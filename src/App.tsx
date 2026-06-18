@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Music, 
@@ -23,7 +23,8 @@ import {
   Activity,
   HardDrive,
   Download,
-  Trash2
+  Trash2,
+  Scissors
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -32,9 +33,9 @@ import { AudioUploader } from './components/AudioUploader';
 import { AudioList } from './components/AudioList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
-import { AudioSlicer } from './components/AudioSlicer';
-import { AudioFile, CompressionSettings, ProcessingStatus } from './types';
-import { compressAudio, loadFFmpeg, mergeAudios } from './lib/ffmpeg';
+import { CutterWorkstation } from './components/CutterWorkstation';
+import { AudioFile, CompressionSettings } from './types';
+import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
 import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
@@ -209,59 +210,11 @@ export default function App() {
     });
   };
 
-  const handleExportSlices = async (slices: any[], sourceFile: File) => {
-    // Process each slice
-    for (const slice of slices) {
-      updateFileStatus(slice.id, { status: 'processing', progress: 0 });
-
-      try {
-        const trim = { start: slice.start, end: slice.end };
-        
-        const resultBlob = await compressAudio(sourceFile, settings, (progress) => {
-          updateFileStatus(slice.id, { progress });
-        }, trim);
-
-        const previewUrl = URL.createObjectURL(resultBlob);
-
-        const audioFile: AudioFile = {
-          id: slice.id,
-          file: sourceFile,
-          name: `${slice.name}.${settings.format}`,
-          size: sourceFile.size,
-          type: sourceFile.type,
-          status: 'completed',
-          progress: 100,
-          startTime: slice.start,
-          endTime: slice.end,
-          resultBlob,
-          processedSize: resultBlob.size,
-          previewUrl
-        };
-
-        setFiles(prev => [audioFile, ...prev]);
-
-        playCompletionSound();
-
-        confetti({
-          particleCount: 40,
-          spread: 30,
-          origin: { y: 0.9, x: lang === 'ar' ? 0.2 : 0.8 },
-          colors: ['#8b5cf6', '#10b981']
-        });
-      } catch (err) {
-        console.error(`Error processing slice:`, err);
-      }
-    }
-    
-    // Switch to queue tab to show results
-    setActiveTab('queue');
-  };
-
   const isAnyProcessing = files.some(f => f.status === 'processing');
   const hasIdleFiles = files.some(f => f.status === 'idle');
   const hasCompletedFiles = files.some(f => f.status === 'completed');
 
-  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings' | 'slicer'>('workstation');
+  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'cutter' | 'settings'>('workstation');
 
   const handleTrimChange = (id: string, start: number, end: number) => {
     updateFileStatus(id, { startTime: start, endTime: end });
@@ -371,28 +324,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Desktop Navigation Tabs */}
-      <div className="hidden sm:flex border-b border-[#2D3139] bg-[#14171C] shrink-0">
-        {[
-          { id: 'workstation', label: t.workstation, icon: Activity },
-          { id: 'slicer', label: t.audioSlicer, icon: Scissors },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={cn(
-              "px-6 py-2 flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest border-b-2 transition-colors",
-              activeTab === tab.id 
-                ? "text-blue-500 border-blue-500 bg-[#1A1D23]" 
-                : "text-gray-500 border-transparent hover:text-gray-300"
-            )}
-          >
-            <tab.icon size={14} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Main Workspace */}
       <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
         
@@ -400,7 +331,7 @@ export default function App() {
         <div className="flex border-b border-[#2D3139] bg-[#14171C] sm:hidden shrink-0">
           {[
             { id: 'workstation', label: t.workstation, icon: Activity },
-            { id: 'slicer', label: t.audioSlicer, icon: Scissors },
+            { id: 'cutter', label: lang === 'ar' ? 'القاطع' : 'Cutter', icon: Scissors },
             { id: 'queue', label: t.files, icon: History },
             { id: 'settings', label: t.engine, icon: Settings },
           ].map(tab => (
@@ -484,8 +415,7 @@ export default function App() {
         {/* Center Section: Workstation */}
         <section className={cn(
           "flex-1 flex flex-col bg-[#0A0C0F] relative overflow-y-auto scrollbar-hide",
-          activeTab === 'workstation' ? "flex" : "hidden",
-          activeTab !== 'slicer' && activeTab !== 'workstation' && "sm:flex"
+          activeTab === 'workstation' ? "flex" : "hidden sm:flex"
         )}>
           <div className="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full space-y-8 sm:p-8 sm:space-y-12">
             
@@ -567,12 +497,36 @@ export default function App() {
           </div>
         </section>
 
-        {/* Audio Slicer Section */}
+        {/* Cutter Section */}
         <section className={cn(
-          "flex-1 flex flex-col bg-[#0A0C0F] relative",
-          activeTab === 'slicer' ? "flex" : "hidden"
+          "flex-1 flex flex-col bg-[#0A0C0F] relative overflow-y-auto scrollbar-hide",
+          activeTab === 'cutter' ? "flex" : "hidden sm:flex"
         )}>
-          <AudioSlicer t={t} onExportSlices={handleExportSlices} />
+          <div className="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full space-y-8 sm:p-8 sm:space-y-12">
+            {selectedFile ? (
+              <CutterWorkstation
+                file={selectedFile.file}
+                t={t}
+                lang={lang}
+                format={settings.format}
+                bitrate={settings.bitrate}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-96 gap-4">
+                <Scissors size={32} className="text-gray-600" />
+                <div className="text-center">
+                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">
+                    {lang === 'ar' ? 'قاطع الصوت' : 'Audio Cutter'}
+                  </p>
+                  <p className="text-[9px] text-gray-600 font-mono max-w-xs">
+                    {lang === 'ar'
+                      ? 'اختر ملف صوتي من قائمة الانتظار لبدء التقطيع'
+                      : 'Select an audio file from the queue to start cutting'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Sidebar Right: Controls */}
