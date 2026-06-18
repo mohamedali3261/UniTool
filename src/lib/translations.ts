@@ -72,6 +72,14 @@ export const translations = {
     bassBoostDesc: 'إبراز الترددات المنخفضة لعمق صوتي أكبر.',
     mergeFiles: 'دمج كافة الملفات',
     merging: 'جاري الدمج...',
+    audioSlicer: 'تقطيع الصوت',
+    loadAudioFile: 'تحميل ملف صوتي',
+    totalDuration: 'المدة الكلية',
+    createRegion: 'إنشاء منطقة',
+    saveSlice: 'حفظ القطعة',
+    selection: 'المحدد',
+    savedSlices: 'القطع المحفوظة',
+    exportSlices: 'تصدير القطع',
   },
   en: {
     title: 'AudioFlow',
@@ -141,5 +149,13 @@ export const translations = {
     bassBoostDesc: 'Enhances low frequencies for deeper sound.',
     mergeFiles: 'Merge All Files',
     merging: 'Merging...',
+    audioSlicer: 'Audio Slicer',
+    loadAudioFile: 'Load Audio File',
+    totalDuration: 'Total Duration',
+    createRegion: 'Create Region',
+    saveSlice: 'Save Slice',
+    selection: 'Selection',
+    savedSlices: 'Saved Slices',
+    exportSlices: 'Export Slices',
   }
 };

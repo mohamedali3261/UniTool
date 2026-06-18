@@ -32,6 +32,7 @@ import { AudioUploader } from './components/AudioUploader';
 import { AudioList } from './components/AudioList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
+import { AudioSlicer } from './components/AudioSlicer';
 import { AudioFile, CompressionSettings, ProcessingStatus } from './types';
 import { compressAudio, loadFFmpeg, mergeAudios } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -208,11 +209,59 @@ export default function App() {
     });
   };
 
+  const handleExportSlices = async (slices: any[], sourceFile: File) => {
+    // Process each slice
+    for (const slice of slices) {
+      updateFileStatus(slice.id, { status: 'processing', progress: 0 });
+
+      try {
+        const trim = { start: slice.start, end: slice.end };
+        
+        const resultBlob = await compressAudio(sourceFile, settings, (progress) => {
+          updateFileStatus(slice.id, { progress });
+        }, trim);
+
+        const previewUrl = URL.createObjectURL(resultBlob);
+
+        const audioFile: AudioFile = {
+          id: slice.id,
+          file: sourceFile,
+          name: `${slice.name}.${settings.format}`,
+          size: sourceFile.size,
+          type: sourceFile.type,
+          status: 'completed',
+          progress: 100,
+          startTime: slice.start,
+          endTime: slice.end,
+          resultBlob,
+          processedSize: resultBlob.size,
+          previewUrl
+        };
+
+        setFiles(prev => [audioFile, ...prev]);
+
+        playCompletionSound();
+
+        confetti({
+          particleCount: 40,
+          spread: 30,
+          origin: { y: 0.9, x: lang === 'ar' ? 0.2 : 0.8 },
+          colors: ['#8b5cf6', '#10b981']
+        });
+      } catch (err) {
+        console.error(`Error processing slice:`, err);
+      }
+    }
+    
+    // Switch to queue tab to show results
+    setActiveTab('queue');
+  };
+
   const isAnyProcessing = files.some(f => f.status === 'processing');
   const hasIdleFiles = files.some(f => f.status === 'idle');
   const hasCompletedFiles = files.some(f => f.status === 'completed');
 
-  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
+  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings' | 'slicer'>('workstation');
 
   const handleTrimChange = (id: string, start: number, end: number) => {
     updateFileStatus(id, { startTime: start, endTime: end });
@@ -322,6 +371,28 @@ export default function App() {
         </div>
       </header>
 
+      {/* Desktop Navigation Tabs */}
+      <div className="hidden sm:flex border-b border-[#2D3139] bg-[#14171C] shrink-0">
+        {[
+          { id: 'workstation', label: t.workstation, icon: Activity },
+          { id: 'slicer', label: t.audioSlicer, icon: Scissors },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={cn(
+              "px-6 py-2 flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest border-b-2 transition-colors",
+              activeTab === tab.id 
+                ? "text-blue-500 border-blue-500 bg-[#1A1D23]" 
+                : "text-gray-500 border-transparent hover:text-gray-300"
+            )}
+          >
+            <tab.icon size={14} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Main Workspace */}
       <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
         
@@ -329,6 +400,7 @@ export default function App() {
         <div className="flex border-b border-[#2D3139] bg-[#14171C] sm:hidden shrink-0">
           {[
             { id: 'workstation', label: t.workstation, icon: Activity },
+            { id: 'slicer', label: t.audioSlicer, icon: Scissors },
             { id: 'queue', label: t.files, icon: History },
             { id: 'settings', label: t.engine, icon: Settings },
           ].map(tab => (
@@ -412,7 +484,8 @@ export default function App() {
         {/* Center Section: Workstation */}
         <section className={cn(
           "flex-1 flex flex-col bg-[#0A0C0F] relative overflow-y-auto scrollbar-hide",
-          activeTab === 'workstation' ? "flex" : "hidden sm:flex"
+          activeTab === 'workstation' ? "flex" : "hidden",
+          activeTab !== 'slicer' && activeTab !== 'workstation' && "sm:flex"
         )}>
           <div className="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full space-y-8 sm:p-8 sm:space-y-12">
             
@@ -491,14 +564,15 @@ export default function App() {
                 )}
               </div>
             )}
-                      </>
-                    )}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              </div>
-            )}
           </div>
+        </section>
+
+        {/* Audio Slicer Section */}
+        <section className={cn(
+          "flex-1 flex flex-col bg-[#0A0C0F] relative",
+          activeTab === 'slicer' ? "flex" : "hidden"
+        )}>
+          <AudioSlicer t={t} onExportSlices={handleExportSlices} />
         </section>
 
         {/* Sidebar Right: Controls */}
