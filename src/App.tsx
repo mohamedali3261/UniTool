@@ -14,17 +14,11 @@ import {
   Info,
   Loader2,
   AlertTriangle,
-  Play,
-  CheckCircle,
-  FileCode,
   Plus,
   Cpu,
   Zap,
   Activity,
-  HardDrive,
   Download,
-  Trash2,
-  Scissors
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -33,7 +27,6 @@ import { AudioUploader } from './components/AudioUploader';
 import { AudioList } from './components/AudioList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
-import { CutterWorkstation } from './components/CutterWorkstation';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -214,7 +207,7 @@ export default function App() {
   const hasIdleFiles = files.some(f => f.status === 'idle');
   const hasCompletedFiles = files.some(f => f.status === 'completed');
 
-  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'cutter' | 'settings'>('workstation');
+  const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
   const handleTrimChange = (id: string, start: number, end: number) => {
     updateFileStatus(id, { startTime: start, endTime: end });
@@ -306,7 +299,7 @@ export default function App() {
         <div className="flex items-center gap-4 sm:gap-8">
           <button 
             onClick={toggleLang}
-            className="text-[9px] font-mono text-gray-500 hover:text-white border border-[#2D3139] px-2 py-1 rounded transition-colors uppercase sm:text-[10px]"
+            className="text-[9px] font-mono text-gray-400 hover:text-white bg-gradient-to-r from-[#1A1D23] to-[#14171C] border border-[#2D3139] hover:border-blue-500/50 px-3 py-1.5 rounded-sm transition-all uppercase sm:text-[10px] font-bold shadow-lg hover:shadow-blue-500/20"
           >
             {t.lang}
           </button>
@@ -331,7 +324,6 @@ export default function App() {
         <div className="flex border-b border-[#2D3139] bg-[#14171C] sm:hidden shrink-0">
           {[
             { id: 'workstation', label: t.workstation, icon: Activity },
-            { id: 'cutter', label: lang === 'ar' ? 'القاطع' : 'Cutter', icon: Scissors },
             { id: 'queue', label: t.files, icon: History },
             { id: 'settings', label: t.engine, icon: Settings },
           ].map(tab => (
@@ -375,14 +367,14 @@ export default function App() {
               <div className="flex flex-col gap-2">
                 <button
                   onClick={downloadAllFiles}
-                  className="w-full flex items-center justify-center gap-2 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-sm hover:bg-blue-600/30 transition-colors text-[9px] uppercase font-mono font-bold"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-500/50 text-white rounded-sm hover:from-blue-500 hover:to-blue-400 transition-all text-[9px] uppercase font-mono font-bold shadow-lg shadow-blue-500/20"
                 >
                   <Download size={12} />
                   {t.downloadAll}
                 </button>
                 <button
                   onClick={downloadAllAsZip}
-                  className="w-full flex items-center justify-center gap-2 py-2 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 rounded-sm hover:bg-emerald-600/30 transition-colors text-[9px] uppercase font-mono font-bold"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-500/50 text-white rounded-sm hover:from-emerald-500 hover:to-emerald-400 transition-all text-[9px] uppercase font-mono font-bold shadow-lg shadow-emerald-500/20"
                 >
                   <Download size={12} />
                   {t.downloadBatch}
@@ -443,8 +435,8 @@ export default function App() {
                     t={t}
                   />
                   <div className="flex gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1A1D23] border border-[#2D3139] rounded-sm text-gray-400 hover:bg-[#21262E] transition-colors text-[10px] font-mono uppercase cursor-pointer group">
-                      <Plus size={14} className="group-hover:text-blue-500 transition-colors" />
+                    <label className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#1A1D23] to-[#14171C] border border-[#2D3139] hover:border-blue-500/50 rounded-sm text-gray-400 hover:text-blue-400 transition-all text-[10px] font-mono uppercase cursor-pointer group shadow-lg hover:shadow-blue-500/20">
+                      <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" />
                       {t.addMore}
                       <input 
                         type="file" 
@@ -470,60 +462,30 @@ export default function App() {
                 <button
                   onClick={processAll}
                   disabled={isAnyProcessing}
-                  className="group relative w-full sm:w-auto px-10 py-5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white transition-all overflow-hidden rounded-sm"
+                  className="group relative w-full sm:w-auto px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white transition-all overflow-hidden rounded-lg shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none"
                 >
-                  <div className="relative z-10 flex items-center justify-center gap-3 font-bold text-[10px] uppercase tracking-[0.2em] sm:text-xs">
+                  <div className="relative z-10 flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-[0.2em] sm:text-sm">
                     {isAnyProcessing ? (
                       <>
-                        <Loader2 size={14} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                         {t.processing} ({files.filter(f => f.status === 'processing').length}/{files.filter(f => f.status === 'idle' || f.status === 'processing').length})
                       </>
                     ) : (
                       <>
-                        <Cpu size={14} />
+                        <Zap size={16} className="animate-pulse" />
                         {t.executepass} ({files.filter(f => f.status === 'idle').length})
                       </>
                     )}
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                 </button>
                 {isAnyProcessing && (
-                  <div className="text-[9px] font-mono text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-[9px] font-mono text-gray-500 uppercase tracking-wider animate-pulse">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
                     ⚡ {lang === 'ar' ? 'معالجة متعددة نشطة' : 'Parallel Processing Active'}
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Cutter Section */}
-        <section className={cn(
-          "flex-1 flex flex-col bg-[#0A0C0F] relative overflow-y-auto scrollbar-hide",
-          activeTab === 'cutter' ? "flex" : "hidden sm:flex"
-        )}>
-          <div className="flex-1 flex flex-col p-4 max-w-4xl mx-auto w-full space-y-8 sm:p-8 sm:space-y-12">
-            {selectedFile ? (
-              <CutterWorkstation
-                file={selectedFile.file}
-                t={t}
-                lang={lang}
-                format={settings.format}
-                bitrate={settings.bitrate}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-96 gap-4">
-                <Scissors size={32} className="text-gray-600" />
-                <div className="text-center">
-                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">
-                    {lang === 'ar' ? 'قاطع الصوت' : 'Audio Cutter'}
-                  </p>
-                  <p className="text-[9px] text-gray-600 font-mono max-w-xs">
-                    {lang === 'ar'
-                      ? 'اختر ملف صوتي من قائمة الانتظار لبدء التقطيع'
-                      : 'Select an audio file from the queue to start cutting'}
-                  </p>
-                </div>
               </div>
             )}
           </div>
