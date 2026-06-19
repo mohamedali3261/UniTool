@@ -29,6 +29,7 @@ import { AudioList } from './components/AudioList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
 import { AudioSplitter } from './pages/AudioSplitter';
+import { VideoLogo } from './pages/VideoLogo';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -36,7 +37,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter'>('compress');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo'>('compress');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const t = translations[lang];
 
@@ -326,6 +327,18 @@ export default function App() {
               <Scissors size={12} />
               {lang === 'ar' ? 'قص' : 'Split'}
             </button>
+            <button
+              onClick={() => setCurrentPage('videoLogo')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'videoLogo'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <Plus size={12} />
+              {lang === 'ar' ? 'لوجو فيديو' : 'Video Logo'}
+            </button>
           </div>
 
           <button 
@@ -351,6 +364,8 @@ export default function App() {
       {/* Main Workspace */}
       {currentPage === 'splitter' ? (
         <AudioSplitter t={t} lang={lang} />
+      ) : currentPage === 'videoLogo' ? (
+        <VideoLogo t={t} lang={lang} />
       ) : (
         <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
         
@@ -375,6 +390,16 @@ export default function App() {
           >
             <Scissors size={12} />
             {lang === 'ar' ? 'قص' : 'Split'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('videoLogo')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'videoLogo' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <Plus size={12} />
+            {lang === 'ar' ? 'لوجو' : 'Logo'}
           </button>
         </div>
         
