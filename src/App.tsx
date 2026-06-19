@@ -19,6 +19,7 @@ import {
   Zap,
   Activity,
   Download,
+  Scissors,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -27,6 +28,7 @@ import { AudioUploader } from './components/AudioUploader';
 import { AudioList } from './components/AudioList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
+import { AudioSplitter } from './pages/AudioSplitter';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -34,6 +36,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter'>('compress');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const t = translations[lang];
 
@@ -297,6 +300,34 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-4 sm:gap-8">
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage('compress')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'compress'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <Zap size={12} />
+              {lang === 'ar' ? 'ضغط' : 'Compress'}
+            </button>
+            <button
+              onClick={() => setCurrentPage('splitter')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'splitter'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <Scissors size={12} />
+              {lang === 'ar' ? 'قص' : 'Split'}
+            </button>
+          </div>
+
           <button 
             onClick={toggleLang}
             className="text-[9px] font-mono text-gray-400 hover:text-white bg-gradient-to-r from-[#1A1D23] to-[#14171C] border border-[#2D3139] hover:border-blue-500/50 px-3 py-1.5 rounded-sm transition-all uppercase sm:text-[10px] font-bold shadow-lg hover:shadow-blue-500/20"
@@ -318,7 +349,34 @@ export default function App() {
       </header>
 
       {/* Main Workspace */}
-      <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
+      {currentPage === 'splitter' ? (
+        <AudioSplitter t={t} lang={lang} />
+      ) : (
+        <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
+        
+        {/* Mobile Navigation for Page Selection */}
+        <div className="md:hidden flex border-b border-[#2D3139] bg-[#14171C] shrink-0">
+          <button
+            onClick={() => setCurrentPage('compress')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'compress' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <Zap size={12} />
+            {lang === 'ar' ? 'ضغط' : 'Compress'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('splitter')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'splitter' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <Scissors size={12} />
+            {lang === 'ar' ? 'قص' : 'Split'}
+          </button>
+        </div>
         
         {/* Mobile Navigation Tabs */}
         <div className="flex border-b border-[#2D3139] bg-[#14171C] sm:hidden shrink-0">
@@ -516,6 +574,7 @@ export default function App() {
           </div>
         </aside>
       </main>
+      )}
 
       {/* Footer Status Bar */}
       <footer className="px-4 py-1.5 bg-[#0A0C0F] border-t border-[#1F2937] flex justify-between items-center text-[8px] text-gray-600 font-mono shrink-0 sm:px-6">
