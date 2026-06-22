@@ -335,13 +335,17 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     }
   };
 
-  const downloadSegment = (segment: SplitSegment) => {
+  const downloadSegment = (segment: SplitSegment, index?: number) => {
     if (!segment.resultBlob) return;
 
     const url = URL.createObjectURL(segment.resultBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${segment.name}.${settings.format}`;
+    
+    // Use index if provided, otherwise find segment index
+    const segmentIndex = index !== undefined ? index + 1 : segments.findIndex(s => s.id === segment.id) + 1;
+    a.download = `audio${segmentIndex}.${settings.format}`;
+    
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -353,7 +357,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     
     completedSegments.forEach((segment, index) => {
       setTimeout(() => {
-        downloadSegment(segment);
+        downloadSegment(segment, index);
       }, index * 300);
     });
   };
@@ -363,8 +367,8 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     if (completedSegments.length === 0) return;
 
     const zip = new JSZip();
-    completedSegments.forEach(segment => {
-      zip.file(`${segment.name}.${settings.format}`, segment.resultBlob!);
+    completedSegments.forEach((segment, index) => {
+      zip.file(`audio${index + 1}.${settings.format}`, segment.resultBlob!);
     });
 
     const content = await zip.generateAsync({ type: 'blob' });
