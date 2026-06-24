@@ -286,7 +286,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
 
   // Handle mouse move
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
       if (!dragState.isDragging || !videoMetadata || !previewContainerRef.current) return;
 
       const container = previewContainerRef.current;

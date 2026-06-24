@@ -49,19 +49,25 @@ export const compressAudio = async (
 
   await instance.writeFile(inputName, await fetchFile(file));
 
-  let command = [];
+  let command = ['-i', inputName];
 
-  // Add trim options if provided
+  // Add trim options if provided - using -ss and -t after input for better accuracy
   if (trim) {
+    const duration = trim.end - trim.start;
+    console.log('[FFmpeg] Trim settings:', {
+      start: trim.start.toFixed(3),
+      end: trim.end.toFixed(3),
+      duration: duration.toFixed(3)
+    });
+    
+    // Use accurate seeking for precise trimming
     if (trim.start > 0) {
-      command = [...command, '-ss', trim.start.toString()];
+      command = [...command, '-ss', trim.start.toFixed(3)];
     }
-    if (trim.end > trim.start) {
-      command = [...command, '-to', trim.end.toString()];
+    if (duration > 0) {
+      command = [...command, '-t', duration.toFixed(3)];
     }
   }
-
-  command = [...command, '-i', inputName];
 
   // Bitrate and Codec
   if (settings.format === 'mp3') {
@@ -70,6 +76,9 @@ export const compressAudio = async (
     command = [...command, '-c:a', 'aac', '-b:a', settings.bitrate];
   } else if (settings.format === 'opus') {
     command = [...command, '-c:a', 'libopus', '-b:a', settings.bitrate];
+  } else {
+    // Default to mp3 if format not recognized
+    command = [...command, '-c:a', 'libmp3lame', '-b:a', settings.bitrate || '128k'];
   }
 
   // Channels
@@ -124,15 +133,22 @@ export const compressAudio = async (
     command = [...command, '-af', filters.join(',')];
   }
 
+  // Ensure accurate seeking and avoid timestamp issues
+  command = [...command, '-avoid_negative_ts', 'make_zero'];
+
   command.push(outputName);
+
+  console.log('[FFmpeg] Command:', command.join(' '));
 
   try {
     const result = await instance.exec(command);
     if (result !== 0) {
+      console.error('[FFmpeg] Command failed:', command.join(' '));
       throw new Error(`FFmpeg instance exited with code ${result}`);
     }
   } catch (err) {
     console.error('FFmpeg execution error:', err);
+    console.error('Failed command:', command.join(' '));
     throw err;
   }
 

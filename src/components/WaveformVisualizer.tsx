@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Play, Pause, Scissors, MoveHorizontal } from 'lucide-react';
-import { cn } from './lib/utils';
+import { cn } from '../lib/utils';
 
 interface WaveformVisualizerProps {
   url: string;
@@ -25,8 +25,15 @@ export function WaveformVisualizer({ url, onTrimChange, startTime = 0, endTime, 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Ensure container has dimensions before initializing
+    const container = containerRef.current;
+    if (!container.offsetWidth) {
+      console.warn('Container width not ready');
+      return;
+    }
+
     const ws = WaveSurfer.create({
-      container: containerRef.current,
+      container: container,
       waveColor: '#1e293b',
       progressColor: '#3b82f6',
       cursorColor: '#3b82f6',
@@ -39,22 +46,52 @@ export function WaveformVisualizer({ url, onTrimChange, startTime = 0, endTime, 
       hideScrollbar: true,
     });
 
-    ws.load(url);
+    let isDestroyed = false;
 
     ws.on('ready', () => {
-      setDuration(ws.getDuration());
-      if (onTrimChange && !endTime) {
-        onTrimChange(0, ws.getDuration());
+      if (!isDestroyed) {
+        setDuration(ws.getDuration());
+        if (onTrimChange && !endTime) {
+          onTrimChange(0, ws.getDuration());
+        }
       }
     });
 
-    ws.on('play', () => setIsPlaying(true));
-    ws.on('pause', () => setIsPlaying(false));
+    ws.on('play', () => {
+      if (!isDestroyed) {
+        setIsPlaying(true);
+      }
+    });
+    
+    ws.on('pause', () => {
+      if (!isDestroyed) {
+        setIsPlaying(false);
+      }
+    });
+
+    ws.on('error', (error) => {
+      // Suppress abort errors during cleanup
+      if (!error.message?.includes('abort')) {
+        console.error('WaveSurfer error:', error);
+      }
+    });
+
+    ws.load(url).catch((error) => {
+      // Suppress abort errors during cleanup
+      if (!error.message?.includes('abort') && !isDestroyed) {
+        console.error('Error loading audio:', error);
+      }
+    });
 
     wavesurferRef.current = ws;
 
     return () => {
-      ws.destroy();
+      isDestroyed = true;
+      try {
+        ws.destroy();
+      } catch (error) {
+        // Ignore errors during cleanup
+      }
     };
   }, [url]);
 
@@ -96,7 +133,7 @@ export function WaveformVisualizer({ url, onTrimChange, startTime = 0, endTime, 
         </div>
       </div>
 
-      <div ref={containerRef} className="w-full" />
+      <div ref={containerRef} className="w-full" style={{ minHeight: '80px' }} />
 
       {onTrimChange && (
         <div className="space-y-4 pt-2">

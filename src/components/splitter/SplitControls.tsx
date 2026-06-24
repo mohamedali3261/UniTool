@@ -70,7 +70,7 @@ export function SplitControls({
           <button
             onClick={onAddSegment}
             disabled={disabled}
-            className="flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-500 hover:to-blue-400 disabled:from-gray-700 disabled:to-gray-700 text-xs font-medium transition-all shadow-lg"
+            className="flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-500 hover:to-blue-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-xs font-medium transition-all shadow-lg"
           >
             <Plus size={14} />
             {lang === 'ar' ? 'إضافة' : 'Add'}
@@ -78,7 +78,7 @@ export function SplitControls({
           <button
             onClick={onSplitAtCurrentTime}
             disabled={disabled}
-            className="flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:from-emerald-500 hover:to-emerald-400 disabled:from-gray-700 disabled:to-gray-700 text-xs font-medium transition-all shadow-lg"
+            className="flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:from-emerald-500 hover:to-emerald-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-xs font-medium transition-all shadow-lg"
           >
             <Scissors size={14} />
             {lang === 'ar' ? 'قص' : 'Split'}
@@ -110,7 +110,7 @@ export function SplitControls({
           <button
             onClick={onAutoSplit}
             disabled={disabled}
-            className="w-full flex items-center justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-purple-400 disabled:from-gray-700 disabled:to-gray-700 text-xs font-medium transition-all shadow-lg"
+            className="w-full flex items-center justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-purple-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-xs font-medium transition-all shadow-lg"
           >
             <Scissors size={14} />
             {lang === 'ar' ? 'تقسيم تلقائي' : 'Auto Split'}

@@ -110,6 +110,13 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     });
 
     regions.on('region-updated', (region: any) => {
+      console.log('Region updated:', {
+        id: region.id,
+        start: region.start.toFixed(3),
+        end: region.end.toFixed(3),
+        duration: (region.end - region.start).toFixed(3)
+      });
+      
       setSegments(prev => prev.map(seg => 
         seg.id === region.id 
           ? { ...seg, startTime: region.start, endTime: region.end }
@@ -135,7 +142,10 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   };
 
   const playSegmentById = (segmentId: string) => {
-    if (!wavesurfer) return;
+    if (!wavesurfer) {
+      console.warn('WaveSurfer is not initialized');
+      return;
+    }
     
     const segment = segments.find(s => s.id === segmentId);
     if (!segment) return;
@@ -144,31 +154,58 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
       clearInterval(playbackIntervalRef.current);
     }
 
-    if (playingSegmentId === segmentId && isPlaying) {
-      wavesurfer.pause();
-      setPlayingSegmentId(null);
-      return;
-    }
-
-    wavesurfer.setTime(segment.startTime);
-    wavesurfer.play();
-    setPlayingSegmentId(segmentId);
-    setSelectedRegionId(segmentId);
-    
-    playbackIntervalRef.current = setInterval(() => {
-      const current = wavesurfer.getCurrentTime();
-      if (current >= segment.endTime) {
+    try {
+      if (playingSegmentId === segmentId && isPlaying) {
         wavesurfer.pause();
         setPlayingSegmentId(null);
-        if (playbackIntervalRef.current) {
-          clearInterval(playbackIntervalRef.current);
-        }
+        return;
       }
-    }, 50);
+
+      wavesurfer.setTime(segment.startTime);
+      wavesurfer.play();
+      setPlayingSegmentId(segmentId);
+      setSelectedRegionId(segmentId);
+      
+      playbackIntervalRef.current = setInterval(() => {
+        if (!wavesurfer) {
+          if (playbackIntervalRef.current) {
+            clearInterval(playbackIntervalRef.current);
+          }
+          return;
+        }
+        
+        const current = wavesurfer.getCurrentTime();
+        if (current >= segment.endTime) {
+          wavesurfer.pause();
+          setPlayingSegmentId(null);
+          if (playbackIntervalRef.current) {
+            clearInterval(playbackIntervalRef.current);
+          }
+        }
+      }, 50);
+    } catch (error) {
+      console.error('Error playing segment:', error);
+      setPlayingSegmentId(null);
+    }
   };
 
   const addSegment = () => {
-    if (!regionsPlugin || !duration) return;
+    if (!regionsPlugin || !wavesurfer || !duration) {
+      console.warn('WaveSurfer is not initialized');
+      return;
+    }
+    
+    // Check if wavesurfer is ready
+    try {
+      const wsDuration = wavesurfer.getDuration();
+      if (!wsDuration || wsDuration === 0) {
+        console.warn('WaveSurfer duration not available yet');
+        return;
+      }
+    } catch (error) {
+      console.warn('WaveSurfer not ready:', error);
+      return;
+    }
 
     const lastSegment = segments[segments.length - 1];
     const start = lastSegment ? lastSegment.endTime : 0;
@@ -178,29 +215,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
     const color = SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length];
     
-    regionsPlugin.addRegion({
-      start,
-      end,
-      color: color + '50',
-      drag: true,
-      resize: true,
-    });
-  };
-
-  const autoSplit = () => {
-    if (!regionsPlugin || !duration || autoSplitCount < 2) return;
-
-    const regions = regionsPlugin.getRegions();
-    regions.forEach((region: any) => region.remove());
-    setSegments([]);
-
-    const segmentDuration = duration / autoSplitCount;
-
-    for (let i = 0; i < autoSplitCount; i++) {
-      const start = i * segmentDuration;
-      const end = (i + 1) * segmentDuration;
-      const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
-
+    try {
       regionsPlugin.addRegion({
         start,
         end,
@@ -208,66 +223,153 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
         drag: true,
         resize: true,
       });
+    } catch (error) {
+      console.error('Error adding segment:', error);
+    }
+  };
+
+  const autoSplit = () => {
+    if (!regionsPlugin || !wavesurfer || !duration || autoSplitCount < 2) {
+      console.warn('WaveSurfer is not initialized or invalid split count');
+      return;
+    }
+    
+    // Check if wavesurfer is ready
+    try {
+      const wsDuration = wavesurfer.getDuration();
+      if (!wsDuration || wsDuration === 0) {
+        console.warn('WaveSurfer duration not available yet');
+        return;
+      }
+    } catch (error) {
+      console.warn('WaveSurfer not ready:', error);
+      return;
+    }
+
+    try {
+      const regions = regionsPlugin.getRegions();
+      regions.forEach((region: any) => region.remove());
+      setSegments([]);
+
+      const segmentDuration = duration / autoSplitCount;
+
+      for (let i = 0; i < autoSplitCount; i++) {
+        const start = i * segmentDuration;
+        const end = (i + 1) * segmentDuration;
+        const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+
+        regionsPlugin.addRegion({
+          start,
+          end,
+          color: color + '50',
+          drag: true,
+          resize: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error auto-splitting:', error);
     }
   };
 
   const splitAtCurrentTime = () => {
-    if (!regionsPlugin || !wavesurfer || !duration) return;
-
-    const current = wavesurfer.getCurrentTime();
-    if (current <= 0 || current >= duration) return;
-
-    const regions = regionsPlugin.getRegions();
-    let regionToSplit: any = null;
-
-    for (const region of regions) {
-      if (current > region.start && current < region.end) {
-        regionToSplit = region;
-        break;
-      }
+    if (!regionsPlugin || !wavesurfer || !duration) {
+      console.warn('WaveSurfer is not initialized');
+      return;
     }
-
-    if (regionToSplit) {
-      const oldEnd = regionToSplit.end;
-      regionToSplit.setOptions({ end: current });
-
-      const color = SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length];
-      regionsPlugin.addRegion({
-        start: current,
-        end: oldEnd,
-        color: color + '50',
-        drag: true,
-        resize: true,
-      });
-    } else {
-      const end = Math.min(current + 30, duration);
-      const color = SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length];
+    
+    // Check if wavesurfer is ready
+    try {
+      const wsDuration = wavesurfer.getDuration();
+      if (!wsDuration || wsDuration === 0) {
+        console.warn('WaveSurfer duration not available yet');
+        return;
+      }
       
-      regionsPlugin.addRegion({
-        start: current,
-        end,
-        color: color + '50',
-        drag: true,
-        resize: true,
-      });
+      const current = wavesurfer.getCurrentTime();
+      if (current <= 0 || current >= duration) return;
+
+      const regions = regionsPlugin.getRegions();
+      let regionToSplit: any = null;
+
+      for (const region of regions) {
+        if (current > region.start && current < region.end) {
+          regionToSplit = region;
+          break;
+        }
+      }
+
+      if (regionToSplit) {
+        const oldEnd = regionToSplit.end;
+        regionToSplit.setOptions({ end: current });
+
+        const color = SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length];
+        regionsPlugin.addRegion({
+          start: current,
+          end: oldEnd,
+          color: color + '50',
+          drag: true,
+          resize: true,
+        });
+      } else {
+        const end = Math.min(current + 30, duration);
+        const color = SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length];
+        
+        regionsPlugin.addRegion({
+          start: current,
+          end,
+          color: color + '50',
+          drag: true,
+          resize: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error splitting at current time:', error);
     }
   };
 
-  const playPause = () => {
-    if (!wavesurfer) return;
-    wavesurfer.playPause();
+  const togglePlayPause = () => {
+    if (!wavesurfer) {
+      console.warn('WaveSurfer is not initialized');
+      return;
+    }
+    
+    try {
+      if (wavesurfer.isPlaying()) {
+        wavesurfer.pause();
+      } else {
+        wavesurfer.play();
+      }
+    } catch (error) {
+      console.error('Error toggling playback:', error);
+    }
   };
 
   const skipBackward = () => {
-    if (!wavesurfer) return;
-    const newTime = Math.max(0, wavesurfer.getCurrentTime() - 5);
-    wavesurfer.setTime(newTime);
+    if (!wavesurfer) {
+      console.warn('WaveSurfer is not initialized');
+      return;
+    }
+    
+    try {
+      const newTime = Math.max(0, wavesurfer.getCurrentTime() - 5);
+      wavesurfer.setTime(newTime);
+    } catch (error) {
+      console.error('Error skipping backward:', error);
+    }
   };
 
   const skipForward = () => {
-    if (!wavesurfer) return;
-    const newTime = Math.min(duration, wavesurfer.getCurrentTime() + 5);
-    wavesurfer.setTime(newTime);
+    if (!wavesurfer) {
+      console.warn('WaveSurfer is not initialized');
+      return;
+    }
+    
+    try {
+      const newTime = Math.min(duration, wavesurfer.getCurrentTime() + 5);
+      wavesurfer.setTime(newTime);
+    } catch (error) {
+      console.error('Error skipping forward:', error);
+    }
   };
 
   const clearAllSegments = () => {
@@ -297,6 +399,13 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
   const processSegment = async (segment: SplitSegment) => {
     if (!audioFile || !isFfmpegLoaded) return;
+
+    // Log segment times for debugging
+    console.log(`Processing segment: ${segment.name}`, {
+      start: segment.startTime.toFixed(3),
+      end: segment.endTime.toFixed(3),
+      duration: (segment.endTime - segment.startTime).toFixed(3)
+    });
 
     setSegments(prev => prev.map(seg =>
       seg.id === segment.id ? { ...seg, status: 'processing', progress: 0 } : seg
@@ -493,7 +602,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
               isPlaying={isPlaying}
               currentTime={currentTime}
               duration={duration}
-              onPlayPause={playPause}
+              onPlayPause={togglePlayPause}
               onSkipBackward={skipBackward}
               onSkipForward={skipForward}
               onClearAll={clearAllSegments}
