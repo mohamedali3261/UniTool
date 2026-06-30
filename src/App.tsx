@@ -5,12 +5,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Music, 
-  Settings, 
-  History, 
-  Sparkles, 
-  Waves, 
+import {
+  Music,
+  Settings,
+  History,
+  Sparkles,
+  Waves,
   Info,
   Loader2,
   AlertTriangle,
@@ -20,6 +20,9 @@ import {
   Activity,
   Download,
   Scissors,
+  ImageIcon,
+  Eraser,
+  MessageSquareText,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -30,6 +33,9 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
 import { AudioSplitter } from './pages/AudioSplitter';
 import { VideoLogo } from './pages/VideoLogo';
+import { ImageCropper } from './pages/ImageCropper';
+import { BackgroundRemover } from './pages/BackgroundRemover';
+import { SpeechToText } from './pages/SpeechToText';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -37,7 +43,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo'>('compress');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText'>('compress');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const t = translations[lang];
 
@@ -339,6 +345,42 @@ export default function App() {
               <Plus size={12} />
               {lang === 'ar' ? 'لوجو فيديو' : 'Video Logo'}
             </button>
+            <button
+              onClick={() => setCurrentPage('imageCropper')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'imageCropper'
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <ImageIcon size={12} />
+              {lang === 'ar' ? 'قص الصور' : 'Crop'}
+            </button>
+            <button
+              onClick={() => setCurrentPage('bgRemover')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'bgRemover'
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <Eraser size={12} />
+              {lang === 'ar' ? 'خلفية' : 'Bg Remove'}
+            </button>
+            <button
+              onClick={() => setCurrentPage('speechToText')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'speechToText'
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <MessageSquareText size={12} />
+              {lang === 'ar' ? 'نص' : 'STT'}
+            </button>
           </div>
 
           <button 
@@ -362,10 +404,16 @@ export default function App() {
       </header>
 
       {/* Main Workspace */}
-      {currentPage === 'splitter' ? (
+      {currentPage === 'speechToText' ? (
+        <SpeechToText t={t} lang={lang} />
+      ) : currentPage === 'splitter' ? (
         <AudioSplitter t={t} lang={lang} />
       ) : currentPage === 'videoLogo' ? (
         <VideoLogo t={t} lang={lang} />
+      ) : currentPage === 'imageCropper' ? (
+        <ImageCropper t={t} lang={lang} />
+      ) : currentPage === 'bgRemover' ? (
+        <BackgroundRemover t={t} lang={lang} />
       ) : (
         <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
         
@@ -400,6 +448,36 @@ export default function App() {
           >
             <Plus size={12} />
             {lang === 'ar' ? 'لوجو' : 'Logo'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('imageCropper')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'imageCropper' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <ImageIcon size={12} />
+            {lang === 'ar' ? 'قص' : 'Crop'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('bgRemover')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'bgRemover' ? "text-purple-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <Eraser size={12} />
+            {lang === 'ar' ? 'خلفية' : 'Bg'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('speechToText')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'speechToText' ? "text-purple-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <MessageSquareText size={12} />
+            {lang === 'ar' ? 'نص' : 'STT'}
           </button>
         </div>
         
