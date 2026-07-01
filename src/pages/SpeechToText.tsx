@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Languages, Copy, Download, Trash2, FileText, AlertCircle } from 'lucide-react';
 
 interface SpeechToTextProps {
@@ -37,7 +37,10 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
     }
   }, [transcript, interimText]);
 
-  const stopAudioVisualization = useCallback(() => {
+  const langRef = useRef(recognitionLang);
+  langRef.current = recognitionLang;
+
+  const stopAudioVisualization = () => {
     cancelAnimationFrame(animFrameRef.current);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
@@ -49,11 +52,10 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
     }
     analyserRef.current = null;
     setAudioLevel(0);
-  }, []);
+  };
 
-  const startAudioVisualization = useCallback(async () => {
+  const startAudioVisualization = (stream: MediaStream) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
@@ -80,30 +82,18 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
       };
       animFrameRef.current = requestAnimationFrame(update);
     } catch {
-      // Mic permission denied or unavailable
+      // Visualization failed, recognition can still work
     }
-  }, []);
+  };
 
-  const stopListening = useCallback(() => {
-    shouldListenRef.current = false;
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-    setInterimText('');
-    stopAudioVisualization();
-  }, [stopAudioVisualization]);
-
-  const startListening = useCallback(() => {
+  const startRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition || !shouldListenRef.current) return;
 
-    shouldListenRef.current = true;
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = recognitionLang;
+    recognition.lang = langRef.current;
 
     recognition.onresult = (event: any) => {
       let finalText = '';
@@ -121,7 +111,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
 
     recognition.onerror = (event: any) => {
       if (event.error === 'no-speech' || event.error === 'aborted') return;
-      setError(lang === 'ar' ? 'حدث خطأ في التعرف على الصوت' : `Recognition error: ${event.error}`);
+      setError(langRef.current === 'ar-SA' ? 'حدث خطأ في التعرف على الصوت' : `Recognition error: ${event.error}`);
       shouldListenRef.current = false;
       setIsListening(false);
       stopAudioVisualization();
@@ -129,7 +119,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
 
     recognition.onend = () => {
       if (shouldListenRef.current) {
-        recognition.start();
+        startRecognition();
       } else {
         setIsListening(false);
         setInterimText('');
@@ -137,12 +127,38 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
       }
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
-    setError(null);
-    startAudioVisualization();
-  }, [recognitionLang, lang, startAudioVisualization, stopAudioVisualization]);
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+      setError(null);
+    } catch {
+      setError(lang === 'ar' ? 'فشل في بدء التعرف على الصوت' : 'Failed to start speech recognition');
+      shouldListenRef.current = false;
+      setIsListening(false);
+    }
+  };
+
+  const startListening = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      shouldListenRef.current = true;
+      startAudioVisualization(stream);
+      startRecognition();
+    }).catch(() => {
+      setError(lang === 'ar' ? 'تم رفض إذن الميكروفون' : 'Microphone permission denied');
+    });
+  };
+
+  const stopListening = () => {
+    shouldListenRef.current = false;
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    setInterimText('');
+    stopAudioVisualization();
+  };
 
   const toggleListening = () => {
     if (isListening) {
@@ -153,11 +169,12 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
   };
 
   const handleLanguageChange = (newLang: 'ar-SA' | 'en-US') => {
-    const wasListening = isListening;
-    setRecognitionLang(newLang);
-    if (wasListening) {
+    if (isListening) {
+      setRecognitionLang(newLang);
       stopListening();
-      setTimeout(() => startListening(), 200);
+      setTimeout(() => startListening(), 300);
+    } else {
+      setRecognitionLang(newLang);
     }
   };
 
