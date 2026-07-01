@@ -23,6 +23,7 @@ import {
   ImageIcon,
   Eraser,
   MessageSquareText,
+  FileAudio,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -36,6 +37,7 @@ import { VideoLogo } from './pages/VideoLogo';
 import { ImageCropper } from './pages/ImageCropper';
 import { BackgroundRemover } from './pages/BackgroundRemover';
 import { SpeechToText } from './pages/SpeechToText';
+import { AudioTranscriber } from './pages/AudioTranscriber';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -43,7 +45,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText'>('compress');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber'>('compress');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const t = translations[lang];
 
@@ -381,6 +383,18 @@ export default function App() {
               <MessageSquareText size={12} />
               {lang === 'ar' ? 'نص' : 'STT'}
             </button>
+            <button
+              onClick={() => setCurrentPage('audioTranscriber')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
+                currentPage === 'audioTranscriber'
+                  ? "bg-cyan-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
+              )}
+            >
+              <FileAudio size={12} />
+              {lang === 'ar' ? 'تفريغ' : 'Transcribe'}
+            </button>
           </div>
 
           <button 
@@ -404,7 +418,9 @@ export default function App() {
       </header>
 
       {/* Main Workspace */}
-      {currentPage === 'speechToText' ? (
+      {currentPage === 'audioTranscriber' ? (
+        <AudioTranscriber t={t} lang={lang} />
+      ) : currentPage === 'speechToText' ? (
         <SpeechToText t={t} lang={lang} />
       ) : currentPage === 'splitter' ? (
         <AudioSplitter t={t} lang={lang} />
@@ -478,6 +494,16 @@ export default function App() {
           >
             <MessageSquareText size={12} />
             {lang === 'ar' ? 'نص' : 'STT'}
+          </button>
+          <button
+            onClick={() => setCurrentPage('audioTranscriber')}
+            className={cn(
+              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
+              currentPage === 'audioTranscriber' ? "text-cyan-500 bg-[#1A1D23]" : "text-gray-500"
+            )}
+          >
+            <FileAudio size={12} />
+            {lang === 'ar' ? 'تفريغ' : 'Transcribe'}
           </button>
         </div>
         
