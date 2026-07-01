@@ -11,6 +11,7 @@ import {
   Play, 
   Download, 
   X, 
+  Plus,
   Loader2,
   Video,
   CheckCircle2,
@@ -74,9 +75,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     initialLogoY: 0
   });
   const [videoMetadata, setVideoMetadata] = useState<{ width: number; height: number } | null>(null);
+  const [logoNaturalSize, setLogoNaturalSize] = useState<{ width: number; height: number } | null>(null);
+  const [showInstruction, setShowInstruction] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const logoImageRef = useRef<HTMLImageElement>(null);
 
@@ -115,6 +117,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       setLogoFile(file);
       setLogoUrl(URL.createObjectURL(file));
       setError(null);
+      setShowInstruction(true);
     }
   };
 
@@ -129,10 +132,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
           height: video.videoHeight
         });
         setVideoDuration(duration);
-        // Set initial logo position (fixed values)
+        // Set initial logo position to center of video
         setLogoPosition({
-          x: 1102,
-          y: 20,
+          x: video.videoWidth / 2,
+          y: video.videoHeight / 2,
           scale: 0.37
         });
         // Set initial trim settings
@@ -173,7 +176,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       });
 
       ffmpeg.on('progress', ({ progress: prog }) => {
-        setProgress(Math.round(prog * 100));
+        setProgress(Math.min(99, Math.max(1, Math.round(prog * 100))));
       });
 
       await ffmpeg.load({
@@ -199,19 +202,16 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
         ffmpegArgs.push('-to', trimSettings.endTime.toString());
       }
 
-      // FFmpeg overlay filter with high quality settings
-      // IMPORTANT: Preserve original video dimensions and aspect ratio
+      // FFmpeg overlay filter with balanced quality/speed
       ffmpegArgs.push(
         '-filter_complex',
         `[1:v]scale=iw*${logoScale}:ih*${logoScale}[logo];[0:v][logo]overlay=${logoX}:${logoY}:format=auto`,
-        '-c:v', 'libx264',        // Use H.264 codec
-        '-crf', '18',             // High quality (lower = better, 18 is visually lossless)
-        '-preset', 'slow',        // Slower preset = better quality
-        '-profile:v', 'high',     // H.264 High Profile
-        '-level', '4.2',          // H.264 Level 4.2
-        '-pix_fmt', 'yuv420p',    // Pixel format (compatible with most players)
-        '-c:a', 'copy',           // Copy audio without re-encoding
-        '-movflags', '+faststart', // Enable streaming
+        '-c:v', 'libx264',
+        '-crf', '20',             // Good quality (lower = better, 20 is great, 18 is overkill)
+        '-preset', 'medium',      // Balanced speed/quality (slow was too heavy for WASM)
+        '-pix_fmt', 'yuv420p',
+        '-c:a', 'copy',
+        '-movflags', '+faststart',
         '-y',
         'output.mp4'
       );
@@ -287,10 +287,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
   // Handle mouse move
   useEffect(() => {
     const handleMouseMove = (e: globalThis.MouseEvent) => {
-      if (!dragState.isDragging || !videoMetadata || !previewContainerRef.current) return;
+      if (!dragState.isDragging || !videoMetadata || !videoRef.current) return;
 
-      const container = previewContainerRef.current;
-      const rect = container.getBoundingClientRect();
+      const video = videoRef.current;
+      const rect = video.getBoundingClientRect();
       
       // Calculate scale factor between displayed video and actual video
       const scaleX = videoMetadata.width / rect.width;
@@ -326,28 +326,28 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     }
   }, [dragState, videoMetadata]);
 
-  // Handle mouse wheel for scaling
+  // Handle mouse wheel for scaling (finer control)
   const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.02 : 0.02;
+    const delta = e.deltaY > 0 ? -0.005 : 0.005;
     setLogoPosition(prev => ({
       ...prev,
       scale: Math.max(0.05, Math.min(2.0, prev.scale + delta))
     }));
   };
 
-  // Scale controls
+  // Scale controls (finer: 1% per click)
   const scaleUp = () => {
     setLogoPosition(prev => ({
       ...prev,
-      scale: Math.min(2.0, prev.scale + 0.05)
+      scale: Math.min(2.0, prev.scale + 0.01)
     }));
   };
 
   const scaleDown = () => {
     setLogoPosition(prev => ({
       ...prev,
-      scale: Math.max(0.05, prev.scale - 0.05)
+      scale: Math.max(0.05, prev.scale - 0.01)
     }));
   };
 
@@ -383,77 +383,39 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
   }, [trimSettings]);
 
-  // Preview the logo position on the video
-  const updatePreview = () => {
-    if (!videoRef.current || !previewCanvasRef.current || !videoUrl || !logoUrl || !videoMetadata) return;
-
-    const video = videoRef.current;
-    const canvas = previewCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size to match video display size
-    const rect = video.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    // Calculate scale factor
-    const scaleX = rect.width / videoMetadata.width;
-    const scaleY = rect.height / videoMetadata.height;
-
-    // Draw video frame
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Draw logo
-    if (logoImageRef.current && logoImageRef.current.complete) {
-      const logoWidth = logoImageRef.current.width * logoPosition.scale * scaleX;
-      const logoHeight = logoImageRef.current.height * logoPosition.scale * scaleY;
-      const x = logoPosition.x * scaleX;
-      const y = logoPosition.y * scaleY;
-      
-      ctx.drawImage(logoImageRef.current, x, y, logoWidth, logoHeight);
-    }
-  };
-
+  // Track video display size (for logo positioning)
+  // Reset logo natural size when logo changes
   useEffect(() => {
-    if (logoUrl && !logoImageRef.current) {
-      const img = new Image();
-      img.src = logoUrl;
-      img.onload = () => {
-        logoImageRef.current = img;
-        updatePreview();
-      };
+    if (!logoUrl) {
+      setLogoNaturalSize(null);
+      return;
     }
+    const img = new Image();
+    img.onload = () => {
+      setLogoNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = logoUrl;
   }, [logoUrl]);
 
+  // Auto-hide instruction after 3 seconds
   useEffect(() => {
-    if (videoUrl && logoUrl && videoRef.current) {
-      const video = videoRef.current;
-      const handleUpdate = () => updatePreview();
-      
-      video.addEventListener('loadeddata', handleUpdate);
-      video.addEventListener('seeked', handleUpdate);
-      video.addEventListener('timeupdate', handleUpdate);
-      
-      // Update on window resize
-      window.addEventListener('resize', handleUpdate);
-      
-      // Initial update
-      const interval = setInterval(handleUpdate, 100);
-      
-      return () => {
-        video.removeEventListener('loadeddata', handleUpdate);
-        video.removeEventListener('seeked', handleUpdate);
-        video.removeEventListener('timeupdate', handleUpdate);
-        window.removeEventListener('resize', handleUpdate);
-        clearInterval(interval);
-      };
-    }
-  }, [videoUrl, logoUrl, logoPosition, videoMetadata]);
+    if (!showInstruction) return;
+    const timer = setTimeout(() => setShowInstruction(false), 3000);
+    return () => clearTimeout(timer);
+  }, [showInstruction]);
 
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-y-auto">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <Plus size={16} className="text-white" />
+        </div>
+        <div>
+          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'لوجو فيديو' : 'Video Logo'}</h1>
+          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'إضافة شعار مخصص على مقاطع الفيديو' : 'Add custom logos and watermarks to videos'}</p>
+        </div>
+      </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-3 p-3 sm:p-4 max-w-5xl mx-auto w-full">
         
         {/* Left Section: Upload & Preview - Very Compact */}
@@ -507,45 +469,74 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                   src={videoUrl!}
                   controls
                   className="w-full h-auto max-h-72"
-                  onLoadedData={updatePreview}
                 />
-                <canvas
-                  ref={previewCanvasRef}
-                  className="absolute inset-0 w-full h-full pointer-events-none"
-                  style={{ mixBlendMode: 'normal' }}
-                />
-                {/* Interactive Logo Overlay */}
-                {logoUrl && videoMetadata && (
-                  <div
-                    onMouseDown={handleLogoMouseDown}
-                    className={cn(
-                      "absolute group",
-                      dragState.isDragging ? "cursor-grabbing" : "cursor-grab"
-                    )}
-                    style={{
-                      left: `${(logoPosition.x / videoMetadata.width) * 100}%`,
-                      top: `${(logoPosition.y / videoMetadata.height) * 100}%`,
-                      transform: 'translate(-50%, -50%)',
-                      pointerEvents: 'auto',
-                      zIndex: 10
-                    }}
-                  >
-                    {/* Drag indicator - visible on hover */}
-                    <div className="absolute inset-0 -m-4 border-2 border-dashed border-blue-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
-                      <div className="bg-blue-500 text-white p-1.5 rounded-full">
-                        <Hand size={14} />
+                {/* Logo overlay on video - pixel-based to avoid CSS circular % issues */}
+                {logoUrl && videoMetadata && logoNaturalSize && (() => {
+                  const video = videoRef.current;
+                  if (!video) return null;
+                  const videoRect = video.getBoundingClientRect();
+                  const scaleX = videoRect.width / videoMetadata.width;
+                  const scaleY = videoRect.height / videoMetadata.height;
+                  const logoW = logoNaturalSize.width * logoPosition.scale * scaleX;
+                  const logoH = logoNaturalSize.height * logoPosition.scale * scaleY;
+                  const leftPx = logoPosition.x * scaleX;
+                  const topPx = logoPosition.y * scaleY;
+                  return (
+                    <div
+                      className="absolute group z-10"
+                      style={{
+                        left: leftPx,
+                        top: topPx,
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'auto',
+                      }}
+                    >
+                      <img
+                        ref={logoImageRef}
+                        src={logoUrl}
+                        alt="Logo"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          setLogoNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
+                        }}
+                        className={cn(
+                          "pointer-events-auto",
+                          dragState.isDragging ? "cursor-grabbing" : "cursor-grab"
+                        )}
+                        style={{
+                          width: logoW,
+                          height: logoH,
+                          minWidth: 40,
+                          maxWidth: 400,
+                          maxHeight: 400,
+                        }}
+                        onMouseDown={handleLogoMouseDown}
+                        draggable={false}
+                      />
+                      {/* Hover drag indicator */}
+                      <div className="absolute inset-0 -m-3 border-2 border-dashed border-blue-500/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                        <div className="bg-blue-500/80 text-white p-1 rounded-full backdrop-blur-sm">
+                          <Hand size={12} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
                 
-                {/* Instruction overlay */}
-                {logoUrl && (
-                  <div className="absolute top-2 left-2 right-2 flex flex-col gap-1 pointer-events-none">
-                    <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded text-[9px] text-gray-300 font-mono uppercase flex items-center gap-2">
-                      <Hand size={12} className="text-blue-400" />
-                      {lang === 'ar' ? 'اسحب اللوجو • استخدم العجلة للتكبير/التصغير' : 'Drag logo • Scroll to zoom'}
-                    </div>
+                {/* Instruction overlay - centered, auto-hides after 3s */}
+                {showInstruction && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="bg-black/80 backdrop-blur-md px-5 py-3 rounded-xl border border-white/10 shadow-2xl flex items-center gap-3"
+                    >
+                      <Hand size={18} className="text-blue-400" />
+                      <span className="text-xs text-gray-200 font-medium">
+                        {lang === 'ar' ? 'اسحب اللوجو • استخدم العجلة للتكبير/التصغير' : 'Drag logo • Scroll to zoom'}
+                      </span>
+                    </motion.div>
                   </div>
                 )}
               </div>
@@ -918,8 +909,8 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               <div className="space-y-1">
                 <p className="text-[7.5px] text-gray-400 leading-relaxed">
                   {lang === 'ar' 
-                    ? 'معالجة في المتصفح • جودة عالية CRF 18'
-                    : 'Browser processing • High quality CRF 18'}
+                    ? 'معالجة في المتصفح • جودة عالية CRF 20'
+                    : 'Browser processing • High quality CRF 20'}
                 </p>
                 <div className="flex items-center gap-1 text-[7px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
                   <CheckCircle2 size={8} />

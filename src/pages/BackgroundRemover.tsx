@@ -409,6 +409,16 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
 
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <Eraser size={16} className="text-white" />
+        </div>
+        <div>
+          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'إزالة الخلفية' : 'Background Remover'}</h1>
+          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'إزالة خلفية الصور تلقائياً بدقة عالية' : 'Remove image backgrounds automatically'}</p>
+        </div>
+      </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
         {/* Left: Image Preview */}

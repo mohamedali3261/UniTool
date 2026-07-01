@@ -24,6 +24,9 @@ import {
   Eraser,
   MessageSquareText,
   FileAudio,
+  Subtitles,
+  Menu,
+  X as XIcon,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -38,6 +41,7 @@ import { ImageCropper } from './pages/ImageCropper';
 import { BackgroundRemover } from './pages/BackgroundRemover';
 import { SpeechToText } from './pages/SpeechToText';
 import { AudioTranscriber } from './pages/AudioTranscriber';
+import { VideoSubtitles } from './pages/VideoSubtitles';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -45,8 +49,9 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber'>('compress');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber' | 'videoSubtitles'>('compress');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = translations[lang];
 
   const [files, setFiles] = useState<AudioFile[]>([]);
@@ -268,157 +273,144 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header Navigation */}
-      <header className="flex items-center justify-between px-4 py-2 bg-[#1A1D23] border-b border-[#2D3139] shrink-0 sm:px-6 sm:py-3">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-7 h-7 flex items-center justify-center sm:w-8 sm:h-8">
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              <defs>
-                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{ stopColor: '#6366f1', stopOpacity: 1 }} />
-                  <stop offset="100%" style={{ stopColor: '#8b5cf6', stopOpacity: 1 }} />
-                </linearGradient>
-              </defs>
-              <circle cx="50" cy="50" r="45" fill="url(#logoGrad)" className="drop-shadow-lg" />
-              <g fill="white">
-                <motion.rect 
-                  x="30" y="35" width="8" rx="3"
-                  animate={{ height: [30, 15, 30] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+      <header className="flex items-center justify-between px-4 py-3 bg-[#0F1115]/90 backdrop-blur-xl border-b border-white/[0.06] shrink-0 sm:px-6 sm:py-3.5">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-7 h-7 flex items-center justify-center sm:w-9 sm:h-9 relative">
+            <motion.div
+              className="absolute inset-0 rounded-lg bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              style={{ filter: 'blur(6px)', opacity: 0.5 }}
+            />
+            <div className="relative w-full h-full rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <svg viewBox="0 0 40 40" className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]">
+                <motion.polygon
+                  points="14,10 30,20 14,30"
+                  fill="white"
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <motion.rect 
-                  x="42" y="28" width="8" rx="3"
-                  animate={{ height: [44, 22, 44] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.1 }}
-                />
-                <motion.rect 
-                  x="54" y="32" width="8" rx="3"
-                  animate={{ height: [36, 18, 36] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-                />
-                <motion.rect 
-                  x="66" y="38" width="8" rx="3"
-                  animate={{ height: [24, 12, 24] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-                />
-              </g>
-            </svg>
+              </svg>
+            </div>
           </div>
-          <h1 className="text-xs font-bold tracking-tight text-white uppercase font-display italic sm:text-sm">
-            {t.title} <span className="text-blue-500 text-[8px] align-top not-italic ml-0.5 sm:text-[10px]">{t.pro}</span>
-          </h1>
+          <div>
+            <h1 className="text-xs font-bold tracking-tight text-white uppercase font-display italic sm:text-base">
+              {t.title}
+            </h1>
+            <p className="text-[7px] font-mono text-gray-600 -mt-0.5 sm:text-[8px]">{lang === 'ar' ? 'تحرير الصوت والفيديو والصور' : 'Audio, Video & Image Editor'}</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-8">
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage('compress')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'compress'
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <Zap size={12} />
-              {lang === 'ar' ? 'ضغط' : 'Compress'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('splitter')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'splitter'
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <Scissors size={12} />
-              {lang === 'ar' ? 'قص' : 'Split'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('videoLogo')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'videoLogo'
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <Plus size={12} />
-              {lang === 'ar' ? 'لوجو فيديو' : 'Video Logo'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('imageCropper')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'imageCropper'
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <ImageIcon size={12} />
-              {lang === 'ar' ? 'قص الصور' : 'Crop'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('bgRemover')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'bgRemover'
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <Eraser size={12} />
-              {lang === 'ar' ? 'خلفية' : 'Bg Remove'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('speechToText')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'speechToText'
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <MessageSquareText size={12} />
-              {lang === 'ar' ? 'نص' : 'STT'}
-            </button>
-            <button
-              onClick={() => setCurrentPage('audioTranscriber')}
-              className={cn(
-                "px-3 py-1.5 text-[10px] font-mono uppercase transition-all rounded-sm flex items-center gap-1.5",
-                currentPage === 'audioTranscriber'
-                  ? "bg-cyan-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#2D3139]"
-              )}
-            >
-              <FileAudio size={12} />
-              {lang === 'ar' ? 'تفريغ' : 'Transcribe'}
-            </button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center bg-white/[0.03] rounded-lg px-1.5 py-1 border border-white/[0.05]">
+            {[
+              { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap },
+              { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors },
+              { id: 'videoLogo', label: lang === 'ar' ? 'لوجو' : 'Logo', icon: Plus },
+              { id: 'imageCropper', label: lang === 'ar' ? 'قص\u00A0الصور' : 'Crop', icon: ImageIcon },
+              { id: 'bgRemover', label: lang === 'ar' ? 'خلفية' : 'Bg', icon: Eraser },
+              { id: 'speechToText', label: lang === 'ar' ? 'نص' : 'STT', icon: MessageSquareText },
+              { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio },
+              { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles },
+            ].map((item, idx) => (
+              <button
+                key={item.id}
+                onClick={() => setCurrentPage(item.id as any)}
+                className={cn(
+                  "px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all rounded-md flex items-center gap-1.5 relative",
+                  currentPage === item.id
+                    ? "text-white bg-gradient-to-r from-indigo-600/90 to-purple-600/90 shadow-[0_0_12px_rgba(99,102,241,0.3)]"
+                    : "text-gray-500 hover:text-gray-200"
+                )}
+              >
+                <item.icon size={11} className={currentPage === item.id ? 'drop-shadow-[0_0_4px_rgba(99,102,241,0.6)]' : ''} />
+                {item.label}
+              </button>
+            ))}
           </div>
 
-          <button 
+          {/* Lang toggle */}
+          <button
             onClick={toggleLang}
-            className="text-[9px] font-mono text-gray-400 hover:text-white bg-gradient-to-r from-[#1A1D23] to-[#14171C] border border-[#2D3139] hover:border-blue-500/50 px-3 py-1.5 rounded-sm transition-all uppercase sm:text-[10px] font-bold shadow-lg hover:shadow-blue-500/20"
+            className="text-[9px] font-mono text-gray-400 hover:text-white hover:border-white/[0.15] px-2.5 py-1.5 rounded-md transition-all uppercase font-bold bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] sm:text-[10px]"
           >
             {t.lang}
           </button>
-          <div className="hidden sm:flex items-center gap-6 text-[10px] font-mono">
-            <div className={`flex flex-col ${lang === 'ar' ? 'items-start' : 'items-end'}`}>
-              <span className="text-[#6B7280]">{t.engineStatus}</span>
-              <span className="text-green-400">{t.stable}</span>
-            </div>
-            <div className="h-5 w-[1px] bg-[#2D3139]"></div>
-            <div className={`flex flex-col ${lang === 'ar' ? 'items-start' : 'items-end'}`}>
-              <span className="text-[#6B7280]">{t.sandbox}</span>
-              <span className="text-white">{t.active}</span>
-            </div>
-          </div>
+
+          {/* Hamburger (mobile/tablet) */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden p-1.5 text-gray-400 hover:text-white hover:bg-white/[0.08] rounded-md transition-colors"
+          >
+            <Menu size={18} />
+          </button>
         </div>
       </header>
 
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: lang === 'ar' ? '100%' : '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: lang === 'ar' ? '100%' : '-100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className={cn(
+                "fixed top-0 bottom-0 w-72 bg-[#14171C] border-r border-[#2D3139] z-50 md:hidden flex flex-col",
+                lang === 'ar' ? 'left-0 border-l border-r-0' : 'left-0'
+              )}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[#2D3139]">
+                <span className="text-[9px] font-mono uppercase tracking-widest text-gray-500">{lang === 'ar' ? 'الصفحات' : 'Pages'}</span>
+                <button onClick={() => setMobileMenuOpen(false)} className="p-1 text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors">
+                  <XIcon size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-1">
+                {[
+                  { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
+                  { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
+                  { id: 'videoLogo', label: lang === 'ar' ? 'لوجو فيديو' : 'Video Logo', icon: Plus, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
+                  { id: 'imageCropper', label: lang === 'ar' ? 'قص الصور' : 'Crop', icon: ImageIcon, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
+                  { id: 'bgRemover', label: lang === 'ar' ? 'إزالة الخلفية' : 'Bg Remove', icon: Eraser, activeClass: 'bg-purple-600/20 text-purple-400 shadow-[inset_0_0_0_1px_rgba(147,51,234,0.15)]', iconClass: 'text-purple-500' },
+                  { id: 'speechToText', label: lang === 'ar' ? 'نص إلى كلام' : 'Speech to Text', icon: MessageSquareText, activeClass: 'bg-purple-600/20 text-purple-400 shadow-[inset_0_0_0_1px_rgba(147,51,234,0.15)]', iconClass: 'text-purple-500' },
+                  { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ صوتي' : 'Transcribe', icon: FileAudio, activeClass: 'bg-cyan-600/20 text-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.15)]', iconClass: 'text-cyan-500' },
+                  { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة فيديو' : 'Subtitles', icon: Subtitles, activeClass: 'bg-cyan-600/20 text-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.15)]', iconClass: 'text-cyan-500' },
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setCurrentPage(item.id as any); setMobileMenuOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 text-[11px] font-mono rounded-lg transition-all",
+                      currentPage === item.id ? item.activeClass : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                    )}
+                  >
+                    <item.icon size={15} className={item.iconClass} />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-3 border-t border-[#2D3139]">
+                <p className="text-[7px] font-mono text-gray-600 text-center">{t.title} v1.0</p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Workspace */}
-      {currentPage === 'audioTranscriber' ? (
+      {currentPage === 'videoSubtitles' ? (
+        <VideoSubtitles t={t} lang={lang} />
+      ) : currentPage === 'audioTranscriber' ? (
         <AudioTranscriber t={t} lang={lang} />
       ) : currentPage === 'speechToText' ? (
         <SpeechToText t={t} lang={lang} />
@@ -431,81 +423,18 @@ export default function App() {
       ) : currentPage === 'bgRemover' ? (
         <BackgroundRemover t={t} lang={lang} />
       ) : (
-        <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
-        
-        {/* Mobile Navigation for Page Selection */}
-        <div className="md:hidden flex border-b border-[#2D3139] bg-[#14171C] shrink-0">
-          <button
-            onClick={() => setCurrentPage('compress')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'compress' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <Zap size={12} />
-            {lang === 'ar' ? 'ضغط' : 'Compress'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('splitter')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'splitter' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <Scissors size={12} />
-            {lang === 'ar' ? 'قص' : 'Split'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('videoLogo')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'videoLogo' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <Plus size={12} />
-            {lang === 'ar' ? 'لوجو' : 'Logo'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('imageCropper')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'imageCropper' ? "text-blue-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <ImageIcon size={12} />
-            {lang === 'ar' ? 'قص' : 'Crop'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('bgRemover')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'bgRemover' ? "text-purple-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <Eraser size={12} />
-            {lang === 'ar' ? 'خلفية' : 'Bg'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('speechToText')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'speechToText' ? "text-purple-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <MessageSquareText size={12} />
-            {lang === 'ar' ? 'نص' : 'STT'}
-          </button>
-          <button
-            onClick={() => setCurrentPage('audioTranscriber')}
-            className={cn(
-              "flex-1 py-3 flex flex-col items-center gap-1 font-mono text-[8px] uppercase tracking-widest",
-              currentPage === 'audioTranscriber' ? "text-cyan-500 bg-[#1A1D23]" : "text-gray-500"
-            )}
-          >
-            <FileAudio size={12} />
-            {lang === 'ar' ? 'تفريغ' : 'Transcribe'}
-          </button>
+        <>
+        {/* Page Header */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <Zap size={16} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'ضغط الصوت' : 'Audio Compressor'}</h1>
+            <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'ضغط وتحسين جودة الملفات الصوتية' : 'Compress and enhance audio files'}</p>
+          </div>
         </div>
+        <main className="flex flex-1 overflow-hidden relative flex-col sm:flex-row">
         
         {/* Mobile Navigation Tabs */}
         <div className="flex border-b border-[#2D3139] bg-[#14171C] sm:hidden shrink-0">
@@ -703,6 +632,7 @@ export default function App() {
           </div>
         </aside>
       </main>
+      </>
       )}
 
       {/* Footer Status Bar */}

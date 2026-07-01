@@ -249,6 +249,16 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
 
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <ImageIcon size={16} className="text-white" />
+        </div>
+        <div>
+          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الصور' : 'Image Cropper'}</h1>
+          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتدوير الصور بدقة مع معاينة مباشرة' : 'Crop and rotate images with live preview'}</p>
+        </div>
+      </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
         {/* Left Section: Image Preview */}

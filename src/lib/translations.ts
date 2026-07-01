@@ -5,7 +5,7 @@
 
 export const translations = {
   ar: {
-    title: 'AudioFlow',
+    title: 'MediaFlow',
     pro: 'احترافي',
     engineStatus: 'حالة المحرك',
     stable: 'مستقر',
@@ -113,9 +113,15 @@ export const translations = {
     clearKey: 'مسح',
     unsupportedFormat: 'صيغة ملف غير مدعومة',
     transcriptionTime: 'وقت المعالجة',
+    videoSubtitles: 'ترجمة فيديو',
+    dropVideo: 'اسحب ملف الفيديو هنا',
+    generateSubtitles: 'تفريغ الفيديو',
+    extractingAudio: 'جاري استخراج الصوت...',
+    segments: 'مقاطع',
+    videoFormats: 'MP4, WebM, OGV, AVI, MOV',
   },
   en: {
-    title: 'AudioFlow',
+    title: 'MediaFlow',
     pro: 'PRO',
     engineStatus: 'ENGINE STATUS',
     stable: 'STABLE',
@@ -223,5 +229,12 @@ export const translations = {
     clearKey: 'Clear',
     unsupportedFormat: 'Unsupported file format',
     transcriptionTime: 'Time',
+    videoSubtitles: 'Video Subtitles',
+    dropVideo: 'Drop video file here',
+    generateSubtitles: 'Generate Subtitles',
+    extractingAudio: 'Extracting audio...',
+    videoProcessing: 'Processing...',
+    segments: 'Segments',
+    videoFormats: 'MP4, WebM, OGV, AVI, MOV',
   }
 };

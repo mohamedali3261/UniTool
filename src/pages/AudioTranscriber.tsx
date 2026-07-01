@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import {
-  Upload, FileAudio, AlertCircle, Loader2, Languages, Copy, Download,
+  Upload, FileAudio, AlertCircle, Loader2, Copy, Download,
   FileText, Trash2, Key, CheckCircle2, FileOutput, Quote, Timer, X
 } from 'lucide-react';
 
@@ -24,6 +24,8 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef(0);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
 
   const startTimer = () => {
     setElapsed(0);
@@ -108,11 +110,11 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
       const base64 = await fileToBase64(file);
       const mimeType = file.type || 'audio/mpeg';
       const prompt = lang === 'ar'
-        ? 'فرغ هذا المقطع الصوتي كاملاً مع جميع الكلمات المنطوقة. أعد النص باللغة العربية فقط.'
-        : 'Transcribe this audio completely, including all spoken words. Return only the transcript text without any additional notes.';
+        ? 'فرغ هذا المقطع الصوتي كاملاً مع جميع الكلمات المنطوقة. حافظ على اللغة الأصلية كما هي — عربي وإنجليزي وأي خليط بينهما. لا تغير أو تترجم الكلمات. أعد النص فقط.'
+        : 'Transcribe this audio completely, preserving the original spoken language — Arabic, English, or any mix. Do not translate or alter words. Return only the transcript.';
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -190,7 +192,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const exportMd = () => {
     if (!transcript) return;
-    const md = `# Transcript: ${file?.name || 'Audio'}\n\n${transcript}\n\n---\n*Transcribed via AudioFlow*\n`;
+    const md = `# Transcript: ${file?.name || 'Audio'}\n\n${transcript}\n\n---\n*Transcribed via MediaFlow*\n`;
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -213,8 +215,25 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
 
+  const handleTranscriptScroll = () => {
+    const el = transcriptRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+    setShowScrollIndicator(!atBottom);
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <FileAudio size={16} className="text-white" />
+        </div>
+        <div>
+          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'تفريغ صوتي' : 'Audio Transcriber'}</h1>
+          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تفريغ الملفات الصوتية إلى نص باستخدام Gemini AI' : 'Transcribe audio files to text using Gemini AI'}</p>
+        </div>
+      </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
         {/* Left: Upload + Transcript */}
@@ -270,10 +289,20 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
               </div>
             ) : transcript ? (
               /* Transcript Display */
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-3 font-mono text-xs leading-relaxed">
+              <div className="flex-1 flex flex-col overflow-hidden relative">
+                <div
+                  className="flex-1 overflow-y-auto p-3 font-mono text-xs leading-relaxed scrollbar-thin"
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: '#2D3139 transparent' }}
+                  ref={transcriptRef}
+                  onScroll={handleTranscriptScroll}
+                >
                   <p className="text-gray-200 whitespace-pre-wrap">{transcript}</p>
                 </div>
+                {showScrollIndicator && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#14171C] via-[#14171C]/80 to-transparent pointer-events-none flex items-end justify-center pb-1">
+                    <div className="w-6 h-1 rounded-full bg-gray-600 animate-bounce" />
+                  </div>
+                )}
               </div>
             ) : (
               /* Ready but no transcript yet */
@@ -320,21 +349,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
               </p>
             </div>
 
-            {/* Language Hint */}
-            <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <Languages size={12} className="text-cyan-500" />
-                <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'لغة النص' : 'Text Language'}</h3>
-              </div>
-              <div className="flex gap-1">
-                <div className={cn("flex-1 py-2 text-[9px] font-mono uppercase rounded text-center tracking-wider bg-cyan-600 text-white")}>
-                  {lang === 'ar' ? 'العربية' : 'Arabic'}
-                </div>
-                <div className={cn("flex-1 py-2 text-[9px] font-mono uppercase rounded text-center tracking-wider bg-[#1A1D23] text-gray-400 border border-[#2D3139]")}>
-                  {lang === 'ar' ? 'الإنجليزية' : 'English'}
-                </div>
-              </div>
-            </div>
+
 
             {/* Transcribe Button */}
             <button

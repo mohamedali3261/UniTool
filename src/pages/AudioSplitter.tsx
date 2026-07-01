@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Scissors } from 'lucide-react';
 import JSZip from 'jszip';
 import WaveSurfer from 'wavesurfer.js';
 
@@ -510,28 +510,26 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   }
 
   return (
-    <div className="flex-1 flex bg-[#0A0C0F] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <Scissors size={16} className="text-white" />
+        </div>
+        <div>
+          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الملفات الصوتية' : 'Audio Splitter'}</h1>
+          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتقسيم ملفاتك الصوتية بسهولة واحترافية' : 'Cut and split your audio files easily and professionally'}</p>
+        </div>
+      </div>
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-1">
-              {lang === 'ar' ? 'قص الملفات الصوتية' : 'Audio Splitter'}
-            </h1>
-            <p className="text-sm text-gray-500">
-              {lang === 'ar' ? 'قص وتقسيم ملفاتك الصوتية بسهولة واحترافية' : 'Cut and split your audio files easily and professionally'}
-            </p>
+        {audioFile && (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-2 text-xs text-blue-400">
+            💡 {lang === 'ar'
+              ? 'انقر على المقطع الملون لتشغيله • اسحب الحواف للتعديل'
+              : 'Click colored segment to play • Drag edges to resize'}
           </div>
-
-          {audioFile && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-2 text-xs text-blue-400">
-              💡 {lang === 'ar' 
-                ? 'انقر على المقطع الملون لتشغيله • اسحب الحواف للتعديل' 
-                : 'Click colored segment to play • Drag edges to resize'}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* File Upload */}
         {!audioFile ? (
