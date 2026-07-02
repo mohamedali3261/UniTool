@@ -6,7 +6,6 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   Scissors,
   Maximize2,
   Minimize2,
@@ -55,6 +54,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState('');
   const [displaySize, setDisplaySize] = useState<DisplaySize>({ width: 0, height: 0 });
+  const [mobileTab, setMobileTab] = useState<'crop' | 'crops'>('crop');
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,23 +98,25 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     });
   };
 
-  const handleMouseDown = (e: React.MouseEvent, type: 'move' | 'resize', handle: string = '') => {
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, type: 'move' | 'resize', handle: string = '') => {
     e.preventDefault();
     e.stopPropagation();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     if (type === 'move') {
       setIsDragging(true);
     } else {
       setIsResizing(true);
       setResizeHandle(handle);
     }
-    dragStartRef.current = { x: e.clientX, y: e.clientY, box: { ...cropBox } };
+    dragStartRef.current = { x: clientX, y: clientY, box: { ...cropBox } };
   };
 
   useEffect(() => {
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
+    const handleMove = (clientX: number, clientY: number) => {
       if (!isDragging && !isResizing) return;
-      const dx = e.clientX - dragStartRef.current.x;
-      const dy = e.clientY - dragStartRef.current.y;
+      const dx = clientX - dragStartRef.current.x;
+      const dy = clientY - dragStartRef.current.y;
       const box = dragStartRef.current.box;
 
       if (isDragging) {
@@ -146,17 +148,26 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => handleMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: globalThis.TouchEvent) => {
+      if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
       setIsResizing(false);
     };
 
     if (isDragging || isResizing) {
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('mouseup', handleEnd);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleEnd);
       };
     }
   }, [isDragging, isResizing, resizeHandle, displaySize]);
@@ -250,44 +261,71 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <ImageIcon size={16} className="text-white" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <ImageIcon size={14} className="text-white sm:size-4" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الصور' : 'Image Cropper'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتدوير الصور بدقة مع معاينة مباشرة' : 'Crop and rotate images with live preview'}</p>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الصور' : 'Image Cropper'}</h1>
+          <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص الصور بدقة' : 'Crop images with precision'}</p>
         </div>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
+        {/* Mobile Tab Bar */}
+        {imageFile && (
+          <div className="flex border-b border-[#2D3139] bg-[#14171C] shrink-0 lg:hidden">
+            <button
+              onClick={() => setMobileTab('crop')}
+              className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+                mobileTab === 'crop' ? 'text-blue-400 bg-[#1A1D23] border-b-2 border-blue-500' : 'text-gray-500'
+              }`}
+            >
+              <Scissors size={14} />
+              {lang === 'ar' ? 'قص' : 'Crop'}
+            </button>
+            <button
+              onClick={() => setMobileTab('crops')}
+              className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+                mobileTab === 'crops' ? 'text-blue-400 bg-[#1A1D23] border-b-2 border-blue-500' : 'text-gray-500'
+              }`}
+            >
+              <CheckCircle2 size={14} />
+              {lang === 'ar' ? 'القصات' : 'Crops'}
+              {croppedItems.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[8px] font-bold">{croppedItems.length}</span>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Left Section: Image Preview */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className={`${imageFile && mobileTab === 'crops' ? 'hidden lg:flex' : 'flex'} flex-1 flex-col min-h-0`}>
           {/* Image Upload / Viewer */}
           <div className="flex-1 flex flex-col p-3 sm:p-4">
             {!imageFile ? (
               <label className="group relative flex flex-col items-center justify-center gap-2 flex-1 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                  <Upload size={20} className="text-blue-500" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                  <Upload size={18} className="text-blue-500 sm:size-5" />
                 </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm text-gray-300 font-medium">
+                <div className="text-center space-y-0.5 sm:space-y-1">
+                  <p className="text-xs sm:text-sm text-gray-300 font-medium">
                     {lang === 'ar' ? 'انقر لاختيار صورة' : 'Click to select image'}
                   </p>
-                  <p className="text-[9px] text-gray-500 font-mono uppercase">PNG, JPG, WebP</p>
+                  <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono uppercase">PNG, JPG, WebP</p>
                 </div>
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             ) : (
               <div className="flex-1 flex flex-col gap-2 min-h-0">
                 {/* Image info bar */}
-                <div className="flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2 text-[9px] font-mono text-gray-400">
-                    <ImageIcon size={12} className="text-blue-500" />
-                    <span>{imageFile.name}</span>
+                <div className="flex items-center justify-between shrink-0 gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[9px] font-mono text-gray-400 min-w-0">
+                    <ImageIcon size={10} className="text-blue-500 shrink-0 sm:size-3" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">{imageFile.name}</span>
                     {imageNaturalSize && (
-                      <span className="text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded text-[8px]">
-                        {imageNaturalSize.width} × {imageNaturalSize.height}
+                      <span className="text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded text-[7px] sm:text-[8px] shrink-0">
+                        {imageNaturalSize.width}×{imageNaturalSize.height}
                       </span>
                     )}
                   </div>
@@ -306,7 +344,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                       ref={imageRef}
                       src={imageUrl!}
                       alt="Source"
-                      className="block max-w-[80vw] max-h-[70vh] w-auto h-auto"
+                      className="block max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto"
                       onLoad={handleImageLoad}
                       draggable={false}
                     />
@@ -327,36 +365,57 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                             top: cropBox.y,
                             width: cropBox.width,
                             height: cropBox.height,
+                            touchAction: 'none',
                           }}
                           onMouseDown={(e) => handleMouseDown(e, 'move')}
+                          onTouchStart={(e) => handleMouseDown(e, 'move')}
                         >
                           <div className="absolute inset-0 opacity-20" style={{
                             backgroundImage: `linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)`,
                             backgroundSize: '33.33% 33.33%'
                           }} />
 
-                          <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border border-blue-500 rounded-sm cursor-nw-resize z-10"
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'nw')} />
-                          <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border border-blue-500 rounded-sm cursor-ne-resize z-10"
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'ne')} />
-                          <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border border-blue-500 rounded-sm cursor-sw-resize z-10"
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'sw')} />
-                          <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border border-blue-500 rounded-sm cursor-se-resize z-10"
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'se')} />
+                          <div className="absolute -top-2 -left-2 sm:-top-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                            style={{ touchAction: 'none' }}
+                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'nw')}
+                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'nw')} />
+                          <div className="absolute -top-2 -right-2 sm:-top-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                            style={{ touchAction: 'none' }}
+                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'ne')}
+                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'ne')} />
+                          <div className="absolute -bottom-2 -left-2 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                            style={{ touchAction: 'none' }}
+                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'sw')}
+                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'sw')} />
+                          <div className="absolute -bottom-2 -right-2 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                            style={{ touchAction: 'none' }}
+                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'se')}
+                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'se')} />
                         </div>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* Instructions bar */}
+                {/* Instructions bar / Crop button */}
                 {imageNaturalSize && (
-                  <div className="flex items-center shrink-0">
-                    <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded text-[9px] text-gray-400 font-mono flex items-center gap-2">
-                      <Scissors size={12} className="text-blue-400" />
-                      {lang === 'ar' ? 'اسحب لتحديد • الزوايا لتغيير الحجم' : 'Drag to move • Corners to resize'}
-                    </div>
-                  </div>
+                  <button
+                    onClick={processCrop}
+                    disabled={processing}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin sm:size-[14px]" />
+                        {lang === 'ar' ? 'جاري القص...' : 'Cropping...'}
+                      </>
+                    ) : (
+                      <>
+                        <Scissors size={12} className="sm:size-[14px]" />
+                        {lang === 'ar' ? 'قص المنطقة' : 'Crop Area'}
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
             )}
@@ -364,124 +423,93 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         </div>
 
         {/* Right Sidebar: Controls + Crops List */}
-        <div className="lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col max-h-[50vh] lg:max-h-none">
-          <div className="overflow-y-auto flex-1 p-3 space-y-3">
-            {/* Crop Info */}
-            {imageNaturalSize && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
-                <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Maximize2 size={12} className="text-blue-500" />
-                  {lang === 'ar' ? 'معلومات القص' : 'Crop Info'}
-                </h3>
-                <div className="space-y-1 text-[9px] font-mono">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{lang === 'ar' ? 'الأصلي' : 'Original'}</span>
-                    <span className="text-blue-400">{imageNaturalSize.width} × {imageNaturalSize.height}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{lang === 'ar' ? 'القص' : 'Crop'}</span>
-                    <span className="text-purple-400">
-                      {Math.round(cropBox.width * imageNaturalSize.width / displaySize.width)} × {Math.round(cropBox.height * imageNaturalSize.height / displaySize.height)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Crop Button */}
-            {imageFile && (
-              <button
-                onClick={processCrop}
-                disabled={processing}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    {lang === 'ar' ? 'جاري القص...' : 'Cropping...'}
-                  </>
-                ) : (
-                  <>
-                    <Scissors size={14} />
-                    {lang === 'ar' ? 'قص المنطقة' : 'Crop Area'}
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Crops List */}
+        <div className={`${imageFile && mobileTab === 'crop' ? 'hidden lg:block' : ''} lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col lg:max-h-none`}>
+          <div className="overflow-y-auto flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3">
+            {/* Crops List (top) */}
             {croppedItems.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <CheckCircle2 size={12} className="text-green-500" />
+                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <CheckCircle2 size={10} className="text-green-500 sm:size-3" />
                     {lang === 'ar' ? 'القصات' : 'Crops'} ({croppedItems.length})
                   </h3>
                   <div className="flex gap-1">
                     <button
                       onClick={downloadAllAsZip}
-                      className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded text-[8px] font-bold uppercase transition-all"
+                      className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"
                     >
-                      <FolderDown size={10} />
+                      <FolderDown size={8} className="sm:size-[10px]" />
                       ZIP
                     </button>
                     <button
                       onClick={clearAllItems}
-                      className="flex items-center gap-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[8px] font-bold uppercase transition-all"
+                      className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"
                     >
-                      <Trash2 size={10} />
+                      <Trash2 size={8} className="sm:size-[10px]" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                <div className="space-y-1 sm:space-y-1.5 max-h-48 sm:max-h-64 overflow-y-auto">
                   {croppedItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-2 bg-[#0F1115] border border-[#2D3139] rounded-lg p-1.5 group hover:border-blue-500/30 transition-colors"
+                      className="flex items-center gap-1.5 sm:gap-2 bg-[#0F1115] border border-[#2D3139] rounded-lg p-1.5 group hover:border-blue-500/30 transition-colors"
                     >
-                      <div className="w-10 h-10 rounded overflow-hidden bg-[#1A1D23] shrink-0 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded overflow-hidden bg-[#1A1D23] shrink-0 flex items-center justify-center">
                         <img src={item.url} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[8px] font-mono text-gray-400 truncate">
+                        <div className="text-[7px] sm:text-[8px] font-mono text-gray-400 truncate">
                           #{index + 1}
                         </div>
-                        <div className="text-[7px] font-mono text-gray-600">
-                          {item.width} × {item.height}
+                        <div className="text-[6px] sm:text-[7px] font-mono text-gray-600">
+                          {item.width}×{item.height}
                         </div>
                       </div>
                       <button
                         onClick={() => downloadItem(item)}
-                        className="p-1 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400 transition-all"
+                        className="p-1 sm:p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400 transition-all"
                         title={lang === 'ar' ? 'تحميل' : 'Download'}
                       >
-                        <Download size={12} />
+                        <Download size={10} className="sm:size-3" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1 hover:bg-red-500/20 rounded text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-1 sm:p-1.5 hover:bg-red-500/20 rounded text-gray-500 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                       >
-                        <X size={12} />
+                        <X size={10} className="sm:size-3" />
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Crop Info */}
+            {imageNaturalSize && (
+              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
+                <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Maximize2 size={10} className="text-blue-500 sm:size-3" />
+                  {lang === 'ar' ? 'معلومات القص' : 'Crop Info'}
+                </h3>
+                <div className="space-y-0.5 sm:space-y-1 text-[8px] sm:text-[9px] font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{lang === 'ar' ? 'الأصلي' : 'Original'}</span>
+                    <span className="text-blue-400">{imageNaturalSize.width}×{imageNaturalSize.height}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{lang === 'ar' ? 'القص' : 'Crop'}</span>
+                    <span className="text-purple-400">
+                      {Math.round(cropBox.width * imageNaturalSize.width / displaySize.width)}×{Math.round(cropBox.height * imageNaturalSize.height / displaySize.height)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
-          {/* Info box at bottom */}
-          <div className="p-3 border-t border-[#2D3139] bg-[#0F1115] mt-auto">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={10} className="text-blue-500 shrink-0 mt-0.5" />
-              <p className="text-[7px] text-gray-500 leading-relaxed font-mono">
-                {lang === 'ar'
-                  ? 'معالجة في المتصفح • جودة عالية • يتم الحفظ بصيغة PNG'
-                  : 'Browser processing • High quality • Saved as PNG'}
-              </p>
-            </div>
-          </div>
 
           {/* Hidden canvas */}
           <canvas ref={canvasRef} className="hidden" />

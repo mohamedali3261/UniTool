@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Scissors } from 'lucide-react';
+import { Plus, Loader2, Scissors, AudioWaveform, ListMusic } from 'lucide-react';
 import JSZip from 'jszip';
 import WaveSurfer from 'wavesurfer.js';
 
@@ -49,6 +49,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   const [splitMode, setSplitMode] = useState<'manual' | 'auto'>('manual');
   const [autoSplitCount, setAutoSplitCount] = useState(4);
   const playbackIntervalRef = useRef<any>(null);
+  const [mobileTab, setMobileTab] = useState<'waveform' | 'segments'>('waveform');
 
   const [settings] = useState<CompressionSettings>({
     quality: 'medium',
@@ -512,18 +513,48 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Scissors size={16} className="text-white" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الملفات الصوتية' : 'Audio Splitter'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتقسيم ملفاتك الصوتية بسهولة واحترافية' : 'Cut and split your audio files easily and professionally'}</p>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الملفات الصوتية' : 'Audio Splitter'}</h1>
+          <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتقسيم ملفاتك الصوتية' : 'Cut and split your audio files'}</p>
         </div>
       </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+
+        {/* Mobile Tab Bar */}
+        {audioFile && (
+          <div className="flex border-b border-[#2D3139] bg-[#14171C] shrink-0 lg:hidden">
+            <button
+              onClick={() => setMobileTab('waveform')}
+              className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+                mobileTab === 'waveform' ? 'text-blue-400 bg-[#1A1D23] border-b-2 border-blue-500' : 'text-gray-500'
+              }`}
+            >
+              <AudioWaveform size={14} />
+              {lang === 'ar' ? 'موجة' : 'Waveform'}
+            </button>
+            <button
+              onClick={() => setMobileTab('segments')}
+              className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+                mobileTab === 'segments' ? 'text-blue-400 bg-[#1A1D23] border-b-2 border-blue-500' : 'text-gray-500'
+              }`}
+            >
+              <ListMusic size={14} />
+              {lang === 'ar' ? 'مقاطع' : 'Segments'}
+              {segments.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[8px] font-bold">{segments.length}</span>
+              )}
+            </button>
+          </div>
+        )}
+
+        <div className={`flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 ${
+          audioFile && mobileTab === 'segments' ? 'hidden lg:flex' : ''
+        }`}>
         {audioFile && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-2 text-xs text-blue-400">
             💡 {lang === 'ar'
@@ -534,17 +565,17 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
         {/* File Upload */}
         {!audioFile ? (
-          <div className="border-2 border-dashed border-[#2D3139] rounded-2xl p-8 sm:p-12 lg:p-16 text-center hover:border-blue-500/50 transition-all">
+          <div className="border-2 border-dashed border-[#2D3139] rounded-2xl p-6 sm:p-12 lg:p-16 text-center hover:border-blue-500/50 transition-all">
             <label className="cursor-pointer block">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl flex items-center justify-center">
-                  <Plus className="text-blue-500" size={32} />
+                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl flex items-center justify-center">
+                  <Plus className="text-blue-500" size={24} />
                 </div>
                 <div>
-                  <p className="text-white font-medium text-lg mb-2">
+                  <p className="text-white font-medium text-sm sm:text-lg mb-1 sm:mb-2">
                     {lang === 'ar' ? 'اختر ملف صوتي' : 'Choose Audio File'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-[11px] sm:text-sm text-gray-500">
                     {lang === 'ar' ? 'اسحب وأفلت أو انقر للتحميل' : 'Drag and drop or click to upload'}
                   </p>
                 </div>
@@ -560,11 +591,11 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
         ) : (
           <>
             {/* File Info */}
-            <div className="bg-gradient-to-br from-[#14171C] to-[#0A0C0F] border border-[#2D3139] rounded-2xl p-5">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-br from-[#14171C] to-[#0A0C0F] border border-[#2D3139] rounded-2xl p-3 sm:p-5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex-1">
-                  <p className="text-white font-medium mb-1">{audioFile.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-white font-medium mb-1 truncate max-w-[160px] xs:max-w-full sm:max-w-full">{audioFile.name}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">
                     {(audioFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
@@ -616,7 +647,8 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
         {/* Sidebar */}
         {audioFile && (
-          <SegmentsSidebar
+          <div className={`${mobileTab === 'waveform' ? 'hidden' : 'flex-1 flex flex-col'} lg:flex-initial lg:block`}>
+            <SegmentsSidebar
             segments={segments}
             playingSegmentId={playingSegmentId}
             selectedSegmentId={selectedRegionId}
@@ -632,6 +664,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
             hasIdle={hasIdleSegments}
             lang={lang}
           />
+          </div>
         )}
       </div>
     </div>

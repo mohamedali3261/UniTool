@@ -623,17 +623,6 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
             )}
           </div>
 
-          {/* Info box */}
-          <div className="p-3 border-t border-[#2D3139] bg-[#0F1115] mt-auto">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={10} className="text-purple-500 shrink-0 mt-0.5" />
-              <p className="text-[7px] text-gray-500 leading-relaxed font-mono">
-                {lang === 'ar'
-                  ? 'يحدد الخلفية المتصلة بحافة الصورة فقط • يحافظ على تفاصيل الجسم الداخلية • حواف ناعمة'
-                  : 'Removes background connected to image edges only • Preserves internal details • Smooth edges'}
-              </p>
-            </div>
-          </div>
 
           <canvas ref={resultCanvasRef} className="hidden" />
           <canvas ref={canvasRef} className="hidden" />

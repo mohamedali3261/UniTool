@@ -651,6 +651,13 @@ export default function App() {
       </>
       )}
 
+      {/* Designed by Mohamed Ali */}
+      <div className="px-4 py-2 bg-[#0A0C0F] border-t border-[#1F2937] text-center shrink-0 sm:px-6">
+        <p className="text-[9px] font-mono text-gray-600">
+          {lang === 'ar' ? 'تصميم' : 'Designed by'} Eng. Mohamed Ali
+        </p>
+      </div>
+
       {/* Footer Status Bar */}
       <footer className="px-4 py-1.5 bg-[#0A0C0F] border-t border-[#1F2937] flex justify-between items-center text-[8px] text-gray-600 font-mono shrink-0 sm:px-6">
         <div className="flex gap-4 sm:gap-6">

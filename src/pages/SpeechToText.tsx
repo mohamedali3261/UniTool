@@ -741,16 +741,6 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
               </div>
             )}
           </div>
-
-          {/* Info */}
-          <div className="p-3 border-t border-[#2D3139] bg-[#0F1115]">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={10} className="text-purple-500 shrink-0 mt-0.5" />
-              <p className="text-[7px] text-gray-500 leading-relaxed font-mono">
-                {lang === 'ar' ? 'Web Speech API • بدون خادم • العربية/الإنجليزية' : 'Web Speech API • No server • Arabic/English'}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

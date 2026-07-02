@@ -907,17 +907,6 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
             </div>
           )}
 
-          {/* Info */}
-          <div className="p-3 border-t border-[#2D3139] bg-[#0F1115]">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={10} className="text-cyan-500 shrink-0 mt-0.5" />
-              <p className="text-[7px] text-gray-500 leading-relaxed font-mono">
-                {lang === 'ar'
-                  ? 'استخراج الصوت بـ FFmpeg + تفريغ بـ Gemini • الترجمة تحرق داخل الفيديو (تسجيل متصفح)'
-                  : 'Audio extraction via FFmpeg + transcription via Gemini • Subtitles burned into video (real-time recording)'}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

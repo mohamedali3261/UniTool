@@ -60,13 +60,13 @@ export function SegmentCard({
         style={{ backgroundColor: segment.color }}
       />
 
-      <div className="p-3">
+      <div className="p-2.5 sm:p-3">
         {/* Header with play button */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
           <button
             onClick={onPlay}
             className={cn(
-              "shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all relative",
+              "shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all relative",
               isPlaying
                 ? "bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/50"
                 : segment.status === 'completed' 
@@ -75,27 +75,27 @@ export function SegmentCard({
             )}
           >
             {segment.status === 'processing' ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={14} className="sm:size-4 animate-spin" />
             ) : isPlaying ? (
               <>
-                <Pause size={16} />
+                <Pause size={14} className="sm:size-4" />
                 <div className="absolute inset-0 rounded-lg bg-white opacity-20 animate-pulse" />
               </>
             ) : (
-              <Play size={16} className="ml-0.5" />
+              <Play size={14} className="ml-0.5 sm:size-4" />
             )}
           </button>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-medium text-xs truncate mb-0.5">
+            <h3 className="text-white font-medium text-[10px] sm:text-xs truncate mb-0.5">
               {segment.name}
             </h3>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <span className="px-1.5 py-0.5 bg-[#2D3139] text-blue-400 rounded font-mono">
+            <div className="flex items-center gap-1 text-[8px] sm:text-[10px]">
+              <span className="px-1 sm:px-1.5 py-0.5 bg-[#2D3139] text-blue-400 rounded font-mono">
                 {formatTime(segment.startTime)}
               </span>
               <span className="text-gray-600">→</span>
-              <span className="px-1.5 py-0.5 bg-[#2D3139] text-blue-400 rounded font-mono">
+              <span className="px-1 sm:px-1.5 py-0.5 bg-[#2D3139] text-blue-400 rounded font-mono">
                 {formatTime(segment.endTime)}
               </span>
             </div>
@@ -103,22 +103,22 @@ export function SegmentCard({
 
           <button
             onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 shrink-0 p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
+            className="shrink-0 p-1.5 sm:p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
           >
-            <Trash2 size={14} />
+            <Trash2 size={12} className="sm:size-[14px]" />
           </button>
         </div>
 
         {/* Progress bar */}
         {segment.status === 'processing' && (
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-1 text-[10px]">
+          <div className="mb-1.5 sm:mb-2">
+            <div className="flex items-center justify-between mb-0.5 sm:mb-1 text-[8px] sm:text-[10px]">
               <span className="text-blue-400 font-medium">
                 {lang === 'ar' ? 'معالجة' : 'Processing'}
               </span>
               <span className="text-blue-400 font-mono">{segment.progress}%</span>
             </div>
-            <div className="h-1.5 bg-[#2D3139] rounded-full overflow-hidden">
+            <div className="h-1 sm:h-1.5 bg-[#2D3139] rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
                 initial={{ width: 0 }}
@@ -130,14 +130,14 @@ export function SegmentCard({
         )}
 
         {/* Actions */}
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 sm:gap-1.5">
           {segment.status === 'idle' && (
             <button
               onClick={onProcess}
               disabled={isProcessing}
-              className="flex-1 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[10px] font-medium transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[9px] sm:text-[10px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <Scissors size={12} />
+              <Scissors size={10} className="sm:size-3" />
               {lang === 'ar' ? 'قص' : 'Cut'}
             </button>
           )}
@@ -145,16 +145,16 @@ export function SegmentCard({
           {segment.status === 'completed' && (
             <button
               onClick={onDownload}
-              className="flex-1 py-2 bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:from-green-500 hover:to-emerald-400 text-[10px] font-medium transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:from-green-500 hover:to-emerald-400 text-[9px] sm:text-[10px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <Download size={12} />
+              <Download size={10} className="sm:size-3" />
               {lang === 'ar' ? 'تحميل' : 'Download'}
             </button>
           )}
           
           {segment.status === 'error' && (
-            <div className="flex-1 py-2 bg-red-500/20 text-red-400 rounded-lg text-[10px] font-medium text-center">
-              {lang === 'ar' ? '❌ فشل' : '❌ Failed'}
+            <div className="flex-1 py-1.5 sm:py-2 bg-red-500/20 text-red-400 rounded-lg text-[9px] sm:text-[10px] font-medium text-center">
+              {lang === 'ar' ? 'فشل' : 'Failed'}
             </div>
           )}
         </div>
