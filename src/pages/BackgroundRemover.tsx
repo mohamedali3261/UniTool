@@ -6,7 +6,6 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   Droplets,
   Eraser,
   Eye,
@@ -410,13 +409,13 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <Eraser size={16} className="text-white" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <Eraser size={14} className="text-white sm:size-4" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'إزالة الخلفية' : 'Background Remover'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'إزالة خلفية الصور تلقائياً بدقة عالية' : 'Remove image backgrounds automatically'}</p>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'إزالة الخلفية' : 'Background Remover'}</h1>
+          <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'إزالة خلفية الصور تلقائياً' : 'Remove image backgrounds automatically'}</p>
         </div>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
@@ -426,23 +425,23 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
           <div className="flex-1 flex flex-col p-3 sm:p-4">
             {!imageFile ? (
               <label className="group relative flex flex-col items-center justify-center gap-2 flex-1 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <Upload size={20} className="text-purple-500" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                  <Upload size={18} className="text-purple-500 sm:size-5" />
                 </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm text-gray-300 font-medium">
+                <div className="text-center space-y-0.5 sm:space-y-1">
+                  <p className="text-xs sm:text-sm text-gray-300 font-medium">
                     {lang === 'ar' ? 'انقر لاختيار صورة' : 'Click to select image'}
                   </p>
-                  <p className="text-[9px] text-gray-500 font-mono uppercase">PNG, JPG, WebP</p>
+                  <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono uppercase">PNG, JPG, WebP</p>
                 </div>
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             ) : (
               <div className="flex-1 flex flex-col gap-2 min-h-0">
-                <div className="flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2 text-[9px] font-mono text-gray-400">
-                    <ImageIcon size={12} className="text-purple-500" />
-                    <span>{imageFile.name}</span>
+                <div className="flex items-center justify-between shrink-0 gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[9px] font-mono text-gray-400 min-w-0">
+                    <ImageIcon size={10} className="text-purple-500 shrink-0 sm:size-3" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">{imageFile.name}</span>
                   </div>
                   <button onClick={removeImage} className="p-1 hover:bg-red-500/20 rounded-sm text-red-400 transition-colors">
                     <X size={14} />
@@ -455,29 +454,29 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
                   onClick={handleImageClick}
                 >
                   {animating && resultUrl ? (
-                    <div className="relative max-w-[80vw] max-h-[70vh] w-auto h-auto flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                      <img src={imageUrl!} alt="Original" className="max-w-[80vw] max-h-[70vh] w-auto h-auto" />
+                    <div className="relative max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                      <img src={imageUrl!} alt="Original" className="max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto" />
                       <img src={resultUrl} alt="Result" className="absolute top-0 left-0 w-full h-full object-contain"
                         style={{ clipPath: `inset(0 0 ${(1 - wipeProgress) * 100}% 0)` }} />
                     </div>
                   ) : showOriginal && resultUrl ? (
-                    <img src={imageUrl!} alt="Original" className="max-w-[80vw] max-h-[70vh] w-auto h-auto" />
+                    <img src={imageUrl!} alt="Original" className="max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto" />
                   ) : (
                     <img
                       ref={imageRef}
                       src={resultUrl || imageUrl!}
                       alt="Source"
-                      className="max-w-[80vw] max-h-[70vh] w-auto h-auto"
+                      className="max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto"
                       draggable={false}
                     />
                   )}
 
                   {!showOriginal && sampledColors.length > 0 && imageRef.current && (
-                    <div className="absolute bottom-2 left-2 flex gap-1 flex-wrap max-w-[60%]">
+                    <div className="absolute bottom-2 left-2 flex gap-1.5 flex-wrap max-w-[60%]">
                       {sampledColors.map((color, i) => (
                         <div
                           key={i}
-                          className="w-5 h-5 rounded-full border-2 border-white shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                          className="w-6 h-6 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-lg cursor-pointer hover:scale-110 transition-transform active:scale-95"
                           style={{ backgroundColor: `rgb(${color.r},${color.g},${color.b})` }}
                           onClick={(e) => { e.stopPropagation(); removeColor(i); }}
                           title={`rgb(${color.r},${color.g},${color.b})`}
@@ -508,49 +507,49 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
         </div>
 
         {/* Right: Controls */}
-        <div className="lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col max-h-[50vh] lg:max-h-none">
-          <div className="overflow-y-auto flex-1 p-3 space-y-3">
+        <div className="lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col lg:max-h-none">
+          <div className="overflow-y-auto flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3">
             {/* Auto Detect Button */}
             {imageFile && !processing && (
               <button
                 onClick={autoDetectBackground}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
               >
-                <Sparkles size={14} />
-                {lang === 'ar' ? 'إزالة الخلفية تلقائياً' : 'Auto Remove Background'}
+                <Sparkles size={12} className="sm:size-[14px]" />
+                {lang === 'ar' ? 'إزالة تلقائية' : 'Auto Remove'}
               </button>
             )}
 
             {/* Sampled Colors */}
             {imageFile && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
+              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Droplets size={12} className="text-purple-500" />
-                    {lang === 'ar' ? 'عينات اللون' : 'Color Samples'}
+                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Droplets size={10} className="text-purple-500 sm:size-3" />
+                    {lang === 'ar' ? 'عينات اللون' : 'Samples'}
                   </h3>
                   {sampledColors.length > 0 && (
-                    <button onClick={clearColors} className="text-[8px] text-red-400 hover:text-red-300 font-mono uppercase tracking-wider">
+                    <button onClick={clearColors} className="text-[7px] sm:text-[8px] text-red-400 hover:text-red-300 font-mono uppercase tracking-wider">
                       {lang === 'ar' ? 'مسح' : 'Clear'}
                     </button>
                   )}
                 </div>
                 {sampledColors.length === 0 ? (
-                  <p className="text-[8px] text-gray-600 font-mono">
+                  <p className="text-[7px] sm:text-[8px] text-gray-600 font-mono">
                     {lang === 'ar'
-                      ? 'اضغط "إزالة الخلفية تلقائياً" أو انقر على الخلفية يدوياً'
-                      : 'Click "Auto Remove" or click on background areas'}
+                      ? 'اضغط "إزالة تلقائية" أو انقر على الخلفية'
+                      : 'Click "Auto Remove" or tap background'}
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
                     {sampledColors.map((color, i) => (
-                      <div key={i} className="flex items-center gap-1.5 bg-[#1A1D23] border border-[#2D3139] rounded px-1.5 py-1 group">
-                        <div className="w-4 h-4 rounded border border-white/20 shrink-0"
+                      <div key={i} className="flex items-center gap-1 sm:gap-1.5 bg-[#1A1D23] border border-[#2D3139] rounded px-1 sm:px-1.5 py-1 group">
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border border-white/20 shrink-0"
                           style={{ backgroundColor: `rgb(${color.r},${color.g},${color.b})` }} />
-                        <span className="text-[7px] font-mono text-gray-500">{color.r},{color.g},{color.b}</span>
+                        <span className="text-[6px] sm:text-[7px] font-mono text-gray-500">{color.r},{color.g},{color.b}</span>
                         <button onClick={() => removeColor(i)}
-                          className="p-0.5 hover:bg-red-500/20 rounded text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                          <X size={9} />
+                          className="p-0.5 hover:bg-red-500/20 rounded text-gray-600 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                          <X size={7} className="sm:size-[9px]" />
                         </button>
                       </div>
                     ))}
@@ -561,20 +560,20 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
 
             {/* Tolerance Slider */}
             {imageFile && sampledColors.length > 0 && !processing && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
+              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Eraser size={12} className="text-orange-500" />
+                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Eraser size={10} className="text-orange-500 sm:size-3" />
                     {lang === 'ar' ? 'الحساسية' : 'Tolerance'}
                   </h3>
-                  <span className="text-[9px] font-mono text-orange-400">{tolerance}%</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-orange-400">{tolerance}%</span>
                 </div>
                 <input
                   type="range" min="1" max="100" value={tolerance}
                   onChange={(e) => setTolerance(Number(e.target.value))}
                   className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer slider-thumb"
                 />
-                <div className="flex justify-between text-[7px] text-gray-600 font-mono">
+                <div className="flex justify-between text-[6px] sm:text-[7px] text-gray-600 font-mono">
                   <span>{lang === 'ar' ? 'دقيق' : 'Precise'}</span>
                   <span>{lang === 'ar' ? 'واسع' : 'Broad'}</span>
                 </div>
@@ -585,26 +584,26 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
             {imageFile && sampledColors.length > 0 && !processing && (
               <button
                 onClick={() => processImage()}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
               >
-                <Eraser size={14} />
+                <Eraser size={12} className="sm:size-[14px]" />
                 {lang === 'ar' ? 'تطبيق الإزالة' : 'Apply Removal'}
               </button>
             )}
 
             {/* Result */}
             {resultUrl && !processing && !animating && (
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[9px] font-mono text-green-400 uppercase tracking-widest">
-                    <CheckCircle2 size={12} />
+                  <div className="flex items-center gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] font-mono text-green-400 uppercase tracking-widest">
+                    <CheckCircle2 size={10} className="sm:size-3" />
                     {lang === 'ar' ? 'تمت الإزالة' : 'Done'}
                   </div>
                   <button
                     onClick={() => setShowOriginal(!showOriginal)}
-                    className="flex items-center gap-1 px-2 py-1 bg-[#1A1D23] border border-[#2D3139] rounded text-[8px] font-mono text-gray-400 hover:text-white transition-all"
+                    className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-[#1A1D23] border border-[#2D3139] rounded text-[7px] sm:text-[8px] font-mono text-gray-400 hover:text-white transition-all"
                   >
-                    {showOriginal ? <EyeOff size={10} /> : <Eye size={10} />}
+                    {showOriginal ? <EyeOff size={8} className="sm:size-[10px]" /> : <Eye size={8} className="sm:size-[10px]" />}
                     {showOriginal
                       ? (lang === 'ar' ? 'النتيجة' : 'Result')
                       : (lang === 'ar' ? 'الأصلي' : 'Original')}
@@ -613,9 +612,9 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
                 {!showOriginal && (
                   <button
                     onClick={downloadResult}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-lg transition-all font-bold text-[10px] uppercase tracking-wider shadow-lg shadow-green-500/30"
+                    className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-lg transition-all font-bold text-[8px] sm:text-[10px] uppercase tracking-wider shadow-lg shadow-green-500/30"
                   >
-                    <Download size={14} />
+                    <Download size={12} className="sm:size-[14px]" />
                     {lang === 'ar' ? 'تحميل PNG' : 'Download PNG'}
                   </button>
                 )}
