@@ -348,7 +348,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Bottom Sheet */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -356,51 +356,67 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
             <motion.div
-              initial={{ x: lang === 'ar' ? '100%' : '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: lang === 'ar' ? '100%' : '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className={cn(
-                "fixed top-0 bottom-0 w-72 bg-[#14171C] border-r border-[#2D3139] z-50 md:hidden flex flex-col",
-                lang === 'ar' ? 'left-0 border-l border-r-0' : 'left-0'
-              )}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 35, stiffness: 400 }}
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
             >
-              <div className="flex items-center justify-between p-4 border-b border-[#2D3139]">
-                <span className="text-[9px] font-mono uppercase tracking-widest text-gray-500">{lang === 'ar' ? 'الصفحات' : 'Pages'}</span>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1 text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors">
-                  <XIcon size={16} />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                {[
-                  { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
-                  { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
-                  { id: 'videoLogo', label: lang === 'ar' ? 'لوجو فيديو' : 'Video Logo', icon: Plus, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
-                  { id: 'imageCropper', label: lang === 'ar' ? 'قص الصور' : 'Crop', icon: ImageIcon, activeClass: 'bg-indigo-600/20 text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]', iconClass: 'text-indigo-500' },
-                  { id: 'bgRemover', label: lang === 'ar' ? 'إزالة الخلفية' : 'Bg Remove', icon: Eraser, activeClass: 'bg-purple-600/20 text-purple-400 shadow-[inset_0_0_0_1px_rgba(147,51,234,0.15)]', iconClass: 'text-purple-500' },
-                  { id: 'speechToText', label: lang === 'ar' ? 'نص إلى كلام' : 'Speech to Text', icon: MessageSquareText, activeClass: 'bg-purple-600/20 text-purple-400 shadow-[inset_0_0_0_1px_rgba(147,51,234,0.15)]', iconClass: 'text-purple-500' },
-                  { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ صوتي' : 'Transcribe', icon: FileAudio, activeClass: 'bg-cyan-600/20 text-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.15)]', iconClass: 'text-cyan-500' },
-                  { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة فيديو' : 'Subtitles', icon: Subtitles, activeClass: 'bg-cyan-600/20 text-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.15)]', iconClass: 'text-cyan-500' },
-                ].map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => { setCurrentPage(item.id as any); setMobileMenuOpen(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 text-[11px] font-mono rounded-lg transition-all",
-                      currentPage === item.id ? item.activeClass : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
-                    )}
-                  >
-                    <item.icon size={15} className={item.iconClass} />
-                    {item.label}
+              <div className="bg-[#14171C] rounded-t-2xl border-t border-[#2D3139] mx-2 shadow-2xl">
+                {/* Handle bar */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-8 h-1 rounded-full bg-[#2D3139]" />
+                </div>
+                
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-2">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-gray-500">{lang === 'ar' ? 'الصفحات' : 'Pages'}</span>
+                  <button onClick={() => setMobileMenuOpen(false)} className="p-1 text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors">
+                    <XIcon size={14} />
                   </button>
-                ))}
-              </div>
-              <div className="p-3 border-t border-[#2D3139]">
-                <p className="text-[7px] font-mono text-gray-600 text-center">{t.title} v1.0</p>
+                </div>
+                
+                {/* Grid */}
+                <div className="px-4 pb-5 grid grid-cols-4 gap-3">
+                  {[
+                    { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
+                    { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
+                    { id: 'videoLogo', label: lang === 'ar' ? 'لوجو' : 'Logo', icon: Plus, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
+                    { id: 'imageCropper', label: lang === 'ar' ? 'قص صور' : 'Crop', icon: ImageIcon, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
+                    { id: 'bgRemover', label: lang === 'ar' ? 'خلفية' : 'Bg Rem.', icon: Eraser, color: 'from-purple-600 to-purple-500', activeBg: 'bg-purple-600/20 ring-1 ring-purple-500/30' },
+                    { id: 'speechToText', label: lang === 'ar' ? 'نص' : 'Speech', icon: MessageSquareText, color: 'from-purple-600 to-purple-500', activeBg: 'bg-purple-600/20 ring-1 ring-purple-500/30' },
+                    { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
+                    { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => { setCurrentPage(item.id as any); setMobileMenuOpen(false); }}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${
+                        currentPage === item.id
+                          ? item.activeBg
+                          : 'hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}>
+                        <item.icon size={18} className="text-white" />
+                      </div>
+                      <span className={`text-[8px] font-mono text-center leading-tight ${
+                        currentPage === item.id ? 'text-white' : 'text-gray-400'
+                      }`}>
+                        {item.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Footer */}
+                <div className="px-5 pb-4 pt-2 border-t border-[#2D3139]">
+                  <p className="text-[7px] font-mono text-gray-600 text-center">{t.title} v1.0</p>
+                </div>
               </div>
             </motion.div>
           </>

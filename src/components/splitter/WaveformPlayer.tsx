@@ -109,7 +109,7 @@ export function WaveformPlayer({
   return (
     <div className="space-y-3">
       {/* Waveform Container */}
-      <div className="relative bg-gradient-to-br from-[#0A0C0F] to-[#14171C] rounded-xl border-2 border-[#2D3139] p-6 shadow-xl">
+      <div className="relative bg-gradient-to-br from-[#0A0C0F] to-[#14171C] rounded-xl border-2 border-[#2D3139] p-4 sm:p-5 lg:p-6 shadow-xl">
         {/* Grid background */}
         <div className="absolute inset-0 opacity-5" style={{
           backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)',

@@ -52,9 +52,9 @@ export function SegmentsSidebar({
   lang,
 }: SegmentsSidebarProps) {
   return (
-    <div className="w-80 bg-[#0A0C0F] border-l border-[#2D3139] flex flex-col h-full">
+    <div className="w-full lg:w-80 bg-[#0A0C0F] lg:border-l border-[#2D3139] flex flex-col shrink-0">
       {/* Header */}
-      <div className="p-4 border-b border-[#2D3139] bg-gradient-to-br from-[#14171C] to-[#0A0C0F]">
+      <div className="p-3 sm:p-4 border-b border-[#2D3139] bg-gradient-to-br from-[#14171C] to-[#0A0C0F]">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
             <Scissors className="text-white" size={20} />
@@ -105,7 +105,7 @@ export function SegmentsSidebar({
       </div>
 
       {/* Segments List */}
-      <div className="flex-1 overflow-y-auto p-3 segments-list-scroll">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-3 segments-list-scroll">
         <style>{`
           .segments-list-scroll::-webkit-scrollbar {
             width: 6px;
@@ -167,7 +167,7 @@ export function SegmentsSidebar({
 
       {/* Footer Stats */}
       {segments.length > 0 && (
-        <div className="p-3 border-t border-[#2D3139] bg-[#14171C]">
+        <div className="p-2 sm:p-3 border-t border-[#2D3139] bg-[#14171C]">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-[#0A0C0F] rounded-lg p-2">
               <div className="text-xs text-gray-600 mb-0.5">{lang === 'ar' ? 'معلق' : 'Pending'}</div>

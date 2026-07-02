@@ -156,7 +156,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
   }, [videoUrl]);
 
   const processVideo = async () => {
-    if (!videoFile || !logoFile || !videoMetadata) {
+    if (!videoFile || !logoFile || !videoMetadata || !logoNaturalSize) {
       setError(lang === 'ar' ? 'الرجاء اختيار فيديو ولوجو' : 'Please select video and logo');
       return;
     }
@@ -188,10 +188,12 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
       await ffmpeg.writeFile('logo.png', await fetchFile(logoFile));
 
-      // Calculate logo position
-      const logoX = Math.round(logoPosition.x);
-      const logoY = Math.round(logoPosition.y);
+      // Calculate logo position (offset by half scaled size since preview uses translate(-50%, -50%))
       const logoScale = logoPosition.scale;
+      const scaledLogoW = logoNaturalSize.width * logoScale;
+      const scaledLogoH = logoNaturalSize.height * logoScale;
+      const logoX = Math.round(logoPosition.x - scaledLogoW / 2);
+      const logoY = Math.round(logoPosition.y - scaledLogoH / 2);
 
       // Build FFmpeg command with optional trim
       const ffmpegArgs = ['-i', 'input.mp4', '-i', 'logo.png'];
@@ -418,8 +420,8 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-3 p-3 sm:p-4 max-w-5xl mx-auto w-full">
         
-        {/* Left Section: Upload & Preview - Very Compact */}
-        <div className="flex-1 max-w-xl space-y-3">
+        {/* Left Section: Upload & Preview */}
+        <div className="flex-1 space-y-3">
           
           {/* Video Upload */}
           <div className="space-y-2">
@@ -429,19 +431,19 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                 {lang === 'ar' ? 'الفيديو' : 'Video'}
               </h2>
               {videoFile && (
-                <button
-                  onClick={removeVideo}
-                  className="p-1.5 hover:bg-red-500/20 rounded-sm text-red-500 transition-colors"
-                >
-                  <X size={14} />
+                  <button
+                    onClick={removeVideo}
+                    className="p-1.5 sm:p-1 hover:bg-red-500/20 rounded-sm text-red-500 transition-colors"
+                  >
+                    <X size={14} />
                 </button>
               )}
             </div>
 
             {!videoFile ? (
-              <label className="group relative flex flex-col items-center justify-center gap-2 p-6 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                  <Upload size={18} className="text-blue-500" />
+              <label className="group relative flex flex-col items-center justify-center gap-2 p-5 sm:p-6 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all cursor-pointer">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                  <Upload size={16} className="text-blue-500" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-xs text-gray-300 font-medium">
@@ -468,7 +470,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                   ref={videoRef}
                   src={videoUrl!}
                   controls
-                  className="w-full h-auto max-h-72"
+                  className="w-full h-auto"
                 />
                 {/* Logo overlay on video - pixel-based to avoid CSS circular % issues */}
                 {logoUrl && videoMetadata && logoNaturalSize && (() => {
@@ -477,8 +479,9 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                   const videoRect = video.getBoundingClientRect();
                   const scaleX = videoRect.width / videoMetadata.width;
                   const scaleY = videoRect.height / videoMetadata.height;
-                  const logoW = logoNaturalSize.width * logoPosition.scale * scaleX;
-                  const logoH = logoNaturalSize.height * logoPosition.scale * scaleY;
+                  const uniformScale = logoPosition.scale * scaleX;
+                  const logoW = logoNaturalSize.width * uniformScale;
+                  const logoH = logoNaturalSize.height * uniformScale;
                   const leftPx = logoPosition.x * scaleX;
                   const topPx = logoPosition.y * scaleY;
                   return (
@@ -561,9 +564,9 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
             </div>
 
             {!logoFile ? (
-              <label className="group relative flex flex-col items-center justify-center gap-2 p-4 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <ImageIcon size={16} className="text-purple-500" />
+              <label className="group relative flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                  <ImageIcon size={14} className="text-purple-500" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-xs text-gray-300 font-medium">
@@ -774,9 +777,9 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               </div>
               <div className="relative bg-[#14171C] rounded-lg overflow-hidden border border-green-500/30">
                 <video
-                  src={URL.createObjectURL(resultBlob)}
-                  controls
-                  className="w-full h-auto max-h-48"
+                src={URL.createObjectURL(resultBlob)}
+                controls
+                className="w-full h-auto max-h-48 sm:max-h-72"
                 />
               </div>
             </div>
@@ -859,10 +862,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               <div className="flex gap-1.5 items-center">
                 <button
                   onClick={scaleDown}
-                  className="p-1 bg-[#2D3139] hover:bg-red-500/20 hover:border-red-500/50 border border-transparent rounded-sm transition-all text-red-400 hover:text-red-300"
+                  className="p-1.5 sm:p-1 bg-[#2D3139] hover:bg-red-500/20 hover:border-red-500/50 border border-transparent rounded-sm transition-all text-red-400 hover:text-red-300"
                   title={lang === 'ar' ? 'تصغير' : 'Zoom Out'}
                 >
-                  <Minimize2 size={11} />
+                  <Minimize2 size={13} />
                 </button>
                 <input
                   type="range"
@@ -874,10 +877,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                 />
                 <button
                   onClick={scaleUp}
-                  className="p-1 bg-[#2D3139] hover:bg-green-500/20 hover:border-green-500/50 border border-transparent rounded-sm transition-all text-green-400 hover:text-green-300"
+                  className="p-1.5 sm:p-1 bg-[#2D3139] hover:bg-green-500/20 hover:border-green-500/50 border border-transparent rounded-sm transition-all text-green-400 hover:text-green-300"
                   title={lang === 'ar' ? 'تكبير' : 'Zoom In'}
                 >
-                  <Maximize2 size={11} />
+                  <Maximize2 size={13} />
                 </button>
               </div>
             </div>
@@ -887,7 +890,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
           <button
             onClick={processVideo}
             disabled={!videoFile || !logoFile || processing}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {processing ? (
               <>
@@ -901,24 +904,6 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               </>
             )}
           </button>
-
-          {/* Info Box */}
-          <div className="bg-[#14171C] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
-            <div className="flex items-start gap-2">
-              <AlertCircle size={11} className="text-blue-500 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-[7.5px] text-gray-400 leading-relaxed">
-                  {lang === 'ar' 
-                    ? 'معالجة في المتصفح • جودة عالية CRF 20'
-                    : 'Browser processing • High quality CRF 20'}
-                </p>
-                <div className="flex items-center gap-1 text-[7px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
-                  <CheckCircle2 size={8} />
-                  {lang === 'ar' ? 'جودة عالية' : 'High Quality'}
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Processing Progress */}
           {processing && (

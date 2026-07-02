@@ -522,7 +522,8 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
         </div>
       </div>
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
         {audioFile && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-2 text-xs text-blue-400">
             💡 {lang === 'ar'
@@ -533,11 +534,11 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
         {/* File Upload */}
         {!audioFile ? (
-          <div className="border-2 border-dashed border-[#2D3139] rounded-2xl p-16 text-center hover:border-blue-500/50 transition-all">
+          <div className="border-2 border-dashed border-[#2D3139] rounded-2xl p-8 sm:p-12 lg:p-16 text-center hover:border-blue-500/50 transition-all">
             <label className="cursor-pointer block">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl flex items-center justify-center">
-                  <Plus className="text-blue-500" size={40} />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl flex items-center justify-center">
+                  <Plus className="text-blue-500" size={32} />
                 </div>
                 <div>
                   <p className="text-white font-medium text-lg mb-2">
@@ -611,27 +612,28 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
             />
           </>
         )}
-      </div>
+        </div>
 
-      {/* Sidebar */}
-      {audioFile && (
-        <SegmentsSidebar
-          segments={segments}
-          playingSegmentId={playingSegmentId}
-          selectedSegmentId={selectedRegionId}
-          onPlaySegment={playSegmentById}
-          onProcessSegment={processSegment}
-          onDownloadSegment={downloadSegment}
-          onDeleteSegment={removeSegment}
-          onDownloadAll={downloadAllSegments}
-          onDownloadZip={downloadAllAsZip}
-          onProcessAll={processAllSegments}
-          isProcessing={isAnyProcessing}
-          hasCompleted={hasCompletedSegments}
-          hasIdle={hasIdleSegments}
-          lang={lang}
-        />
-      )}
+        {/* Sidebar */}
+        {audioFile && (
+          <SegmentsSidebar
+            segments={segments}
+            playingSegmentId={playingSegmentId}
+            selectedSegmentId={selectedRegionId}
+            onPlaySegment={playSegmentById}
+            onProcessSegment={processSegment}
+            onDownloadSegment={downloadSegment}
+            onDeleteSegment={removeSegment}
+            onDownloadAll={downloadAllSegments}
+            onDownloadZip={downloadAllAsZip}
+            onProcessAll={processAllSegments}
+            isProcessing={isAnyProcessing}
+            hasCompleted={hasCompletedSegments}
+            hasIdle={hasIdleSegments}
+            lang={lang}
+          />
+        )}
+      </div>
     </div>
   );
 }
