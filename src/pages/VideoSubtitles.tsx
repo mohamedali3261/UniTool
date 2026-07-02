@@ -499,23 +499,46 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
   };
 
   const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
+  const [mobileTab, setMobileTab] = useState<'video' | 'controls'>('video');
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#0A0C0F]">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <Subtitles size={16} className="text-white" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <Subtitles size={14} className="text-white sm:size-4" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'ترجمة فيديو' : 'Video Subtitles'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تفريغ وحرق الترجمة على الفيديو تلقائياً' : 'Auto-transcribe and burn subtitles into video'}</p>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'ترجمة فيديو' : 'Video Subtitles'}</h1>
+          <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تفريغ وحرق الترجمة على الفيديو' : 'Transcribe & burn subtitles into video'}</p>
         </div>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
+        {/* Mobile Tab Bar */}
+        <div className="flex border-b border-[#2D3139] bg-[#14171C] shrink-0 lg:hidden">
+          <button
+            onClick={() => setMobileTab('video')}
+            className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+              mobileTab === 'video' ? 'text-cyan-400 bg-[#1A1D23] border-b-2 border-cyan-500' : 'text-gray-500'
+            }`}
+          >
+            <FileVideo size={14} />
+            {lang === 'ar' ? 'الفيديو' : 'Video'}
+          </button>
+          <button
+            onClick={() => setMobileTab('controls')}
+            className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+              mobileTab === 'controls' ? 'text-cyan-400 bg-[#1A1D23] border-b-2 border-cyan-500' : 'text-gray-500'
+            }`}
+          >
+            <Subtitles size={14} />
+            {lang === 'ar' ? 'تحكم' : 'Controls'}
+          </button>
+        </div>
+
         {/* Left: Video + Subtitles */}
-        <div className={`flex-1 flex flex-col min-h-0 p-3 sm:p-4 relative ${muxing ? 'hidden' : ''}`}>
+        <div className={`flex-1 flex-col min-h-0 p-3 sm:p-4 ${mobileTab === 'video' ? 'flex' : 'hidden'} lg:flex`}>
           <div className="flex-1 flex flex-col bg-[#14171C] rounded-lg border border-[#2D3139] relative">
             <div className="flex-1 flex flex-col overflow-y-auto relative"
               onScroll={e => {
@@ -655,6 +678,28 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 )}
               </div>
             )}
+
+            {/* Generate Subtitles Button at bottom */}
+            {file && !muxing && (
+              <div className="shrink-0 border-t border-[#2D3139] px-3 py-2">
+                <button
+                  onClick={transcribe}
+                  disabled={!apiKey || processing}
+                  className={
+                    "w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-lg transition-all font-bold text-[9px] sm:text-[10px] uppercase tracking-wider shadow-lg " +
+                    "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/20 " +
+                    ((!apiKey || processing) ? "opacity-50 cursor-not-allowed" : "")
+                  }
+                >
+                  {processing ? (
+                    <><Loader2 size={14} className="animate-spin" /> {lang === 'ar' ? 'جاري المعالجة...' : 'Processing...'}</>
+                  ) : (
+                    <><Subtitles size={14} /> {lang === 'ar' ? 'تفريغ الفيديو' : 'Generate Subtitles'}</>
+                  )}
+                </button>
+              </div>
+            )}
+
           </div>
           {showMainPanelScroll && (
             <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#14171C] via-[#14171C]/80 to-transparent pointer-events-none flex items-end justify-center pb-1.5">
@@ -665,9 +710,9 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
       </div>
 
         {/* Right: Controls */}
-        <div className="lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col relative overflow-hidden">
+        <div className={`lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex-col relative overflow-hidden ${mobileTab === 'controls' ? 'flex' : 'hidden'} lg:flex`}>
           <div
-            className="flex-1 p-3 space-y-3 overflow-y-auto"
+            className="flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3 overflow-y-auto"
             onScroll={e => {
               const el = e.currentTarget;
               const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
@@ -676,7 +721,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
           >
 
             {/* API Key */}
-            <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
+            <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Key size={12} className="text-cyan-500" />
@@ -711,7 +756,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
               onClick={transcribe}
               disabled={!file || !apiKey || processing}
               className={
-                "w-full flex items-center justify-center gap-2 py-4 rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg " +
+                "w-full flex items-center justify-center gap-2 py-2.5 sm:py-4 rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg " +
                 "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/30 " +
                 ((!file || !apiKey || processing) ? "opacity-50 cursor-not-allowed" : "")
               }
@@ -726,17 +771,17 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
             {/* Stats */}
             {transcript && stage === 'done' && (
               <>
-                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <Timer size={12} className="text-cyan-500" />
                     <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'إحصائيات' : 'Stats'}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-1">
-                    <div className="bg-[#1A1D23] rounded p-1.5 text-center">
+                    <div className="bg-[#1A1D23] rounded p-1 sm:p-1.5 text-center">
                       <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'كلمات' : 'Words'}</p>
                       <p className="text-[10px] font-mono text-cyan-400">{wordCount}</p>
                     </div>
-                    <div className="bg-[#1A1D23] rounded p-1.5 text-center">
+                    <div className="bg-[#1A1D23] rounded p-1 sm:p-1.5 text-center">
                       <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'مقاطع' : 'Segments'}</p>
                       <p className="text-[10px] font-mono text-blue-400">{segments.length}</p>
                     </div>
@@ -744,12 +789,12 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </div>
 
                 {/* Transcript */}
-                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <FileText size={12} className="text-cyan-500" />
                     <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'النص' : 'Transcript'}</h3>
                   </div>
-                  <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
+                  <div className="max-h-24 sm:max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                     {segmentTimes.map((seg, i) => {
                       const isActive = seg.text === currentSubtitle;
                       return (
@@ -774,7 +819,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </div>
 
                 {/* Font Size */}
-                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <Type size={12} className="text-cyan-500" />
                     <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'حجم الخط' : 'Font Size'}</h3>
@@ -797,7 +842,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </div>
 
                 {/* Word Highlighting */}
-                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
+                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <Palette size={12} className="text-cyan-500" />
@@ -840,7 +885,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </div>
 
                 {/* Export */}
-                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+                <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                   <div className="flex items-center gap-1.5">
                     <FileOutput size={12} className="text-cyan-500" />
                     <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'تصدير' : 'Export'}</h3>
@@ -855,15 +900,15 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </div>
 
                 {/* Burn Subtitles into Video */}
-                <button
-                  onClick={downloadVideo}
-                  disabled={muxing}
-                  className={
-                    "w-full flex items-center justify-center gap-2 py-3 rounded-lg transition-all font-bold text-xs uppercase tracking-wider " +
-                    "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/30 " +
-                    (muxing ? "opacity-50 cursor-not-allowed" : "")
-                  }
-                >
+                  <button
+                    onClick={downloadVideo}
+                    disabled={muxing}
+                    className={
+                      "w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider " +
+                      "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/30 " +
+                      (muxing ? "opacity-50 cursor-not-allowed" : "")
+                    }
+                  >
                   {muxing ? (
                     <><Loader2 size={14} className="animate-spin" /> {lang === 'ar' ? 'جاري التضمين...' : 'Embedding...'} {muxProgress}%</>
                   ) : (
@@ -872,7 +917,7 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                 </button>
 
               {/* Clear */}
-              <button onClick={() => { setTranscript(''); setSegments([]); setCurrentSubtitle(''); setResultVideoUrl(''); setStage('idle'); }} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1A1D23] border border-[#2D3139] hover:border-red-500/50 text-gray-400 hover:text-red-400 rounded-lg transition-all text-[10px] font-mono">
+              <button onClick={() => { setTranscript(''); setSegments([]); setCurrentSubtitle(''); setResultVideoUrl(''); setStage('idle'); }} className="w-full flex items-center justify-center gap-2 py-1.5 sm:py-2 bg-[#1A1D23] border border-[#2D3139] hover:border-red-500/50 text-gray-400 hover:text-red-400 rounded-lg transition-all text-[9px] sm:text-[10px] font-mono">
                 <Trash2 size={12} /> {lang === 'ar' ? 'مسح النص' : 'Clear Text'}
               </button>
 

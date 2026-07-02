@@ -286,23 +286,41 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     });
   };
 
-  // Handle mouse move
+  // Handle touch start on logo
+  const handleLogoTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setDragState({
+      isDragging: true,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialLogoX: logoPosition.x,
+      initialLogoY: logoPosition.y
+    });
+  };
+
+  // Handle mouse/touch move
   useEffect(() => {
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
+    const getClientX = (e: globalThis.MouseEvent | globalThis.TouchEvent): number => {
+      return 'touches' in e ? e.touches[0].clientX : e.clientX;
+    };
+    const getClientY = (e: globalThis.MouseEvent | globalThis.TouchEvent): number => {
+      return 'touches' in e ? e.touches[0].clientY : e.clientY;
+    };
+
+    const handleMove = (e: globalThis.MouseEvent | globalThis.TouchEvent) => {
       if (!dragState.isDragging || !videoMetadata || !videoRef.current) return;
 
       const video = videoRef.current;
       const rect = video.getBoundingClientRect();
       
-      // Calculate scale factor between displayed video and actual video
       const scaleX = videoMetadata.width / rect.width;
       const scaleY = videoMetadata.height / rect.height;
       
-      // Calculate movement in pixels
-      const deltaX = (e.clientX - dragState.startX) * scaleX;
-      const deltaY = (e.clientY - dragState.startY) * scaleY;
+      const deltaX = (getClientX(e) - dragState.startX) * scaleX;
+      const deltaY = (getClientY(e) - dragState.startY) * scaleY;
       
-      // Update logo position (in actual video pixels)
       const newX = Math.max(0, Math.min(videoMetadata.width, dragState.initialLogoX + deltaX));
       const newY = Math.max(0, Math.min(videoMetadata.height, dragState.initialLogoY + deltaY));
       
@@ -313,17 +331,21 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       }));
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       setDragState(prev => ({ ...prev, isDragging: false }));
     };
 
     if (dragState.isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
       
       return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('mouseup', handleEnd);
+        window.removeEventListener('touchmove', handleMove);
+        window.removeEventListener('touchend', handleEnd);
       };
     }
   }, [dragState, videoMetadata]);
@@ -512,8 +534,10 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                           minWidth: 40,
                           maxWidth: 400,
                           maxHeight: 400,
+                          touchAction: 'none',
                         }}
                         onMouseDown={handleLogoMouseDown}
+                        onTouchStart={handleLogoTouchStart}
                         draggable={false}
                       />
                       {/* Hover drag indicator */}
@@ -594,22 +618,18 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
             )}
           </div>
 
-          {/* Video Trim Controls - Modern & Simple */}
+          {/* Video Trim Controls */}
           {videoFile && videoDuration > 0 && (
-            <div className="bg-gradient-to-br from-[#1A1D23] to-[#14171C] border border-[#2D3139] rounded-xl p-4 space-y-4 shadow-lg">
-              <div className="flex items-center justify-between">
+            <div className="bg-[#14171C] border border-[#2D3139] rounded-xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#2D3139]">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                    <Scissors size={16} className="text-white" />
+                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <Scissors size={12} className="text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-[10px] font-bold text-white uppercase tracking-wide">
-                      {lang === 'ar' ? 'قص الفيديو' : 'Trim Video'}
-                    </h3>
-                    <p className="text-[7px] text-gray-500 font-mono">
-                      {lang === 'ar' ? 'اختر الجزء المطلوب' : 'Select desired part'}
-                    </p>
-                  </div>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wide">
+                    {lang === 'ar' ? 'قص الفيديو' : 'Trim'}
+                  </span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -618,143 +638,89 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                     onChange={(e) => setTrimSettings(prev => ({ ...prev, enabled: e.target.checked }))}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-[#2D3139] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-500"></div>
+                  <div className="w-9 h-5 bg-[#2D3139] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-500"></div>
                 </label>
               </div>
 
               {trimSettings.enabled && (
-                <div className="space-y-4">
-                  {/* Timeline Visualizer */}
-                  <div className="space-y-2">
-                    <div className="relative h-16 bg-[#0F1115] rounded-lg border border-[#2D3139] overflow-hidden">
-                      {/* Background pattern */}
-                      <div className="absolute inset-0" style={{
-                        backgroundImage: 'repeating-linear-gradient(90deg, #2D3139 0px, #2D3139 1px, transparent 1px, transparent 20px)',
-                        opacity: 0.3
-                      }} />
-                      
-                      {/* Selected range highlight */}
-                      <div 
-                        className="absolute top-0 bottom-0 bg-gradient-to-r from-orange-500/30 via-red-500/30 to-orange-500/30 border-x-2 border-orange-500 transition-all duration-200"
-                        style={{
-                          left: `${(trimSettings.startTime / videoDuration) * 100}%`,
-                          right: `${100 - (trimSettings.endTime / videoDuration) * 100}%`
-                        }}
-                      >
-                        {/* Pulse effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
-                      </div>
-                      
-                      {/* Start marker with handle */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-green-400 to-green-600 transition-all duration-200 shadow-lg shadow-green-500/50"
-                        style={{ left: `${(trimSettings.startTime / videoDuration) * 100}%` }}
-                      >
-                        <div className="absolute -top-1 -left-2 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-lg" />
-                        <div className="absolute -bottom-1 -left-2 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-lg" />
-                      </div>
-                      
-                      {/* End marker with handle */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-400 to-red-600 transition-all duration-200 shadow-lg shadow-red-500/50"
-                        style={{ left: `${(trimSettings.endTime / videoDuration) * 100}%` }}
-                      >
-                        <div className="absolute -top-1 -left-2 w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-lg" />
-                        <div className="absolute -bottom-1 -left-2 w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-lg" />
-                      </div>
-                    </div>
-
-                    {/* Time labels */}
-                    <div className="flex justify-between items-center text-[10px] font-mono px-1">
-                      <div className="flex items-center gap-1.5 bg-green-500/10 px-2 py-1 rounded">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-green-400 font-bold">{formatTime(trimSettings.startTime)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-orange-500/10 px-2 py-1 rounded">
-                        <Clock size={12} className="text-orange-400" />
-                        <span className="text-orange-400 font-bold">{formatTime(trimSettings.endTime - trimSettings.startTime)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-red-500/10 px-2 py-1 rounded">
-                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        <span className="text-red-400 font-bold">{formatTime(trimSettings.endTime)}</span>
-                      </div>
-                    </div>
+                <div className="p-3 space-y-3">
+                  {/* Timeline */}
+                  <div className="relative h-10 bg-[#0F1115] rounded-lg border border-[#2D3139] overflow-hidden">
+                    <div className="absolute inset-0" style={{
+                      backgroundImage: 'repeating-linear-gradient(90deg, #2D3139 0px, #2D3139 1px, transparent 1px, transparent ' + (Math.max(8, videoDuration > 60 ? videoDuration / 3 : 20)) + 'px)',
+                      opacity: 0.2
+                    }} />
+                    <div
+                      className="absolute top-0 bottom-0 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-500/20 border-x-2 border-orange-500"
+                      style={{
+                        left: `${(trimSettings.startTime / videoDuration) * 100}%`,
+                        width: `${((trimSettings.endTime - trimSettings.startTime) / videoDuration) * 100}%`
+                      }}
+                    />
                   </div>
 
-                  {/* Dual Range Sliders */}
-                  <div className="space-y-3">
-                    {/* Start Time Slider */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-medium text-green-400 uppercase tracking-wide flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        {lang === 'ar' ? 'بداية القص' : 'Start Point'}
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max={Math.max(0, trimSettings.endTime - 1)}
-                        step="0.1"
-                        value={trimSettings.startTime}
-                        onChange={(e) => {
-                          const newStart = parseFloat(e.target.value);
-                          setTrimSettings(prev => ({ 
-                            ...prev, 
-                            startTime: Math.min(newStart, prev.endTime - 1)
-                          }));
-                        }}
-                        className="w-full h-2 bg-gradient-to-r from-green-500/20 to-[#2D3139] rounded-lg appearance-none cursor-pointer slider-thumb"
-                      />
+                  {/* Time display */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-[9px] font-mono text-gray-500">
+                      <span className="text-green-400 font-bold">{formatTime(trimSettings.startTime)}</span>
+                      <span className="text-gray-600">→</span>
+                      <span className="text-red-400 font-bold">{formatTime(trimSettings.endTime)}</span>
                     </div>
-
-                    {/* End Time Slider */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-medium text-red-400 uppercase tracking-wide flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        {lang === 'ar' ? 'نهاية القص' : 'End Point'}
-                      </label>
-                      <input
-                        type="range"
-                        min={Math.min(videoDuration, trimSettings.startTime + 1)}
-                        max={videoDuration}
-                        step="0.1"
-                        value={trimSettings.endTime}
-                        onChange={(e) => setTrimSettings(prev => ({ 
-                          ...prev, 
-                          endTime: Math.max(parseFloat(e.target.value), prev.startTime + 1)
-                        }))}
-                        className="w-full h-2 bg-gradient-to-r from-red-500/20 to-[#2D3139] rounded-lg appearance-none cursor-pointer slider-thumb"
-                      />
+                    <div className="flex items-center gap-1.5 text-[9px] font-mono text-orange-400">
+                      <Clock size={10} />
+                      <span className="font-bold">{formatTime(trimSettings.endTime - trimSettings.startTime)}</span>
                     </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => {
-                        if (videoRef.current) {
-                          videoRef.current.currentTime = trimSettings.startTime;
-                          videoRef.current.play();
-                        }
+                        setTrimSettings(prev => ({ ...prev, startTime: 0, endTime: videoDuration }));
                       }}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 border border-green-500/30 text-green-400 rounded-lg text-[9px] font-bold uppercase transition-all"
+                      className="text-[8px] font-mono text-gray-500 hover:text-white transition-colors"
                     >
-                      <Play size={12} />
-                      {lang === 'ar' ? 'معاينة' : 'Preview'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTrimSettings(prev => ({
-                          ...prev,
-                          startTime: 0,
-                          endTime: videoDuration
-                        }));
-                      }}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#2D3139] hover:bg-[#374151] text-gray-400 hover:text-white rounded-lg text-[9px] font-bold uppercase transition-all"
-                    >
-                      <X size={12} />
                       {lang === 'ar' ? 'إعادة' : 'Reset'}
                     </button>
                   </div>
+
+                  {/* Single combined range slider */}
+                  <div className="space-y-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max={videoDuration}
+                      step="0.1"
+                      value={trimSettings.startTime}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setTrimSettings(prev => ({ ...prev, startTime: Math.min(v, prev.endTime - 1) }));
+                      }}
+                      className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-400 [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(74,222,128,0.5)] [&::-webkit-slider-thumb]:cursor-pointer"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max={videoDuration}
+                      step="0.1"
+                      value={trimSettings.endTime}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setTrimSettings(prev => ({ ...prev, endTime: Math.max(v, prev.startTime + 1) }));
+                      }}
+                      className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-400 [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(248,113,113,0.5)] [&::-webkit-slider-thumb]:cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Preview button */}
+                  <button
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.currentTime = trimSettings.startTime;
+                        videoRef.current.play();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 border border-green-500/30 text-green-400 rounded-lg text-[9px] font-bold uppercase transition-all"
+                  >
+                    <Play size={12} />
+                    {lang === 'ar' ? 'تشغيل من البداية' : 'Play from Start'}
+                  </button>
                 </div>
               )}
             </div>

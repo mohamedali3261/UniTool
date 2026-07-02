@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import {
   Upload, FileAudio, AlertCircle, Loader2, Copy, Download,
-  FileText, Trash2, Key, CheckCircle2, FileOutput, Quote, Timer, X
+  FileText, Trash2, Key, CheckCircle2, FileOutput, Quote, Timer, X, Mic
 } from 'lucide-react';
 
 interface AudioTranscriberProps {
@@ -214,6 +214,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
   };
 
   const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
+  const [mobileTab, setMobileTab] = useState<'transcript' | 'controls'>('transcript');
 
   const handleTranscriptScroll = () => {
     const el = transcriptRef.current;
@@ -223,21 +224,43 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#0A0C0F]">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <FileAudio size={16} className="text-white" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <FileAudio size={14} className="text-white sm:size-4" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'تفريغ صوتي' : 'Audio Transcriber'}</h1>
-          <p className="text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تفريغ الملفات الصوتية إلى نص باستخدام Gemini AI' : 'Transcribe audio files to text using Gemini AI'}</p>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'تفريغ صوتي' : 'Audio Transcriber'}</h1>
+          <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تفريغ الملفات الصوتية إلى نص' : 'Transcribe audio files to text'}</p>
         </div>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
+        {/* Mobile Tab Bar */}
+        <div className="flex border-b border-[#2D3139] bg-[#14171C] shrink-0 lg:hidden">
+          <button
+            onClick={() => setMobileTab('transcript')}
+            className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+              mobileTab === 'transcript' ? 'text-cyan-400 bg-[#1A1D23] border-b-2 border-cyan-500' : 'text-gray-500'
+            }`}
+          >
+            <FileText size={14} />
+            {lang === 'ar' ? 'التفريغ' : 'Transcribe'}
+          </button>
+          <button
+            onClick={() => setMobileTab('controls')}
+            className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+              mobileTab === 'controls' ? 'text-cyan-400 bg-[#1A1D23] border-b-2 border-cyan-500' : 'text-gray-500'
+            }`}
+          >
+            <Mic size={14} />
+            {lang === 'ar' ? 'تحكم' : 'Controls'}
+          </button>
+        </div>
+
         {/* Left: Upload + Transcript */}
-        <div className="flex-1 flex flex-col min-h-0 p-3 sm:p-4">
+        <div className={`flex-1 flex-col min-h-0 p-3 sm:p-4 ${mobileTab === 'transcript' ? 'flex' : 'hidden'} lg:flex`}>
           <div className="flex-1 flex flex-col bg-[#14171C] rounded-lg border border-[#2D3139] overflow-hidden">
 
             {/* Header */}
@@ -311,15 +334,34 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
                 <p className="text-[9px]">{lang === 'ar' ? 'اضغط على "تفريغ" لبدء المعالجة' : 'Click "Transcribe" to start'}</p>
               </div>
             )}
+
+            {/* Transcribe Button at bottom */}
+            <div className="shrink-0 border-t border-[#2D3139] px-3 py-2">
+              <button
+                onClick={transcribe}
+                disabled={!file || !apiKey || transcribing}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-lg transition-all font-bold text-[9px] sm:text-[10px] uppercase tracking-wider shadow-lg",
+                  "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/20",
+                  (!file || !apiKey || transcribing) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {transcribing ? (
+                  <><Loader2 size={14} className="animate-spin" /> {lang === 'ar' ? 'جاري التفريغ...' : 'Transcribing...'}</>
+                ) : (
+                  <><FileAudio size={14} /> {lang === 'ar' ? 'تفريغ الصوت' : 'Transcribe'}</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Right: Controls */}
-        <div className="lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col overflow-y-auto">
-          <div className="flex-1 p-3 space-y-3">
+        <div className={`lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex-col overflow-y-auto ${mobileTab === 'controls' ? 'flex' : 'hidden'} lg:flex`}>
+          <div className="flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3">
 
             {/* API Key */}
-            <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-2">
+            <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Key size={12} className="text-cyan-500" />
@@ -356,7 +398,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
               onClick={transcribe}
               disabled={!file || !apiKey || transcribing}
               className={cn(
-                "w-full flex items-center justify-center gap-2 py-4 rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg",
+                "w-full flex items-center justify-center gap-2 py-2.5 sm:py-4 rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg",
                 "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/30",
                 (!file || !apiKey || transcribing) && "opacity-50 cursor-not-allowed"
               )}
@@ -370,17 +412,17 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
             {/* Stats */}
             {transcript && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Timer size={12} className="text-cyan-500" />
                   <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'إحصائيات' : 'Stats'}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-1">
-                  <div className="bg-[#1A1D23] rounded p-1.5 text-center">
+                  <div className="bg-[#1A1D23] rounded p-1 sm:p-1.5 text-center">
                     <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'كلمات' : 'Words'}</p>
                     <p className="text-[10px] font-mono text-cyan-400">{wordCount}</p>
                   </div>
-                  <div className="bg-[#1A1D23] rounded p-1.5 text-center">
+                  <div className="bg-[#1A1D23] rounded p-1 sm:p-1.5 text-center">
                     <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'وقت المعالجة' : 'Time'}</p>
                     <p className="text-[10px] font-mono text-blue-400">{formatTime(elapsed)}</p>
                   </div>
@@ -390,7 +432,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
             {/* Export */}
             {transcript && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2.5 space-y-1.5">
+              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <FileOutput size={12} className="text-cyan-500" />
                   <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'تصدير' : 'Export'}</h3>
@@ -408,7 +450,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
             {/* Clear */}
             {transcript && (
-              <button onClick={() => { setTranscript(''); setSegments([]); }} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1A1D23] border border-[#2D3139] hover:border-red-500/50 text-gray-400 hover:text-red-400 rounded-lg transition-all text-[10px] font-mono">
+              <button onClick={() => { setTranscript(''); setSegments([]); }} className="w-full flex items-center justify-center gap-2 py-1.5 sm:py-2 bg-[#1A1D23] border border-[#2D3139] hover:border-red-500/50 text-gray-400 hover:text-red-400 rounded-lg transition-all text-[9px] sm:text-[10px] font-mono">
                 <Trash2 size={12} /> {lang === 'ar' ? 'مسح النص' : 'Clear Text'}
               </button>
             )}

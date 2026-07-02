@@ -6,12 +6,10 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  Droplets,
   Eraser,
   Eye,
   EyeOff,
   Sparkles,
-  RotateCcw,
 } from 'lucide-react';
 
 interface BackgroundRemoverProps {
@@ -407,7 +405,7 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#0A0C0F]">
       {/* Page Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
@@ -421,7 +419,7 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
         {/* Left: Image Preview */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           <div className="flex-1 flex flex-col p-3 sm:p-4">
             {!imageFile ? (
               <label className="group relative flex flex-col items-center justify-center gap-2 flex-1 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
@@ -520,76 +518,9 @@ export function BackgroundRemover({ t, lang }: BackgroundRemoverProps) {
               </button>
             )}
 
-            {/* Sampled Colors */}
-            {imageFile && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Droplets size={10} className="text-purple-500 sm:size-3" />
-                    {lang === 'ar' ? 'عينات اللون' : 'Samples'}
-                  </h3>
-                  {sampledColors.length > 0 && (
-                    <button onClick={clearColors} className="text-[7px] sm:text-[8px] text-red-400 hover:text-red-300 font-mono uppercase tracking-wider">
-                      {lang === 'ar' ? 'مسح' : 'Clear'}
-                    </button>
-                  )}
-                </div>
-                {sampledColors.length === 0 ? (
-                  <p className="text-[7px] sm:text-[8px] text-gray-600 font-mono">
-                    {lang === 'ar'
-                      ? 'اضغط "إزالة تلقائية" أو انقر على الخلفية'
-                      : 'Click "Auto Remove" or tap background'}
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {sampledColors.map((color, i) => (
-                      <div key={i} className="flex items-center gap-1 sm:gap-1.5 bg-[#1A1D23] border border-[#2D3139] rounded px-1 sm:px-1.5 py-1 group">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border border-white/20 shrink-0"
-                          style={{ backgroundColor: `rgb(${color.r},${color.g},${color.b})` }} />
-                        <span className="text-[6px] sm:text-[7px] font-mono text-gray-500">{color.r},{color.g},{color.b}</span>
-                        <button onClick={() => removeColor(i)}
-                          className="p-0.5 hover:bg-red-500/20 rounded text-gray-600 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
-                          <X size={7} className="sm:size-[9px]" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tolerance Slider */}
-            {imageFile && sampledColors.length > 0 && !processing && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Eraser size={10} className="text-orange-500 sm:size-3" />
-                    {lang === 'ar' ? 'الحساسية' : 'Tolerance'}
-                  </h3>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-orange-400">{tolerance}%</span>
-                </div>
-                <input
-                  type="range" min="1" max="100" value={tolerance}
-                  onChange={(e) => setTolerance(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer slider-thumb"
-                />
-                <div className="flex justify-between text-[6px] sm:text-[7px] text-gray-600 font-mono">
-                  <span>{lang === 'ar' ? 'دقيق' : 'Precise'}</span>
-                  <span>{lang === 'ar' ? 'واسع' : 'Broad'}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Process Button */}
-            {imageFile && sampledColors.length > 0 && !processing && (
-              <button
-                onClick={() => processImage()}
-                className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
-              >
-                <Eraser size={12} className="sm:size-[14px]" />
-                {lang === 'ar' ? 'تطبيق الإزالة' : 'Apply Removal'}
-              </button>
-            )}
+            {/* Sampled Colors - removed */}
+            {/* Tolerance - removed */}
+            {/* Apply Removal - removed */}
 
             {/* Result */}
             {resultUrl && !processing && !animating && (
