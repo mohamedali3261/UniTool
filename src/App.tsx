@@ -27,6 +27,9 @@ import {
   Subtitles,
   Menu,
   X as XIcon,
+  FileText,
+  Percent,
+  LayoutGrid,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
@@ -42,6 +45,13 @@ import { BackgroundRemover } from './pages/BackgroundRemover';
 import { SpeechToText } from './pages/SpeechToText';
 import { AudioTranscriber } from './pages/AudioTranscriber';
 import { VideoSubtitles } from './pages/VideoSubtitles';
+import { PdfToImage } from './pages/PdfToImage';
+import { ImageCompressor } from './pages/ImageCompressor';
+import { ImageTools } from './pages/ImageTools';
+import { CompressionTools } from './pages/CompressionTools';
+import { OfficeCompressor } from './pages/OfficeCompressor';
+import { VideoCompressor } from './pages/VideoCompressor';
+import { PdfCompressor } from './pages/PdfCompressor';
 import { AudioFile, CompressionSettings } from './types';
 import { compressAudio, loadFFmpeg } from './lib/ffmpeg';
 import { cn } from './lib/utils';
@@ -49,7 +59,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber' | 'videoSubtitles'>('compress');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber' | 'videoSubtitles' | 'pdfToImage' | 'imageCompressor' | 'imageTools' | 'officeCompressor' | 'compressionTools' | 'videoCompressor' | 'pdfCompressor'>('compressionTools');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = translations[lang];
@@ -305,14 +315,15 @@ export default function App() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center bg-white/[0.03] rounded-lg px-1.5 py-1 border border-white/[0.05]">
             {[
-              { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap },
+              { id: 'compressionTools', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap },
               { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors },
               { id: 'videoLogo', label: lang === 'ar' ? 'لوجو' : 'Logo', icon: Plus },
-              { id: 'imageCropper', label: lang === 'ar' ? 'قص\u00A0الصور' : 'Crop', icon: ImageIcon },
-              { id: 'bgRemover', label: lang === 'ar' ? 'خلفية' : 'Bg', icon: Eraser },
+              { id: 'imageTools', label: lang === 'ar' ? 'صور' : 'Images', icon: LayoutGrid },
               { id: 'speechToText', label: lang === 'ar' ? 'نص' : 'STT', icon: MessageSquareText },
               { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio },
               { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles },
+              { id: 'pdfToImage', label: lang === 'ar' ? 'تحويل' : 'Convert', icon: FileText },
+              { id: 'imageTools', label: lang === 'ar' ? 'صور' : 'Images', icon: LayoutGrid },
             ].map((item, idx) => (
               <button
                 key={item.id}
@@ -383,14 +394,15 @@ export default function App() {
                 {/* Grid */}
                 <div className="px-4 pb-5 grid grid-cols-4 gap-3">
                   {[
-                    { id: 'compress', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
+                    { id: 'compressionTools', label: lang === 'ar' ? 'ضغط' : 'Compress', icon: Zap, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
                     { id: 'splitter', label: lang === 'ar' ? 'قص' : 'Split', icon: Scissors, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
                     { id: 'videoLogo', label: lang === 'ar' ? 'لوجو' : 'Logo', icon: Plus, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
-                    { id: 'imageCropper', label: lang === 'ar' ? 'قص صور' : 'Crop', icon: ImageIcon, color: 'from-indigo-600 to-indigo-500', activeBg: 'bg-indigo-600/20 ring-1 ring-indigo-500/30' },
-                    { id: 'bgRemover', label: lang === 'ar' ? 'خلفية' : 'Bg Rem.', icon: Eraser, color: 'from-purple-600 to-purple-500', activeBg: 'bg-purple-600/20 ring-1 ring-purple-500/30' },
+                    { id: 'imageTools', label: lang === 'ar' ? 'صور' : 'Images', icon: LayoutGrid, color: 'from-pink-600 to-rose-600', activeBg: 'bg-pink-600/20 ring-1 ring-pink-500/30' },
                     { id: 'speechToText', label: lang === 'ar' ? 'نص' : 'Speech', icon: MessageSquareText, color: 'from-purple-600 to-purple-500', activeBg: 'bg-purple-600/20 ring-1 ring-purple-500/30' },
                     { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
                     { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
+                    { id: 'pdfToImage', label: lang === 'ar' ? 'تحويل' : 'Convert', icon: FileText, color: 'from-orange-600 to-amber-600', activeBg: 'bg-orange-600/20 ring-1 ring-orange-500/30' },
+                    { id: 'imageTools', label: lang === 'ar' ? 'صور' : 'Images', icon: LayoutGrid, color: 'from-pink-600 to-rose-600', activeBg: 'bg-pink-600/20 ring-1 ring-pink-500/30' },
                   ].map(item => (
                     <button
                       key={item.id}
@@ -438,6 +450,20 @@ export default function App() {
         <ImageCropper t={t} lang={lang} />
       ) : currentPage === 'bgRemover' ? (
         <BackgroundRemover t={t} lang={lang} />
+      ) : currentPage === 'pdfToImage' ? (
+        <PdfToImage t={t} lang={lang} />
+      ) : currentPage === 'imageCompressor' ? (
+        <ImageCompressor t={t} lang={lang} />
+      ) : currentPage === 'imageTools' ? (
+        <ImageTools t={t} lang={lang} onNavigate={(page) => setCurrentPage(page as any)} />
+      ) : currentPage === 'compressionTools' ? (
+        <CompressionTools t={t} lang={lang} onNavigate={(page) => setCurrentPage(page as any)} />
+      ) : currentPage === 'officeCompressor' ? (
+        <OfficeCompressor t={t} lang={lang} />
+      ) : currentPage === 'videoCompressor' ? (
+        <VideoCompressor t={t} lang={lang} />
+      ) : currentPage === 'pdfCompressor' ? (
+        <PdfCompressor t={t} lang={lang} />
       ) : (
         <>
         {/* Page Header */}
