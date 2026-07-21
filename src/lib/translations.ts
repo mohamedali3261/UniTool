@@ -5,7 +5,7 @@
 
 export const translations = {
   ar: {
-    title: 'MediaFlow',
+    title: 'UniTool',
     pro: 'احترافي',
     engineStatus: 'حالة المحرك',
     stable: 'مستقر',
@@ -121,7 +121,7 @@ export const translations = {
     videoFormats: 'MP4, WebM, OGV, AVI, MOV',
   },
   en: {
-    title: 'MediaFlow',
+    title: 'UniTool',
     pro: 'PRO',
     engineStatus: 'ENGINE STATUS',
     stable: 'STABLE',

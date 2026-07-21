@@ -87,7 +87,10 @@ export default function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        await loadFFmpeg();
+        await Promise.all([
+          loadFFmpeg(),
+          new Promise(resolve => setTimeout(resolve, 3000)),
+        ]);
         setIsFfmpegLoaded(true);
       } catch (err) {
         console.error('Failed to load FFmpeg:', err);
@@ -259,21 +262,23 @@ export default function App() {
 
   if (!isFfmpegLoaded) {
     return (
-      <div className="min-h-screen bg-[#0A0C0F] flex items-center justify-center font-mono">
-        <div className="text-center space-y-6">
+      <div className="min-h-screen bg-[#0A0C0F] flex items-center justify-center font-mono" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-center flex flex-col items-center justify-center px-6">
+          <img src="/UniTool_logo.png" alt="UniTool Logo" className="w-64 h-64 sm:w-80 sm:h-80 object-contain" />
+
+          {/* Equalizer Bars */}
           <div className="flex gap-1 justify-center h-8">
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
                 animate={{ height: ["20%", "100%", "20%"] }}
                 transition={{ duration: 1, repeat: Infinity, delay: i * 0.1 }}
-                className="w-1 bg-blue-500"
+                className="w-1 rounded-full"
+                style={{
+                  background: `linear-gradient(to top, #6366f1, #a855f7, #ec4899)`,
+                }}
               />
             ))}
-          </div>
-          <div className="space-y-1 px-4">
-            <div className="text-white text-[10px] tracking-widest uppercase">{t.initializing}</div>
-            <div className="text-gray-600 text-[8px] uppercase">{t.wait}</div>
           </div>
         </div>
       </div>
@@ -281,34 +286,11 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden" dir="rtl">
       {/* Header Navigation */}
-      <header className="flex items-center justify-between px-4 py-3 bg-[#0F1115]/90 backdrop-blur-xl border-b border-white/[0.06] shrink-0 sm:px-6 sm:py-3.5">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-7 h-7 flex items-center justify-center sm:w-9 sm:h-9 relative">
-            <motion.div
-              className="absolute inset-0 rounded-lg bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500"
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              style={{ filter: 'blur(6px)', opacity: 0.5 }}
-            />
-            <div className="relative w-full h-full rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <svg viewBox="0 0 40 40" className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]">
-                <motion.polygon
-                  points="14,10 30,20 14,30"
-                  fill="white"
-                  animate={{ scale: [1, 1.06, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </svg>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xs font-bold tracking-tight text-white uppercase font-display italic sm:text-base">
-              {t.title}
-            </h1>
-            <p className="text-[7px] font-mono text-gray-600 -mt-0.5 sm:text-[8px]">{lang === 'ar' ? 'تحرير الصوت والفيديو والصور' : 'Audio, Video & Image Editor'}</p>
-          </div>
+      <header className="flex items-center justify-between bg-[#0F1115]/90 backdrop-blur-xl border-b border-white/[0.06] shrink-0 overflow-visible">
+        <div className="flex items-center">
+          <img src="/UniTool_logo.png" alt="UniTool Logo" className="w-32 h-32 sm:w-40 sm:h-40 object-contain -my-8 sm:-my-12" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">

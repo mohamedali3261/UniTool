@@ -192,7 +192,7 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const exportMd = () => {
     if (!transcript) return;
-    const md = `# Transcript: ${file?.name || 'Audio'}\n\n${transcript}\n\n---\n*Transcribed via MediaFlow*\n`;
+    const md = `# Transcript: ${file?.name || 'Audio'}\n\n${transcript}\n\n---\n*Transcribed via UniTool*\n`;
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
