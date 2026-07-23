@@ -337,14 +337,14 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                 {/* Image container */}
                 <div
                   ref={containerRef}
-                  className="relative flex-1 bg-[#14171C] rounded-lg overflow-hidden border border-[#2D3139] flex items-center justify-center"
+                  className="relative flex-1 bg-[#14171C] rounded-lg overflow-auto border border-[#2D3139] flex items-center justify-center"
                 >
                   <div className="relative inline-block">
                     <img
                       ref={imageRef}
                       src={imageUrl!}
                       alt="Source"
-                      className="block max-w-[90vw] max-h-[50vh] sm:max-w-[80vw] sm:max-h-[70vh] w-auto h-auto"
+                      className="block w-auto h-auto"
                       onLoad={handleImageLoad}
                       draggable={false}
                     />
