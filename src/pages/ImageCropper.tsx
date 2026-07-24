@@ -431,27 +431,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                   </div>
                 </div>
 
-                {/* Instructions bar / Crop button */}
-                {imageNaturalSize && (
-                  <button
-                    onClick={processCrop}
-                    disabled={processing}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
-                  >
-                    {processing ? (
-                      <>
-                        <Loader2 size={12} className="animate-spin sm:size-[14px]" />
-                        {lang === 'ar' ? 'جاري القص...' : 'Cropping...'}
-                      </>
-                    ) : (
-                      <>
-                        <Scissors size={12} className="sm:size-[14px]" />
-                        {lang === 'ar' ? 'قص المنطقة' : 'Crop Area'}
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
+                </div>
             )}
           </div>
         </div>
@@ -459,6 +439,26 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         {/* Right Sidebar: Controls + Crops List */}
         <div className={`${imageFile && mobileTab === 'crop' ? 'hidden lg:block' : ''} lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col lg:max-h-none`}>
           <div className="overflow-y-auto flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3">
+            {/* Crop Button */}
+            {imageNaturalSize && (
+              <button
+                onClick={processCrop}
+                disabled={processing}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 size={12} className="animate-spin sm:size-[14px]" />
+                    {lang === 'ar' ? 'جاري القص...' : 'Cropping...'}
+                  </>
+                ) : (
+                  <>
+                    <Scissors size={12} className="sm:size-[14px]" />
+                    {lang === 'ar' ? 'قص المنطقة' : 'Crop Area'}
+                  </>
+                )}
+              </button>
+            )}
             {/* Crops List (top) */}
             {croppedItems.length > 0 && (
               <div className="space-y-1.5 sm:space-y-2">
