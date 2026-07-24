@@ -12,35 +12,41 @@ const tools = [
   {
     id: 'imageCropper',
     icon: Scissors,
-    titleAr: 'قص وتعديل الصور بدقة',
-    titleEn: 'Crop & Resize Images Precisely',
+    titleAr: 'قص الصور بدقة',
+    titleEn: 'Crop Images Precisely',
     descAr: 'قص وتدوير وتعديل أبعاد الصور بدقة مع معاينة مباشرة',
     descEn: 'Crop, rotate and resize images with precision and live preview',
-    gradient: 'from-violet-500/30 to-indigo-500/15',
-    iconBg: 'bg-violet-500/20',
-    tag: { labelAr: 'تعديل', labelEn: 'Edit', color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+    color: 'from-violet-500/20 to-indigo-500/20',
+    border: 'border-violet-500/20 hover:border-violet-400/40',
+    iconBg: 'bg-gradient-to-br from-violet-500 to-indigo-600',
+    glow: 'group-hover:shadow-violet-500/20',
+    featured: true,
   },
   {
     id: 'bgRemover',
     icon: Eraser,
-    titleAr: 'إزالة خلفية الصور تلقائياً',
-    titleEn: 'Remove Image Background Automatically',
+    titleAr: 'إزالة الخلفية',
+    titleEn: 'Remove Background',
     descAr: 'احذف خلفية أي صورة تلقائياً بضغطة واحدة وبجودة عالية',
     descEn: 'Remove any image background automatically with one click in high quality',
-    gradient: 'from-emerald-500/30 to-teal-500/15',
-    iconBg: 'bg-emerald-500/20',
-    tag: { labelAr: 'خلفية', labelEn: 'Bg', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    color: 'from-emerald-500/20 to-teal-500/20',
+    border: 'border-emerald-500/20 hover:border-emerald-400/40',
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+    glow: 'group-hover:shadow-emerald-500/20',
+    featured: false,
   },
   {
     id: 'imageCompressor',
     icon: Percent,
-    titleAr: 'ضغط الصور لتقليل الحجم',
-    titleEn: 'Compress Images to Reduce Size',
+    titleAr: 'ضغط الصور',
+    titleEn: 'Compress Images',
     descAr: 'ضغط الصور بشكل ذكي مع الحفاظ على الجودة العالية',
     descEn: 'Smartly compress images while preserving high quality',
-    gradient: 'from-amber-500/30 to-orange-500/15',
-    iconBg: 'bg-amber-500/20',
-    tag: { labelAr: 'ضغط', labelEn: 'Size', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    color: 'from-amber-500/20 to-orange-500/20',
+    border: 'border-amber-500/20 hover:border-amber-400/40',
+    iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+    glow: 'group-hover:shadow-amber-500/20',
+    featured: false,
   },
 ];
 
@@ -76,47 +82,76 @@ export function ImageTools({ t, lang, onNavigate }: Props) {
             {tools.map((tool, i) => (
               <motion.button
                 key={tool.id}
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: i * 0.08 }}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.05, type: 'spring', stiffness: 400, damping: 30 }}
                 onClick={() => onNavigate(tool.id)}
-                className="group relative text-left"
+                className={cn(
+                  "group relative text-left",
+                  tool.featured && "sm:col-span-2"
+                )}
               >
                 <div className={cn(
-                  "relative p-4 rounded-xl border border-white/[0.06] overflow-hidden transition-all duration-300",
-                  "bg-white/[0.03] backdrop-blur-xl",
-                  "hover:bg-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-white/[0.02]"
+                  "relative rounded-2xl overflow-hidden transition-all duration-300 border",
+                  tool.border,
+                  "bg-gradient-to-br", tool.color,
+                  "backdrop-blur-sm",
+                  "hover:shadow-xl", tool.glow,
+                  "hover:-translate-y-0.5"
                 )}>
+                  {/* Background watermark icon */}
+                  <div className="absolute -bottom-4 -right-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+                    <tool.icon size={tool.featured ? 120 : 80} className="text-white" />
+                  </div>
+
                   <div className={cn(
-                    "absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity group-hover:opacity-30",
-                    tool.gradient
-                  )} />
-                  <div className="relative z-10 flex items-start gap-3">
+                    "relative z-10 flex items-center gap-4",
+                    tool.featured ? "p-5 sm:p-6" : "p-4"
+                  )}>
+                    {/* Icon circle */}
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-xl transition-transform group-hover:scale-110",
-                      tool.iconBg
+                      "rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300",
+                      "group-hover:scale-110 group-hover:rotate-6",
+                      tool.iconBg,
+                      "shadow-lg",
+                      tool.featured
+                        ? "w-14 h-14 sm:w-16 sm:h-16"
+                        : "w-11 h-11"
                     )}>
-                      <tool.icon size={18} className="text-white" />
+                      <tool.icon size={tool.featured ? 24 : 18} className="text-white" />
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-[10px] font-bold text-white truncate sm:text-xs">
+                        <h3 className={cn(
+                          "font-extrabold text-white truncate",
+                          tool.featured
+                            ? "text-sm sm:text-base"
+                            : "text-[11px] sm:text-xs"
+                        )}>
                           {lang === 'ar' ? tool.titleAr : tool.titleEn}
                         </h3>
-                        <span className={cn(
-                          "text-[6px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0 font-bold",
-                          tool.tag.color
-                        )}>
-                          {lang === 'ar' ? tool.tag.labelAr : tool.tag.labelEn}
-                        </span>
+                        {tool.featured && (
+                          <Sparkles size={12} className="text-yellow-400 shrink-0" />
+                        )}
                       </div>
-                      <p className="text-[8px] text-white/50 font-mono leading-relaxed line-clamp-2 sm:text-[9px]">
+                      <p className={cn(
+                        "text-white/40 font-mono leading-relaxed line-clamp-2",
+                        tool.featured
+                          ? "text-[9px] sm:text-[10px]"
+                          : "text-[8px] sm:text-[9px]"
+                      )}>
                         {lang === 'ar' ? tool.descAr : tool.descEn}
                       </p>
-                      <div className="flex items-center gap-1 mt-2 text-[7px] font-mono text-white/40 group-hover:text-white/60 transition-colors">
-                        <span>{lang === 'ar' ? 'فتح الأداة' : 'Open tool'}</span>
-                        <ArrowRight size={8} className={lang === 'ar' ? 'rotate-180' : ''} />
-                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-white/[0.06] group-hover:bg-white/[0.12] transition-all duration-300 group-hover:scale-110">
+                      <ArrowRight size={12} className={cn(
+                        "text-white/40 group-hover:text-white/80 transition-colors",
+                        lang === 'ar' ? 'rotate-180' : ''
+                      )} />
                     </div>
                   </div>
                 </div>

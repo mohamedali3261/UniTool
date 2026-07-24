@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight } from 'lucide-react';
+import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -12,57 +12,67 @@ const tools = [
   {
     id: 'imageToPdf',
     icon: Image,
-    titleAr: 'تحويل الصور إلى ملف PDF',
-    titleEn: 'Convert Images to PDF',
+    titleAr: 'صور → PDF',
+    titleEn: 'Images → PDF',
     descAr: 'دمج وتحويل مجموعة الصور إلى ملف PDF واحد بجودة عالية',
     descEn: 'Merge and convert multiple images into a single high-quality PDF file',
-    gradient: 'from-red-500/30 to-rose-500/15',
-    iconBg: 'bg-red-500/20',
-    tag: { labelAr: 'إنشاء', labelEn: 'Create', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+    color: 'from-red-500/20 to-rose-600/20',
+    border: 'border-red-500/20 hover:border-red-400/40',
+    iconBg: 'bg-gradient-to-br from-red-500 to-rose-600',
+    glow: 'group-hover:shadow-red-500/20',
+    featured: true,
   },
   {
     id: 'pdfToImage',
     icon: Image,
-    titleAr: 'استخراج صفحات PDF كصور',
-    titleEn: 'Extract PDF Pages as Images',
+    titleAr: 'PDF → صور',
+    titleEn: 'PDF → Images',
     descAr: 'تحويل صفحات ملف PDF إلى صور PNG أو JPG بدقة عالية',
     descEn: 'Convert PDF pages to high-resolution PNG or JPG images',
-    gradient: 'from-orange-500/30 to-amber-500/15',
-    iconBg: 'bg-orange-500/20',
-    tag: { labelAr: 'تحويل', labelEn: 'Convert', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+    color: 'from-orange-500/20 to-amber-500/20',
+    border: 'border-orange-500/20 hover:border-orange-400/40',
+    iconBg: 'bg-gradient-to-br from-orange-500 to-amber-500',
+    glow: 'group-hover:shadow-orange-500/20',
+    featured: false,
   },
   {
     id: 'pdfToWord',
     icon: Type,
-    titleAr: 'تحويل PDF إلى مستند Word',
-    titleEn: 'Convert PDF to Word Document',
+    titleAr: 'PDF → Word',
+    titleEn: 'PDF → Word',
     descAr: 'استخراج النصوص من ملف PDF وتحويلها إلى مستند Word قابل للتعديل',
     descEn: 'Extract text from PDF and convert it to an editable Word document',
-    gradient: 'from-blue-500/30 to-indigo-500/15',
-    iconBg: 'bg-blue-500/20',
-    tag: { labelAr: 'تحويل', labelEn: 'Convert', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    color: 'from-blue-500/20 to-indigo-600/20',
+    border: 'border-blue-500/20 hover:border-blue-400/40',
+    iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+    glow: 'group-hover:shadow-blue-500/20',
+    featured: false,
   },
   {
     id: 'wordToPdf',
     icon: FileText,
-    titleAr: 'تحويل مستند Word إلى PDF',
-    titleEn: 'Convert Word Document to PDF',
+    titleAr: 'Word → PDF',
+    titleEn: 'Word → PDF',
     descAr: 'تحويل ملف Word إلى PDF مع الحفاظ على التنسيق والتصميم',
     descEn: 'Convert Word files to PDF while preserving formatting and layout',
-    gradient: 'from-cyan-500/30 to-blue-500/15',
-    iconBg: 'bg-cyan-500/20',
-    tag: { labelAr: 'تحويل', labelEn: 'Convert', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+    color: 'from-cyan-500/20 to-blue-500/20',
+    border: 'border-cyan-500/20 hover:border-cyan-400/40',
+    iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-500',
+    glow: 'group-hover:shadow-cyan-500/20',
+    featured: true,
   },
   {
     id: 'pdfCompressor',
     icon: Shrink,
-    titleAr: 'ضغط ملفات PDF لتقليل الحجم',
-    titleEn: 'Compress PDF Files to Reduce Size',
+    titleAr: 'ضغط PDF',
+    titleEn: 'Compress PDF',
     descAr: 'تقليل حجم ملفات PDF مع الحفاظ على جودة المحتوى والنصوص',
     descEn: 'Reduce PDF file size while maintaining content and text quality',
-    gradient: 'from-emerald-500/30 to-teal-500/15',
-    iconBg: 'bg-emerald-500/20',
-    tag: { labelAr: 'ضغط', labelEn: 'Compress', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    color: 'from-emerald-500/20 to-teal-500/20',
+    border: 'border-emerald-500/20 hover:border-emerald-400/40',
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+    glow: 'group-hover:shadow-emerald-500/20',
+    featured: false,
   },
 ];
 
@@ -98,47 +108,76 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
             {tools.map((tool, i) => (
               <motion.button
                 key={tool.id}
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: i * 0.08 }}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.05, type: 'spring', stiffness: 400, damping: 30 }}
                 onClick={() => onNavigate(tool.id)}
-                className="group relative text-left"
+                className={cn(
+                  "group relative text-left",
+                  tool.featured && "sm:col-span-2"
+                )}
               >
                 <div className={cn(
-                  "relative p-4 rounded-xl border border-white/[0.06] overflow-hidden transition-all duration-300",
-                  "bg-white/[0.03] backdrop-blur-xl",
-                  "hover:bg-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-white/[0.02]"
+                  "relative rounded-2xl overflow-hidden transition-all duration-300 border",
+                  tool.border,
+                  "bg-gradient-to-br", tool.color,
+                  "backdrop-blur-sm",
+                  "hover:shadow-xl", tool.glow,
+                  "hover:-translate-y-0.5"
                 )}>
+                  {/* Background watermark icon */}
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+                    <tool.icon size={tool.featured ? 120 : 80} className="text-white" />
+                  </div>
+
                   <div className={cn(
-                    "absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity group-hover:opacity-30",
-                    tool.gradient
-                  )} />
-                  <div className="relative z-10 flex items-start gap-3">
+                    "relative z-10 flex items-center gap-4",
+                    tool.featured ? "p-5 sm:p-6" : "p-4"
+                  )}>
+                    {/* Icon circle */}
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-xl transition-transform group-hover:scale-110",
-                      tool.iconBg
+                      "rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300",
+                      "group-hover:scale-110 group-hover:rotate-6",
+                      tool.iconBg,
+                      "shadow-lg",
+                      tool.featured
+                        ? "w-14 h-14 sm:w-16 sm:h-16"
+                        : "w-11 h-11"
                     )}>
-                      <tool.icon size={18} className="text-white" />
+                      <tool.icon size={tool.featured ? 24 : 18} className="text-white" />
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-[10px] font-bold text-white truncate sm:text-xs">
+                        <h3 className={cn(
+                          "font-extrabold text-white truncate",
+                          tool.featured
+                            ? "text-sm sm:text-base"
+                            : "text-[11px] sm:text-xs"
+                        )}>
                           {lang === 'ar' ? tool.titleAr : tool.titleEn}
                         </h3>
-                        <span className={cn(
-                          "text-[6px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0 font-bold",
-                          tool.tag.color
-                        )}>
-                          {lang === 'ar' ? tool.tag.labelAr : tool.tag.labelEn}
-                        </span>
+                        {tool.featured && (
+                          <Sparkles size={12} className="text-yellow-400 shrink-0" />
+                        )}
                       </div>
-                      <p className="text-[8px] text-white/50 font-mono leading-relaxed line-clamp-2 sm:text-[9px]">
+                      <p className={cn(
+                        "text-white/40 font-mono leading-relaxed line-clamp-2",
+                        tool.featured
+                          ? "text-[9px] sm:text-[10px]"
+                          : "text-[8px] sm:text-[9px]"
+                      )}>
                         {lang === 'ar' ? tool.descAr : tool.descEn}
                       </p>
-                      <div className="flex items-center gap-1 mt-2 text-[7px] font-mono text-white/40 group-hover:text-white/60 transition-colors">
-                        <span>{lang === 'ar' ? 'فتح الأداة' : 'Open tool'}</span>
-                        <ArrowRight size={8} className={lang === 'ar' ? 'rotate-180' : ''} />
-                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-white/[0.06] group-hover:bg-white/[0.12] transition-all duration-300 group-hover:scale-110">
+                      <ArrowRight size={12} className={cn(
+                        "text-white/40 group-hover:text-white/80 transition-colors",
+                        lang === 'ar' ? 'rotate-180' : ''
+                      )} />
                     </div>
                   </div>
                 </div>
