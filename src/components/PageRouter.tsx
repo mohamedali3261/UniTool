@@ -21,6 +21,11 @@ import { CompressionTools } from '../pages/CompressionTools';
 import { OfficeCompressor } from '../pages/OfficeCompressor';
 import { VideoCompressor } from '../pages/VideoCompressor';
 import { PdfCompressor } from '../pages/PdfCompressor';
+import { PdfMerger } from '../pages/PdfMerger';
+import { PdfSplitter } from '../pages/PdfSplitter';
+import { PdfToText } from '../pages/PdfToText';
+import { PdfUnlock } from '../pages/PdfUnlock';
+import { PdfProtect } from '../pages/PdfProtect';
 
 interface Props {
   currentPage: PageId;
@@ -96,6 +101,16 @@ export function PageRouter({
       return <WordToPdf {...p} />;
     case 'pdfTools':
       return <PdfTools {...p} onNavigate={onNavigate} />;
+    case 'pdfMerger':
+      return <PdfMerger {...p} />;
+    case 'pdfSplitter':
+      return <PdfSplitter {...p} />;
+    case 'pdfToText':
+      return <PdfToText {...p} />;
+    case 'pdfUnlock':
+      return <PdfUnlock {...p} />;
+    case 'pdfProtect':
+      return <PdfProtect {...p} />;
     case 'compressionTools':
       return <CompressionTools {...p} onNavigate={onNavigate} />;
     default:

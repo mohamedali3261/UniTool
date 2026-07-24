@@ -19,4 +19,9 @@ export type PageId =
   | 'imageToPdf'
   | 'pdfToWord'
   | 'wordToPdf'
-  | 'pdfTools';
+  | 'pdfTools'
+  | 'pdfMerger'
+  | 'pdfSplitter'
+  | 'pdfToText'
+  | 'pdfUnlock'
+  | 'pdfProtect';

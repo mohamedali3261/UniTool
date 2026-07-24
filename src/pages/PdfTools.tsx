@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles } from 'lucide-react';
+import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles, Merge, Scissors, Search, Lock, Unlock } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -20,7 +20,6 @@ const tools = [
     border: 'border-red-500/20 hover:border-red-400/40',
     iconBg: 'bg-gradient-to-br from-red-500 to-rose-600',
     glow: 'group-hover:shadow-red-500/20',
-    featured: true,
   },
   {
     id: 'pdfToImage',
@@ -33,7 +32,6 @@ const tools = [
     border: 'border-orange-500/20 hover:border-orange-400/40',
     iconBg: 'bg-gradient-to-br from-orange-500 to-amber-500',
     glow: 'group-hover:shadow-orange-500/20',
-    featured: false,
   },
   {
     id: 'pdfToWord',
@@ -46,7 +44,6 @@ const tools = [
     border: 'border-blue-500/20 hover:border-blue-400/40',
     iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
     glow: 'group-hover:shadow-blue-500/20',
-    featured: false,
   },
   {
     id: 'wordToPdf',
@@ -59,7 +56,6 @@ const tools = [
     border: 'border-cyan-500/20 hover:border-cyan-400/40',
     iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-500',
     glow: 'group-hover:shadow-cyan-500/20',
-    featured: true,
   },
   {
     id: 'pdfCompressor',
@@ -72,14 +68,76 @@ const tools = [
     border: 'border-emerald-500/20 hover:border-emerald-400/40',
     iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
     glow: 'group-hover:shadow-emerald-500/20',
-    featured: false,
+  },
+  {
+    id: 'pdfMerger',
+    icon: Merge,
+    titleAr: 'دمج ملفات PDF',
+    titleEn: 'Merge PDF Files',
+    descAr: 'دمج عدة ملفات PDF في ملف واحد مع ترتيب الصفحات',
+    descEn: 'Combine multiple PDF files into one with page ordering',
+    color: 'from-violet-500/20 to-purple-500/20',
+    border: 'border-violet-500/20 hover:border-violet-400/40',
+    iconBg: 'bg-gradient-to-br from-violet-500 to-purple-600',
+    glow: 'group-hover:shadow-violet-500/20',
+  },
+  {
+    id: 'pdfSplitter',
+    icon: Scissors,
+    titleAr: 'تقسيم PDF',
+    titleEn: 'Split PDF',
+    descAr: 'استخراج أو حذف صفحات محددة من ملف PDF',
+    descEn: 'Extract or remove specific pages from a PDF file',
+    color: 'from-emerald-500/20 to-teal-500/20',
+    border: 'border-emerald-500/20 hover:border-emerald-400/40',
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+    glow: 'group-hover:shadow-emerald-500/20',
+  },
+  {
+    id: 'pdfToText',
+    icon: Search,
+    titleAr: 'استخراج النص من PDF',
+    titleEn: 'Extract Text from PDF',
+    descAr: 'تحويل محتوى ملف PDF إلى نص عادي قابل للنسخ والتعديل',
+    descEn: 'Convert PDF content to plain text for copying and editing',
+    color: 'from-blue-500/20 to-cyan-500/20',
+    border: 'border-blue-500/20 hover:border-blue-400/40',
+    iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-600',
+    glow: 'group-hover:shadow-blue-500/20',
+  },
+  {
+    id: 'pdfProtect',
+    icon: Lock,
+    titleAr: 'حماية PDF بكلمة مرور',
+    titleEn: 'Protect PDF with Password',
+    descAr: 'إضافة كلمة مرور لحماية ملف PDF من الوصول غير المصرح به',
+    descEn: 'Add password protection to prevent unauthorized access to PDF',
+    color: 'from-rose-500/20 to-pink-500/20',
+    border: 'border-rose-500/20 hover:border-rose-400/40',
+    iconBg: 'bg-gradient-to-br from-rose-500 to-pink-600',
+    glow: 'group-hover:shadow-rose-500/20',
+  },
+  {
+    id: 'pdfUnlock',
+    icon: Unlock,
+    titleAr: 'فتح PDF محمي',
+    titleEn: 'Unlock Protected PDF',
+    descAr: 'إزالة كلمة المرور من ملف PDF محمي لتعديله أو طباعته',
+    descEn: 'Remove password from a protected PDF for editing or printing',
+    color: 'from-amber-500/20 to-orange-500/20',
+    border: 'border-amber-500/20 hover:border-amber-400/40',
+    iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+    glow: 'group-hover:shadow-amber-500/20',
   },
 ];
 
 export function PdfTools({ t, lang, onNavigate }: Props) {
   const featured = tools[0];
-  const mid = [tools[1], tools[2]];
-  const small = [tools[3], tools[4]];
+  const row1 = [tools[1], tools[2]];
+  const row2 = [tools[3], tools[4]];
+  const row3 = [tools[5], tools[6]];
+  const row4 = [tools[7], tools[8]];
+  const row5 = [tools[9]];
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <style>{`
@@ -143,31 +201,14 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
             </div>
           </motion.button>
 
-          {/* Row 2: Two medium cards */}
+          {/* Row 2 */}
           <div className="grid grid-cols-2 gap-3 mb-3">
-            {mid.map((tool, i) => (
-              <motion.button
-                key={tool.id}
-                initial={{ y: 16, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.08 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }}
-                onClick={() => onNavigate(tool.id)}
-                className="group relative text-left"
-              >
-                <div className={cn(
-                  "relative rounded-2xl overflow-hidden transition-all duration-300 border h-full",
-                  tool.border,
-                  "bg-gradient-to-br", tool.color,
-                  "backdrop-blur-sm hover:shadow-xl", tool.glow,
-                  "hover:-translate-y-0.5"
-                )}>
-                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                    <tool.icon size={80} className="text-white" />
-                  </div>
+            {row1.map((tool, i) => (
+              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.08 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left">
+                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={80} className="text-white" /></div>
                   <div className="relative z-10 p-4 flex items-center gap-3">
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}>
-                      <tool.icon size={20} className="text-white" />
-                    </div>
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={20} className="text-white" /></div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-[11px] sm:text-xs font-extrabold text-white truncate mb-1">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
                       <p className="text-[8px] sm:text-[9px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
@@ -178,31 +219,68 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
             ))}
           </div>
 
-          {/* Row 3: Two small cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {small.map((tool, i) => (
-              <motion.button
-                key={tool.id}
-                initial={{ y: 16, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }}
-                onClick={() => onNavigate(tool.id)}
-                className="group relative text-left"
-              >
-                <div className={cn(
-                  "relative rounded-2xl overflow-hidden transition-all duration-300 border h-full",
-                  tool.border,
-                  "bg-gradient-to-br", tool.color,
-                  "backdrop-blur-sm hover:shadow-xl", tool.glow,
-                  "hover:-translate-y-0.5"
-                )}>
-                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                    <tool.icon size={60} className="text-white" />
-                  </div>
-                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}>
-                      <tool.icon size={17} className="text-white" />
+          {/* Row 3 */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {row2.map((tool, i) => (
+              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.14 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left">
+                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={80} className="text-white" /></div>
+                  <div className="relative z-10 p-4 flex items-center gap-3">
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={20} className="text-white" /></div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[11px] sm:text-xs font-extrabold text-white truncate mb-1">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
+                      <p className="text-[8px] sm:text-[9px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
                     </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Row 4 */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {row3.map((tool, i) => (
+              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left">
+                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={80} className="text-white" /></div>
+                  <div className="relative z-10 p-4 flex items-center gap-3">
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={20} className="text-white" /></div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[11px] sm:text-xs font-extrabold text-white truncate mb-1">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
+                      <p className="text-[8px] sm:text-[9px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Row 5 */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {row4.map((tool, i) => (
+              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.26 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left">
+                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={60} className="text-white" /></div>
+                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={17} className="text-white" /></div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[10px] sm:text-[11px] font-extrabold text-white truncate mb-0.5">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
+                      <p className="text-[7px] sm:text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Row 6: Last card (half width) */}
+          <div className="max-w-[calc(50%-0.375rem)]">
+            {row5.map((tool) => (
+              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.32, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left w-full">
+                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={60} className="text-white" /></div>
+                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={17} className="text-white" /></div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-[10px] sm:text-[11px] font-extrabold text-white truncate mb-0.5">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
                       <p className="text-[7px] sm:text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
