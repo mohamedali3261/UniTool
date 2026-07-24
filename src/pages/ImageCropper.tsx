@@ -339,61 +339,63 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                   ref={containerRef}
                   className="relative flex-1 bg-[#14171C] rounded-lg overflow-auto border border-[#2D3139] min-h-0"
                 >
-                  <div className="relative inline-flex justify-center items-start min-w-full min-h-full">
-                    <img
-                      ref={imageRef}
-                      src={imageUrl!}
-                      alt="Source"
-                      className="block max-w-full max-h-[60vh] w-auto h-auto object-contain"
-                      onLoad={handleImageLoad}
-                      draggable={false}
-                    />
+                  <div className="flex justify-center items-center min-w-full min-h-full">
+                    <div className="relative" style={{ width: displaySize.width || 'auto', height: displaySize.height || 'auto' }}>
+                      <img
+                        ref={imageRef}
+                        src={imageUrl!}
+                        alt="Source"
+                        className="block max-w-full max-h-[60vh] w-auto h-auto object-contain"
+                        onLoad={handleImageLoad}
+                        draggable={false}
+                      />
 
-                    {imageNaturalSize && displaySize.width > 0 && (
-                      <>
-                        <div
-                          className="absolute inset-0 pointer-events-none bg-black/60"
-                          style={{
-                            clipPath: `inset(${cropBox.y}px ${displaySize.width - cropBox.x - cropBox.width}px ${displaySize.height - cropBox.y - cropBox.height}px ${cropBox.x}px)`
-                          }}
-                        />
+                      {imageNaturalSize && displaySize.width > 0 && (
+                        <>
+                          <div
+                            className="absolute inset-0 pointer-events-none bg-black/60"
+                            style={{
+                              clipPath: `inset(${cropBox.y}px ${displaySize.width - cropBox.x - cropBox.width}px ${displaySize.height - cropBox.y - cropBox.height}px ${cropBox.x}px)`
+                            }}
+                          />
 
-                        <div
-                          className="absolute cursor-move border-2 border-white/80"
-                          style={{
-                            left: cropBox.x,
-                            top: cropBox.y,
-                            width: cropBox.width,
-                            height: cropBox.height,
-                            touchAction: 'none',
-                          }}
-                          onMouseDown={(e) => handleMouseDown(e, 'move')}
-                          onTouchStart={(e) => handleMouseDown(e, 'move')}
-                        >
-                          <div className="absolute inset-0 opacity-20" style={{
-                            backgroundImage: `linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)`,
-                            backgroundSize: '33.33% 33.33%'
-                          }} />
+                          <div
+                            className="absolute cursor-move border-2 border-white/80"
+                            style={{
+                              left: cropBox.x,
+                              top: cropBox.y,
+                              width: cropBox.width,
+                              height: cropBox.height,
+                              touchAction: 'none',
+                            }}
+                            onMouseDown={(e) => handleMouseDown(e, 'move')}
+                            onTouchStart={(e) => handleMouseDown(e, 'move')}
+                          >
+                            <div className="absolute inset-0 opacity-20" style={{
+                              backgroundImage: `linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)`,
+                              backgroundSize: '33.33% 33.33%'
+                            }} />
 
-                          <div className="absolute -top-2 -left-2 sm:-top-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
-                            style={{ touchAction: 'none' }}
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'nw')}
-                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'nw')} />
-                          <div className="absolute -top-2 -right-2 sm:-top-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
-                            style={{ touchAction: 'none' }}
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'ne')}
-                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'ne')} />
-                          <div className="absolute -bottom-2 -left-2 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
-                            style={{ touchAction: 'none' }}
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'sw')}
-                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'sw')} />
-                          <div className="absolute -bottom-2 -right-2 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
-                            style={{ touchAction: 'none' }}
-                            onMouseDown={(e) => handleMouseDown(e, 'resize', 'se')}
-                            onTouchStart={(e) => handleMouseDown(e, 'resize', 'se')} />
-                        </div>
-                      </>
-                    )}
+                            <div className="absolute -top-2 -left-2 sm:-top-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                              style={{ touchAction: 'none' }}
+                              onMouseDown={(e) => handleMouseDown(e, 'resize', 'nw')}
+                              onTouchStart={(e) => handleMouseDown(e, 'resize', 'nw')} />
+                            <div className="absolute -top-2 -right-2 sm:-top-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                              style={{ touchAction: 'none' }}
+                              onMouseDown={(e) => handleMouseDown(e, 'resize', 'ne')}
+                              onTouchStart={(e) => handleMouseDown(e, 'resize', 'ne')} />
+                            <div className="absolute -bottom-2 -left-2 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                              style={{ touchAction: 'none' }}
+                              onMouseDown={(e) => handleMouseDown(e, 'resize', 'sw')}
+                              onTouchStart={(e) => handleMouseDown(e, 'resize', 'sw')} />
+                            <div className="absolute -bottom-2 -right-2 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-3 sm:h-3 bg-white border-2 sm:border border-blue-500 rounded-sm z-10"
+                              style={{ touchAction: 'none' }}
+                              onMouseDown={(e) => handleMouseDown(e, 'resize', 'se')}
+                              onTouchStart={(e) => handleMouseDown(e, 'resize', 'se')} />
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
