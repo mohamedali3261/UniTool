@@ -198,47 +198,52 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     }
   }, [isDragging, isResizing, resizeHandle, displaySize]);
 
-  const processCrop = () => {
-    if (!imageRef.current || !canvasRef.current || !imageNaturalSize) return;
-    const img = imageRef.current;
+  const processCrop = async () => {
+    if (!canvasRef.current || !imageNaturalSize || !imageFile) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     setProcessing(true);
 
-    const scaleX = imageNaturalSize.width / displaySize.width;
-    const scaleY = imageNaturalSize.height / displaySize.height;
+    try {
+      const bitmap = await createImageBitmap(imageFile);
 
-    const sx = Math.round(cropBox.x * scaleX);
-    const sy = Math.round(cropBox.y * scaleY);
-    const sw = Math.round(cropBox.width * scaleX);
-    const sh = Math.round(cropBox.height * scaleY);
+      const scaleX = imageNaturalSize.width / displaySize.width;
+      const scaleY = imageNaturalSize.height / displaySize.height;
 
-    canvas.width = sw;
-    canvas.height = sh;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      const sx = Math.round(cropBox.x * scaleX);
+      const sy = Math.round(cropBox.y * scaleY);
+      const sw = Math.round(cropBox.width * scaleX);
+      const sh = Math.round(cropBox.height * scaleY);
 
-    const mime = imageFile?.type || 'image/png';
-    const quality = mime === 'image/png' ? undefined : 0.92;
-    const ext = mime === 'image/webp' ? 'webp' : mime === 'image/jpeg' ? 'jpg' : 'png';
+      canvas.width = sw;
+      canvas.height = sh;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+      bitmap.close();
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const newItem: CroppedItem = {
-          id: Math.random().toString(36).substr(2, 9),
-          blob,
-          url,
-          width: sw,
-          height: sh,
-        };
-        setCroppedItems(prev => [newItem, ...prev]);
-      }
+      const mime = imageFile.type || 'image/png';
+      const quality = mime === 'image/png' ? undefined : 0.92;
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const newItem: CroppedItem = {
+            id: Math.random().toString(36).substr(2, 9),
+            blob,
+            url,
+            width: sw,
+            height: sh,
+          };
+          setCroppedItems(prev => [newItem, ...prev]);
+        }
+        setProcessing(false);
+      }, mime, quality);
+    } catch {
       setProcessing(false);
-    }, mime, quality);
+    }
   };
 
   const downloadItem = (item: CroppedItem) => {
