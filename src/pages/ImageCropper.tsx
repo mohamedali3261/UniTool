@@ -41,6 +41,19 @@ interface CroppedItem {
 }
 
 const MIN_CROP_SIZE = 50;
+const CROP_STORAGE_KEY = 'unitool_image_cropper_size';
+
+function getSavedCropRatio(): { rw: number; rh: number } | null {
+  try {
+    const saved = localStorage.getItem(CROP_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return null;
+}
+
+function saveCropRatio(rw: number, rh: number) {
+  try { localStorage.setItem(CROP_STORAGE_KEY, JSON.stringify({ rw, rh })); } catch {}
+}
 
 export function ImageCropper({ t, lang }: ImageCropperProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -68,6 +81,12 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     };
   }, [imageUrl, croppedItems]);
 
+  useEffect(() => {
+    if (displaySize.width > 0 && displaySize.height > 0 && cropBox.width > 0 && cropBox.height > 0) {
+      saveCropRatio(cropBox.width / displaySize.width, cropBox.height / displaySize.height);
+    }
+  }, [cropBox.width, cropBox.height, displaySize]);
+
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
@@ -88,13 +107,20 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     const h = Math.round(rect.height);
     setDisplaySize({ width: w, height: h });
     setImageNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
-    const cw = Math.round(w * 0.5);
-    const ch = Math.round(h * 0.5);
+    const saved = getSavedCropRatio();
+    let cw: number, ch: number;
+    if (saved) {
+      cw = Math.round(w * saved.rw);
+      ch = Math.round(h * saved.rh);
+    } else {
+      cw = Math.round(w * 0.5);
+      ch = Math.round(h * 0.5);
+    }
     setCropBox({
       x: Math.round((w - cw) / 2),
       y: Math.round((h - ch) / 2),
-      width: Math.max(MIN_CROP_SIZE, cw),
-      height: Math.max(MIN_CROP_SIZE, ch),
+      width: Math.max(MIN_CROP_SIZE, Math.min(cw, w)),
+      height: Math.max(MIN_CROP_SIZE, Math.min(ch, h)),
     });
   };
 
@@ -195,6 +221,10 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
+    const mime = imageFile?.type || 'image/png';
+    const quality = mime === 'image/png' ? undefined : 0.92;
+    const ext = mime === 'image/webp' ? 'webp' : mime === 'image/jpeg' ? 'jpg' : 'png';
+
     canvas.toBlob((blob) => {
       if (blob) {
         const url = URL.createObjectURL(blob);
@@ -208,13 +238,14 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         setCroppedItems(prev => [newItem, ...prev]);
       }
       setProcessing(false);
-    }, 'image/png');
+    }, mime, quality);
   };
 
   const downloadItem = (item: CroppedItem) => {
+    const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
     const a = document.createElement('a');
     a.href = item.url;
-    a.download = `cropped_${item.id}.png`;
+    a.download = `cropped_${item.id}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -224,7 +255,8 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     if (croppedItems.length === 0) return;
     const zip = new JSZip();
     croppedItems.forEach((item, i) => {
-      zip.file(`cropped_${i + 1}_${item.width}x${item.height}.png`, item.blob);
+      const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
+      zip.file(`cropped_${i + 1}_${item.width}x${item.height}.${ext}`, item.blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(content);
