@@ -38,6 +38,7 @@ interface CroppedItem {
   url: string;
   width: number;
   height: number;
+  originalName: string;
 }
 
 const MIN_CROP_SIZE = 50;
@@ -236,6 +237,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
             url,
             width: sw,
             height: sh,
+            originalName: imageFile.name.replace(/\.[^.]+$/, ''),
           };
           setCroppedItems(prev => [newItem, ...prev]);
         }
@@ -250,7 +252,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
     const a = document.createElement('a');
     a.href = item.url;
-    a.download = `cropped_${item.id}.${ext}`;
+    a.download = `${item.originalName}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -261,7 +263,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     const zip = new JSZip();
     croppedItems.forEach((item, i) => {
       const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
-      zip.file(`cropped_${i + 1}_${item.width}x${item.height}.${ext}`, item.blob);
+      zip.file(`${item.originalName}.${ext}`, item.blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(content);
