@@ -77,6 +77,9 @@ const tools = [
 ];
 
 export function PdfTools({ t, lang, onNavigate }: Props) {
+  const featured = tools[0];
+  const mid = [tools[1], tools[2]];
+  const small = [tools[3], tools[4]];
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <style>{`
@@ -104,80 +107,105 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
 
       <div className="flex-1 pdf-tools-scroll">
         <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {tools.map((tool, i) => (
+          {/* Row 1: Featured full-width card */}
+          <motion.button
+            initial={{ y: 16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0, type: 'spring', stiffness: 300, damping: 25 }}
+            onClick={() => onNavigate(featured.id)}
+            className="group relative w-full text-left mb-3"
+          >
+            <div className={cn(
+              "relative rounded-2xl overflow-hidden transition-all duration-300 border",
+              featured.border,
+              "bg-gradient-to-br", featured.color,
+              "backdrop-blur-sm hover:shadow-xl", featured.glow,
+              "hover:-translate-y-0.5"
+            )}>
+              <div className="absolute -bottom-6 -left-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+                <featured.icon size={140} className="text-white" />
+              </div>
+              <div className="relative z-10 p-5 sm:p-6 flex items-center gap-5">
+                <div className={cn("w-16 h-16 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-xl", featured.iconBg)}>
+                  <featured.icon size={28} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <h3 className="text-base sm:text-lg font-extrabold text-white truncate">{lang === 'ar' ? featured.titleAr : featured.titleEn}</h3>
+                    <Sparkles size={14} className="text-yellow-400 shrink-0" />
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? featured.descAr : featured.descEn}</p>
+                </div>
+                <div className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.06] group-hover:bg-white/[0.12] transition-all duration-300 group-hover:scale-110">
+                  <ArrowRight size={16} className={cn("text-white/40 group-hover:text-white/80 transition-colors", lang === 'ar' ? 'rotate-180' : '')} />
+                </div>
+              </div>
+            </div>
+          </motion.button>
+
+          {/* Row 2: Two medium cards */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {mid.map((tool, i) => (
               <motion.button
                 key={tool.id}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: i * 0.05, type: 'spring', stiffness: 400, damping: 30 }}
+                initial={{ y: 16, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.08 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }}
                 onClick={() => onNavigate(tool.id)}
-                className={cn(
-                  "group relative text-left",
-                  tool.featured && "sm:col-span-2"
-                )}
+                className="group relative text-left"
               >
                 <div className={cn(
-                  "relative rounded-2xl overflow-hidden transition-all duration-300 border",
+                  "relative rounded-2xl overflow-hidden transition-all duration-300 border h-full",
                   tool.border,
                   "bg-gradient-to-br", tool.color,
-                  "backdrop-blur-sm",
-                  "hover:shadow-xl", tool.glow,
+                  "backdrop-blur-sm hover:shadow-xl", tool.glow,
                   "hover:-translate-y-0.5"
                 )}>
-                  {/* Background watermark icon */}
                   <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                    <tool.icon size={tool.featured ? 120 : 80} className="text-white" />
+                    <tool.icon size={80} className="text-white" />
                   </div>
-
-                  <div className={cn(
-                    "relative z-10 flex items-center gap-4",
-                    tool.featured ? "p-5 sm:p-6" : "p-4"
-                  )}>
-                    {/* Icon circle */}
-                    <div className={cn(
-                      "rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300",
-                      "group-hover:scale-110 group-hover:rotate-6",
-                      tool.iconBg,
-                      "shadow-lg",
-                      tool.featured
-                        ? "w-14 h-14 sm:w-16 sm:h-16"
-                        : "w-11 h-11"
-                    )}>
-                      <tool.icon size={tool.featured ? 24 : 18} className="text-white" />
+                  <div className="relative z-10 p-4 flex items-center gap-3">
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}>
+                      <tool.icon size={20} className="text-white" />
                     </div>
-
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className={cn(
-                          "font-extrabold text-white truncate",
-                          tool.featured
-                            ? "text-sm sm:text-base"
-                            : "text-[11px] sm:text-xs"
-                        )}>
-                          {lang === 'ar' ? tool.titleAr : tool.titleEn}
-                        </h3>
-                        {tool.featured && (
-                          <Sparkles size={12} className="text-yellow-400 shrink-0" />
-                        )}
-                      </div>
-                      <p className={cn(
-                        "text-white/40 font-mono leading-relaxed line-clamp-2",
-                        tool.featured
-                          ? "text-[9px] sm:text-[10px]"
-                          : "text-[8px] sm:text-[9px]"
-                      )}>
-                        {lang === 'ar' ? tool.descAr : tool.descEn}
-                      </p>
+                      <h3 className="text-[11px] sm:text-xs font-extrabold text-white truncate mb-1">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
+                      <p className="text-[8px] sm:text-[9px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
                     </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
 
-                    {/* Arrow */}
-                    <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-white/[0.06] group-hover:bg-white/[0.12] transition-all duration-300 group-hover:scale-110">
-                      <ArrowRight size={12} className={cn(
-                        "text-white/40 group-hover:text-white/80 transition-colors",
-                        lang === 'ar' ? 'rotate-180' : ''
-                      )} />
+          {/* Row 3: Two small cards */}
+          <div className="grid grid-cols-2 gap-3">
+            {small.map((tool, i) => (
+              <motion.button
+                key={tool.id}
+                initial={{ y: 16, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }}
+                onClick={() => onNavigate(tool.id)}
+                className="group relative text-left"
+              >
+                <div className={cn(
+                  "relative rounded-2xl overflow-hidden transition-all duration-300 border h-full",
+                  tool.border,
+                  "bg-gradient-to-br", tool.color,
+                  "backdrop-blur-sm hover:shadow-xl", tool.glow,
+                  "hover:-translate-y-0.5"
+                )}>
+                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+                    <tool.icon size={60} className="text-white" />
+                  </div>
+                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}>
+                      <tool.icon size={17} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[10px] sm:text-[11px] font-extrabold text-white truncate mb-0.5">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
+                      <p className="text-[7px] sm:text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
                     </div>
                   </div>
                 </div>
