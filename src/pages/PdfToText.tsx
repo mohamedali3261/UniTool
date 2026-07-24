@@ -3,10 +3,7 @@ import { Upload, Download, Loader2, FileText, Copy, Check, Trash2, ChevronLeft, 
 import * as pdfjsLib from 'pdfjs-dist';
 import { cn } from '../lib/utils';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface Props {
   t: any;
@@ -22,6 +19,7 @@ export function PdfToText({ t, lang }: Props) {
   const [pages, setPages] = useState<PageText[]>([]);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [activePage, setActivePage] = useState(0);
@@ -43,26 +41,53 @@ export function PdfToText({ t, lang }: Props) {
     setPages([]);
     setActivePage(0);
     setFileName(file.name.replace(/\.pdf$/i, ''));
+    setProgress(lang === 'ar' ? 'جاري تحميل الملف...' : 'Loading file...');
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      setProgress(lang === 'ar' ? 'جاري فتح PDF...' : 'Opening PDF...');
+
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+      const totalPages = pdf.numPages;
       const extractedPages: PageText[] = [];
 
-      for (let i = 1; i <= pdf.numPages; i++) {
+      for (let i = 1; i <= totalPages; i++) {
+        setProgress(`${lang === 'ar' ? 'جاري استخراج الصفحة' : 'Extracting page'} ${i}/${totalPages}`);
+
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const text = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
-        extractedPages.push({ pageNum: i, text });
+        let lastY: number | null = null;
+        let pageText = '';
+
+        for (const item of textContent.items as any[]) {
+          const str = item.str;
+          if (str === undefined) continue;
+
+          const currentY = item.transform ? item.transform[5] : null;
+
+          if (lastY !== null && currentY !== null) {
+            const diff = Math.abs(currentY - lastY);
+            if (diff > 5) {
+              pageText += '\n';
+            } else if (pageText.length > 0 && !pageText.endsWith('\n') && !pageText.endsWith(' ') && str.length > 0) {
+              pageText += ' ';
+            }
+          }
+
+          pageText += str;
+          if (currentY !== null) lastY = currentY;
+        }
+
+        extractedPages.push({ pageNum: i, text: pageText.trim() });
       }
 
       setPages(extractedPages);
+      setProgress('');
       setLoading(false);
     } catch (err: any) {
       console.error('PDF text extraction error:', err);
       setError(lang === 'ar' ? `خطأ: ${err?.message || 'تحقق من الملف'}` : `Error: ${err?.message || 'Check the file'}`);
+      setProgress('');
       setLoading(false);
     }
 
@@ -78,18 +103,12 @@ export function PdfToText({ t, lang }: Props) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const copyAllText = async () => {
-    await navigator.clipboard.writeText(fullText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const downloadTxt = () => {
     let content = '';
     if (pages.length === 1) {
       content = pages[0].text;
     } else {
-      content = pages.map(p => `--- Page ${p.pageNum} ---\n\n${p.text}`).join('\n\n\n');
+      content = pages.map(p => `--- ${lang === 'ar' ? 'صفحة' : 'Page'} ${p.pageNum} ---\n\n${p.text}`).join('\n\n\n');
     }
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -138,7 +157,7 @@ export function PdfToText({ t, lang }: Props) {
           <div className={cn("md:block", mobileTab !== 'upload' && 'hidden')}>
             <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleFileUpload} />
 
-            {!loading && (
+            {!loading && pages.length === 0 && (
               <button onClick={() => fileInputRef.current?.click()} className="w-full p-6 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-center">
                 <Upload size={24} className="text-gray-500 mx-auto mb-2" />
                 <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اختر ملف PDF' : 'Choose a PDF file'}</p>
@@ -148,7 +167,7 @@ export function PdfToText({ t, lang }: Props) {
             {loading && (
               <div className="w-full p-6 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 text-center">
                 <Loader2 size={24} className="animate-spin text-blue-400 mx-auto mb-2" />
-                <p className="text-[10px] text-blue-400 font-mono">{lang === 'ar' ? 'جاري استخراج النص...' : 'Extracting text...'}</p>
+                <p className="text-[10px] text-blue-400 font-mono">{progress || (lang === 'ar' ? 'جاري الاستخراج...' : 'Extracting...')}</p>
               </div>
             )}
 
@@ -170,7 +189,7 @@ export function PdfToText({ t, lang }: Props) {
 
           {error && <p className="text-[9px] text-red-400 font-mono text-center">{error}</p>}
 
-          {/* Page-by-page Text Preview */}
+          {/* Text Preview */}
           {pages.length > 0 && !loading && (
             <div className={cn("md:block", mobileTab !== 'preview' && 'hidden')}>
               {/* Page Navigator */}
