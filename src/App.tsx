@@ -52,6 +52,8 @@ import { ImageTools } from './pages/ImageTools';
 import { QRCodeGenerator } from './pages/QRCodeGenerator';
 import { VideoToGif } from './pages/VideoToGif';
 import { ImageToPdf } from './pages/ImageToPdf';
+import { PdfToWord } from './pages/PdfToWord';
+import { WordToPdf } from './pages/WordToPdf';
 import { CompressionTools } from './pages/CompressionTools';
 import { OfficeCompressor } from './pages/OfficeCompressor';
 import { VideoCompressor } from './pages/VideoCompressor';
@@ -63,7 +65,7 @@ import { translations } from './lib/translations';
 import { playCompletionSound } from './lib/soundEffects';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber' | 'videoSubtitles' | 'pdfToImage' | 'imageCompressor' | 'imageTools' | 'officeCompressor' | 'compressionTools' | 'videoCompressor' | 'pdfCompressor' | 'qrCode' | 'videoToGif' | 'imageToPdf'>('compressionTools');
+  const [currentPage, setCurrentPage] = useState<'compress' | 'splitter' | 'videoLogo' | 'imageCropper' | 'bgRemover' | 'speechToText' | 'audioTranscriber' | 'videoSubtitles' | 'pdfToImage' | 'imageCompressor' | 'imageTools' | 'officeCompressor' | 'compressionTools' | 'videoCompressor' | 'pdfCompressor' | 'qrCode' | 'videoToGif' | 'imageToPdf' | 'pdfToWord' | 'wordToPdf'>('compressionTools');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = translations[lang];
@@ -312,6 +314,8 @@ export default function App() {
               { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio },
               { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles },
               { id: 'pdfToImage', label: lang === 'ar' ? 'تحويل' : 'Convert', icon: FileText },
+              { id: 'pdfToWord', label: 'PDF→W', icon: FileText },
+              { id: 'wordToPdf', label: 'W→PDF', icon: FileText },
             ].map((item, idx) => (
               <button
                 key={item.id}
@@ -393,6 +397,8 @@ export default function App() {
                     { id: 'audioTranscriber', label: lang === 'ar' ? 'تفريغ' : 'Transcribe', icon: FileAudio, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
                     { id: 'videoSubtitles', label: lang === 'ar' ? 'ترجمة' : 'Subtitles', icon: Subtitles, color: 'from-cyan-600 to-cyan-500', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
                     { id: 'pdfToImage', label: lang === 'ar' ? 'تحويل' : 'Convert', icon: FileText, color: 'from-orange-600 to-amber-600', activeBg: 'bg-orange-600/20 ring-1 ring-orange-500/30' },
+                    { id: 'pdfToWord', label: 'PDF→W', icon: FileText, color: 'from-blue-600 to-indigo-600', activeBg: 'bg-blue-600/20 ring-1 ring-blue-500/30' },
+                    { id: 'wordToPdf', label: 'W→PDF', icon: FileText, color: 'from-cyan-600 to-blue-600', activeBg: 'bg-cyan-600/20 ring-1 ring-cyan-500/30' },
                   ].map(item => (
                     <button
                       key={item.id}
@@ -460,6 +466,10 @@ export default function App() {
         <VideoToGif t={t} lang={lang} />
       ) : currentPage === 'imageToPdf' ? (
         <ImageToPdf t={t} lang={lang} />
+      ) : currentPage === 'pdfToWord' ? (
+        <PdfToWord t={t} lang={lang} />
+      ) : currentPage === 'wordToPdf' ? (
+        <WordToPdf t={t} lang={lang} />
       ) : (
         <>
         {/* Page Header */}
