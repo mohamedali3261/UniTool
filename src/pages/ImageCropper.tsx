@@ -213,16 +213,16 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
       const scaleX = imageNaturalSize.width / displaySize.width;
       const scaleY = imageNaturalSize.height / displaySize.height;
 
-      const sx = Math.round(cropBox.x * scaleX);
-      const sy = Math.round(cropBox.y * scaleY);
-      const sw = Math.round(cropBox.width * scaleX);
-      const sh = Math.round(cropBox.height * scaleY);
+      const sx = cropBox.x * scaleX;
+      const sy = cropBox.y * scaleY;
+      const sw = cropBox.width * scaleX;
+      const sh = cropBox.height * scaleY;
 
-      canvas.width = sw;
-      canvas.height = sh;
+      canvas.width = Math.round(sw);
+      canvas.height = Math.round(sh);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+      ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, Math.round(sw), Math.round(sh));
       bitmap.close();
 
       const mime = imageFile.type || 'image/png';
@@ -235,8 +235,8 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
             id: Math.random().toString(36).substr(2, 9),
             blob,
             url,
-            width: sw,
-            height: sh,
+            width: Math.round(sw),
+            height: Math.round(sh),
             originalName: imageFile.name.replace(/\.[^.]+$/, ''),
           };
           setCroppedItems(prev => [newItem, ...prev]);
