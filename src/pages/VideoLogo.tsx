@@ -77,6 +77,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
   const [videoMetadata, setVideoMetadata] = useState<{ width: number; height: number } | null>(null);
   const [logoNaturalSize, setLogoNaturalSize] = useState<{ width: number; height: number } | null>(null);
   const [showInstruction, setShowInstruction] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -205,14 +206,49 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
       }
 
       // FFmpeg overlay filter with balanced quality/speed
+      // Build video filter chain: scale logo, overlay, then apply speed
+      let videoFilter = `[1:v]scale=iw*${logoScale}:ih*${logoScale}[logo];[0:v][logo]overlay=${logoX}:${logoY}:format=auto`;
+      
+      // Build audio filter chain
+      let audioFilter = '';
+      
+      // Apply speed if not 1x
+      if (playbackRate !== 1) {
+        videoFilter += `,setpts=PTS/${playbackRate}`;
+        
+        // atempo only supports 0.5-100, chain multiple for slower speeds
+        const atempoParts: string[] = [];
+        let remaining = playbackRate;
+        if (remaining < 0.5) {
+          // Chain: 0.5, 0.5, ... then final
+          while (remaining < 0.5) {
+            atempoParts.push('atempo=0.5');
+            remaining /= 0.5;
+          }
+          atempoParts.push(`atempo=${remaining}`);
+        } else {
+          atempoParts.push(`atempo=${remaining}`);
+        }
+        audioFilter = atempoParts.join(',');
+      }
+      
       ffmpegArgs.push(
         '-filter_complex',
-        `[1:v]scale=iw*${logoScale}:ih*${logoScale}[logo];[0:v][logo]overlay=${logoX}:${logoY}:format=auto`,
+        videoFilter,
+      );
+      
+      if (audioFilter) {
+        ffmpegArgs.push('-af', audioFilter);
+      }
+
+      const needReencodeAudio = trimSettings.enabled || audioFilter;
+      
+      ffmpegArgs.push(
         '-c:v', 'libx264',
-        '-crf', '20',             // Good quality (lower = better, 20 is great, 18 is overkill)
-        '-preset', 'medium',      // Balanced speed/quality (slow was too heavy for WASM)
+        '-crf', '20',
+        '-preset', 'medium',
         '-pix_fmt', 'yuv420p',
-        '-c:a', 'copy',
+        ...(needReencodeAudio ? ['-c:a', 'aac', '-b:a', '192k'] : ['-c:a', 'copy']),
         '-movflags', '+faststart',
         '-y',
         'output.mp4'
@@ -427,6 +463,13 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     const timer = setTimeout(() => setShowInstruction(false), 3000);
     return () => clearTimeout(timer);
   }, [showInstruction]);
+
+  // Apply playback rate to video preview
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-y-auto">
@@ -851,6 +894,49 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               </div>
             </div>
           </div>
+
+          {/* Speed Control */}
+          {videoFile && (
+            <div className="bg-[#14171C] border border-[#2D3139] rounded-lg p-2.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Clock size={12} className="text-cyan-500" />
+                  {lang === 'ar' ? 'سرعة الفيديو' : 'Playback Speed'}
+                </h3>
+                <span className="text-[9px] font-mono text-cyan-400 font-bold">{playbackRate}x</span>
+              </div>
+              <input
+                type="range"
+                min="0.25"
+                max="3"
+                step="0.25"
+                value={playbackRate}
+                onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer slider-thumb"
+              />
+              <div className="flex justify-between text-[7px] font-mono text-gray-600">
+                <span>0.25x</span>
+                <span>1x</span>
+                <span>3x</span>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
+                  <button
+                    key={rate}
+                    onClick={() => setPlaybackRate(rate)}
+                    className={cn(
+                      "px-2 py-1 rounded text-[8px] font-mono font-bold transition-all",
+                      playbackRate === rate
+                        ? "bg-cyan-500/20 border border-cyan-500/50 text-cyan-400"
+                        : "bg-[#2D3139] text-gray-500 hover:text-white border border-transparent"
+                    )}
+                  >
+                    {rate}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Process Button */}
           <button

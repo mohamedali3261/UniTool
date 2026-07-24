@@ -300,9 +300,9 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         )}
 
         {/* Left Section: Image Preview */}
-        <div className={`${imageFile && mobileTab === 'crops' ? 'hidden lg:flex' : 'flex'} flex-1 flex-col min-h-0`}>
+        <div className={`${imageFile && mobileTab === 'crops' ? 'hidden lg:flex' : 'flex'} flex-1 flex-col min-h-0 overflow-hidden`}>
           {/* Image Upload / Viewer */}
-          <div className="flex-1 flex flex-col p-3 sm:p-4">
+          <div className="flex-1 flex flex-col p-3 sm:p-4 min-h-0">
             {!imageFile ? (
               <label className="group relative flex flex-col items-center justify-center gap-2 flex-1 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all cursor-pointer">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
@@ -337,14 +337,14 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                 {/* Image container */}
                 <div
                   ref={containerRef}
-                  className="relative flex-1 bg-[#14171C] rounded-lg overflow-auto border border-[#2D3139] flex items-center justify-center"
+                  className="relative flex-1 bg-[#14171C] rounded-lg overflow-auto border border-[#2D3139] min-h-0"
                 >
-                  <div className="relative inline-block">
+                  <div className="relative inline-flex justify-center items-start min-w-full min-h-full">
                     <img
                       ref={imageRef}
                       src={imageUrl!}
                       alt="Source"
-                      className="block w-auto h-auto"
+                      className="block max-w-full max-h-[60vh] w-auto h-auto object-contain"
                       onLoad={handleImageLoad}
                       draggable={false}
                     />
