@@ -1,17 +1,25 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, Loader2, FileText, Copy, Check } from 'lucide-react';
+import { Upload, Download, Loader2, FileText, Copy, Check, Trash2 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { cn } from '../lib/utils';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 interface Props {
   t: any;
   lang: 'ar' | 'en';
 }
 
+interface PageText {
+  pageNum: number;
+  text: string;
+}
+
 export function PdfToText({ t, lang }: Props) {
-  const [text, setText] = useState<string>('');
+  const [pages, setPages] = useState<PageText[]>([]);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,37 +27,53 @@ export function PdfToText({ t, lang }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'preview' | 'export'>('upload');
 
-  const handleFile = async (f: File) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== 'application/pdf') {
+      setError(lang === 'ar' ? 'الرجاء اختيار ملف PDF' : 'Please select a PDF file');
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setText('');
-    setFileName(f.name.replace(/\.pdf$/i, ''));
+    setPages([]);
+    setFileName(file.name.replace(/\.pdf$/i, ''));
+
     try {
-      const arrayBuffer = await f.arrayBuffer();
+      const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = '';
+      const extractedPages: PageText[] = [];
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n\n';
+        const textContent = await page.getTextContent();
+        const text = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        extractedPages.push({ pageNum: i, text });
       }
-      setText(fullText.trim());
+
+      setPages(extractedPages);
+      setLoading(false);
     } catch (err: any) {
       console.error('PDF text extraction error:', err);
       setError(lang === 'ar' ? `خطأ: ${err?.message || 'تحقق من الملف'}` : `Error: ${err?.message || 'Check the file'}`);
+      setLoading(false);
     }
-    setLoading(false);
+
+    e.target.value = '';
   };
 
+  const fullText = pages.map(p => p.text).join('\n\n');
+
   const copyText = async () => {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const downloadTxt = () => {
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -97,42 +121,59 @@ export function PdfToText({ t, lang }: Props) {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,application/pdf"
-              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
-              onChange={e => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-                e.target.value = '';
-              }}
+              accept="application/pdf,.pdf"
+              className="hidden"
+              onChange={handleFileUpload}
             />
-            <button onClick={() => fileInputRef.current?.click()} disabled={loading} className={cn(
-              "w-full p-6 rounded-xl border-2 border-dashed transition-all text-center",
-              "border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5",
-              loading && 'opacity-50 cursor-wait'
-            )}>
-              {loading ? <Loader2 size={24} className="animate-spin text-blue-400 mx-auto mb-2" /> : <Upload size={24} className="text-gray-500 mx-auto mb-2" />}
-              <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اضغط هنا لاختيار ملف PDF' : 'Click here to choose a PDF file'}</p>
-            </button>
+
+            {pages.length === 0 && !loading && (
+              <button onClick={() => fileInputRef.current?.click()} className="w-full p-6 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-center">
+                <Upload size={24} className="text-gray-500 mx-auto mb-2" />
+                <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اختر ملف PDF' : 'Choose a PDF file'}</p>
+              </button>
+            )}
+
+            {loading && (
+              <div className="w-full p-6 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 text-center">
+                <Loader2 size={24} className="animate-spin text-blue-400 mx-auto mb-2" />
+                <p className="text-[10px] text-blue-400 font-mono">{lang === 'ar' ? 'جاري استخراج النص...' : 'Extracting text...'}</p>
+              </div>
+            )}
+
+            {pages.length > 0 && !loading && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
+                  <FileText size={16} className="text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-white font-bold truncate">{fileName}</p>
+                  <p className="text-[8px] text-gray-500 font-mono">{pages.length} {lang === 'ar' ? 'صفحة' : 'pages'}</p>
+                </div>
+                <button onClick={() => { setPages([]); setFileName(''); }} className="p-1 rounded hover:bg-red-500/20">
+                  <Trash2 size={12} className="text-red-400" />
+                </button>
+              </div>
+            )}
           </div>
 
+          {error && <p className="text-[9px] text-red-400 font-mono text-center">{error}</p>}
+
           {/* Text Preview */}
-          {text && (
+          {pages.length > 0 && !loading && (
             <div className={cn("md:block", mobileTab !== 'preview' && 'hidden')}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-mono text-gray-400">{text.length} {lang === 'ar' ? 'حرف' : 'characters'}</span>
+                <span className="text-[9px] font-mono text-gray-400">{fullText.length} {lang === 'ar' ? 'حرف' : 'characters'}</span>
                 <button onClick={copyText} className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-[8px] font-mono text-gray-400 transition-colors">
                   {copied ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
                   {copied ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}
                 </button>
               </div>
-              <textarea readOnly value={text} className="w-full h-64 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[10px] text-gray-300 font-mono leading-relaxed resize-none focus:outline-none focus:border-white/[0.12]" />
+              <textarea readOnly value={fullText} className="w-full h-64 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[10px] text-gray-300 font-mono leading-relaxed resize-none focus:outline-none focus:border-white/[0.12]" />
             </div>
           )}
 
-          {error && <p className="text-[9px] text-red-400 font-mono text-center">{error}</p>}
-
           {/* Download */}
-          {text && (
+          {pages.length > 0 && !loading && (
             <div className={cn("md:block", mobileTab !== 'export' && 'hidden')}>
               <button onClick={downloadTxt} className="w-full py-3 rounded-xl font-bold text-[11px] font-mono bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:shadow-lg hover:shadow-blue-500/20 transition-all">
                 <span className="flex items-center justify-center gap-2">
