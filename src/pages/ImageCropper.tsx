@@ -11,6 +11,8 @@ import {
   Trash2,
   FolderDown,
   Plus,
+  Grid3X3,
+  ArrowLeft,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
@@ -74,6 +76,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState('');
   const [mobileTab, setMobileTab] = useState<'crop' | 'crops'>('crop');
+  const [showGallery, setShowGallery] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -335,14 +338,9 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     });
   };
 
-  const removeAllImages = () => {
-    images.forEach(img => URL.revokeObjectURL(img.url));
-    setImages([]);
-    setActiveIndex(0);
-  };
-
   const switchImage = (index: number) => {
     setActiveIndex(index);
+    setShowGallery(false);
   };
 
   return (
@@ -397,37 +395,6 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
               </label>
             ) : (
               <div className="flex-1 flex flex-col gap-2 min-h-0">
-                {/* Thumbnails strip */}
-                <div className="flex gap-1.5 overflow-x-auto pb-1 shrink-0 scrollbar-thin">
-                  {images.map((entry, i) => (
-                    <button
-                      key={i}
-                      onClick={() => switchImage(i)}
-                      className={cn(
-                        "relative shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all group/thumb",
-                        i === activeIndex ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-[#2D3139] hover:border-gray-500'
-                      )}
-                    >
-                      <img src={entry.url} alt="" className="w-full h-full object-cover" />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
-                      >
-                        <X size={8} className="text-white" />
-                      </button>
-                      {i === activeIndex && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-blue-500/80 text-center text-[7px] text-white font-bold py-0.5">
-                          {i + 1}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                  <label className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-lg border-2 border-dashed border-[#2D3139] hover:border-blue-500/50 flex items-center justify-center cursor-pointer transition-all">
-                    <Plus size={16} className="text-gray-500" />
-                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                  </label>
-                </div>
-
                 {/* Active image info */}
                 {active && (
                   <div className="flex items-center justify-between shrink-0 gap-2">
@@ -509,94 +476,164 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         {/* Right Sidebar */}
         <div className={`${images.length > 0 && mobileTab === 'crop' ? 'hidden lg:block' : ''} lg:w-72 border-t lg:border-t-0 lg:border-l border-[#2D3139] bg-[#14171C] flex flex-col lg:max-h-none`}>
           <div className="overflow-y-auto flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3">
-            {/* Crop Button */}
-            {images.length > 0 && (
-              <button
-                onClick={processCrop}
-                disabled={processing}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 size={12} className="animate-spin sm:size-[14px]" />
-                    {lang === 'ar' ? `جاري القص ${progress.done}/${progress.total}...` : `Cropping ${progress.done}/${progress.total}...`}
-                  </>
-                ) : (
-                  <>
-                    <Scissors size={12} className="sm:size-[14px]" />
-                    {lang === 'ar' ? `قص الكل (${images.length})` : `Crop All (${images.length})`}
-                  </>
-                )}
-              </button>
-            )}
 
-            {/* Crops List */}
-            {croppedItems.length > 0 && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <CheckCircle2 size={10} className="text-green-500 sm:size-3" />
-                    {lang === 'ar' ? 'القصات' : 'Crops'} ({croppedItems.length})
+            {showGallery ? (
+              <>
+                {/* Gallery header */}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowGallery(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+                    <ArrowLeft size={14} className={lang === 'ar' ? 'rotate-180' : ''} />
+                  </button>
+                  <h3 className="text-[9px] sm:text-[10px] font-mono text-gray-300 uppercase tracking-wider flex-1">
+                    {lang === 'ar' ? 'كل الصور' : 'All Images'} ({images.length})
                   </h3>
-                  <div className="flex gap-1">
-                    <button onClick={downloadAllAsZip} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all">
-                      <FolderDown size={8} className="sm:size-[10px]" />
-                      ZIP
-                    </button>
-                    <button onClick={clearAllItems} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all">
-                      <Trash2 size={8} className="sm:size-[10px]" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-1 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
 
-                <div className="space-y-1 sm:space-y-1.5 max-h-48 sm:max-h-64 overflow-y-auto">
-                  {croppedItems.map((item, index) => (
-                    <div key={item.id} className="flex items-center gap-1.5 sm:gap-2 bg-[#0F1115] border border-[#2D3139] rounded-lg p-1.5 group hover:border-blue-500/30 transition-colors">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded overflow-hidden bg-[#1A1D23] shrink-0 flex items-center justify-center">
-                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                {/* Gallery grid */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {images.map((entry, i) => (
+                    <button
+                      key={i}
+                      onClick={() => switchImage(i)}
+                      className={cn(
+                        "relative aspect-square rounded-lg overflow-hidden border-2 transition-all group/gal",
+                        i === activeIndex ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-[#2D3139] hover:border-gray-500'
+                      )}
+                    >
+                      <img src={entry.url} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-center text-[7px] text-white font-mono py-0.5 truncate px-0.5">
+                        {entry.file.name}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[7px] sm:text-[8px] font-mono text-gray-400 truncate">{item.originalName}</div>
-                        <div className="text-[6px] sm:text-[7px] font-mono text-gray-600">{item.width}×{item.height}</div>
-                      </div>
-                      <button onClick={() => downloadItem(item)} className="p-1 sm:p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400 transition-all" title={lang === 'ar' ? 'تحميل' : 'Download'}>
-                        <Download size={10} className="sm:size-3" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center opacity-0 group/gal:opacity-100 transition-opacity"
+                      >
+                        <X size={8} className="text-white" />
                       </button>
-                      <button onClick={() => removeItem(item.id)} className="p-1 sm:p-1.5 hover:bg-red-500/20 rounded text-gray-500 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
-                        <X size={10} className="sm:size-3" />
-                      </button>
-                    </div>
+                    </button>
                   ))}
                 </div>
-              </div>
-            )}
+              </>
+            ) : (
+              <>
+                {/* Add Images button */}
+                <label className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all cursor-pointer">
+                  <Plus size={14} className="text-blue-400" />
+                  <span className="text-[10px] sm:text-xs font-mono text-gray-300">
+                    {lang === 'ar' ? 'إضافة صور' : 'Add Images'}
+                  </span>
+                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                </label>
 
-            {/* Crop Info */}
-            {active?.naturalSize && active.displaySize && (
-              <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
-                <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Maximize2 size={10} className="text-blue-500 sm:size-3" />
-                  {lang === 'ar' ? 'معلومات القص' : 'Crop Info'}
-                </h3>
-                <div className="space-y-0.5 sm:space-y-1 text-[8px] sm:text-[9px] font-mono">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{lang === 'ar' ? 'الأصلي' : 'Original'}</span>
-                    <span className="text-blue-400">{active.naturalSize.width}×{active.naturalSize.height}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{lang === 'ar' ? 'القص' : 'Crop'}</span>
-                    <span className="text-purple-400">
-                      {Math.round(cropBox.width * active.naturalSize.width / active.displaySize.width)}×{Math.round(cropBox.height * active.naturalSize.height / active.displaySize.height)}
+                {/* View All button */}
+                {images.length > 1 && (
+                  <button
+                    onClick={() => setShowGallery(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all"
+                  >
+                    <Grid3X3 size={14} className="text-purple-400" />
+                    <span className="text-[10px] sm:text-xs font-mono text-gray-300">
+                      {lang === 'ar' ? `عرض كل الصور (${images.length})` : `View All (${images.length})`}
                     </span>
-                  </div>
-                  {images.length > 1 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{lang === 'ar' ? 'الصور' : 'Images'}</span>
-                      <span className="text-green-400">{images.length} {lang === 'ar' ? 'صورة' : 'files'}</span>
+                  </button>
+                )}
+
+                {/* Crop Button */}
+                {images.length > 0 && (
+                  <button
+                    onClick={processCrop}
+                    disabled={processing}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin sm:size-[14px]" />
+                        {lang === 'ar' ? `جاري القص ${progress.done}/${progress.total}...` : `Cropping ${progress.done}/${progress.total}...`}
+                      </>
+                    ) : (
+                      <>
+                        <Scissors size={12} className="sm:size-[14px]" />
+                        {lang === 'ar' ? `قص الكل (${images.length})` : `Crop All (${images.length})`}
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Crops List */}
+                {croppedItems.length > 0 && (
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <CheckCircle2 size={10} className="text-green-500 sm:size-3" />
+                        {lang === 'ar' ? 'القصات' : 'Crops'} ({croppedItems.length})
+                      </h3>
+                      <div className="flex gap-1">
+                        <button onClick={downloadAllAsZip} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all">
+                          <FolderDown size={8} className="sm:size-[10px]" />
+                          ZIP
+                        </button>
+                        <button onClick={clearAllItems} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all">
+                          <Trash2 size={8} className="sm:size-[10px]" />
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+
+                    <div className="space-y-1 sm:space-y-1.5 max-h-48 sm:max-h-64 overflow-y-auto">
+                      {croppedItems.map((item, index) => (
+                        <div key={item.id} className="flex items-center gap-1.5 sm:gap-2 bg-[#0F1115] border border-[#2D3139] rounded-lg p-1.5 group hover:border-blue-500/30 transition-colors">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded overflow-hidden bg-[#1A1D23] shrink-0 flex items-center justify-center">
+                            <img src={item.url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[7px] sm:text-[8px] font-mono text-gray-400 truncate">{item.originalName}</div>
+                            <div className="text-[6px] sm:text-[7px] font-mono text-gray-600">{item.width}×{item.height}</div>
+                          </div>
+                          <button onClick={() => downloadItem(item)} className="p-1 sm:p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400 transition-all" title={lang === 'ar' ? 'تحميل' : 'Download'}>
+                            <Download size={10} className="sm:size-3" />
+                          </button>
+                          <button onClick={() => removeItem(item.id)} className="p-1 sm:p-1.5 hover:bg-red-500/20 rounded text-gray-500 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                            <X size={10} className="sm:size-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Crop Info */}
+                {active?.naturalSize && active.displaySize && (
+                  <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
+                    <h3 className="text-[8px] sm:text-[9px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Maximize2 size={10} className="text-blue-500 sm:size-3" />
+                      {lang === 'ar' ? 'معلومات القص' : 'Crop Info'}
+                    </h3>
+                    <div className="space-y-0.5 sm:space-y-1 text-[8px] sm:text-[9px] font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{lang === 'ar' ? 'الأصلي' : 'Original'}</span>
+                        <span className="text-blue-400">{active.naturalSize.width}×{active.naturalSize.height}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{lang === 'ar' ? 'القص' : 'Crop'}</span>
+                        <span className="text-purple-400">
+                          {Math.round(cropBox.width * active.naturalSize.width / active.displaySize.width)}×{Math.round(cropBox.height * active.naturalSize.height / active.displaySize.height)}
+                        </span>
+                      </div>
+                      {images.length > 1 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">{lang === 'ar' ? 'الصور' : 'Images'}</span>
+                          <span className="text-green-400">{images.length} {lang === 'ar' ? 'صورة' : 'files'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
