@@ -3,6 +3,8 @@ import { Upload, Download, Loader2, FileText, Copy, Check } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { cn } from '../lib/utils';
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
 interface Props {
   t: any;
   lang: 'ar' | 'en';
@@ -24,7 +26,6 @@ export function PdfToText({ t, lang }: Props) {
     setFileName(f.name.replace(/\.pdf$/i, ''));
     try {
       const arrayBuffer = await f.arrayBuffer();
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -93,14 +94,24 @@ export function PdfToText({ t, lang }: Props) {
         <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-4">
           {/* Upload */}
           <div className={cn("md:block", mobileTab !== 'upload' && 'hidden')}>
-            <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+                e.target.value = '';
+              }}
+            />
             <button onClick={() => fileInputRef.current?.click()} disabled={loading} className={cn(
               "w-full p-6 rounded-xl border-2 border-dashed transition-all text-center",
               "border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5",
               loading && 'opacity-50 cursor-wait'
             )}>
               {loading ? <Loader2 size={24} className="animate-spin text-blue-400 mx-auto mb-2" /> : <Upload size={24} className="text-gray-500 mx-auto mb-2" />}
-              <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اختر ملف PDF' : 'Choose a PDF file'}</p>
+              <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اضغط هنا لاختيار ملف PDF' : 'Click here to choose a PDF file'}</p>
             </button>
           </div>
 
