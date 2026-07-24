@@ -121,23 +121,23 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
                       <tool.icon size={18} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-xs font-bold text-white truncate">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-sm font-extrabold text-white truncate sm:text-base">
                           {lang === 'ar' ? tool.titleAr : tool.titleEn}
                         </h3>
                         <span className={cn(
-                          "text-[6px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0",
+                          "text-[7px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 font-bold",
                           tool.tag.color
                         )}>
                           {lang === 'ar' ? tool.tag.labelAr : tool.tag.labelEn}
                         </span>
                       </div>
-                      <p className="text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">
+                      <p className="text-[9px] text-white/50 font-mono leading-relaxed line-clamp-2 sm:text-[10px]">
                         {lang === 'ar' ? tool.descAr : tool.descEn}
                       </p>
-                      <div className="flex items-center gap-1 mt-2 text-[7px] font-mono text-white/30 group-hover:text-white/50 transition-colors">
+                      <div className="flex items-center gap-1 mt-2.5 text-[8px] font-mono text-white/40 group-hover:text-white/60 transition-colors">
                         <span>{lang === 'ar' ? 'فتح الأداة' : 'Open tool'}</span>
-                        <ArrowRight size={8} className={lang === 'ar' ? 'rotate-180' : ''} />
+                        <ArrowRight size={10} className={lang === 'ar' ? 'rotate-180' : ''} />
                       </div>
                     </div>
                   </div>
