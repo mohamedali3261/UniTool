@@ -22,6 +22,5 @@ export type PageId =
   | 'pdfTools'
   | 'pdfMerger'
   | 'pdfSplitter'
-  | 'pdfToText'
   | 'pdfUnlock'
   | 'pdfProtect';

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles, Merge, Scissors, Search, Lock, Unlock } from 'lucide-react';
+import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles, Merge, Scissors, Lock, Unlock } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -94,18 +94,6 @@ const tools = [
     glow: 'group-hover:shadow-emerald-500/20',
   },
   {
-    id: 'pdfToText',
-    icon: Search,
-    titleAr: 'استخراج النص من PDF',
-    titleEn: 'Extract Text from PDF',
-    descAr: 'تحويل محتوى ملف PDF إلى نص عادي قابل للنسخ والتعديل',
-    descEn: 'Convert PDF content to plain text for copying and editing',
-    color: 'from-blue-500/20 to-cyan-500/20',
-    border: 'border-blue-500/20 hover:border-blue-400/40',
-    iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-600',
-    glow: 'group-hover:shadow-blue-500/20',
-  },
-  {
     id: 'pdfProtect',
     icon: Lock,
     titleAr: 'حماية PDF بكلمة مرور',
@@ -137,7 +125,6 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
   const row2 = [tools[3], tools[4]];
   const row3 = [tools[5], tools[6]];
   const row4 = [tools[7], tools[8]];
-  const row5 = [tools[9]];
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <style>{`
@@ -256,41 +243,6 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
           </div>
 
           {/* Row 5 */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            {row4.map((tool, i) => (
-              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.26 + i * 0.06, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left">
-                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
-                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={60} className="text-white" /></div>
-                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={17} className="text-white" /></div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[10px] sm:text-[11px] font-extrabold text-white truncate mb-0.5">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
-                      <p className="text-[7px] sm:text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-
-          {/* Row 6: Last card (half width) */}
-          <div className="max-w-[calc(50%-0.375rem)]">
-            {row5.map((tool) => (
-              <motion.button key={tool.id} initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.32, type: 'spring', stiffness: 300, damping: 25 }} onClick={() => onNavigate(tool.id)} className="group relative text-left w-full">
-                <div className={cn("relative rounded-2xl overflow-hidden transition-all duration-300 border h-full", tool.border, "bg-gradient-to-br", tool.color, "backdrop-blur-sm hover:shadow-xl", tool.glow, "hover:-translate-y-0.5")}>
-                  <div className="absolute -bottom-4 -left-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity"><tool.icon size={60} className="text-white" /></div>
-                  <div className="relative z-10 p-3.5 flex items-center gap-2.5">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg", tool.iconBg)}><tool.icon size={17} className="text-white" /></div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[10px] sm:text-[11px] font-extrabold text-white truncate mb-0.5">{lang === 'ar' ? tool.titleAr : tool.titleEn}</h3>
-                      <p className="text-[7px] sm:text-[8px] text-white/40 font-mono leading-relaxed line-clamp-2">{lang === 'ar' ? tool.descAr : tool.descEn}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
