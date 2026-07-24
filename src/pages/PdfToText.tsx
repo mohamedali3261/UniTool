@@ -3,11 +3,6 @@ import { Upload, Download, Loader2, FileText, Copy, Check } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { cn } from '../lib/utils';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
-
 interface Props {
   t: any;
   lang: 'ar' | 'en';
@@ -29,6 +24,7 @@ export function PdfToText({ t, lang }: Props) {
     setFileName(f.name.replace(/\.pdf$/i, ''));
     try {
       const arrayBuffer = await f.arrayBuffer();
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -38,8 +34,9 @@ export function PdfToText({ t, lang }: Props) {
         fullText += pageText + '\n\n';
       }
       setText(fullText.trim());
-    } catch {
-      setError(lang === 'ar' ? 'خطأ في استخراج النص' : 'Error extracting text');
+    } catch (err: any) {
+      console.error('PDF text extraction error:', err);
+      setError(lang === 'ar' ? `خطأ: ${err?.message || 'تحقق من الملف'}` : `Error: ${err?.message || 'Check the file'}`);
     }
     setLoading(false);
   };
