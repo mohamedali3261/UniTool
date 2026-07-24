@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Upload, Download, Loader2, FileText, Copy, Check, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Download, Loader2, FileText, Copy, Check, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { cn } from '../lib/utils';
 
@@ -24,19 +24,24 @@ export function PdfToText({ t, lang }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activePage, setActivePage] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'preview' | 'export'>('upload');
 
+  useEffect(() => {
+    if (pages.length > 0 && !loading) {
+      setMobileTab('preview');
+    }
+  }, [pages, loading]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') {
-      setError(lang === 'ar' ? 'الرجاء اختيار ملف PDF' : 'Please select a PDF file');
-      return;
-    }
+    if (!file) return;
 
     setLoading(true);
     setError(null);
     setPages([]);
+    setActivePage(0);
     setFileName(file.name.replace(/\.pdf$/i, ''));
 
     try {
@@ -65,15 +70,28 @@ export function PdfToText({ t, lang }: Props) {
   };
 
   const fullText = pages.map(p => p.text).join('\n\n');
+  const currentPageText = pages[activePage]?.text || '';
 
-  const copyText = async () => {
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyAllText = async () => {
     await navigator.clipboard.writeText(fullText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const downloadTxt = () => {
-    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+    let content = '';
+    if (pages.length === 1) {
+      content = pages[0].text;
+    } else {
+      content = pages.map(p => `--- Page ${p.pageNum} ---\n\n${p.text}`).join('\n\n\n');
+    }
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -118,15 +136,9 @@ export function PdfToText({ t, lang }: Props) {
         <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-4">
           {/* Upload */}
           <div className={cn("md:block", mobileTab !== 'upload' && 'hidden')}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf,.pdf"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleFileUpload} />
 
-            {pages.length === 0 && !loading && (
+            {!loading && (
               <button onClick={() => fileInputRef.current?.click()} className="w-full p-6 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-center">
                 <Upload size={24} className="text-gray-500 mx-auto mb-2" />
                 <p className="text-[10px] text-gray-400 font-mono">{lang === 'ar' ? 'اختر ملف PDF' : 'Choose a PDF file'}</p>
@@ -147,9 +159,9 @@ export function PdfToText({ t, lang }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-white font-bold truncate">{fileName}</p>
-                  <p className="text-[8px] text-gray-500 font-mono">{pages.length} {lang === 'ar' ? 'صفحة' : 'pages'}</p>
+                  <p className="text-[8px] text-gray-500 font-mono">{pages.length} {lang === 'ar' ? 'صفحة' : 'pages'} • {fullText.length} {lang === 'ar' ? 'حرف' : 'chars'}</p>
                 </div>
-                <button onClick={() => { setPages([]); setFileName(''); }} className="p-1 rounded hover:bg-red-500/20">
+                <button onClick={() => { setPages([]); setFileName(''); setActivePage(0); }} className="p-1 rounded hover:bg-red-500/20">
                   <Trash2 size={12} className="text-red-400" />
                 </button>
               </div>
@@ -158,17 +170,69 @@ export function PdfToText({ t, lang }: Props) {
 
           {error && <p className="text-[9px] text-red-400 font-mono text-center">{error}</p>}
 
-          {/* Text Preview */}
+          {/* Page-by-page Text Preview */}
           {pages.length > 0 && !loading && (
             <div className={cn("md:block", mobileTab !== 'preview' && 'hidden')}>
+              {/* Page Navigator */}
+              {pages.length > 1 && (
+                <div className="flex items-center justify-between mb-3 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <button
+                    onClick={() => setActivePage(p => Math.max(0, p - 1))}
+                    disabled={activePage === 0}
+                    className="p-1.5 rounded-lg hover:bg-white/[0.08] disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={14} className="text-gray-400" />
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-white font-bold">{activePage + 1}</span>
+                    <span className="text-[10px] font-mono text-gray-500">/</span>
+                    <span className="text-[10px] font-mono text-gray-400">{pages.length}</span>
+                  </div>
+                  <button
+                    onClick={() => setActivePage(p => Math.min(pages.length - 1, p + 1))}
+                    disabled={activePage === pages.length - 1}
+                    className="p-1.5 rounded-lg hover:bg-white/[0.08] disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </button>
+                </div>
+              )}
+
+              {/* Page Dots */}
+              {pages.length > 1 && pages.length <= 20 && (
+                <div className="flex items-center justify-center gap-1 mb-3 flex-wrap">
+                  {pages.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActivePage(i)}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        i === activePage ? "bg-blue-500 scale-125" : "bg-white/10 hover:bg-white/20"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Text Content */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-mono text-gray-400">{fullText.length} {lang === 'ar' ? 'حرف' : 'characters'}</span>
-                <button onClick={copyText} className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-[8px] font-mono text-gray-400 transition-colors">
+                <span className="text-[9px] font-mono text-gray-400">
+                  {pages.length > 1
+                    ? `${lang === 'ar' ? 'صفحة' : 'Page'} ${activePage + 1} — ${currentPageText.length} ${lang === 'ar' ? 'حرف' : 'chars'}`
+                    : `${currentPageText.length} ${lang === 'ar' ? 'حرف' : 'chars'}`
+                  }
+                </span>
+                <button
+                  onClick={() => copyText(pages.length > 1 ? currentPageText : fullText)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-[8px] font-mono text-gray-400 transition-colors"
+                >
                   {copied ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
                   {copied ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : (lang === 'ar' ? 'نسخ' : 'Copy')}
                 </button>
               </div>
-              <textarea readOnly value={fullText} className="w-full h-64 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[10px] text-gray-300 font-mono leading-relaxed resize-none focus:outline-none focus:border-white/[0.12]" />
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 min-h-[16rem]">
+                <pre className="text-[10px] text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">{currentPageText || (lang === 'ar' ? 'لا يوجد نص في هذه الصفحة' : 'No text on this page')}</pre>
+              </div>
             </div>
           )}
 
