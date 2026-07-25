@@ -13,6 +13,7 @@ import {
   Plus,
   Grid3X3,
   ArrowLeft,
+  FolderOpen,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
@@ -41,6 +42,7 @@ interface CroppedItem {
   width: number;
   height: number;
   originalName: string;
+  folderPath: string;
 }
 
 interface ImageEntry {
@@ -48,6 +50,7 @@ interface ImageEntry {
   url: string;
   naturalSize: DisplaySize | null;
   displaySize: DisplaySize | null;
+  folderPath: string;
 }
 
 const MIN_CROP_SIZE = 50;
@@ -102,9 +105,11 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const addImages = (files: FileList | File[]) => {
     const newEntries: ImageEntry[] = [];
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      const file = files[i] as File & { webkitRelativePath?: string };
       if (file.type.startsWith('image/')) {
-        newEntries.push({ file, url: URL.createObjectURL(file), naturalSize: null, displaySize: null });
+        const relativePath = file.webkitRelativePath || '';
+        const folderPath = relativePath.includes('/') ? relativePath.substring(0, relativePath.lastIndexOf('/')) : '';
+        newEntries.push({ file, url: URL.createObjectURL(file), naturalSize: null, displaySize: null, folderPath });
       }
     }
     if (newEntries.length > 0) {
@@ -284,6 +289,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
             width: Math.round(sw),
             height: Math.round(sh),
             originalName: entry.file.name.replace(/\.[^.]+$/, ''),
+            folderPath: entry.folderPath,
           });
         } else {
           resolve(null);
@@ -324,7 +330,8 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     const zip = new JSZip();
     croppedItems.forEach((item) => {
       const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
-      zip.file(`${item.originalName}.${ext}`, item.blob);
+      const path = item.folderPath ? `${item.folderPath}/${item.originalName}.${ext}` : `${item.originalName}.${ext}`;
+      zip.file(path, item.blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(content);
@@ -556,6 +563,15 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                     {lang === 'ar' ? 'إضافة صور' : 'Add Images'}
                   </span>
                   <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                </label>
+
+                {/* Add Folder button */}
+                <label className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
+                  <FolderOpen size={14} className="text-purple-400" />
+                  <span className="text-[10px] sm:text-xs font-mono text-gray-300">
+                    {lang === 'ar' ? 'إضافة فولدر' : 'Add Folder'}
+                  </span>
+                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" {...{ webkitdirectory: '', directory: '' }} />
                 </label>
 
                 {/* Remove All button */}
