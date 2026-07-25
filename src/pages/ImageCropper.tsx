@@ -552,6 +552,19 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                   <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                 </label>
 
+                {/* Remove All button */}
+                {images.length > 0 && (
+                  <button
+                    onClick={removeAllImages}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-lg transition-all"
+                  >
+                    <Trash2 size={13} className="text-red-400" />
+                    <span className="text-[10px] sm:text-xs font-mono text-red-400">
+                      {lang === 'ar' ? 'حذف الكل' : 'Remove All'}
+                    </span>
+                  </button>
+                )}
+
                 {/* View All button */}
                 {images.length > 1 && (
                   <button
