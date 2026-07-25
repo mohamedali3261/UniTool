@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   FolderOpen,
   HelpCircle,
+  ArrowDown,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
@@ -401,10 +402,16 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         </div>
         <button
           onClick={() => { setShowGuide(true); markGuideSeen(); }}
-          className="p-1.5 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors shrink-0"
+          className="relative flex items-center gap-1.5 px-2 py-1.5 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors shrink-0"
           title={lang === 'ar' ? 'طريقة استخدام الأداة' : 'How to use'}
         >
-          <HelpCircle size={16} />
+          <HelpCircle size={14} />
+          <span className="text-[9px] sm:text-[10px] font-mono hidden sm:inline">{lang === 'ar' ? 'طريقة الاستخدام' : 'How to Use'}</span>
+          {!hasSeenGuide() && (
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 animate-bounce">
+              <ArrowDown size={12} className="text-yellow-400" />
+            </span>
+          )}
         </button>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
