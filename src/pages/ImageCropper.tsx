@@ -359,6 +359,12 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
     });
   };
 
+  const removeAllImages = () => {
+    images.forEach(img => URL.revokeObjectURL(img.url));
+    setImages([]);
+    setActiveIndex(0);
+  };
+
   const switchImage = (index: number) => {
     setActiveIndex(index);
     setShowGallery(false);
