@@ -92,7 +92,8 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const [resizeHandle, setResizeHandle] = useState('');
   const [mobileTab, setMobileTab] = useState<'crop' | 'crops'>('crop');
   const [showGallery, setShowGallery] = useState(false);
-  const [showGuide, setShowGuide] = useState(() => !hasSeenGuide());
+  const [showGuide, setShowGuide] = useState(false);
+  const [guideSeen, setGuideSeen] = useState(() => hasSeenGuide());
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -401,15 +402,15 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
           <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص عدة صور في مرة واحدة' : 'Crop multiple images at once'}</p>
         </div>
         <button
-          onClick={() => { setShowGuide(true); markGuideSeen(); }}
+          onClick={() => { setShowGuide(true); markGuideSeen(); setGuideSeen(true); }}
           className="relative flex items-center gap-1.5 px-2 py-1.5 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors shrink-0"
           title={lang === 'ar' ? 'طريقة استخدام الأداة' : 'How to use'}
         >
           <HelpCircle size={14} />
           <span className="text-[9px] sm:text-[10px] font-mono hidden sm:inline">{lang === 'ar' ? 'طريقة الاستخدام' : 'How to Use'}</span>
-          {!hasSeenGuide() && (
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 animate-bounce">
-              <ArrowDown size={12} className="text-yellow-400" />
+          {!guideSeen && (
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 animate-bounce">
+              <ArrowDown size={14} className="text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.6)]" />
             </span>
           )}
         </button>
@@ -786,7 +787,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
             </div>
 
             <button
-              onClick={() => { setShowGuide(false); markGuideSeen(); }}
+              onClick={() => { setShowGuide(false); markGuideSeen(); setGuideSeen(true); }}
               className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg font-bold text-xs transition-all"
             >
               {lang === 'ar' ? 'فهمت، يلا نبدأ' : "Got it, let's go"}
