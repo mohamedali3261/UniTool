@@ -14,6 +14,7 @@ import {
   Grid3X3,
   ArrowLeft,
   FolderOpen,
+  HelpCircle,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
@@ -55,6 +56,7 @@ interface ImageEntry {
 
 const MIN_CROP_SIZE = 50;
 const CROP_STORAGE_KEY = 'unitool_image_cropper_size';
+const GUIDE_STORAGE_KEY = 'unitool_image_cropper_guide_seen';
 
 function getSavedCropRatio(): { rw: number; rh: number } | null {
   try {
@@ -66,6 +68,15 @@ function getSavedCropRatio(): { rw: number; rh: number } | null {
 
 function saveCropRatio(rw: number, rh: number) {
   try { localStorage.setItem(CROP_STORAGE_KEY, JSON.stringify({ rw, rh })); } catch {}
+}
+
+function hasSeenGuide(): boolean {
+  try { return localStorage.getItem(GUIDE_STORAGE_KEY) === 'true'; } catch {}
+  return false;
+}
+
+function markGuideSeen() {
+  try { localStorage.setItem(GUIDE_STORAGE_KEY, 'true'); } catch {}
 }
 
 export function ImageCropper({ t, lang }: ImageCropperProps) {
@@ -80,6 +91,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const [resizeHandle, setResizeHandle] = useState('');
   const [mobileTab, setMobileTab] = useState<'crop' | 'crops'>('crop');
   const [showGallery, setShowGallery] = useState(false);
+  const [showGuide, setShowGuide] = useState(() => !hasSeenGuide());
 
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -383,10 +395,17 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <ImageIcon size={14} className="text-white sm:size-4" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'قص الصور' : 'Image Cropper'}</h1>
           <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص عدة صور في مرة واحدة' : 'Crop multiple images at once'}</p>
         </div>
+        <button
+          onClick={() => { setShowGuide(true); markGuideSeen(); }}
+          className="p-1.5 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors shrink-0"
+          title={lang === 'ar' ? 'طريقة استخدام الأداة' : 'How to use'}
+        >
+          <HelpCircle size={16} />
+        </button>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row gap-0">
 
@@ -696,6 +715,78 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
           <canvas ref={canvasRef} className="hidden" />
         </div>
       </div>
+
+      {/* Guide Modal */}
+      {showGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowGuide(false)}>
+          <div className="bg-[#14171C] border border-[#2D3139] rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                <HelpCircle size={18} className="text-blue-400" />
+                {lang === 'ar' ? 'طريقة استخدام الأداة' : 'How to Use'}
+              </h2>
+              <button onClick={() => setShowGuide(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-[10px] sm:text-xs text-gray-300 leading-relaxed">
+              <div className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[9px] font-bold text-blue-400">1</span>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-0.5">{lang === 'ar' ? 'ارفع الصور' : 'Upload Images'}</p>
+                  <p className="text-gray-400">{lang === 'ar' ? 'ارفع صور فردية أو فولدر كله صور من القائمة الجانبية' : 'Upload individual images or a whole folder from the sidebar'}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[9px] font-bold text-purple-400">2</span>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-0.5">{lang === 'ar' ? 'حدد منطقة القص' : 'Select Crop Area'}</p>
+                  <p className="text-gray-400">{lang === 'ar' ? 'اسحب الصندوق على الصورة وغيّر الحجم من الزوايا' : 'Drag the box on the image and resize from the corners'}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[9px] font-bold text-green-400">3</span>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-0.5">{lang === 'ar' ? 'قص الكل مرة واحدة' : 'Crop All at Once'}</p>
+                  <p className="text-gray-400">{lang === 'ar' ? 'اضغط "قص الكل" لقص كل الصور بنفس المنطقة المحددة' : 'Click "Crop All" to crop every image with the same area'}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[9px] font-bold text-emerald-400">4</span>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-0.5">{lang === 'ar' ? 'حمّل النتائج' : 'Download Results'}</p>
+                  <p className="text-gray-400">{lang === 'ar' ? 'حمّل صورة واحدة أو كلهم في ZIP بنفس الأسماء والفولدرات' : 'Download single image or all as ZIP preserving names and folders'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+              <p className="text-[9px] sm:text-[10px] text-blue-300 font-mono">
+                {lang === 'ar' ? 'الحجم المحدد بيتحفظ تلقائي وبيتكرر على كل الصور. الصور بتتحفظ بنفس الصيغة والجودة الأصلية.' : 'Your crop size is saved and reused for all images. Images are saved in their original format and quality.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => { setShowGuide(false); markGuideSeen(); }}
+              className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg font-bold text-xs transition-all"
+            >
+              {lang === 'ar' ? 'فهمت، يلا نبدأ' : "Got it, let's go"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
