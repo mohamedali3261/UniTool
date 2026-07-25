@@ -228,20 +228,41 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   }, [isDragging, isResizing, resizeHandle, active?.displaySize]);
 
   const cropOneImage = async (entry: ImageEntry): Promise<CroppedItem | null> => {
-    if (!entry.naturalSize || !entry.displaySize) return null;
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
     const bitmap = await createImageBitmap(entry.file);
-    const scaleX = entry.naturalSize.width / entry.displaySize.width;
-    const scaleY = entry.naturalSize.height / entry.displaySize.height;
+    const natW = bitmap.width;
+    const natH = bitmap.height;
 
-    const sx = cropBox.x * scaleX;
-    const sy = cropBox.y * scaleY;
-    const sw = cropBox.width * scaleX;
-    const sh = cropBox.height * scaleY;
+    let sx: number, sy: number, sw: number, sh: number;
+
+    if (entry.displaySize && entry.naturalSize && entry.displaySize.width > 0) {
+      const scaleX = entry.naturalSize.width / entry.displaySize.width;
+      const scaleY = entry.naturalSize.height / entry.displaySize.height;
+      sx = cropBox.x * scaleX;
+      sy = cropBox.y * scaleY;
+      sw = cropBox.width * scaleX;
+      sh = cropBox.height * scaleY;
+    } else {
+      const ratioX = cropBox.width / (active?.displaySize?.width || 1);
+      const ratioY = cropBox.height / (active?.displaySize?.height || 1);
+      const activeNatW = active?.naturalSize?.width || natW;
+      const activeNatH = active?.naturalSize?.height || natH;
+      const offsetX = cropBox.x / (active?.displaySize?.width || 1);
+      const offsetY = cropBox.y / (active?.displaySize?.height || 1);
+      sx = offsetX * natW;
+      sy = offsetY * natH;
+      sw = ratioX * natW;
+      sh = ratioY * natH;
+    }
+
+    sx = Math.max(0, Math.min(sx, natW));
+    sy = Math.max(0, Math.min(sy, natH));
+    sw = Math.min(sw, natW - sx);
+    sh = Math.min(sh, natH - sy);
 
     canvas.width = Math.round(sw);
     canvas.height = Math.round(sh);
