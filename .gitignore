@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+.watermark-tmp/
+WatermarkTool/artworks/*.gif

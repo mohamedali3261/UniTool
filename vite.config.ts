@@ -16,6 +16,12 @@ export default defineConfig(() => {
       exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
     },
     server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
+      },
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',

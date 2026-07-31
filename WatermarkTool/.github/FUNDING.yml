@@ -1,0 +1,5 @@
+# GitHub repo-level Sponsor button. The "Sponsor" link will appear at
+# the top-right of the repository page on GitHub. Used to help offset
+# CI runner minutes and release storage. Optional, never required.
+ko_fi: allenkoss
+custom: ['https://paypal.me/allenkoss']

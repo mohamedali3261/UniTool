@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, ImagePlus, ArrowDownUp, Percent } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, ImagePlus, ArrowDownUp, Percent, FolderOpen } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
 
@@ -11,6 +11,7 @@ interface Props {
 interface CompressedFile {
   id: number;
   name: string;
+  relativePath?: string;
   originalSize: number;
   compressedSize: number;
   originalDataUrl: string;
@@ -30,6 +31,17 @@ export function ImageCompressor({ t, lang }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'files' | 'export'>('upload');
   const [nextId, setNextId] = useState(1);
+  const [uploadMode, setUploadMode] = useState<'files' | 'folder'>('files');
+  const [rootFolderName, setRootFolderName] = useState<string>('');
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (uploadMode === 'folder' && folderInputRef.current) {
+      folderInputRef.current.setAttribute('webkitdirectory', '');
+      folderInputRef.current.removeAttribute('multiple');
+    }
+  }, [uploadMode]);
 
   const mimeMap: Record<string, string> = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
   const mimeType = mimeMap[format] || 'image/jpeg';
@@ -79,17 +91,25 @@ export function ImageCompressor({ t, lang }: Props) {
     try {
       let idCounter = nextId;
       const newFiles: CompressedFile[] = [];
+      let folderName = '';
 
       for (const f of Array.from(inputFiles)) {
         if (!f.type.startsWith('image/')) continue;
+        if (!folderName && uploadMode === 'folder' && f.webkitRelativePath) {
+          folderName = f.webkitRelativePath.split('/')[0];
+        }
         const dataUrl = await new Promise<string>(resolve => {
           const r = new FileReader();
           r.onload = () => resolve(r.result as string);
           r.readAsDataURL(f);
         });
+        const name = f.name.replace(/\.[^.]+$/, '');
         newFiles.push({
           id: idCounter++,
-          name: f.name.replace(/\.[^.]+$/, ''),
+          name,
+          relativePath: uploadMode === 'folder' && f.webkitRelativePath
+            ? f.webkitRelativePath.substring(f.webkitRelativePath.indexOf('/') + 1).replace(/\.[^.]+$/, '')
+            : undefined,
           originalSize: f.size,
           compressedSize: 0,
           originalDataUrl: dataUrl,
@@ -106,6 +126,8 @@ export function ImageCompressor({ t, lang }: Props) {
         return;
       }
 
+      if (folderName) setRootFolderName(folderName);
+
       setFiles(prev => [...prev, ...newFiles]);
       setNextId(idCounter);
       setSelectedIds(prev => {
@@ -118,7 +140,7 @@ export function ImageCompressor({ t, lang }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [nextId, format, quality, lang]);
+  }, [nextId, format, quality, lang, uploadMode]);
 
   const compressAll = async () => {
     if (files.length === 0) return;
@@ -182,13 +204,16 @@ export function ImageCompressor({ t, lang }: Props) {
       const url = f.keptOriginal ? f.originalDataUrl : f.compressedDataUrl;
       const blob = await fetch(url).then(r => r.blob());
       const ext = f.keptOriginal ? 'original' : format;
-      zip.file(`${f.name}.${ext}`, blob);
+      const zipPath = f.relativePath
+        ? `${rootFolderName}/${f.relativePath}.${ext}`
+        : `${f.name}.${ext}`;
+      zip.file(zipPath, blob);
     }
     const content = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(content);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `compressed_images.zip`;
+    a.download = rootFolderName ? `${rootFolderName}_compressed.zip` : `compressed_images.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -200,6 +225,7 @@ export function ImageCompressor({ t, lang }: Props) {
     setSelectedIds(new Set());
     setNextId(1);
     setError(null);
+    setRootFolderName('');
   };
 
   const removeFile = (id: number) => {
@@ -267,21 +293,67 @@ export function ImageCompressor({ t, lang }: Props) {
         )}>
           <div className={cn(mobileTab === 'upload' ? "block" : "hidden sm:block")}>
             <div className="p-3 border-b border-[#2D3139] sm:p-4">
+              <div className="flex gap-1 mb-2">
+                <button
+                  onClick={() => setUploadMode('files')}
+                  className={cn(
+                    "flex-1 py-1.5 text-[8px] font-mono uppercase tracking-wider rounded-md border transition-all",
+                    uploadMode === 'files'
+                      ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
+                      : "bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500"
+                  )}
+                >
+                  {lang === 'ar' ? 'ملفات' : 'Files'}
+                </button>
+                <button
+                  onClick={() => setUploadMode('folder')}
+                  className={cn(
+                    "flex-1 py-1.5 text-[8px] font-mono uppercase tracking-wider rounded-md border transition-all",
+                    uploadMode === 'folder'
+                      ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
+                      : "bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500"
+                  )}
+                >
+                  {lang === 'ar' ? 'مجلد' : 'Folder'}
+                </button>
+              </div>
               <label className={cn(
                 "flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-[#2D3139] rounded-lg cursor-pointer hover:border-emerald-500/50 transition-colors bg-[#0F1115]",
                 files.length > 0 ? "border-emerald-500/30" : ""
               )}>
-                <ImagePlus size={20} className={files.length > 0 ? "text-emerald-500" : "text-gray-500"} />
+                {uploadMode === 'folder' ? (
+                  <Upload size={20} className={files.length > 0 ? "text-emerald-500" : "text-gray-500"} />
+                ) : (
+                  <ImagePlus size={20} className={files.length > 0 ? "text-emerald-500" : "text-gray-500"} />
+                )}
                 <span className="text-[9px] font-mono text-gray-400 text-center leading-relaxed">
                   {files.length > 0
-                    ? (lang === 'ar' ? 'إضافة صور' : 'Add more images')
-                    : (lang === 'ar' ? 'اختر صور' : 'Select images')}
+                    ? (uploadMode === 'folder'
+                      ? (lang === 'ar' ? 'إضافة مجلد' : 'Add more folder')
+                      : (lang === 'ar' ? 'إضافة صور' : 'Add more images'))
+                    : (uploadMode === 'folder'
+                      ? (lang === 'ar' ? 'اختر مجلد' : 'Select folder')
+                      : (lang === 'ar' ? 'اختر صور' : 'Select images'))}
                 </span>
                 <span className="text-[7px] font-mono text-gray-600">
-                  PNG, JPG, WebP
+                  {uploadMode === 'folder'
+                    ? (lang === 'ar' ? 'جميع الصور داخل المجلدات الفرعية' : 'All images in sub-folders')
+                    : 'PNG, JPG, WebP'}
                 </span>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+                <input
+                  ref={uploadMode === 'files' ? fileInputRef : folderInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple={uploadMode === 'files'}
+                  className="hidden"
+                  onChange={handleFiles}
+                />
               </label>
+              {rootFolderName && uploadMode === 'folder' && (
+                <p className="text-[8px] font-mono text-emerald-400 mt-2 text-center truncate flex items-center justify-center gap-1">
+                  <FolderOpen size={10} /> {rootFolderName}
+                </p>
+              )}
               {error && <p className="text-[8px] text-red-400 mt-2 font-mono">{error}</p>}
               {loading && (
                 <div className="flex items-center gap-2 mt-3 text-[8px] text-gray-400 font-mono">
@@ -354,6 +426,12 @@ export function ImageCompressor({ t, lang }: Props) {
                     <span>{lang === 'ar' ? 'الملفات' : 'Files'}:</span>
                     <span>{files.length}</span>
                   </div>
+                  {uploadMode === 'folder' && rootFolderName && (
+                    <div className="flex justify-between">
+                      <span>{lang === 'ar' ? 'المجلد' : 'Folder'}:</span>
+                      <span className="text-gray-400 truncate max-w-[120px]">{rootFolderName}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>{lang === 'ar' ? 'الحجم الأصلي' : 'Original'}:</span>
                     <span className="text-gray-400">{formatBytes(totalOriginalSize)}</span>
@@ -458,7 +536,12 @@ export function ImageCompressor({ t, lang }: Props) {
                     >
                       <img src={f.originalDataUrl} alt={f.name} className="w-full h-auto" draggable={false} />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                        <p className="text-[8px] font-mono text-white truncate leading-tight">{f.name}</p>
+                        <p className="text-[8px] font-mono text-white truncate leading-tight">
+                          {f.relativePath || f.name}
+                        </p>
+                        {f.relativePath && f.relativePath !== f.name && (
+                          <p className="text-[6px] font-mono text-gray-500 truncate leading-tight">{f.name}</p>
+                        )}
                         <div className="flex items-center gap-2 text-[7px] font-mono text-gray-400 mt-0.5">
                           <span>{formatBytes(f.originalSize)}</span>
                           {f.compressedSize > 0 && (
