@@ -17,7 +17,7 @@ import { ErrorScreen, LoadingScreen } from './components/LoadingScreen';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageId>('watermarkRemover');
+  const [currentPage, setCurrentPage] = useState<PageId>('videoToGif');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = translations[lang];

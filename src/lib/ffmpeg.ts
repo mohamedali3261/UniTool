@@ -27,6 +27,7 @@ export const loadFFmpeg = async () => {
     console.log('[FFmpeg] Load successful');
   } catch (error) {
     console.error('[FFmpeg] Load failed:', error);
+    ffmpeg = null;
     throw error;
   }
 

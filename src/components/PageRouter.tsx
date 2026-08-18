@@ -4,11 +4,9 @@ import type { CompressionSettings } from '../types';
 import { AudioSplitter } from '../pages/AudioSplitter';
 import { VideoLogo } from '../pages/VideoLogo';
 import { ImageCropper } from '../pages/ImageCropper';
-import { BackgroundRemover } from '../pages/BackgroundRemover';
 import { SpeechToText } from '../pages/SpeechToText';
 import { AudioTranscriber } from '../pages/AudioTranscriber';
 import { VideoSubtitles } from '../pages/VideoSubtitles';
-import { WatermarkRemover } from '../pages/WatermarkRemover';
 import { AudioExtractor } from '../pages/AudioExtractor';
 import { VideoMerger } from '../pages/VideoMerger';
 import { PdfToImage } from '../pages/PdfToImage';
@@ -67,8 +65,6 @@ export function PageRouter({
   switch (currentPage) {
     case 'videoSubtitles':
       return <VideoSubtitles {...p} />;
-    case 'watermarkRemover':
-      return <WatermarkRemover {...p} />;
     case 'audioExtractor':
       return <AudioExtractor {...p} />;
     case 'videoMerger':
@@ -83,8 +79,6 @@ export function PageRouter({
       return <VideoLogo {...p} />;
     case 'imageCropper':
       return <ImageCropper {...p} />;
-    case 'bgRemover':
-      return <BackgroundRemover {...p} />;
     case 'pdfToImage':
       return <PdfToImage {...p} />;
     case 'imageCompressor':

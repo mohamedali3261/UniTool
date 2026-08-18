@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Download, Loader2, Film, Trash2, Scissors, Settings2, Eye } from 'lucide-react';
+import { Upload, Download, Loader2, Film, Trash2, Scissors, Settings2, Eye, Wand2, Pipette, ScanSearch } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { loadFFmpeg } from '../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
@@ -24,8 +24,15 @@ export function VideoToGif({ t, lang }: Props) {
   const [width, setWidth] = useState(480);
   const [loop, setLoop] = useState(0);
 
+  const [removeBg, setRemoveBg] = useState(false);
+  const [bgColor, setBgColor] = useState('#00ff00');
+  const [bgSimilarity, setBgSimilarity] = useState(0.3);
+  const [bgBlend, setBgBlend] = useState(0.1);
+  const [detectingColor, setDetectingColor] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const detectCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +65,75 @@ export function VideoToGif({ t, lang }: Props) {
 
   const maxDuration = videoRef.current?.duration || 10;
 
+  const detectBgColor = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    setDetectingColor(true);
+
+    vid.currentTime = startTime;
+    vid.addEventListener('seeked', function onSeeked() {
+      vid.removeEventListener('seeked', onSeeked);
+
+      const canvas = detectCanvasRef.current || document.createElement('canvas');
+      if (!detectCanvasRef.current) detectCanvasRef.current = canvas;
+      const w = vid.videoWidth;
+      const h = vid.videoHeight;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { setDetectingColor(false); return; }
+
+      ctx.drawImage(vid, 0, 0, w, h);
+
+      const sampleSize = Math.max(2, Math.round(Math.min(w, h) * 0.02));
+      const regions: [number, number][] = [
+        [0, 0],
+        [w - sampleSize, 0],
+        [0, h - sampleSize],
+        [w - sampleSize, h - sampleSize],
+        [Math.round(w / 2) - sampleSize / 2, 0],
+        [0, Math.round(h / 2) - sampleSize / 2],
+        [w - sampleSize, Math.round(h / 2) - sampleSize / 2],
+        [Math.round(w / 2) - sampleSize / 2, h - sampleSize],
+      ];
+
+      const colorBuckets: Record<string, { r: number; g: number; b: number; count: number }> = {};
+
+      for (const [rx, ry] of regions) {
+        const x = Math.max(0, Math.min(w - sampleSize, rx));
+        const y = Math.max(0, Math.min(h - sampleSize, ry));
+        const s = Math.min(sampleSize, w - x, h - y);
+        if (s < 1) continue;
+        const data = ctx.getImageData(x, y, s, s).data;
+        let tr = 0, tg = 0, tb = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          tr += data[i]; tg += data[i + 1]; tb += data[i + 2]; count++;
+        }
+        const r = Math.round(tr / count);
+        const g = Math.round(tg / count);
+        const b = Math.round(tb / count);
+        const key = `${Math.round(r / 16) * 16},${Math.round(g / 16) * 16},${Math.round(b / 16) * 16}`;
+        if (!colorBuckets[key]) {
+          colorBuckets[key] = { r, g, b, count: 1 };
+        } else {
+          colorBuckets[key].r = Math.round((colorBuckets[key].r * colorBuckets[key].count + r) / (colorBuckets[key].count + 1));
+          colorBuckets[key].g = Math.round((colorBuckets[key].g * colorBuckets[key].count + g) / (colorBuckets[key].count + 1));
+          colorBuckets[key].b = Math.round((colorBuckets[key].b * colorBuckets[key].count + b) / (colorBuckets[key].count + 1));
+          colorBuckets[key].count++;
+        }
+      }
+
+      let best = { r: 0, g: 0, b: 0, count: 0 };
+      for (const bucket of Object.values(colorBuckets)) {
+        if (bucket.count > best.count) best = bucket;
+      }
+
+      const hex = '#' + [best.r, best.g, best.b].map(c => c.toString(16).padStart(2, '0')).join('');
+      setBgColor(hex);
+      setDetectingColor(false);
+    });
+  };
+
   const convertToGif = async () => {
     if (!videoFile) return;
     setConverting(true);
@@ -79,23 +155,45 @@ export function VideoToGif({ t, lang }: Props) {
 
       const startTimeStr = formatTime(startTime);
 
-      await ffmpeg.exec([
-        '-i', inputName,
-        '-ss', startTimeStr,
-        '-t', String(duration),
-        '-vf', `fps=${fps},scale=${width}:-1:flags=lanczos,palettegen=stats_mode=diff`,
-        '-y', paletteName
-      ]);
+      if (removeBg) {
+        const ck = `chromakey=color=${bgColor.replace('#', '0x')}:similarity=${bgSimilarity}:blend=${bgBlend}`;
 
-      await ffmpeg.exec([
-        '-i', inputName,
-        '-i', paletteName,
-        '-lavfi', `fps=${fps},scale=${width}:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
-        '-ss', startTimeStr,
-        '-t', String(duration),
-        '-loop', String(loop),
-        '-y', outputName
-      ]);
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-ss', startTimeStr,
+          '-t', String(duration),
+          '-vf', `${ck},fps=${fps},scale=${width}:-1:flags=lanczos,palettegen=stats_mode=diff`,
+          '-y', paletteName
+        ]);
+
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-i', paletteName,
+          '-lavfi', `${ck},fps=${fps},scale=${width}:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
+          '-ss', startTimeStr,
+          '-t', String(duration),
+          '-loop', String(loop),
+          '-y', outputName
+        ]);
+      } else {
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-ss', startTimeStr,
+          '-t', String(duration),
+          '-vf', `fps=${fps},scale=${width}:-1:flags=lanczos,palettegen=stats_mode=diff`,
+          '-y', paletteName
+        ]);
+
+        await ffmpeg.exec([
+          '-i', inputName,
+          '-i', paletteName,
+          '-lavfi', `fps=${fps},scale=${width}:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
+          '-ss', startTimeStr,
+          '-t', String(duration),
+          '-loop', String(loop),
+          '-y', outputName
+        ]);
+      }
 
       const data = await ffmpeg.readFile(outputName);
       const blob = new Blob([data], { type: 'image/gif' });
@@ -106,9 +204,16 @@ export function VideoToGif({ t, lang }: Props) {
       try { await ffmpeg.deleteFile(inputName); } catch {}
       try { await ffmpeg.deleteFile(paletteName); } catch {}
       try { await ffmpeg.deleteFile(outputName); } catch {}
-    } catch (err) {
+    } catch (err: any) {
       console.error('GIF conversion error:', err);
-      setError(lang === 'ar' ? 'فشل تحويل الفيديو لـ GIF' : 'Failed to convert video to GIF');
+      const msg = err?.message || '';
+      if (msg.includes('not loaded') || msg.includes('load()')) {
+        setError(lang === 'ar' ? 'FFmpeg غير جاهز - أعد تحميل الصفحة وجرّب مرة أخرى' : 'FFmpeg not ready - reload the page and try again');
+      } else if (msg.includes('SharedArrayBuffer') || !window.crossOriginIsolated) {
+        setError(lang === 'ar' ? 'المتصفح لا يدعم المعالجة - استخدم localhost أو HTTPS' : 'Browser does not support processing - use localhost or HTTPS');
+      } else {
+        setError(lang === 'ar' ? 'فشل تحويل الفيديو لـ GIF' : 'Failed to convert video to GIF');
+      }
     } finally {
       setConverting(false);
     }
@@ -141,6 +246,10 @@ export function VideoToGif({ t, lang }: Props) {
     setStartTime(0);
     setDuration(3);
     setProgress(0);
+    setRemoveBg(false);
+    setBgColor('#00ff00');
+    setBgSimilarity(0.3);
+    setBgBlend(0.1);
   };
 
   const formatBytes = (bytes: number) => {
@@ -308,6 +417,114 @@ export function VideoToGif({ t, lang }: Props) {
             </div>
           </div>
 
+          {/* Background Removal */}
+          <div className="p-3 border-b border-[#2D3139] sm:p-4">
+            <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5 sm:text-[10px]">
+              <Wand2 size={11} className="text-purple-500" />
+              {lang === 'ar' ? 'إزالة الخلفية' : 'Remove Background'}
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => setRemoveBg(!removeBg)}
+                className={cn(
+                  "w-full py-2 text-[8px] font-mono uppercase tracking-wider rounded-md border transition-all",
+                  removeBg
+                    ? "bg-purple-600/20 border-purple-500/40 text-purple-400"
+                    : "bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500"
+                )}
+              >
+                {removeBg
+                  ? (lang === 'ar' ? 'الإزالة مفعّلة' : 'Background Removal: ON')
+                  : (lang === 'ar' ? 'فعّل إزالة الخلفية' : 'Enable Background Removal')}
+              </button>
+              {removeBg && (
+                <>
+                  <div>
+                    <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px] flex items-center gap-1">
+                      <Pipette size={9} className="text-purple-400" />
+                      {lang === 'ar' ? 'لون الخلفية' : 'Background Color'}
+                    </label>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <input
+                        type="color"
+                        value={bgColor}
+                        onChange={e => setBgColor(e.target.value)}
+                        className="w-8 h-8 rounded border border-[#2D3139] cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={bgColor}
+                        onChange={e => setBgColor(e.target.value)}
+                        className="flex-1 px-2 py-1.5 bg-[#0F1115] border border-[#2D3139] rounded text-[9px] font-mono text-gray-300 uppercase"
+                      />
+                    </div>
+                    <button
+                      onClick={detectBgColor}
+                      disabled={detectingColor}
+                      className="w-full mt-2 py-1.5 flex items-center justify-center gap-1.5 text-[8px] font-mono uppercase tracking-wider rounded border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all disabled:opacity-50"
+                    >
+                      {detectingColor ? (
+                        <Loader2 size={10} className="animate-spin" />
+                      ) : (
+                        <ScanSearch size={10} />
+                      )}
+                      {lang === 'ar' ? 'كشف لون الخلفية تلقائي' : 'Auto Detect Color'}
+                    </button>
+                    <div className="flex gap-1 mt-2">
+                      {['#00ff00', '#0000ff', '#ff0000', '#000000', '#ffffff'].map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setBgColor(c)}
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 transition-all hover:scale-110",
+                            bgColor === c ? "border-white scale-110" : "border-[#2D3139]"
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px]">
+                      {lang === 'ar' ? 'الدقة' : 'Similarity'}: {bgSimilarity.toFixed(2)}
+                    </label>
+                    <input
+                      type="range"
+                      min="0.01"
+                      max="1"
+                      step="0.01"
+                      value={bgSimilarity}
+                      onChange={e => setBgSimilarity(parseFloat(e.target.value))}
+                      className="w-full mt-1.5 accent-purple-500"
+                    />
+                    <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
+                      <span>{lang === 'ar' ? 'دقيقة' : 'Precise'}</span>
+                      <span>{lang === 'ar' ? 'واسعة' : 'Broad'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px]">
+                      {lang === 'ar' ? 'التوهج' : 'Blend'}: {bgBlend.toFixed(2)}
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={bgBlend}
+                      onChange={e => setBgBlend(parseFloat(e.target.value))}
+                      className="w-full mt-1.5 accent-purple-500"
+                    />
+                    <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
+                      <span>{lang === 'ar' ? 'حاد' : 'Sharp'}</span>
+                      <span>{lang === 'ar' ? 'ناعم' : 'Smooth'}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Convert */}
           <div className="p-3 mt-auto space-y-2 sm:p-4">
             {converting && (
@@ -359,7 +576,6 @@ export function VideoToGif({ t, lang }: Props) {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 max-w-full">
-          {/* Video Preview */}
           <div className="relative rounded-xl overflow-hidden bg-black shadow-2xl shadow-black/40 max-w-full">
             <video
               ref={videoRef}
@@ -369,7 +585,6 @@ export function VideoToGif({ t, lang }: Props) {
             />
           </div>
 
-          {/* GIF Preview */}
           {gifUrl && (
             <div className="flex flex-col items-center gap-2">
               <span className="text-[9px] font-mono text-amber-400 uppercase tracking-widest">
@@ -412,7 +627,6 @@ export function VideoToGif({ t, lang }: Props) {
       </div>
 
       <div className="flex flex-1 overflow-hidden flex-col sm:flex-row">
-        {/* Settings Panel */}
         <aside className={cn(
           "w-full sm:w-80 max-h-[55vh] sm:max-h-none bg-[#14171C] border-r border-[#2D3139] flex flex-col shrink-0 overflow-y-auto settings-scroll",
           mobileTab === 'upload' ? "flex" : "hidden sm:flex"
@@ -420,7 +634,6 @@ export function VideoToGif({ t, lang }: Props) {
           {renderSettingsContent()}
         </aside>
 
-        {/* Preview */}
         <div className={cn(
           "flex flex-col",
           mobileTab === 'preview' ? "flex" : "hidden sm:flex"
@@ -428,6 +641,8 @@ export function VideoToGif({ t, lang }: Props) {
           {renderPreviewContent()}
         </div>
       </div>
+
+      <canvas ref={detectCanvasRef} className="hidden" />
     </div>
   );
 }

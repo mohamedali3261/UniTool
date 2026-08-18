@@ -8,7 +8,6 @@ import {
   MessageSquareText,
   FileAudio,
   Subtitles,
-  Eraser,
   QrCode,
   AudioLines,
   Combine,
@@ -25,7 +24,6 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { id: 'watermarkRemover', labelAr: 'علامة مائية', labelEn: 'Watermark Remover', icon: Eraser, color: 'from-violet-600 to-purple-600', activeBg: 'bg-violet-600/15 ring-1 ring-violet-500/30' },
   { id: 'audioExtractor', labelAr: 'استخراج الصوت من الفيديو', labelEn: 'Extract Audio from Video', icon: AudioLines, color: 'from-emerald-600 to-teal-600', activeBg: 'bg-emerald-600/15 ring-1 ring-emerald-500/30' },
   { id: 'videoMerger', labelAr: 'دمج الفيديوهات', labelEn: 'Merge Videos', icon: Combine, color: 'from-sky-600 to-blue-600', activeBg: 'bg-sky-600/15 ring-1 ring-sky-500/30' },
   { id: 'videoToGif', labelAr: 'تحويل الفيديو لـ GIF', labelEn: 'Video to GIF', icon: Film, color: 'from-amber-600 to-orange-600', activeBg: 'bg-amber-600/15 ring-1 ring-amber-500/30' },

@@ -13,10 +13,6 @@ if not exist "node_modules\" (
     echo.
 )
 
-REM Start watermark API server in background
-echo Starting Watermark API on port 3001...
-start "Watermark API" /MIN cmd /c "node server.js"
-
 REM Start the development server
 echo Opening http://localhost:3000
 echo.

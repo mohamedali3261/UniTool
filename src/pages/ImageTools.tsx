@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Eraser, Percent, Scissors, LayoutGrid, Sparkles, ArrowRight } from 'lucide-react';
+import { Percent, Scissors, LayoutGrid, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -21,19 +21,6 @@ const tools = [
     iconBg: 'bg-gradient-to-br from-violet-500 to-indigo-600',
     glow: 'group-hover:shadow-violet-500/20',
     featured: true,
-  },
-  {
-    id: 'bgRemover',
-    icon: Eraser,
-    titleAr: 'إزالة الخلفية',
-    titleEn: 'Remove Background',
-    descAr: 'احذف خلفية أي صورة تلقائياً بضغطة واحدة وبجودة عالية',
-    descEn: 'Remove any image background automatically with one click in high quality',
-    color: 'from-emerald-500/20 to-teal-500/20',
-    border: 'border-emerald-500/20 hover:border-emerald-400/40',
-    iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
-    glow: 'group-hover:shadow-emerald-500/20',
-    featured: false,
   },
   {
     id: 'imageCompressor',
