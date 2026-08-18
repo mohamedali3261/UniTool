@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Icon Generator - Google Play Store</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0c0f; --card: #14171c; --border: #2d3139; --text: #d1d5db;
+    --text2: #6b7280; --accent: #22c55e; --accent2: #10b981;
+    --radius: 10px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: rgba(15,17,21,0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 10; }
+  .header-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #22c55e, #10b981); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; flex-shrink: 0; }
+  .header h1 { font-size: 16px; font-weight: 700; }
+  .header p { font-size: 11px; color: var(--text2); font-family: monospace; }
+
+  .layout { display: flex; height: calc(100vh - 65px); }
+
+  /* Sidebar */
+  .sidebar { width: 340px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .section { padding: 16px; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .section-title svg { width: 13px; height: 13px; color: var(--accent); }
+
+  /* Upload */
+  .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: #0f1115; }
+  .upload-zone:hover { border-color: rgba(34,197,94,0.4); }
+  .upload-zone svg { width: 32px; height: 32px; color: #4b5563; margin: 0 auto 8px; display: block; }
+  .upload-zone .label { font-size: 12px; color: var(--text2); }
+  .upload-zone .hint { font-size: 10px; color: #4b5563; font-family: monospace; margin-top: 4px; }
+  .file-info { display: flex; justify-content: space-between; align-items: center; }
+  .file-info .name { font-size: 11px; color: var(--text2); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .file-info .meta { font-size: 10px; color: #4b5563; font-family: monospace; display: flex; gap: 8px; margin-top: 4px; }
+  .file-info .remove { font-size: 10px; color: #ef4444; cursor: pointer; background: none; border: none; font-family: monospace; }
+
+  /* Size list */
+  .size-list { display: flex; flex-direction: column; gap: 6px; }
+  .size-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f1115; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .size-item:hover { border-color: #4b5563; }
+  .size-item.active { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.06); }
+  .size-item .check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; font-size: 10px; color: transparent; }
+  .size-item.active .check { background: var(--accent); border-color: var(--accent); color: white; }
+  .size-item .info { flex: 1; min-width: 0; }
+  .size-item .name { font-size: 11px; font-family: monospace; }
+  .size-item .dims { font-size: 9px; color: #4b5563; font-family: monospace; }
+  .size-item .del { opacity: 0; background: none; border: none; color: #ef4444; cursor: pointer; font-size: 11px; padding: 2px; transition: opacity 0.15s; }
+  .size-item:hover .del { opacity: 1; }
+
+  /* Add custom */
+  .add-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-row input { flex: 1; padding: 6px 8px; background: #0f1115; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; font-family: monospace; outline: none; }
+  .add-row input:focus { border-color: var(--accent); }
+  .add-row input::placeholder { color: #4b5563; }
+  .add-btn { padding: 6px 12px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); border-radius: 6px; color: var(--accent); font-size: 11px; cursor: pointer; font-family: monospace; white-space: nowrap; }
+  .add-btn:hover { background: rgba(34,197,94,0.25); }
+
+  /* Presets */
+  .presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .preset-btn { padding: 4px 8px; font-size: 9px; font-family: monospace; border-radius: 4px; border: 1px solid var(--border); background: #0f1115; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-btn.active { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: var(--accent); }
+
+  /* Actions */
+  .actions { padding: 16px; margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .btn-primary { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: monospace; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+  .btn-generate { background: linear-gradient(135deg, #22c55e, #10b981); color: white; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+  .btn-generate:hover { box-shadow: 0 6px 16px rgba(34,197,94,0.4); transform: translateY(-1px); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-zip { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--accent); }
+  .btn-zip:hover { background: rgba(34,197,94,0.2); }
+
+  /* Main content */
+  .main { flex: 1; overflow-y: auto; padding: 20px; }
+  .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #4b5563; }
+  .empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
+  .empty p { font-size: 12px; font-family: monospace; }
+
+  .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .results-header .count { font-size: 11px; font-family: monospace; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .result-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.2s; }
+  .result-card:hover { border-color: rgba(34,197,94,0.3); }
+  .result-card .preview { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #0f1115; padding: 8px; }
+  .result-card .preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .result-card .meta { padding: 8px 10px; }
+  .result-card .meta .label { font-size: 10px; font-family: monospace; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+  .result-card .meta .dims { font-size: 9px; color: #4b5563; font-family: monospace; margin-top: 2px; }
+  .result-card .dl-btn { background: none; border: none; color: var(--text2); cursor: pointer; padding: 2px; transition: color 0.15s; }
+  .result-card .dl-btn:hover { color: var(--accent); }
+
+  .group-title { font-size: 10px; font-family: monospace; color: #4b5563; text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0 8px; display: flex; align-items: center; gap: 6px; }
+  .group-title:first-child { margin-top: 0; }
+
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; height: auto; }
+    .sidebar { width: 100%; max-height: 50vh; }
+    .main { min-height: 50vh; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+  </div>
+  <div>
+    <h1>App Icon Generator</h1>
+    <p>Google Play Store - All Required Sizes</p>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <!-- Upload -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Source Image
+      </div>
+      <div id="uploadZone" class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div class="label">Click to upload image</div>
+        <div class="hint">PNG, JPG, WebP (512x512+ recommended)</div>
+      </div>
+      <div id="fileInfo" style="display:none" class="file-info">
+        <div>
+          <div class="name" id="fileName"></div>
+          <div class="meta"><span id="fileDims"></span><span id="fileSize"></span></div>
+        </div>
+        <button class="remove" onclick="removeFile()">Remove</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+    </div>
+
+    <!-- Presets -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Presets
+      </div>
+      <div class="presets" id="presets"></div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="section" style="flex:1;overflow-y:auto">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Sizes <span id="sizeCount" style="opacity:0.5;font-weight:400"></span>
+      </div>
+      <div id="sizeList" class="size-list"></div>
+      <div class="add-row">
+        <input type="text" id="customName" placeholder="name">
+        <input type="number" id="customW" placeholder="W" min="1">
+        <input type="number" id="customH" placeholder="H" min="1">
+        <button class="add-btn" onclick="addCustom()">+</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button id="btnGenerate" class="btn-primary btn-generate" disabled onclick="generate()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+        Generate All
+      </button>
+      <button id="btnZip" class="btn-primary btn-zip" style="display:none" onclick="downloadZip()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download All (ZIP)
+      </button>
+    </div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="empty" id="emptyState">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <p>Upload an image to generate icons</p>
+    </div>
+    <div id="resultsContainer" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const PRESETS = [
+  { label: 'All Google Play', sizes: [
+    { name: 'launcher_mdpi', w: 48, h: 48 },
+    { name: 'launcher_hdpi', w: 72, h: 72 },
+    { name: 'launcher_xhdpi', w: 96, h: 96 },
+    { name: 'launcher_xxhdpi', w: 144, h: 144 },
+    { name: 'launcher_xxxhdpi', w: 192, h: 192 },
+    { name: 'play_store_512', w: 512, h: 512 },
+    { name: 'play_store_1024', w: 1024, h: 1024 },
+    { name: 'feature_graphic', w: 1024, h: 500 },
+    { name: 'phone_screenshot', w: 1080, h: 1920 },
+    { name: 'tablet_7', w: 1080, h: 1920 },
+    { name: 'tablet_10', w: 1200, h: 1920 },
+    { name: 'tv_banner', w: 320, h: 180 },
+    { name: 'tv_highres', w: 1280, h: 720 },
+    { name: 'wear_round', w: 320, h: 320 },
+    { name: 'wear_square', w: 320, h: 320 },
+  ]},
+  { label: 'Launcher Only', sizes: [
+    { name: 'mdpi', w: 48, h: 48 },
+    { name: 'hdpi', w: 72, h: 72 },
+    { name: 'xhdpi', w: 96, h: 96 },
+    { name: 'xxhdpi', w: 144, h: 144 },
+    { name: 'xxxhdpi', w: 192, h: 192 },
+  ]},
+  { label: 'Play Store', sizes: [
+    { name: 'icon_512', w: 512, h: 512 },
+    { name: 'icon_1024', w: 1024, h: 1024 },
+    { name: 'feature_graphic', w: 1024, h: 500 },
+  ]},
+  { label: 'Screenshots', sizes: [
+    { name: 'phone', w: 1080, h: 1920 },
+    { name: 'tablet_7', w: 1080, h: 1920 },
+    { name: 'tablet_10', w: 1200, h: 1920 },
+  ]},
+  { label: 'TV + Wear', sizes: [
+    { name: 'tv_banner', w: 320, h: 180 },
+    { name: 'tv_highres', w: 1280, h: 720 },
+    { name: 'wear_round', w: 320, h: 320 },
+    { name: 'wear_square', w: 320, h: 320 },
+  ]},
+];
+
+let sourceImage = null;
+let sizes = [];
+let results = [];
+let activePreset = null;
+
+// Init presets
+const presetsEl = document.getElementById('presets');
+PRESETS.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn';
+  btn.textContent = p.label;
+  btn.onclick = () => applyPreset(i);
+  presetsEl.appendChild(btn);
+});
+
+function applyPreset(idx) {
+  activePreset = idx;
+  sizes = PRESETS[idx].sizes.map(s => ({ ...s, active: true }));
+  document.querySelectorAll('.preset-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  renderSizes();
+  updateBtn();
+}
+
+// File upload
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    sourceImage = img;
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('fileInfo').style.display = 'flex';
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileDims').textContent = img.naturalWidth + 'x' + img.naturalHeight;
+    document.getElementById('fileSize').textContent = formatBytes(file.size);
+    updateBtn();
+  };
+  img.src = url;
+});
+
+function removeFile() {
+  sourceImage = null;
+  results = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('uploadZone').style.display = '';
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('resultsContainer').style.display = 'none';
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('btnZip').style.display = 'none';
+  updateBtn();
+}
+
+// Sizes
+function renderSizes() {
+  const list = document.getElementById('sizeList');
+  list.innerHTML = '';
+  document.getElementById('sizeCount').textContent = '(' + sizes.length + ')';
+  sizes.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'size-item' + (s.active ? ' active' : '');
+    div.innerHTML = `
+      <div class="check">${s.active ? '✓' : ''}</div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="dims">${s.w} x ${s.h}</div>
+      </div>
+      <button class="del" title="Remove">✕</button>
+    `;
+    div.querySelector('.check').parentElement.onclick = () => { s.active = !s.active; renderSizes(); updateBtn(); };
+    div.querySelector('.del').onclick = (e) => { e.stopPropagation(); sizes.splice(i, 1); renderSizes(); updateBtn(); };
+    list.appendChild(div);
+  });
+}
+
+function addCustom() {
+  const name = document.getElementById('customName').value.trim() || 'custom_' + Date.now();
+  const w = parseInt(document.getElementById('customW').value);
+  const h = parseInt(document.getElementById('customH').value);
+  if (!w || !h || w < 1 || h < 1) return;
+  sizes.push({ name, w, h, active: true });
+  document.getElementById('customName').value = '';
+  document.getElementById('customW').value = '';
+  document.getElementById('customH').value = '';
+  renderSizes();
+  updateBtn();
+}
+
+function updateBtn() {
+  document.getElementById('btnGenerate').disabled = !sourceImage || sizes.filter(s => s.active).length === 0;
+}
+
+// Generate
+async function generate() {
+  if (!sourceImage) return;
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  results = [];
+
+  const active = sizes.filter(s => s.active);
+  for (const s of active) {
+    const blob = await resize(sourceImage, s.w, s.h);
+    const url = URL.createObjectURL(blob);
+    results.push({ name: s.name, w: s.w, h: s.h, url, size: blob.size });
+  }
+
+  renderResults();
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg> Generate All`;
+  btn.disabled = false;
+  document.getElementById('btnZip').style.display = '';
+}
+
+function resize(img, w, h) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const srcA = img.naturalWidth / img.naturalHeight;
+    const dstA = w / h;
+    let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+    if (srcA > dstA) { sw = img.naturalHeight * dstA; sx = (img.naturalWidth - sw) / 2; }
+    else { sh = img.naturalWidth / dstA; sy = (img.naturalHeight - sh) / 2; }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+    c.toBlob(b => resolve(b), 'image/png');
+  });
+}
+
+function renderResults() {
+  const container = document.getElementById('resultsContainer');
+  const empty = document.getElementById('emptyState');
+  empty.style.display = 'none';
+  container.style.display = '';
+
+  const groups = {};
+  results.forEach(r => {
+    const cat = r.name.includes('launcher') ? 'Launcher Icons' :
+                r.name.includes('play') || r.name.includes('feature') ? 'Play Store' :
+                r.name.includes('screenshot') || r.name.includes('phone') || r.name.includes('tablet') ? 'Screenshots' :
+                r.name.includes('tv') ? 'Android TV' :
+                r.name.includes('wear') ? 'Wear OS' : 'Custom';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(r);
+  });
+
+  let html = `<div class="results-header"><span class="count">${results.length} images generated</span></div>`;
+  for (const [cat, items] of Object.entries(groups)) {
+    html += `<div class="group-title">${cat}</div><div class="grid">`;
+    items.forEach(r => {
+      html += `
+        <div class="result-card">
+          <div class="preview"><img src="${r.url}" alt="${r.name}" style="${r.w <= 192 ? 'image-rendering:pixelated' : ''}"></div>
+          <div class="meta">
+            <div class="label">
+              <span>${r.name}</span>
+              <button class="dl-btn" onclick="downloadOne('${r.url}','${r.name}')" title="Download">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+            <div class="dims">${r.w}x${r.h} · ${formatBytes(r.size)}</div>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function downloadOne(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name + '.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+async function downloadZip() {
+  if (!results.length) return;
+  const btn = document.getElementById('btnZip');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating ZIP...';
+  const zip = new JSZip();
+  for (const r of results) {
+    const resp = await fetch(r.url);
+    const blob = await resp.blob();
+    zip.file(r.name + '.png', blob);
+  }
+  const content = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = 'app_icons.zip';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download All (ZIP)`;
+  btn.disabled = false;
+}
+
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const k = 1024, s = ['B','KB','MB'];
+  const i = Math.floor(Math.log(b) / Math.log(k));
+  return (b / Math.pow(k, i)).toFixed(1) + ' ' + s[i];
+}
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'rgba(34,197,94,0.6)'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer(); dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    document.getElementById('fileInput').dispatchEvent(new Event('change'));
+  }
+});
+</script>
+</body>
+</html>

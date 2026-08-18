@@ -26,7 +26,6 @@ import { PdfMerger } from '../pages/PdfMerger';
 import { PdfSplitter } from '../pages/PdfSplitter';
 import { PdfUnlock } from '../pages/PdfUnlock';
 import { PdfProtect } from '../pages/PdfProtect';
-import { AppIconGenerator } from '../pages/AppIconGenerator';
 
 interface Props {
   currentPage: PageId;
@@ -114,8 +113,6 @@ export function PageRouter({
       return <PdfProtect {...p} />;
     case 'compressionTools':
       return <CompressionTools {...p} onNavigate={onNavigate} />;
-    case 'appIconGenerator':
-      return <AppIconGenerator {...p} />;
     default:
       return <AudioWorkspace {...audioProps} {...p} />;
   }

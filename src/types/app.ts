@@ -24,5 +24,4 @@ export type PageId =
   | 'pdfMerger'
   | 'pdfSplitter'
   | 'pdfUnlock'
-  | 'pdfProtect'
-  | 'appIconGenerator';
+  | 'pdfProtect';
