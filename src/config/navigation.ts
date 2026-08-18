@@ -11,6 +11,7 @@ import {
   QrCode,
   AudioLines,
   Combine,
+  Grid3X3,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -36,4 +37,5 @@ export const navItems: NavItem[] = [
   { id: 'qrCode', labelAr: 'مولد رمز QR', labelEn: 'QR Code Generator', icon: QrCode, color: 'from-cyan-600 to-blue-600', activeBg: 'bg-cyan-600/15 ring-1 ring-cyan-500/30' },
   { id: 'speechToText', labelAr: 'تحويل الكلام إلى نص', labelEn: 'Speech to Text', icon: MessageSquareText, color: 'from-purple-600 to-fuchsia-600', activeBg: 'bg-purple-600/15 ring-1 ring-purple-500/30' },
   { id: 'audioTranscriber', labelAr: 'تفريغ الصوت', labelEn: 'Audio Transcriber', icon: FileAudio, color: 'from-teal-600 to-cyan-600', activeBg: 'bg-teal-600/15 ring-1 ring-teal-500/30' },
+  { id: 'appIconGenerator', labelAr: 'أيقونات التطبيق', labelEn: 'App Icons', icon: Grid3X3, color: 'from-green-600 to-emerald-600', activeBg: 'bg-green-600/15 ring-1 ring-green-500/30' },
 ];
