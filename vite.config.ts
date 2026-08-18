@@ -15,6 +15,13 @@ export default defineConfig(() => {
     optimizeDeps: {
       exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'app.html'),
+        },
+      },
+    },
     server: {
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
