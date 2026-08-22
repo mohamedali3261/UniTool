@@ -19,6 +19,7 @@ export default defineConfig(() => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'app.html'),
+          designcraft: path.resolve(__dirname, 'designcraft.html'),
         },
       },
     },
