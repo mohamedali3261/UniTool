@@ -102,6 +102,7 @@ export interface ActiveObjectProperties {
   underline?: boolean;
   linethrough?: boolean;
   textBackgroundColor?: string;
+  backgroundColor?: string;
   textGradient?: string[];
   curve?: number;
   // Image specific
