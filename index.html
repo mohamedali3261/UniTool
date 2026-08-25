@@ -25,8 +25,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .nav-links{display:flex;gap:24px;align-items:center}
 .nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .2s;font-weight:500}
 .nav-links a:hover{color:var(--text)}
-.nav-cta{padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:12px;font-weight:600;text-decoration:none;transition:all .2s}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(99,102,241,.4)}
+.nav-cta{padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:600;text-decoration:none;transition:all .2s}
+.nav-cta:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ===== HERO ===== */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden}
@@ -136,6 +136,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <a href="#tools">الأدوات</a>
     <a href="#features">المميزات</a>
     <a href="#designcraft">مصمم الجرافيك</a>
+    <a href="the-audio-reader.html">القارئ الصوتي</a>
       <a class="nav-cta" href="app.html">ابدأ الآن</a>
   </div>
 </nav>
@@ -217,6 +218,34 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div class="counter-item reveal reveal-delay-4"><div class="counter-num" data-count="0">0</div><div class="counter-label">عميل مسجل</div></div>
   </div>
 </section>
+
+<!-- FEATURE BANNER: The Audio Reader -->
+<div class="feature-banner reveal" id="audioreader" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.08));border-color:rgba(99,102,241,.15)">
+  <div class="content">
+    <div class="section-badge" style="border-color:rgba(99,102,241,.2);color:var(--accent)">🎧 صوتيات</div>
+    <h3>The Audio Reader - قارئ الصوتيات</h3>
+    <p>حوّل كتبك ومستنداتك لصوتيات بالذكاء الاصطناعي — دعم كامل للغة العربية، تحكم كامل بالسرعة والصوت، وتصفح ذكي للمحتوى</p>
+    <a href="the-audio-reader.html" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+      افتح القارئ
+    </a>
+  </div>
+  <div class="preview">
+    <div class="phone-mockup">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" style="background:linear-gradient(180deg,rgba(99,102,241,.15),rgba(139,92,246,.08))">
+        <div class="icon-grid">
+          <div class="icon-cell" style="background:rgba(99,102,241,.25)"></div>
+          <div class="icon-cell" style="background:rgba(139,92,246,.25)"></div>
+          <div class="icon-cell" style="background:rgba(236,72,153,.2)"></div>
+          <div class="icon-cell" style="background:rgba(34,197,94,.2)"></div>
+          <div class="icon-cell" style="background:rgba(245,158,11,.2)"></div>
+          <div class="icon-cell" style="background:rgba(6,182,212,.2)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- FEATURE BANNER: DesignCraft -->
 <div class="feature-banner reveal" id="designcraft">

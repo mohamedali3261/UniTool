@@ -21,6 +21,7 @@ export default defineConfig(() => {
           landing: path.resolve(__dirname, 'index.html'),
           main: path.resolve(__dirname, 'app.html'),
           designcraft: path.resolve(__dirname, 'designcraft.html'),
+          audioreader: path.resolve(__dirname, 'the-audio-reader.html'),
         },
       },
     },

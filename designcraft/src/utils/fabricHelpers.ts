@@ -461,50 +461,6 @@ export const addIconToCanvas = (
   }
 };
 
-// Recursively apply fill/stroke color to an object and its group children (for SVG icons)
-export const applyColorToObject = (
-  obj: fabric.Object | null | undefined,
-  colors: { fill?: string; stroke?: string }
-) => {
-  if (!obj) return;
-  const anyObj = obj as any;
-  if (colors.fill !== undefined && ('fill' in anyObj)) anyObj.set('fill', colors.fill);
-  if (colors.stroke !== undefined && ('stroke' in anyObj)) anyObj.set('stroke', colors.stroke);
-  applyColorToGroupChildren(obj, colors);
-};
-
-// Apply colors only to the child paths inside a group (recursively)
-export const applyColorToGroupChildren = (
-  obj: fabric.Object | null | undefined,
-  colors: { fill?: string; stroke?: string }
-) => {
-  if (!obj) return;
-  const anyObj = obj as any;
-
-  if (typeof anyObj.getObjects === 'function') {
-    const children = anyObj.getObjects();
-    if (Array.isArray(children)) {
-      children.forEach((child: any) => applyColorToObject(child, colors));
-    }
-    try { anyObj.dirty = true; } catch { /* noop */ }
-    return;
-  }
-
-  if (colors.fill !== undefined) {
-    const currentFill = anyObj.fill;
-    if (currentFill && currentFill !== 'none' && currentFill !== '') {
-      anyObj.set('fill', colors.fill);
-    }
-  }
-  if (colors.stroke !== undefined) {
-    const currentStroke = anyObj.stroke;
-    if (currentStroke && currentStroke !== 'none' && currentStroke !== '') {
-      anyObj.set('stroke', colors.stroke);
-      if (!anyObj.strokeWidth) anyObj.set('strokeWidth', 1);
-    }
-  }
-};
-
 // Image Adder with automatic scaling & robust CORS fallback
 export const addImageToCanvas = (
   canvas: fabric.Canvas,

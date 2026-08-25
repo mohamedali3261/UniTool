@@ -7,18 +7,12 @@ import { getEnglishKeywordsForSearch } from '../../../utils/searchTranslator';
 interface IconsTabProps {
   onAddIcon: (iconName: string, color: string) => void;
   onOpenIconsModal?: () => void;
-  onUpdateSelectedIconColor?: (color: string) => void;
 }
 
-export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal, onUpdateSelectedIconColor }) => {
+export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal }) => {
   const [search, setSearch] = useState('');
   const [selectedColor, setSelectedColor] = useState('#38BDF8');
   const [activeCategory, setActiveCategory] = useState('all');
-
-  const handleColorChange = (color: string) => {
-    setSelectedColor(color);
-    onUpdateSelectedIconColor?.(color);
-  };
 
   const allIcons = ICONS_CATALOG.flatMap((cat) =>
     cat.icons.map((ic) => ({ ...ic, category: cat.category, categoryAr: cat.categoryAr }))
@@ -102,7 +96,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal,
             <input
               type="color"
               value={selectedColor}
-              onChange={(e) => handleColorChange(e.target.value)}
+              onChange={(e) => setSelectedColor(e.target.value)}
               className="w-5 h-5 rounded-md cursor-pointer bg-transparent border-0"
             />
             <span className="font-mono text-[11px] text-sky-400 font-bold">{selectedColor}</span>
@@ -113,7 +107,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal,
             <button
               key={c}
               type="button"
-              onClick={() => handleColorChange(c)}
+              onClick={() => setSelectedColor(c)}
               className={`w-5 h-5 rounded-md transition flex items-center justify-center ${
                 selectedColor === c ? 'ring-2 ring-white scale-110 shadow-sm' : 'hover:scale-105'
               }`}

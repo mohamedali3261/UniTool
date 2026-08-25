@@ -20,8 +20,8 @@
         "./*"
       ]
     },
+    "include": ["src/**/*", "designcraft/src/**/*"],
     "allowImportingTsExtensions": true,
     "noEmit": true
-  },
-  "include": ["src/**/*", "designcraft/src/**/*"]
+  }
 }

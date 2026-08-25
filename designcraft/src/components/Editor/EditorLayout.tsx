@@ -43,8 +43,6 @@ import {
   addHeartToCanvas,
   addTextToCanvas,
   addIconToCanvas,
-  applyColorToObject,
-  applyColorToGroupChildren,
   addImageToCanvas,
   addSvgShapeToCanvas,
   bringForward,
@@ -482,12 +480,6 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         if (active.type === 'rect') {
           active.set({ rx: value, ry: value });
         }
-      } else if (key === 'fill' || key === 'stroke') {
-        // Set on the object itself, then propagate into SVG icon group children
-        (active as any).set(key, value);
-        if (active.type === 'group') {
-          applyColorToGroupChildren(active, { [key]: value });
-        }
       } else {
         (active as any).set(key, value);
       }
@@ -851,16 +843,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }
             }}
-            onUpdateSelectedIconColor={(color) => {
-              const canvas = fabricCanvasRef.current;
-              if (!canvas) return;
-              const active = canvas.getActiveObject();
-              if (!active || active.type !== 'group') return;
-              applyColorToObject(active, { fill: color, stroke: color });
-              canvas.renderAll();
-              setActiveProperties((prev) => (prev ? { ...prev, fill: color, stroke: color } : null));
-              recordHistory();
-            }}            onOpenIconsModal={() => setIsIconsModalOpen(true)}
+            onOpenIconsModal={() => setIsIconsModalOpen(true)}
           />
         );
       case 'images':
@@ -966,24 +949,13 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 recordHistory();
               }
             }}
-            onMoveLayerUp={(id) => {
+            onMoveLayer={(id, direction) => {
               const canvas = fabricCanvasRef.current;
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                canvas.bringForward(found.rawObject);
-                canvas.renderAll();
-                updateLayersList();
-                recordHistory();
-              }
-            }}
-            onMoveLayerDown={(id) => {
-              const canvas = fabricCanvasRef.current;
-              if (!canvas) return;
-              const found = layersList.find((l) => l.id === id);
-              if (found && found.rawObject) {
-                canvas.sendBackwards(found.rawObject);
-                canvas.renderAll();
+                if (direction === 'up') bringForward(canvas);
+                else sendBackwards(canvas);
                 updateLayersList();
                 recordHistory();
               }
