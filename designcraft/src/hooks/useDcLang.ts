@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import { DCLang, getDcTranslation } from '../translations';
 
-export function useDcLang(): { lang: DCLang; t: ReturnType<typeof getDcTranslation> } {
+type DCTranslations = ReturnType<typeof getDcTranslation>;
+
+let listeners: Array<() => void> = [];
+
+function notify() {
+  listeners.forEach((fn) => fn());
+}
+
+export function useDcLang(): { lang: DCLang; t: DCTranslations } {
   const [lang, setLang] = useState<DCLang>(() => {
     try {
       const stored = localStorage.getItem('unitool-lang');
@@ -12,24 +20,17 @@ export function useDcLang(): { lang: DCLang; t: ReturnType<typeof getDcTranslati
   });
 
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'unitool-lang') {
-        setLang(e.newValue === 'en' ? 'en' : 'ar');
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-
-    const interval = setInterval(() => {
+    const onChange = () => {
       try {
         const stored = localStorage.getItem('unitool-lang');
         const next = stored === 'en' ? 'en' : 'ar';
         setLang((prev) => (prev !== next ? next : prev));
       } catch { /* ignore */ }
-    }, 500);
+    };
 
+    listeners.push(onChange);
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
+      listeners = listeners.filter((fn) => fn !== onChange);
     };
   }, []);
 
