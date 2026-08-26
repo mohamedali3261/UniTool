@@ -52,6 +52,8 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
     { id: 'sentence', label: t.highlightSentence },
     { id: 'word', label: t.highlightWord },
     { id: 'paragraph', label: t.highlightParagraph },
+    { id: 'glow', label: (t as any).highlightGlow || 'Aurora Glow' },
+    { id: 'underline', label: (t as any).highlightUnderline || 'Dashed Underline' },
   ];
 
   return (
@@ -211,7 +213,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               <Highlighter className="h-4 w-4 text-amber-400" />
               <span>{t.highlightStyle}</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {highlightOptions.map((opt) => (
                 <button
                   key={opt.id}
@@ -228,7 +230,39 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Section 5: Auto-Scroll Toggle */}
+          {/* Section 6: Reading Mode */}
+          <div className="space-y-2.5">
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-300">
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 text-[10px]">🎙️</span>
+              <span>{uiLang === 'ar' ? 'طريقة القراءة الصوتية (الوقفات)' : 'Reading Mode (Pauses)'}</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                onClick={() => onUpdateSettings({ readingMode: 'page' })}
+                className={`rounded-xl border p-2.5 text-center text-xs font-medium transition flex flex-col items-center justify-center gap-1 ${
+                  settings.readingMode === 'page'
+                    ? 'border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold'
+                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <span>{uiLang === 'ar' ? 'قراءة متصلة (الصفحة كاملة)' : 'Continuous (Full Page)'}</span>
+                <span className="text-[10px] opacity-70 font-normal">{uiLang === 'ar' ? 'يقرأ الصفحة في نفس واحد' : 'Reads page in one breath'}</span>
+              </button>
+              <button
+                onClick={() => onUpdateSettings({ readingMode: 'sentence' })}
+                className={`rounded-xl border p-2.5 text-center text-xs font-medium transition flex flex-col items-center justify-center gap-1 ${
+                  settings.readingMode === 'sentence'
+                    ? 'border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold'
+                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <span>{uiLang === 'ar' ? 'قراءة متقطعة (جملة بجملة)' : 'Sentence by Sentence'}</span>
+                <span className="text-[10px] opacity-70 font-normal">{uiLang === 'ar' ? 'يتوقف عند الفواصل والنقاط' : 'Pauses at periods'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Section 7: Auto-Scroll Toggle */}
           <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3.5">
             <label className="flex items-center justify-between cursor-pointer">
               <div className="flex items-center gap-2">

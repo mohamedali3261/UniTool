@@ -14,6 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { COLOR_PALETTES } from '../../../data/presets';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ElementsTabProps {
   onAddRectangle: (fill?: string, rx?: number) => void;
@@ -38,60 +39,61 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
   onAddHeart,
   onOpenShapesModal
 }) => {
+  const { t } = useDcLang();
   const [selectedColor, setSelectedColor] = useState('#0284C7');
 
   const shapesList = [
     {
       id: 'rect',
-      label: 'مستطيل',
+      label: t.elemRect,
       icon: <Square className="w-5 h-5" />,
       action: () => onAddRectangle(selectedColor, 0)
     },
     {
       id: 'rounded-rect',
-      label: 'مستطيل دائري',
+      label: t.elemRoundedRect,
       icon: <div className="w-5 h-4 rounded-md border-2 border-current" />,
       action: () => onAddRectangle(selectedColor, 20)
     },
     {
       id: 'circle',
-      label: 'دائرة',
+      label: t.elemCircle,
       icon: <Circle className="w-5 h-5" />,
       action: () => onAddCircle(selectedColor)
     },
     {
       id: 'triangle',
-      label: 'مثلث',
+      label: t.elemTriangle,
       icon: <Triangle className="w-5 h-5" />,
       action: () => onAddTriangle(selectedColor)
     },
     {
       id: 'star',
-      label: 'نجمة',
+      label: t.elemStar,
       icon: <Star className="w-5 h-5" />,
       action: () => onAddStar(selectedColor)
     },
     {
       id: 'badge',
-      label: 'شارة عرض',
+      label: t.elemBadge,
       icon: <Award className="w-5 h-5" />,
       action: () => onAddBadge(selectedColor)
     },
     {
       id: 'line',
-      label: 'خط مستقيم',
+      label: t.elemLine,
       icon: <Minus className="w-5 h-5" />,
       action: () => onAddLine(selectedColor)
     },
     {
       id: 'arrow',
-      label: 'سهم توجيهي',
+      label: t.elemArrow,
       icon: <MoveRight className="w-5 h-5" />,
       action: () => onAddArrow(selectedColor)
     },
     {
       id: 'heart',
-      label: 'قلب',
+      label: t.elemHeart,
       icon: <Heart className="w-5 h-5" />,
       action: () => onAddHeart(selectedColor)
     }
@@ -103,7 +105,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <Shapes className="w-3.5 h-3.5 text-sky-400" />
-          <span>الأشكال والعناصر</span>
+          <span>{t.elemTitle}</span>
         </h3>
         {onOpenShapesModal && (
           <button
@@ -112,7 +114,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
             className="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-1 rounded-lg border border-sky-500/30 transition"
           >
             <Maximize2 className="w-3 h-3" />
-            <span>+200 شكل</span>
+            <span>{t.elemPlus200}</span>
           </button>
         )}
       </div>
@@ -128,7 +130,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
             <div className="p-1.5 rounded-xl bg-sky-500 text-white shadow-sm group-hover:scale-110 transition">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <span>فتح مكتبة الأشكال المتقدمة</span>
+            <span>{t.elemOpenShapes}</span>
           </div>
           <span className="text-[10px] font-mono bg-sky-500/30 text-sky-300 px-2 py-0.5 rounded-full font-bold">
             +200
@@ -140,7 +142,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
       <div className="p-2.5 bg-[#0B132B] rounded-xl border border-slate-800 space-y-1.5">
         <div className="flex items-center justify-between text-[11px] text-slate-300">
           <span className="flex items-center gap-1 font-medium">
-            <Palette className="w-3 h-3 text-sky-400" /> لون التعبئة
+            <Palette className="w-3 h-3 text-sky-400" /> {t.elemFillColor}
           </span>
           <span className="font-mono text-[10px] text-sky-400">{selectedColor}</span>
         </div>

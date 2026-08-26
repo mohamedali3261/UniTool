@@ -17,8 +17,10 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   SlidersHorizontal,
-  Hand
+  Hand,
+  Globe
 } from 'lucide-react';
+import { getDcTranslation, DCLang } from '../../translations';
 
 interface TopBarProps {
   title: string;
@@ -79,6 +81,12 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(title);
+  const [lang] = useState<DCLang>(() => {
+    const shared = localStorage.getItem('unitool-lang');
+    return shared === 'en' ? 'en' : 'ar';
+  });
+  const t = getDcTranslation(lang);
+  const dir = 'ltr';
 
   const handleTitleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,64 +97,100 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header
+    <nav
       id="editor-top-bar"
-      className="h-12 bg-[#1C2541] border-b border-slate-700/70 px-2 sm:px-3 flex items-center justify-between z-30 shrink-0 select-none text-slate-100 font-sans gap-1 overflow-x-auto no-scrollbar"
+      dir={dir}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'rgba(7,8,11,.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid #1e2028', userSelect: 'none',
+      }}
     >
-      {/* Left Section: Navigation & Title */}
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      {/* Left Section: Logo + Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0 }}>
+          <img src="/UniTool_logo.png" alt="UniTool" style={{ width: 128, height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
+        </a>
+
+        <div style={{ width: 1, height: 16, background: '#1e2028' }} />
+
         <button
           type="button"
           onClick={onBackToDashboard}
-          className="flex items-center gap-1 p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition text-xs font-semibold"
-          title="العودة للشاشة الرئيسية"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4, padding: 6,
+            background: 'none', border: 'none', color: '#7c7f8a',
+            cursor: 'pointer', transition: 'color .2s', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#e4e6eb'}
+          onMouseLeave={e => e.currentTarget.style.color = '#7c7f8a'}
+          title={t.backHome}
+
         >
-          <ArrowRight className="w-4 h-4" />
-          <span className="hidden md:inline text-[11px]">الرئيسية</span>
+          <ArrowRight style={{ width: 16, height: 16 }} />
+          <span className="hidden md:inline">{t.home}</span>
         </button>
 
         {onToggleSidebar && (
           <button
             type="button"
             onClick={onToggleSidebar}
-            title={isSidebarOpen ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية'}
-            className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition"
+            title={isSidebarOpen ? t.closeSidebar : t.openSidebar}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 6, borderRadius: 8, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'color .2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = '#e4e6eb'}
+            onMouseLeave={e => e.currentTarget.style.color = '#7c7f8a'}
           >
-            {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+            {isSidebarOpen ? <PanelLeftClose style={{ width: 16, height: 16 }} /> : <PanelLeftOpen style={{ width: 16, height: 16 }} />}
           </button>
         )}
 
-        <div className="h-4 w-px bg-slate-700/80 mx-0.5 hidden xs:block" />
+        <div style={{ width: 1, height: 16, background: '#1e2028' }} />
 
         {/* Project Title */}
         {isEditingTitle ? (
-          <form onSubmit={handleTitleSubmit} className="flex items-center gap-1">
+          <form onSubmit={handleTitleSubmit} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <input
               type="text"
               value={tempTitle}
               onChange={(e) => setTempTitle(e.target.value)}
               autoFocus
               onBlur={handleTitleSubmit}
-              className="bg-[#0B132B] border border-sky-500 rounded-md px-2 py-0.5 text-xs text-white focus:outline-none w-28 sm:w-44 font-medium"
+              style={{
+                background: '#0d0f14', border: '1px solid #6366f1', borderRadius: 6,
+                padding: '2px 8px', fontSize: 12, color: '#e4e6eb', outline: 'none',
+                width: 120, fontWeight: 500,
+              }}
             />
             <button
               type="submit"
-              className="p-1 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 4, background: '#4f46e5', color: '#fff', borderRadius: 6,
+                border: 'none', cursor: 'pointer',
+              }}
             >
-              <Check className="w-3 h-3" />
+              <Check style={{ width: 12, height: 12 }} />
             </button>
           </form>
         ) : (
           <div
-            onClick={() => {
-              setTempTitle(title);
-              setIsEditingTitle(true);
+            onClick={() => { setTempTitle(title); setIsEditingTitle(true); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+              padding: '2px 6px', borderRadius: 6, transition: 'background .2s',
+              maxWidth: 180,
             }}
-            className="group flex items-center gap-1 cursor-pointer px-1.5 py-0.5 rounded-md hover:bg-slate-800 transition max-w-[100px] xs:max-w-[130px] sm:max-w-[180px]"
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <span className="text-xs font-bold text-white truncate">{title}</span>
-            <Edit2 className="w-2.5 h-2.5 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0 hidden sm:inline" />
-            <span className="hidden lg:inline-block text-[9px] font-mono px-1 py-0.2 rounded bg-[#0B132B] text-sky-400 shrink-0">
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#e4e6eb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+            <Edit2 style={{ width: 10, height: 10, color: '#7c7f8a', flexShrink: 0 }} className="hidden sm:inline" />
+            <span className="hidden lg:inline" style={{ fontSize: 9, fontFamily: 'monospace', padding: '1px 4px', borderRadius: 4, background: '#0d0f14', color: '#818cf8', flexShrink: 0 }}>
               {width}×{height}
             </span>
           </div>
@@ -154,26 +198,38 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* Center Section: Canvas Tools (Undo/Redo, Zoom, Pan, Grid) */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         {/* Undo / Redo */}
-        <div className="flex items-center bg-[#0B132B] p-0.5 rounded-lg border border-slate-700/60">
+        <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028' }}>
           <button
             type="button"
             onClick={onUndo}
             disabled={!canUndo}
-            title="تراجع"
-            className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition"
+            title={t.undo}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 4, borderRadius: 4, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s', opacity: canUndo ? 1 : 0.25,
+            }}
+            onMouseEnter={e => { if (canUndo) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
           >
-            <Undo2 className="w-3.5 h-3.5" />
+            <Undo2 style={{ width: 14, height: 14 }} />
           </button>
           <button
             type="button"
             onClick={onRedo}
             disabled={!canRedo}
-            title="إعادة"
-            className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition"
+            title={t.redo}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 4, borderRadius: 4, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s', opacity: canRedo ? 1 : 0.25,
+            }}
+            onMouseEnter={e => { if (canRedo) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
           >
-            <Redo2 className="w-3.5 h-3.5" />
+            <Redo2 style={{ width: 14, height: 14 }} />
           </button>
         </div>
 
@@ -182,74 +238,149 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             type="button"
             onClick={onTogglePanMode}
-            title={isPanMode ? 'إيقاف وضع تحريك الكانفاس (اليد)' : 'تفعيل وضع تحريك الكانفاس (اليد)'}
-            className={`p-1.5 rounded-lg border transition text-xs flex items-center gap-1 ${
-              isPanMode
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm'
-                : 'bg-[#0B132B] border-slate-700/60 text-slate-400 hover:text-white'
-            }`}
+            title={isPanMode ? t.panOff : t.panOn}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: 6, borderRadius: 8, fontSize: 12, fontFamily: 'inherit',
+              border: `1px solid ${isPanMode ? 'rgba(245,158,11,.5)' : '#1e2028'}`,
+              background: isPanMode ? 'rgba(245,158,11,.15)' : '#0d0f14',
+              color: isPanMode ? '#fbbf24' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+            }}
           >
-            <Hand className="w-3.5 h-3.5" />
+            <Hand style={{ width: 14, height: 14 }} />
           </button>
         )}
 
         {/* Zoom Controls */}
-        <div className="flex items-center bg-[#0B132B] p-0.5 rounded-lg border border-slate-700/60 text-xs">
+        <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028', fontSize: 12 }}>
           <button
             type="button"
             onClick={onZoomOut}
-            title="تصغير"
-            className="p-1 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition"
+            title={t.zoomOut}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 4, borderRadius: 4, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; }}
           >
-            <ZoomOut className="w-3.5 h-3.5" />
+            <ZoomOut style={{ width: 14, height: 14 }} />
           </button>
           <button
             type="button"
             onClick={onResetZoom}
-            title="ملاءمة الشاشة"
-            className="px-1 py-0.5 font-mono font-bold text-sky-400 hover:bg-slate-800 rounded text-[10px] sm:text-[11px] transition"
+            title={t.fitScreen}
+            style={{
+              padding: '2px 4px', fontFamily: 'monospace', fontWeight: 700,
+              color: '#818cf8', background: 'none', border: 'none', borderRadius: 4,
+              cursor: 'pointer', fontSize: 11, transition: 'background .2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             type="button"
             onClick={onZoomIn}
-            title="تكبير"
-            className="p-1 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition"
+            title={t.zoomIn}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 4, borderRadius: 4, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; }}
           >
-            <ZoomIn className="w-3.5 h-3.5" />
+            <ZoomIn style={{ width: 14, height: 14 }} />
           </button>
         </div>
 
-        {/* Grid toggle */}
+        {/* Grid Toggle */}
         <button
           type="button"
           onClick={onToggleGrid}
-          title="إظهار / إخفاء الشبكة"
-          className={`p-1.5 rounded-lg border transition text-xs hidden sm:flex items-center ${
-            showGrid
-              ? 'bg-sky-500/20 border-sky-500/50 text-sky-300'
-              : 'bg-[#0B132B] border-slate-700/60 text-slate-400 hover:text-white'
-          }`}
+          title={t.toggleGrid}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 6, borderRadius: 8, fontSize: 12,
+            border: `1px solid ${showGrid ? 'rgba(99,102,241,.5)' : '#1e2028'}`,
+            background: showGrid ? 'rgba(99,102,241,.15)' : '#0d0f14',
+            color: showGrid ? '#818cf8' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+          }}
         >
-          <Grid className="w-3.5 h-3.5" />
+          <Grid style={{ width: 14, height: 14 }} />
         </button>
       </div>
 
       {/* Right Section: Actions (Preview, Save, Export) */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Nav Links */}
+        <div className="hidden xl:flex items-center" style={{ gap: 6, marginRight: 8 }}>
+          {[
+            { href: '/index.html', label: t.home },
+            { href: '/app.html', label: t.tools },
+            { href: '/designcraft.html', label: t.designCraft },
+            { href: '/the-audio-reader.html', label: t.audioReader },
+          ].map(p => {
+            const active = window.location.pathname.endsWith(p.href);
+            return (
+              <a
+                key={p.href}
+                href={p.href}
+                style={{
+                  fontSize: 13, textDecoration: 'none', padding: '6px 14px', borderRadius: 16,
+                  transition: 'all .25s', fontWeight: active ? 600 : 500,
+                  color: active ? '#a5b4fc' : '#7c7f8a',
+                  background: active ? 'rgba(99,102,241,.12)' : 'transparent',
+                  boxShadow: active ? '0 0 16px rgba(99,102,241,.35), inset 0 0 0 1px rgba(99,102,241,.25)' : 'none',
+                }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.04)'; } }}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'transparent'; } }}
+              >
+                {p.label}
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Language Toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            const next = lang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('unitool-lang', next);
+            window.location.reload();
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px',
+            borderRadius: 20, border: '1px solid #1e2028', background: 'transparent',
+            color: '#7c7f8a', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            transition: 'all .2s', fontFamily: 'inherit', marginRight: 4,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.color = '#6366f1'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e2028'; e.currentTarget.style.color = '#7c7f8a'; }}
+          title={t.switchLang}
+        >
+          <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
+          <span>{lang === 'ar' ? 'EN' : 'عربي'}</span>
+        </button>
+
         {onToggleProperties && (
           <button
             type="button"
             onClick={onToggleProperties}
-            title={isPropertiesOpen ? 'إخفاء الخصائص' : 'إظهار الخصائص'}
-            className={`p-1.5 rounded-lg border transition text-xs ${
-              isPropertiesOpen
-                ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
-                : 'bg-[#0B132B] border-slate-700/60 text-slate-400 hover:text-white'
-            }`}
+            title={isPropertiesOpen ? t.hideProps : t.showProps}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 6, borderRadius: 8, fontSize: 12,
+              border: `1px solid ${isPropertiesOpen ? 'rgba(99,102,241,.4)' : '#1e2028'}`,
+              background: isPropertiesOpen ? 'rgba(99,102,241,.15)' : '#0d0f14',
+              color: isPropertiesOpen ? '#818cf8' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+            }}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <SlidersHorizontal style={{ width: 14, height: 14 }} />
           </button>
         )}
 
@@ -257,11 +388,18 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           type="button"
           onClick={onOpenPreview}
-          title="معاينة التصميم"
-          className="p-1.5 sm:px-2.5 sm:py-1 bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-200 hover:text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+          title={t.previewDesign}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+            border: '1px solid #1e2028', background: '#0d0f14',
+            color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#0d0f14'; }}
         >
-          <Eye className="w-3.5 h-3.5 text-sky-400" />
-          <span className="hidden sm:inline text-[11px]">معاينة</span>
+          <Eye style={{ width: 14, height: 14, color: '#818cf8' }} />
+          <span className="hidden sm:inline">{t.preview}</span>
         </button>
 
         {/* Save Button */}
@@ -269,23 +407,38 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={onSave}
           disabled={isSaving}
-          title="حفظ المشروع"
-          className="p-1.5 sm:px-2.5 sm:py-1 bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-200 hover:text-white rounded-lg text-xs font-semibold transition disabled:opacity-50 flex items-center gap-1"
+          title={t.saveProject}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+            border: '1px solid #1e2028', background: '#0d0f14',
+            color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s',
+            fontFamily: 'inherit', opacity: isSaving ? 0.5 : 1,
+          }}
+          onMouseEnter={e => { if (!isSaving) e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#0d0f14'; }}
         >
-          <Save className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden sm:inline text-[11px]">{isSaving ? '...' : 'حفظ'}</span>
+          <Save style={{ width: 14, height: 14, color: '#34d399' }} />
+          <span className="hidden sm:inline">{isSaving ? '...' : t.save}</span>
         </button>
 
-        {/* Export CTA - Always Prominent on Mobile */}
+        {/* Export CTA */}
         <button
           type="button"
           onClick={onOpenExport}
-          className="flex items-center gap-1 px-2.5 sm:px-3 py-1 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white rounded-lg text-xs font-bold shadow-sm shadow-sky-500/20 transition active:scale-95 shrink-0"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+            border: 'none', background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
+            color: '#fff', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          <Download className="w-3.5 h-3.5" />
-          <span className="text-[11px] sm:text-xs">تصدير</span>
+          <Download style={{ width: 14, height: 14 }} />
+          <span>{t.export}</span>
         </button>
       </div>
-    </header>
+    </nav>
   );
 };

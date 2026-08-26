@@ -9,6 +9,7 @@ import {
   Layers,
   Sliders
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface SidebarTabsProps {
   activeTab: SidebarTabType | null;
@@ -26,15 +27,6 @@ interface TabItem {
   icon: React.ReactNode;
 }
 
-const TABS: TabItem[] = [
-  { id: 'text', label: 'النصوص', labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
-  { id: 'elements', label: 'الأشكال', labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
-  { id: 'ornaments', label: 'الزخارف', labelEn: 'Ornaments', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
-  { id: 'icons', label: 'الأيقونات', labelEn: 'Icons', icon: <SmilePlus className="w-4 h-4" /> },
-  { id: 'images', label: 'مكتبة صور', labelEn: 'Photo Library', icon: <ImageIcon className="w-4 h-4" /> },
-  { id: 'layers', label: 'الطبقات', labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
-];
-
 export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   activeTab,
   onSelectTab,
@@ -43,6 +35,16 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   onToggleProperties,
   isPropertiesOpen
 }) => {
+  const { t } = useDcLang();
+
+  const TABS: TabItem[] = [
+    { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
+    { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
+    { id: 'ornaments', label: t.tabOrnaments, labelEn: 'Ornaments', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
+    { id: 'icons', label: t.tabIcons, labelEn: 'Icons', icon: <SmilePlus className="w-4 h-4" /> },
+    { id: 'images', label: t.tabImages, labelEn: 'Photo Library', icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'layers', label: t.tabLayers, labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
+  ];
   // Mobile Bottom Bar Navigation
   if (variant === 'bottom-bar') {
     return (
@@ -87,7 +89,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
             <div className={`p-1 rounded-lg transition ${isPropertiesOpen ? 'bg-amber-500/20 scale-110' : ''}`}>
               <Sliders className="w-4 h-4" />
             </div>
-            <span className="text-[9px] tracking-tight truncate max-w-[44px]">الخصائص</span>
+            <span className="text-[9px] tracking-tight truncate max-w-[44px]">{t.tabProperties}</span>
           </button>
         )}
       </nav>

@@ -10,6 +10,7 @@ import {
   Languages,
   CheckCircle2
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 import {
   searchPexelsPhotos,
   fetchCuratedPexelsPhotos,
@@ -23,20 +24,20 @@ interface PexelsSearchModalProps {
 }
 
 const POPULAR_SEARCH_SUGGESTIONS = [
-  { ar: 'طبيعة خلابة', en: 'nature landscape' },
-  { ar: 'تقنية وذكاء اصطناعي', en: 'artificial intelligence tech' },
-  { ar: 'خلفيات داكنة فخمة', en: 'dark luxury minimal background' },
-  { ar: 'أعمال ومكاتب', en: 'modern office business' },
-  { ar: 'تجريدي ونيون', en: 'abstract neon 3d geometric' },
-  { ar: 'أطعمة ومشروبات', en: 'delicious gourmet food' },
-  { ar: 'قهوة وكافيهات', en: 'specialty coffee cafe' },
-  { ar: 'سيارات رياضية', en: 'luxury sports cars' },
-  { ar: 'أشخاص وفريق عمل', en: 'people teamwork lifestyle' },
-  { ar: 'موضة وأزياء', en: 'fashion style aesthetic' },
-  { ar: 'مدن وناطحات سحاب', en: 'city skyline night architecture' },
-  { ar: 'ألعاب وجيمنج', en: 'gaming setup esports' },
-  { ar: 'سفر وسياحة', en: 'travel tropical beach vacation' },
-  { ar: 'تخفيضات وتسوق', en: 'shopping store discount' }
+  { ar: t.pxNature, en: 'nature landscape' },
+  { ar: t.pxTech, en: 'artificial intelligence tech' },
+  { ar: t.pxDarkBg, en: 'dark luxury minimal background' },
+  { ar: t.pxBusiness, en: 'modern office business' },
+  { ar: t.pxAbstract, en: 'abstract neon 3d geometric' },
+  { ar: t.pxFood, en: 'delicious gourmet food' },
+  { ar: t.pxCoffee, en: 'specialty coffee cafe' },
+  { ar: t.pxCars, en: 'luxury sports cars' },
+  { ar: t.pxPeople, en: 'people teamwork lifestyle' },
+  { ar: t.pxFashion, en: 'fashion style aesthetic' },
+  { ar: t.pxCities, en: 'city skyline night architecture' },
+  { ar: t.pxGaming, en: 'gaming setup esports' },
+  { ar: t.pxTravel, en: 'travel tropical beach vacation' },
+  { ar: t.pxSales, en: 'shopping store discount' }
 ];
 
 export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
@@ -44,6 +45,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
   onClose,
   onSelectImage
 }) => {
+  const { t } = useDcLang();
   const [query, setQuery] = useState('');
   const [translatedQuery, setTranslatedQuery] = useState('');
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
@@ -65,7 +67,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
       const res = await fetchCuratedPexelsPhotos(1, 30);
       setPhotos(res.photos);
       setTotalResults(res.totalResults);
-      setTranslatedQuery('الصور المختارة الأكثر رواجاً (Curated)');
+      setTranslatedQuery(t.pxCurated);
       setPage(1);
     } catch (err) {
       console.error(err);
@@ -133,7 +135,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>مكتبة صور</span>
+                <span>{t.pxLibrary}</span>
                 <span className="text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-full font-normal border border-sky-500/40">
                   4K
                 </span>
@@ -162,7 +164,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="ابحث عن صور عالية الدقة (مثال: طبيعة، تقنية، سيارة، قهوة، خلفية سوداء)..."
+                placeholder={t.pxSearchPlaceholder}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full bg-[#070D1E] border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 shadow-inner"
@@ -191,7 +193,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
               ) : (
                 <Search className="w-4 h-4" />
               )}
-              <span>بحث</span>
+              <span>{t.pxSearch}</span>
             </button>
           </form>
 
@@ -200,13 +202,13 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
             {translatedQuery && (
               <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                 <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <Languages className="w-3 h-3" /> تم ترجمة البحث إلى:
+                  <Languages className="w-3 h-3" /> {t.pxTranslatedTo}
                 </span>
                 <span className="bg-[#0B132B] px-2 py-0.5 rounded border border-slate-700 text-sky-300 font-mono text-[10px]">
                   {translatedQuery}
                 </span>
                 {totalResults > 0 && (
-                  <span className="text-slate-500">({totalResults} نتيجة)</span>
+                  <span className="text-slate-500">({totalResults} {t.pxResults})</span>
                 )}
               </div>
             )}
@@ -235,13 +237,13 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
           {isLoading && photos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-3 text-slate-400 py-16">
               <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
-              <p className="text-sm">جارٍ تحميل أجمل الصور من Pexels بدقة عالية...</p>
+              <p className="text-sm">{t.pxLoading}</p>
             </div>
           ) : photos.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center space-y-3 text-slate-400 py-16">
               <ImageIcon className="w-12 h-12 text-slate-600" />
-              <p className="text-sm font-bold text-slate-300">لم يتم العثور على صور تطابق بحثك</p>
-              <p className="text-xs text-slate-500">جرب كلمات بحث أخرى مثل: طبيعة، مكتب، سيارات، فواكه</p>
+              <p className="text-sm font-bold text-slate-300">{t.pxNoResults}</p>
+              <p className="text-xs text-slate-500">{t.pxTryAgain}</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -272,11 +274,11 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
                           <span className="bg-sky-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow flex items-center gap-1">
                             {isSelected ? (
                               <>
-                                <CheckCircle2 className="w-3 h-3" /> تم الإدراج!
+                                <CheckCircle2 className="w-3 h-3" /> {t.pxInserted}
                               </>
                             ) : (
                               <>
-                                <Download className="w-3 h-3" /> إدراج في اللوحة
+                                <Download className="w-3 h-3" /> {t.pxInsert}
                               </>
                             )}
                           </span>
@@ -287,7 +289,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
                             {photo.alt || 'Pexels Photo'}
                           </p>
                           <p className="text-[9px] text-slate-300 truncate">
-                            تصوير: {photo.photographer}
+                            {t.pxPhotographer} {photo.photographer}
                           </p>
                         </div>
                       </div>
@@ -311,7 +313,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
                   className="px-6 py-2.5 bg-[#0B132B] hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 hover:text-white transition inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
                 >
                   {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />}
-                  <span>تحميل المزيد من الصور</span>
+                  <span>{t.pxLoadMore}</span>
                 </button>
               </div>
             </div>

@@ -17,8 +17,10 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
   selectedEnglishVoiceURI: null,
   autoVoiceSelect: true,
   autoScroll: true,
+  autoScrollSpeed: 0.5,
   highlightMode: 'sentence',
   uiLanguage: 'ar',
+  readingMode: 'sentence',
 };
 
 export function loadSettings(): ReaderSettings {

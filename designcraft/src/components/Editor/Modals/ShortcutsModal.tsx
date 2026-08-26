@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Keyboard, Command } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -7,20 +8,21 @@ interface ShortcutsModalProps {
 }
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useDcLang();
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: 'Ctrl + Z', desc: 'تراجع عن آخر خطوة (Undo)' },
-    { key: 'Ctrl + Y / Ctrl + Shift + Z', desc: 'إعادة الخطوة (Redo)' },
-    { key: 'Delete / Backspace', desc: 'حذف العنصر المحدد' },
-    { key: 'Ctrl + C', desc: 'نسخ العنصر المحدد' },
-    { key: 'Ctrl + V', desc: 'لصق العنصر المنسوخ' },
-    { key: 'Ctrl + D', desc: 'تكرار العنصر فوراً (Duplicate)' },
-    { key: 'Ctrl + A', desc: 'تحديد جميع العناصر' },
-    { key: 'Esc', desc: 'إلغاء التحديد' },
-    { key: 'Arrow Keys', desc: 'تحريك العنصر بمقدار 1 بكسل' },
-    { key: 'Shift + Arrow Keys', desc: 'تحريك العنصر بمقدار 10 بكسل' },
-    { key: 'Ctrl + S', desc: 'حفظ المشروع محلياً' }
+    { key: 'Ctrl + Z', desc: t.scUndo },
+    { key: 'Ctrl + Y / Ctrl + Shift + Z', desc: t.scRedo },
+    { key: 'Delete / Backspace', desc: t.scDelete },
+    { key: 'Ctrl + C', desc: t.scCopy },
+    { key: 'Ctrl + V', desc: t.scPaste },
+    { key: 'Ctrl + D', desc: t.scDuplicate },
+    { key: 'Ctrl + A', desc: t.scSelectAll },
+    { key: 'Esc', desc: t.scDeselect },
+    { key: 'Arrow Keys', desc: t.scMove1 },
+    { key: 'Shift + Arrow Keys', desc: t.scMove10 },
+    { key: 'Ctrl + S', desc: t.scSave }
   ];
 
   return (
@@ -34,7 +36,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400">
               <Keyboard className="w-5 h-5" />
             </div>
-            <h2 className="text-sm font-bold text-white">اختصارات لوحة المفاتيح</h2>
+            <h2 className="text-sm font-bold text-white">{t.scTitle}</h2>
           </div>
           <button
             onClick={onClose}

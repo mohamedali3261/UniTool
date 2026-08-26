@@ -14,6 +14,7 @@ import {
   SmilePlus,
   Shapes
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface LayerItem {
   id: string;
@@ -45,6 +46,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
   onMoveLayerDown,
   onDeleteLayer
 }) => {
+  const { t } = useDcLang();
   const getIcon = (type: string) => {
     switch (type) {
       case 'textbox':
@@ -65,15 +67,15 @@ export const LayersTab: React.FC<LayersTabProps> = ({
       <div className="space-y-1">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <Layers className="w-3.5 h-3.5 text-sky-400" />
-          <span>إدارة وترتيب الطبقات</span>
+          <span>{t.layersTitle}</span>
         </h3>
-        <p className="text-[10px] text-slate-400">تحكم بترتيب العناصر وقفلها وإخفائها</p>
+        <p className="text-[10px] text-slate-400">{t.layersDesc}</p>
       </div>
 
       {layers.length === 0 ? (
         <div className="p-6 text-center rounded-xl bg-[#0B132B] border border-dashed border-slate-800 space-y-1.5">
           <Layers className="w-6 h-6 text-slate-600 mx-auto" />
-          <p className="text-[11px] text-slate-400">لا توجد عناصر مضافة بعد على الكانفاس</p>
+          <p className="text-[11px] text-slate-400">{t.layersEmpty}</p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -100,7 +102,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                 <div className="flex items-center gap-0.5 shrink-0">
                   <button
                     type="button"
-                    title={layer.visible ? 'إخفاء' : 'إظهار'}
+                    title={layer.visible ? t.layersHide : t.layersShow}
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleVisibility(layer.id);
@@ -114,7 +116,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
 
                   <button
                     type="button"
-                    title={layer.locked ? 'فك القفل' : 'قفل'}
+                    title={layer.locked ? t.layersUnlock : t.layersLock}
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleLock(layer.id);
@@ -128,7 +130,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
 
                   <button
                     type="button"
-                    title="للأعلى"
+                    title={t.layersUp}
                     disabled={index === 0}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -141,7 +143,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
 
                   <button
                     type="button"
-                    title="للأسفل"
+                    title={t.layersDown}
                     disabled={index === layers.length - 1}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -154,7 +156,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
 
                   <button
                     type="button"
-                    title="حذف"
+                    title={t.layersDelete}
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteLayer(layer.id);

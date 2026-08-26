@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
 import { ActiveObjectProperties } from '../../types';
 import { initFabricDefaults } from '../../utils/fabricHelpers';
@@ -57,6 +58,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   onOpenProperties,
   onContextMenu
 }) => {
+  const { t, lang } = useDcLang();
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -564,11 +567,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
             <button
               type="button"
               onClick={onOpenProperties}
-              title="تعديل الخصائص والألوان"
+              title={t.caPropsTitle}
               className="p-1 sm:p-1.5 text-amber-300 hover:text-amber-200 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-bold"
             >
               <Sliders className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">الخصائص</span>
+              <span className="hidden sm:inline">{t.caProps}</span>
             </button>
           )}
 
@@ -576,7 +579,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={onDuplicate}
-            title="تكرار العنصر (Ctrl+D)"
+            title={t.caDuplicateTitle}
             className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
           >
             <Copy className="w-3.5 h-3.5" />
@@ -586,7 +589,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleQuickAlignCenter}
-            title="توسيط في الكانفاس"
+            title={t.caCenterTitle}
             className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
           >
             <AlignCenter className="w-3.5 h-3.5" />
@@ -596,7 +599,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleQuickBringForward}
-            title="تحريك للأمام"
+            title={t.caForwardTitle}
             className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
           >
             <ChevronsUp className="w-3.5 h-3.5" />
@@ -606,7 +609,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleQuickSendBackward}
-            title="تحريك للخلف"
+            title={t.caBackwardTitle}
             className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
           >
             <ChevronsDown className="w-3.5 h-3.5" />
@@ -616,7 +619,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleQuickToggleLock}
-            title={isLocked ? 'فك القفل' : 'قفل العنصر'}
+            title={isLocked ? t.caUnlock : t.caLock}
             className={`p-1 sm:p-1.5 rounded-lg transition ${
               isLocked
                 ? 'text-amber-400 bg-amber-950/60'
@@ -632,7 +635,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={onDelete}
-            title="حذف (Delete)"
+            title={t.caDeleteTitle}
             className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -643,7 +646,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       {/* Artboard Frame & Canvas Container */}
       <div className="flex flex-col items-center justify-center">
         <div className="text-[10px] font-mono text-slate-400 mb-1 tracking-wider">
-          لوحة التصميم ({width} × {height} px)
+          {t.caCanvasLabel} ({width} × {height} px)
         </div>
 
         <div
@@ -663,7 +666,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           type="button"
           onClick={() => setZoom((z) => Math.max(0.1, +(z - 0.1).toFixed(2)))}
           className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          title="تصغير (-)"
+          title={t.caZoomOut}
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
@@ -676,7 +679,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           type="button"
           onClick={() => setZoom((z) => Math.min(3.0, +(z + 0.1).toFixed(2)))}
           className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          title="تكبير (+)"
+          title={t.caZoomIn}
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
@@ -687,17 +690,17 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           type="button"
           onClick={fitToScreen}
           className="p-1 text-slate-300 hover:text-sky-300 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-medium"
-          title="ملاءمة أبعاد الشاشة"
+          title={t.caFitScreen}
         >
           <Maximize2 className="w-3 h-3" />
-          <span className="hidden sm:inline">ملاءمة</span>
+          <span className="hidden sm:inline">{t.caFitLabel}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setZoom(1)}
           className="px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 rounded font-mono transition"
-          title="الحجم الفعلي 100%"
+          title={t.caActualSize}
         >
           100%
         </button>

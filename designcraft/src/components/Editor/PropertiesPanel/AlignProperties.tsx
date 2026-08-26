@@ -16,6 +16,7 @@ import {
   Unlock,
   Move
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface AlignPropertiesProps {
   onAlign: (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
@@ -40,15 +41,16 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
   isLocked,
   onToggleLock
 }) => {
+  const { t } = useDcLang();
   return (
     <div className="space-y-4 pt-3 border-t border-slate-800">
       {/* Canvas Alignment */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-300">محاذاة في الكانفاس</label>
+        <label className="text-xs font-semibold text-slate-300">{t.apTitle}</label>
         <div className="grid grid-cols-6 gap-1 bg-[#0B132B] p-1 rounded-xl border border-slate-700/80">
           <button
             type="button"
-            title="محاذاة لليمين"
+            title={t.apAlignRight}
             onClick={() => onAlign('right')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -56,7 +58,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           </button>
           <button
             type="button"
-            title="توسيط أفقي"
+            title={t.apAlignCenterH}
             onClick={() => onAlign('center')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -64,7 +66,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           </button>
           <button
             type="button"
-            title="محاذاة لليسار"
+            title={t.apAlignLeft}
             onClick={() => onAlign('left')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -73,7 +75,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
 
           <button
             type="button"
-            title="محاذاة للأعلى"
+            title={t.apAlignTop}
             onClick={() => onAlign('top')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -81,7 +83,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           </button>
           <button
             type="button"
-            title="توسيط رأسي"
+            title={t.apAlignCenterV}
             onClick={() => onAlign('middle')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -89,7 +91,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           </button>
           <button
             type="button"
-            title="محاذاة للأسفل"
+            title={t.apAlignBottom}
             onClick={() => onAlign('bottom')}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex justify-center"
           >
@@ -100,43 +102,43 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
 
       {/* Layer Hierarchy Actions */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-300">ترتيب الطبقات (Layer Ordering)</label>
+        <label className="text-xs font-semibold text-slate-300">{t.apLayerOrder}</label>
         <div className="grid grid-cols-4 gap-1.5">
           <button
             type="button"
-            title="إحضار للمقدمة (Bring to Front)"
+            title={t.apBringFront}
             onClick={onBringToFront}
             className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition flex flex-col items-center gap-1 text-[10px]"
           >
             <ChevronsUp className="w-3.5 h-3.5 text-sky-400" />
-            <span>للمقدمة</span>
+            <span>{t.apToFront}</span>
           </button>
           <button
             type="button"
-            title="تحريك للأمام (Bring Forward)"
+            title={t.apForward}
             onClick={onBringForward}
             className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition flex flex-col items-center gap-1 text-[10px]"
           >
             <ArrowUp className="w-3.5 h-3.5 text-sky-400" />
-            <span>للأمام</span>
+            <span>{t.apToForward}</span>
           </button>
           <button
             type="button"
-            title="تحريك للخلف (Send Backward)"
+            title={t.apBackward}
             onClick={onSendBackward}
             className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition flex flex-col items-center gap-1 text-[10px]"
           >
             <ArrowDown className="w-3.5 h-3.5 text-sky-400" />
-            <span>للخلف</span>
+            <span>{t.apToBackward}</span>
           </button>
           <button
             type="button"
-            title="إرسال للقاع (Send to Back)"
+            title={t.apToBack}
             onClick={onSendToBack}
             className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition flex flex-col items-center gap-1 text-[10px]"
           >
             <ChevronsDown className="w-3.5 h-3.5 text-sky-400" />
-            <span>للقاع</span>
+            <span>{t.apToBottom}</span>
           </button>
         </div>
       </div>
@@ -149,7 +151,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#0B132B] hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white rounded-xl transition"
         >
           <Copy className="w-3.5 h-3.5 text-sky-400" />
-          <span>تكرار</span>
+          <span>{t.apDuplicate}</span>
         </button>
 
         <button
@@ -162,7 +164,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           }`}
         >
           {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-          <span>{isLocked ? 'مقفل' : 'قفل'}</span>
+          <span>{isLocked ? t.apLocked : t.apLock}</span>
         </button>
 
         <button
@@ -171,7 +173,7 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
           className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#0B132B] hover:bg-rose-900/30 border border-slate-700 hover:border-rose-500/50 text-xs font-semibold text-slate-300 hover:text-rose-300 rounded-xl transition"
         >
           <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-          <span>حذف</span>
+          <span>{t.apDelete}</span>
         </button>
       </div>
     </div>

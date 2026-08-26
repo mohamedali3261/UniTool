@@ -3,6 +3,7 @@ import { ICONS_CATALOG, COLOR_PALETTES } from '../../../data/presets';
 import { Search, SmilePlus, Palette, Sparkles, Check, Maximize2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { getEnglishKeywordsForSearch } from '../../../utils/searchTranslator';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface IconsTabProps {
   onAddIcon: (iconName: string, color: string) => void;
@@ -10,6 +11,7 @@ interface IconsTabProps {
 }
 
 export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal }) => {
+  const { t } = useDcLang();
   const [search, setSearch] = useState('');
   const [selectedColor, setSelectedColor] = useState('#38BDF8');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -40,7 +42,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <SmilePlus className="w-3.5 h-3.5 text-sky-400" />
-          <span>مكتبة الأيقونات</span>
+          <span>{t.iconsLibrary}</span>
         </h3>
         {onOpenIconsModal && (
           <button
@@ -49,7 +51,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
             className="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-1 rounded-lg border border-sky-500/30 transition"
           >
             <Maximize2 className="w-3 h-3" />
-            <span>نافذة شاملة</span>
+            <span>{t.iconsFullWindow}</span>
           </button>
         )}
       </div>
@@ -65,7 +67,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
             <div className="p-1.5 rounded-xl bg-sky-500 text-white shadow-sm group-hover:scale-110 transition">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <span>فتح نافذة البحث الشاملة للأيقونات</span>
+            <span>{t.iconsOpenFull}</span>
           </div>
           <span className="text-[10px] font-mono bg-sky-500/30 text-sky-300 px-2 py-0.5 rounded-full font-bold">
             +{allIcons.length}
@@ -78,7 +80,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
         <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
-          placeholder="ابحث في الأيقونات (مثال: Play, Star, Cart, Phone)..."
+          placeholder={t.iconsSearchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-[#0B132B] border border-slate-700/80 rounded-xl pr-8 pl-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
@@ -90,7 +92,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
         <div className="flex items-center justify-between text-xs text-slate-300">
           <span className="flex items-center gap-1.5 font-bold">
             <Palette className="w-3.5 h-3.5 text-sky-400" />
-            <span>لون الأيقونة</span>
+            <span>{t.iconsColor}</span>
           </span>
           <div className="flex items-center gap-1.5">
             <input
@@ -132,7 +134,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
               : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
           }`}
         >
-          الكل ({allIcons.length})
+          {t.iconsAll} ({allIcons.length})
         </button>
         {ICONS_CATALOG.map((cat) => (
           <button

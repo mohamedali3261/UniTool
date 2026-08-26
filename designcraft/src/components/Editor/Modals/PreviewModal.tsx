@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Smartphone, Monitor, Download, Maximize2 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   height,
   onOpenExport
 }) => {
+  const { t } = useDcLang();
   const [deviceFrame, setDeviceFrame] = useState<'fit' | 'mobile' | 'clean'>('fit');
 
   if (!isOpen) return null;
@@ -34,7 +36,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#1C2541]">
           <div className="flex items-center gap-3">
             <h2 className="text-sm sm:text-base font-bold text-white truncate max-w-xs sm:max-w-md">
-              معاينة: {title}
+              {t.pvTitle} {title}
             </h2>
             <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#0B132B] text-sky-400">
               {width} × {height} px
@@ -50,7 +52,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 className={`p-1.5 rounded-lg transition ${
                   deviceFrame === 'fit' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title="ملاءمة الشاشة"
+                title={t.pvFitScreen}
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
@@ -60,7 +62,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 className={`p-1.5 rounded-lg transition ${
                   deviceFrame === 'mobile' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title="إطار الهاتف"
+                title={t.pvPhoneFrame}
               >
                 <Smartphone className="w-4 h-4" />
               </button>
@@ -70,7 +72,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 className={`p-1.5 rounded-lg transition ${
                   deviceFrame === 'clean' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title="شاشة كمبيوتر"
+                title={t.pvDesktopFrame}
               >
                 <Monitor className="w-4 h-4" />
               </button>
@@ -82,7 +84,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
               className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-md"
             >
               <Download className="w-4 h-4" />
-              <span>تصدير</span>
+              <span>{t.pvExport}</span>
             </button>
 
             <button

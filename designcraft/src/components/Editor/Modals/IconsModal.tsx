@@ -3,6 +3,7 @@ import { ICONS_CATALOG, COLOR_PALETTES } from '../../../data/presets';
 import { Search, SmilePlus, X, Palette, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { getEnglishKeywordsForSearch } from '../../../utils/searchTranslator';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface IconsModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const IconsModal: React.FC<IconsModalProps> = ({
   onClose,
   onSelectIcon
 }) => {
+  const { t } = useDcLang();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedColor, setSelectedColor] = useState('#38BDF8');
@@ -52,7 +54,7 @@ export const IconsModal: React.FC<IconsModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>مكتبة الأيقونات والرموز</span>
+                <span>{t.icTitle}</span>
                 <span className="text-[10px] bg-sky-500/20 text-sky-300 font-mono px-2 py-0.5 rounded-full border border-sky-500/30">
                   +{allIcons.length}
                 </span>
@@ -76,7 +78,7 @@ export const IconsModal: React.FC<IconsModalProps> = ({
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="ابحث في الأيقونات (مثال: Play, Star, Cart, Phone, User, Heart)..."
+                placeholder={t.icSearchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[#0B132B] border border-slate-700/80 rounded-xl pr-10 pl-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
@@ -123,7 +125,7 @@ export const IconsModal: React.FC<IconsModalProps> = ({
                   : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
-              الكل ({allIcons.length})
+              {t.icAll} ({allIcons.length})
             </button>
             {ICONS_CATALOG.map((cat) => (
               <button

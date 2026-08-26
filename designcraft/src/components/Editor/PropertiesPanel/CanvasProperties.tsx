@@ -3,6 +3,7 @@ import { DIMENSION_PRESETS, COLOR_PALETTES } from '../../../data/presets';
 import { ColorPickerPopover } from '../../Common/ColorPickerPopover';
 import { PresetSilhouette } from '../../Dashboard/PresetSilhouette';
 import { Sliders, Sparkles, Maximize2, Palette } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface CanvasPropertiesProps {
   width: number;
@@ -21,21 +22,22 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
   onSetBackgroundColor,
   onSetBackgroundGradient
 }) => {
+  const { t } = useDcLang();
   return (
     <div className="space-y-5 select-none">
       <div className="space-y-1">
         <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
           <Maximize2 className="w-4 h-4 text-sky-400" />
-          <span>خصائص الكانفاس والتصميم</span>
+          <span>{t.cpTitle}</span>
         </h3>
-        <p className="text-[11px] text-slate-400">انقر على أي عنصر بالتصميم للتحكم به، أو اضبط ألوان وأبعاد اللوحة من هنا</p>
+        <p className="text-[11px] text-slate-400">{t.cpDesc}</p>
       </div>
 
       {/* Canvas Dimensions */}
       <div className="p-4 bg-[#0B132B] rounded-2xl border border-slate-800 space-y-3">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
           <span className="flex items-center gap-1">
-            <Sliders className="w-3.5 h-3.5 text-sky-400" /> أبعاد اللوحة (بكسل)
+            <Sliders className="w-3.5 h-3.5 text-sky-400" /> {t.cpDimensions}
           </span>
           <span className="font-mono text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded-md border border-sky-800/50">
             {width} × {height} px
@@ -44,7 +46,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <label className="text-[10px] text-slate-400">العرض (Width)</label>
+            <label className="text-[10px] text-slate-400">{t.cpWidth}</label>
             <input
               type="number"
               min="200"
@@ -56,7 +58,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] text-slate-400">الارتفاع (Height)</label>
+            <label className="text-[10px] text-slate-400">{t.cpHeight}</label>
             <input
               type="number"
               min="200"
@@ -73,11 +75,11 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
       <div className="p-4 bg-[#0B132B] rounded-2xl border border-slate-800 space-y-3.5">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
           <Palette className="w-4 h-4 text-sky-400" />
-          <span>لون خلفية الكانفاس</span>
+          <span>{t.cpBgColor}</span>
         </div>
 
         <ColorPickerPopover
-          label="اختر لون مخصص"
+          label={t.cpCustomColor}
           color={backgroundColor}
           onChange={onSetBackgroundColor}
           allowTransparent={true}
@@ -85,7 +87,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
 
         {/* Quick Solid Palette */}
         <div className="space-y-1 pt-1">
-          <div className="text-[10px] font-semibold text-slate-400">ألوان موحدة سريعة:</div>
+          <div className="text-[10px] font-semibold text-slate-400">{t.cpSolidColors}</div>
           <div className="grid grid-cols-8 gap-1.5">
             {COLOR_PALETTES.solids.slice(0, 16).map((c) => (
               <button
@@ -107,7 +109,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
         <div className="space-y-1.5 pt-2 border-t border-slate-800">
           <div className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-sky-400" />
-            <span>تدرجات احترافية جاهزة:</span>
+            <span>{t.cpGradients}</span>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             {COLOR_PALETTES.gradients.map((g) => (
@@ -128,7 +130,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
 
       {/* Quick Dimension Presets switcher */}
       <div className="space-y-2 pt-2 border-t border-slate-800">
-        <div className="text-xs font-semibold text-slate-300">أبعاد ومقاسات جاهزة منصات السوشيال:</div>
+        <div className="text-xs font-semibold text-slate-300">{t.cpSocialSizes}</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           {DIMENSION_PRESETS.filter(p => p.id !== 'custom').map((preset) => (
             <button

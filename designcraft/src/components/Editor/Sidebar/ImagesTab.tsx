@@ -7,6 +7,7 @@ import {
   Smartphone,
   Search
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ImagesTabProps {
   onAddImage: (url: string) => void;
@@ -19,6 +20,7 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
   onOpenPexelsModal,
   onAddMobileMockup
 }) => {
+  const { t } = useDcLang();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,10 +49,10 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
       <div className="space-y-1">
         <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
           <ImageIcon className="w-4 h-4 text-sky-400" />
-          <span>مكتبة صور</span>
+          <span>{t.imagesLibrary}</span>
         </h3>
         <p className="text-[11px] text-slate-400">
-          اختر من ملايين الصور عالية الدقة مع الانتقال المباشر للكانفاس
+          {t.imagesDesc}
         </p>
       </div>
 
@@ -66,11 +68,11 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
           </div>
           <div>
             <div className="text-xs sm:text-sm font-black flex items-center justify-center gap-1.5">
-              <span>مكتبة صور</span>
+              <span>{t.imagesLibrary}</span>
               <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
             </div>
             <div className="text-[10px] text-sky-200 font-normal mt-0.5">
-              انقر لاختيار أي صورة وإدراجها تلقائياً على الكانفاس
+              {t.imagesClickToAdd}
             </div>
           </div>
         </button>
@@ -84,7 +86,7 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
           className="w-full p-3 rounded-xl bg-[#0B132B] hover:bg-[#152042] border border-slate-700 hover:border-sky-500 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm"
         >
           <Smartphone className="w-4 h-4 text-sky-400" />
-          <span>📱 إضافة إطار هاتف ذكي (موك أب الصور)</span>
+          <span>{t.imagesPhoneMockup}</span>
         </button>
       )}
 
@@ -106,7 +108,7 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
         </div>
         <div>
           <div className="text-xs font-bold text-white group-hover:text-sky-300">
-            رفع صور من جهازك
+            {t.imagesUpload}
           </div>
           <div className="text-[10px] text-slate-400">PNG, JPG, WebP, SVG</div>
         </div>
@@ -116,12 +118,12 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
       {uploadedImages.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-slate-800">
           <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-            <span>الصور المرفوعة ({uploadedImages.length})</span>
+            <span>{t.imagesUploaded} ({uploadedImages.length})</span>
             <button
               onClick={() => setUploadedImages([])}
               className="text-[10px] text-rose-400 hover:underline flex items-center gap-1"
             >
-              <Trash2 className="w-3 h-3" /> مسح الكل
+              <Trash2 className="w-3 h-3" /> {t.imagesClearAll}
             </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -134,7 +136,7 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
                 <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                   <span className="text-[10px] font-bold text-white bg-sky-600 px-2 py-1 rounded-md">
-                    إضافة +
+                    {t.imagesAddMore}
                   </span>
                 </div>
               </div>

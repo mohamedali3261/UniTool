@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TEXT_PRESETS, POPULAR_FONTS, COLOR_PALETTES } from '../../../data/presets';
 import { TextPreset, ActiveObjectProperties } from '../../../types';
+import { useDcLang } from '../../../hooks/useDcLang';
 import {
   Type,
   Sparkles,
@@ -36,6 +37,7 @@ export const TextTab: React.FC<TextTabProps> = ({
   activeProperties,
   onUpdateProperty
 }) => {
+  const { t } = useDcLang();
   const [customText, setCustomText] = useState('');
   const [selectedFont, setSelectedFont] = useState('Cairo');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
@@ -71,7 +73,7 @@ export const TextTab: React.FC<TextTabProps> = ({
 
   const handleAddCustomText = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const textToAdd = customText.trim() || 'نص جديد';
+    const textToAdd = customText.trim() || t.addNewText;
     safeAddText({
       text: textToAdd,
       fontSize: Math.round(36 * (presetScale / 100)),
@@ -109,13 +111,13 @@ export const TextTab: React.FC<TextTabProps> = ({
   };
 
   const categories = [
-    { id: 'all', label: 'الكل' },
-    { id: 'headings', label: 'عناوين' },
-    { id: 'gold', label: 'ذهبي فخم' },
-    { id: 'neon', label: 'نيون وتوهج' },
-    { id: 'calligraphy', label: 'خطوط عربية' },
-    { id: 'badges', label: 'شارات وعروض' },
-    { id: '3d', label: 'تأثيرات 3D' }
+    { id: 'all', label: t.catAllText },
+    { id: 'headings', label: t.catHeadings },
+    { id: 'gold', label: t.catGolden },
+    { id: 'neon', label: t.catNeon },
+    { id: 'calligraphy', label: t.catArabicFonts },
+    { id: 'badges', label: t.catBadges },
+    { id: '3d', label: t.cat3D }
   ];
 
   const filteredPresets = TEXT_PRESETS.filter((p) => {
@@ -129,25 +131,25 @@ export const TextTab: React.FC<TextTabProps> = ({
       <div className="space-y-1">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <Type className="w-4 h-4 text-sky-400" />
-          <span>قسم النصوص والخطوط والتنسيقات الجاهزة</span>
+          <span>{t.textTabDesc}</span>
         </h3>
         <p className="text-[11px] text-slate-400">
-          إضافة نصوص مخصصة، خطوط عربية وتنسيقات نيون ومذهبة بضغطة واحدة
+          {t.textTabSubdesc}
         </p>
       </div>
 
       {/* Quick Add Custom Text Field */}
       <form onSubmit={handleAddCustomText} className="space-y-2 bg-[#0B132B] p-3 rounded-2xl border border-slate-700/80 shadow-xs">
         <div className="text-[11px] font-bold text-slate-300 flex items-center justify-between">
-          <span>أدخل نصك الخاص:</span>
-          <span className="text-[10px] text-sky-400 font-normal">معاينة حية</span>
+          <span>{t.enterCustomText}</span>
+          <span className="text-[10px] text-sky-400 font-normal">{t.livePreview}</span>
         </div>
         <div className="flex gap-1.5">
           <input
             type="text"
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
-            placeholder="اكتب عنوانك أو نصك هنا..."
+            placeholder={t.textInputPlaceholder}
             className="flex-1 bg-[#1C2541] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
           />
           <button
@@ -155,7 +157,7 @@ export const TextTab: React.FC<TextTabProps> = ({
             className="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs flex items-center gap-1 transition shadow-md shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>إضافة</span>
+            <span>{t.addBtn}</span>
           </button>
         </div>
       </form>
@@ -165,16 +167,16 @@ export const TextTab: React.FC<TextTabProps> = ({
         <div className="flex items-center justify-between text-xs font-bold text-slate-300">
           <span className="flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-amber-400" />
-            <span>مقياس الحجم لكافة التنسيقات</span>
+            <span>{t.scaleSection}</span>
           </span>
-          <span className="text-[10px] text-sky-400 font-mono">{presetScale}% الحجم</span>
+          <span className="text-[10px] text-sky-400 font-mono">{presetScale}% {t.scaleLabel}</span>
         </div>
 
         {/* Size Scaler & Color Customizer Bar */}
         <div className="bg-[#0B132B] p-2.5 rounded-2xl border border-slate-800 space-y-2.5">
           <div className="space-y-1">
             <div className="flex justify-between text-[11px] text-slate-300 font-medium">
-              <span>تحكم كامل في الحجم بمؤشر مستمر:</span>
+              <span>{t.scaleSliderHint}</span>
               <span className="text-sky-400 font-mono">{presetScale}%</span>
             </div>
             <input
@@ -189,7 +191,7 @@ export const TextTab: React.FC<TextTabProps> = ({
           </div>
 
           <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px]">
-            <span className="text-slate-300">تخصيص لون التنسيق:</span>
+            <span className="text-slate-300">{t.customColorLabel}</span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -200,7 +202,7 @@ export const TextTab: React.FC<TextTabProps> = ({
                     : 'bg-slate-800 border-slate-700 text-slate-400'
                 }`}
               >
-                الأصلي
+                {t.originalLabel}
               </button>
               {['#FFFFFF', '#FCD34D', '#38BDF8', '#F43F5E', '#10B981', '#A855F7'].map((c) => (
                 <button
@@ -223,7 +225,7 @@ export const TextTab: React.FC<TextTabProps> = ({
         <div className="flex items-center justify-between text-xs font-bold text-slate-300">
           <span className="flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>مكتبة التنسيقات النصية الجاهزة ({filteredPresets.length})</span>
+            <span>{t.textPresetsLibrary} ({filteredPresets.length})</span>
           </span>
         </div>
 
@@ -287,7 +289,7 @@ export const TextTab: React.FC<TextTabProps> = ({
         <div className="flex items-center justify-between text-xs font-bold text-slate-300">
           <span className="flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-            <span>مكتبة الخطوط العربية والإنجليزية</span>
+            <span>{t.textFontsLibrary}</span>
           </span>
         </div>
 
@@ -330,7 +332,7 @@ export const TextTab: React.FC<TextTabProps> = ({
         <div className="flex items-center justify-between text-xs font-bold text-slate-300">
           <span className="flex items-center gap-1.5">
             <Palette className="w-3.5 h-3.5 text-sky-400" />
-            <span>ألوان أساسية مخصصة</span>
+            <span>{t.basicColors}</span>
           </span>
         </div>
 

@@ -6,6 +6,7 @@ import {
   BackgroundPatternItem
 } from '../../../data/patternsCatalog';
 import { ColorPickerPopover } from '../../Common/ColorPickerPopover';
+import { useDcLang } from '../../../hooks/useDcLang';
 import { Palette, Sparkles, Grid, Layers, Check, Image as ImageIcon } from 'lucide-react';
 
 interface BackgroundTabProps {
@@ -21,6 +22,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
   onSelectGradient,
   onSelectPattern
 }) => {
+  const { t } = useDcLang();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'colors' | 'patterns'>('patterns');
   const [selectedPatternId, setSelectedPatternId] = useState<string | null>(null);
@@ -36,10 +38,10 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
       <div className="space-y-1">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <Palette className="w-3.5 h-3.5 text-sky-400" />
-          <span>تخصيص خلفية الكانفاس</span>
+          <span>{t.bgCustomize}</span>
         </h3>
         <p className="text-[10px] text-slate-400">
-          اختر من بين ألوان موحدة، تدرجات عصرية، أو خلفيات منقشة ومزغرفة فاخرة
+          {t.bgCustomizeDesc}
         </p>
       </div>
 
@@ -55,7 +57,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
           }`}
         >
           <Grid className="w-3.5 h-3.5" />
-          <span>خلفيات مزغرفة ({PATTERNS_CATALOG.length})</span>
+          <span>{t.bgPatterns} ({PATTERNS_CATALOG.length})</span>
         </button>
         <button
           type="button"
@@ -67,7 +69,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
           }`}
         >
           <Palette className="w-3.5 h-3.5" />
-          <span>ألوان وتدرجات</span>
+          <span>{t.bgColorsGradients}</span>
         </button>
       </div>
 
@@ -148,14 +150,14 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
           {/* Solid Color Custom Picker */}
           <div className="p-3 bg-[#0B132B] rounded-xl border border-slate-800 space-y-2.5">
             <ColorPickerPopover
-              label="لون الخلفية الموحد"
+              label={t.bgColorSolid}
               color={currentColor || '#0B132B'}
               onChange={onSelectColor}
               allowTransparent={true}
             />
 
             <div className="space-y-1 pt-1">
-              <div className="text-[10px] font-semibold text-slate-400">ألوان سريعة:</div>
+              <div className="text-[10px] font-semibold text-slate-400">{t.bgQuickColors}</div>
               <div className="grid grid-cols-8 gap-1">
                 {COLOR_PALETTES.solids.map((c) => (
                   <button
@@ -178,7 +180,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
           <div className="space-y-2 pt-2 border-t border-slate-800">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
               <Sparkles className="w-3 h-3 text-sky-400" />
-              <span>تدرجات لونية عصرية</span>
+              <span>{t.bgTrendyGradients}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">

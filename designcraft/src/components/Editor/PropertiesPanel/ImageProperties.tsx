@@ -14,6 +14,7 @@ import {
   SunMedium,
   CheckCircle2
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ImagePropertiesProps {
   properties: ActiveObjectProperties;
@@ -26,6 +27,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
   onUpdate,
   onApplyFilter
 }) => {
+  const { t } = useDcLang();
   const [activeTab, setActiveTab] = useState<'softFade' | 'corners' | 'hardCrop' | 'style' | 'filters'>('softFade');
 
   // Soft Fade values (0 - 100 percentage)
@@ -96,7 +98,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           }`}
         >
           <Blend className="w-3.5 h-3.5" />
-          <span>تلاشي جزئي</span>
+          <span>{t.ipFade}</span>
         </button>
 
         <button
@@ -109,7 +111,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           }`}
         >
           <Crop className="w-3.5 h-3.5" />
-          <span>زوايا</span>
+          <span>{t.ipCorners}</span>
         </button>
 
         <button
@@ -122,7 +124,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>إطار وتحديد</span>
+          <span>{t.ipBorder}</span>
         </button>
 
         <button
@@ -135,7 +137,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>فلاتر</span>
+          <span>{t.ipFilters}</span>
         </button>
       </div>
 
@@ -145,7 +147,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-bold text-sky-400">
               <Blend className="w-4 h-4 text-sky-400" />
-              <span>الإخفاء الجزئي وتلاشي الحواف بنعومة</span>
+              <span>{t.ipFadeDesc}</span>
             </div>
             {hasAnyFade && (
               <button
@@ -154,18 +156,18 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 transition"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>إلغاء التلاشي</span>
+                <span>{t.ipClearFade}</span>
               </button>
             )}
           </div>
 
           <div className="bg-[#0B132B] p-2.5 rounded-xl border border-sky-950/60 text-[11px] text-slate-300 leading-relaxed">
-            يسمح لك هذا الخيار بإخفاء حواف الصورة <strong className="text-sky-300 font-semibold">بشكل جزئي وتدريجي</strong> مع تدرج شفافية ناعم لتندمج بسلاسة مع التصميم.
+            {t.ipFadeExplanation}
           </div>
 
           {/* Quick Presets for Partial Fade */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-400">تأثيرات تلاشي جاهزة بنقرة واحدة:</label>
+            <label className="text-[11px] font-semibold text-slate-400">{t.ipFadePresets}</label>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
               <button
                 type="button"
@@ -178,7 +180,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 }}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-200 hover:text-white transition text-center"
               >
-                تلاشي سفلي ناعم (45%)
+                {t.ipFadeBottom}
               </button>
 
               <button
@@ -192,7 +194,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 }}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-200 hover:text-white transition text-center"
               >
-                تلاشي علوي وسفلي (35%)
+                {t.ipFadeTopBottom}
               </button>
 
               <button
@@ -206,7 +208,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 }}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-200 hover:text-white transition text-center"
               >
-                تلاشي الجوانب (يمين ويسار)
+                {t.ipFadeSides}
               </button>
 
               <button
@@ -220,21 +222,21 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 }}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-200 hover:text-white transition text-center"
               >
-                تلاشي دائري ناعم (Vignette)
+                {t.ipFadeRadial}
               </button>
             </div>
           </div>
 
           {/* Individual Edge Sliders */}
           <div className="space-y-3 bg-[#0B132B]/90 p-3 rounded-xl border border-slate-800/80">
-            <div className="text-xs font-semibold text-slate-200 mb-1">التحكم بنسبة التلاشي لكل حافة:</div>
+            <div className="text-xs font-semibold text-slate-200 mb-1">{t.ipFadeSliders}</div>
 
             {/* Top Fade */}
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-                  <span>تلاشي الحافة العلوية (Top Fade)</span>
+                  <span>{t.ipFadeTop}</span>
                 </span>
                 <span className="font-mono text-sky-400">{fadeTop}%</span>
               </div>
@@ -254,7 +256,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-                  <span>تلاشي الحافة السفلية (Bottom Fade)</span>
+                  <span>{t.ipFadeBottomEdge}</span>
                 </span>
                 <span className="font-mono text-indigo-400">{fadeBottom}%</span>
               </div>
@@ -274,7 +276,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>تلاشي الحافة اليمنى (Right Fade)</span>
+                  <span>{t.ipFadeRight}</span>
                 </span>
                 <span className="font-mono text-emerald-400">{fadeRight}%</span>
               </div>
@@ -294,7 +296,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                  <span>تلاشي الحافة اليسرى (Left Fade)</span>
+                  <span>{t.ipFadeLeft}</span>
                 </span>
                 <span className="font-mono text-amber-400">{fadeLeft}%</span>
               </div>
@@ -314,7 +316,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               <div className="flex justify-between text-xs text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                  <span>تلاشي دائري من الأطراف (Radial Feather)</span>
+                  <span>{t.ipFadeRadialFeather}</span>
                 </span>
                 <span className="font-mono text-purple-400">{fadeRadial}%</span>
               </div>
@@ -338,7 +340,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-bold text-sky-400">
               <Crop className="w-3.5 h-3.5" />
-              <span>تدوير وقص زوايا الصورة جزئياً</span>
+              <span>{t.ipCornersTitle}</span>
             </div>
             {(rTL > 0 || rTR > 0 || rBR > 0 || rBL > 0) && (
               <button
@@ -347,7 +349,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 transition"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>حواف حادة</span>
+                <span>{t.ipSharpCorners}</span>
               </button>
             )}
           </div>
@@ -363,7 +365,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                   : 'bg-[#0B132B] border-slate-700/70 text-slate-300 hover:text-white'
               }`}
             >
-              مربع حاد
+              {t.ipSharpSquare}
             </button>
 
             <button
@@ -375,7 +377,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                   : 'bg-[#0B132B] border-slate-700/70 text-slate-300 hover:text-white'
               }`}
             >
-              بطاقة ناعمة (24px)
+              {t.ipSoftCard}
             </button>
 
             <button
@@ -383,7 +385,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               onClick={() => handleAllCornersChange(maxRadius)}
               className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition text-center"
             >
-              دائري / بيضاوي
+              {t.ipCircle}
             </button>
 
             <button
@@ -396,7 +398,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               }}
               className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition text-center"
             >
-              أعلى فقط مستدير
+              {t.ipTopRounded}
             </button>
 
             <button
@@ -409,7 +411,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               }}
               className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition text-center"
             >
-              أسفل فقط مستدير
+              {t.ipBottomRounded}
             </button>
 
             <button
@@ -422,14 +424,14 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               }}
               className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition text-center"
             >
-              زوايا قطرية
+              {t.ipDiagonal}
             </button>
           </div>
 
           {/* All Corners Slider */}
           <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
             <div className="flex justify-between text-xs text-slate-300 font-medium">
-              <span>تدوير كافة الزوايا معاً</span>
+              <span>{t.ipAllCorners}</span>
               <span className="font-mono text-sky-400">{rTL}px</span>
             </div>
             <input
@@ -444,11 +446,11 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
 
           {/* Individual 4-Corner Custom Inputs */}
           <div className="space-y-2 pt-2 border-t border-slate-800/80">
-            <label className="text-xs font-semibold text-slate-300">التحكم بكل زاوية منفصلة:</label>
+            <label className="text-xs font-semibold text-slate-300">{t.ipPerCorner}</label>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>أعلى اليمين</span>
+                  <span>{t.ipTopRight}</span>
                   <span className="font-mono text-sky-400">{rTR}px</span>
                 </div>
                 <input
@@ -463,7 +465,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
 
               <div className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>أعلى اليسار</span>
+                  <span>{t.ipTopLeft}</span>
                   <span className="font-mono text-sky-400">{rTL}px</span>
                 </div>
                 <input
@@ -478,7 +480,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
 
               <div className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>أسفل اليمين</span>
+                  <span>{t.ipBottomRight}</span>
                   <span className="font-mono text-sky-400">{rBR}px</span>
                 </div>
                 <input
@@ -493,7 +495,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
 
               <div className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1">
                 <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>أسفل اليسار</span>
+                  <span>{t.ipBottomLeft}</span>
                   <span className="font-mono text-sky-400">{rBL}px</span>
                 </div>
                 <input
@@ -518,7 +520,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
                 {hasBorders ? <Eye className="w-4 h-4 text-sky-400" /> : <EyeOff className="w-4 h-4 text-amber-400" />}
-                <span>إطار التحديد عند النقر (Selection Box)</span>
+                <span>{t.ipSelectionBox}</span>
               </div>
               <button
                 type="button"
@@ -529,20 +531,20 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                     : 'bg-amber-600/30 text-amber-300 border border-amber-500/40'
                 }`}
               >
-                {hasBorders ? 'ظاهر' : 'مخفي'}
+                {hasBorders ? t.ipSelectionVisible : t.ipSelectionHidden}
               </button>
             </div>
             <p className="text-[11px] text-slate-400">
               {hasBorders
-                ? 'يظهر الخط الأزرق حول الصورة عند الضغط عليها لتسهيل التحكم والتحريك.'
-                : 'تم إخفاء الخط الأزرق حول الصورة لتشاهد حوافها الحقيقية بكل وضوح دون تشويش.'}
+                ? t.ipSelectionVisibleDesc
+                : t.ipSelectionHiddenDesc}
             </p>
           </div>
 
           {/* Stroke / Border Width */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-slate-300 font-medium">
-              <span>سمك إطار الصورة (Border Width)</span>
+              <span>{t.ipBorderWidth}</span>
               <span className="font-mono text-sky-400">{properties.strokeWidth ?? 0}px</span>
             </div>
             <input
@@ -557,7 +559,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
 
           {/* Stroke Color */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">لون الإطار</label>
+            <label className="text-xs font-semibold text-slate-300">{t.ipBorderColor}</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -600,7 +602,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
         <div className="space-y-3.5 animate-fadeIn">
           {/* Flip buttons */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">قلب وتدوير الصورة</label>
+            <label className="text-xs font-semibold text-slate-300">{t.ipFlipTitle}</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -608,7 +610,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 className="flex items-center justify-center gap-1.5 p-2 bg-[#0B132B] hover:bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 transition"
               >
                 <FlipHorizontal className="w-4 h-4 text-sky-400" />
-                <span>قلب أفقي</span>
+                <span>{t.ipFlipH}</span>
               </button>
 
               <button
@@ -617,7 +619,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 className="flex items-center justify-center gap-1.5 p-2 bg-[#0B132B] hover:bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 transition"
               >
                 <FlipVertical className="w-4 h-4 text-sky-400" />
-                <span>قلب رأسي</span>
+                <span>{t.ipFlipV}</span>
               </button>
             </div>
           </div>
@@ -625,7 +627,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           {/* Opacity */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
-              <span>الشفافية (Opacity)</span>
+              <span>{t.ipOpacityLabel}</span>
               <span className="font-mono text-sky-400">{Math.round((properties.opacity ?? 1) * 100)}%</span>
             </div>
             <input
@@ -643,7 +645,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
           <div className="space-y-2 pt-2 border-t border-slate-800">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
               <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-              <span>فلاتر وتحسينات الصورة (Filters)</span>
+              <span>{t.ipFiltersTitle}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-1.5 text-xs">
@@ -652,42 +654,42 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
                 onClick={() => onApplyFilter('grayscale')}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
               >
-                أبيض وأسود
+                {t.ipGrayscale}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyFilter('sepia')}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
               >
-                سيبيا كلاسيك
+                {t.ipSepia}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyFilter('invert')}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
               >
-                عكس الألوان
+                {t.ipInvert}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyFilter('brightness', 0.15)}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
               >
-                زيادة السطوع
+                {t.ipBrightness}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyFilter('contrast', 0.2)}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
               >
-                زيادة التباين
+                {t.ipContrast}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyFilter('reset')}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-rose-900/30 border border-rose-800/40 text-rose-300 transition text-center"
               >
-                إلغاء الفلاتر
+                {t.ipResetFilters}
               </button>
             </div>
           </div>

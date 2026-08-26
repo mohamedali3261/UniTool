@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useDcLang } from '../../hooks/useDcLang';
 import { 
   Copy, 
   Scissors, 
@@ -46,6 +47,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onBringForward,
   onSendBackward
 }) => {
+  const { t, lang } = useDcLang();
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,35 +82,35 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       style={{ 
         top: `${options.y}px`, 
         left: `${options.x}px`,
-        direction: 'rtl'
+        direction: 'ltr'
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="p-1 space-y-0.5">
         <MenuItem 
           icon={<Copy className="w-4 h-4" />} 
-          label="نسخ" 
+          label={t.ctxCopy} 
           shortcut="Ctrl+C"
           disabled={!options.hasSelection}
           onClick={() => handleAction(onCopy)} 
         />
         <MenuItem 
           icon={<Scissors className="w-4 h-4" />} 
-          label="قص" 
+          label={t.ctxCut} 
           shortcut="Ctrl+X"
           disabled={!options.hasSelection}
           onClick={() => handleAction(onCut)} 
         />
         <MenuItem 
           icon={<ClipboardPaste className="w-4 h-4" />} 
-          label="لصق" 
+          label={t.ctxPaste} 
           shortcut="Ctrl+V"
           disabled={!options.hasClipboard}
           onClick={() => handleAction(onPaste)} 
         />
         <MenuItem 
           icon={<CopyPlus className="w-4 h-4" />} 
-          label="تكرار" 
+          label={t.ctxDuplicate} 
           shortcut="Ctrl+D"
           disabled={!options.hasSelection}
           onClick={() => handleAction(onDuplicate)} 
@@ -117,26 +120,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         
         <MenuItem 
           icon={<ArrowUpToLine className="w-4 h-4" />} 
-          label="إحضار للمقدمة" 
+          label={t.ctxBringFront} 
           shortcut="]"
           disabled={!options.hasSelection}
           onClick={() => handleAction(onBringToFront)} 
         />
         <MenuItem 
           icon={<ChevronUp className="w-4 h-4" />} 
-          label="نقل للأمام" 
+          label={t.ctxForward} 
           disabled={!options.hasSelection}
           onClick={() => handleAction(onBringForward)} 
         />
         <MenuItem 
           icon={<ChevronDown className="w-4 h-4" />} 
-          label="نقل للخلف" 
+          label={t.ctxBackward} 
           disabled={!options.hasSelection}
           onClick={() => handleAction(onSendBackward)} 
         />
         <MenuItem 
           icon={<ArrowDownToLine className="w-4 h-4" />} 
-          label="إرسال للخلفية" 
+          label={t.ctxSendBack} 
           shortcut="["
           disabled={!options.hasSelection}
           onClick={() => handleAction(onSendToBack)} 
@@ -146,7 +149,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         
         <MenuItem 
           icon={<Trash2 className="w-4 h-4" />} 
-          label="حذف" 
+          label={t.ctxDelete} 
           shortcut="Del"
           variant="danger"
           disabled={!options.hasSelection}

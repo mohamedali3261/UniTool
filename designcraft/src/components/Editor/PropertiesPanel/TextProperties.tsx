@@ -15,6 +15,7 @@ import {
   Minus,
   Plus
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface TextPropertiesProps {
   properties: ActiveObjectProperties;
@@ -22,6 +23,7 @@ interface TextPropertiesProps {
 }
 
 export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUpdate }) => {
+  const { t } = useDcLang();
   const currentFontSize = properties.fontSize || 40;
   const isBold =
     properties.fontWeight === 'bold' ||
@@ -36,7 +38,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
     <div className="space-y-4">
       {/* Font Family Selector */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-300">نوع الخط / Font Family</label>
+        <label className="text-xs font-semibold text-slate-300">{t.tpFontFamily}</label>
         <select
           value={properties.fontFamily || 'Cairo'}
           onChange={(e) => onUpdate('fontFamily', e.target.value)}
@@ -53,7 +55,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
       {/* Font Size Slider & Weight Controls */}
       <div className="space-y-2 bg-[#0B132B] p-2.5 rounded-2xl border border-slate-700/80 shadow-xs">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-          <span>حجم الخط بالمؤشر (Font Size)</span>
+          <span>{t.tpFontSize}</span>
           <span className="font-mono text-sky-400 font-bold text-xs">{Math.round(currentFontSize)} px</span>
         </div>
 
@@ -77,7 +79,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               type="button"
               onClick={() => onUpdate('fontSize', Math.max(8, currentFontSize - 2))}
               className="p-1 text-slate-400 hover:text-white rounded-lg transition"
-              title="تصغير الحجم"
+              title={t.tpSizeDown}
             >
               <Minus className="w-3.5 h-3.5" />
             </button>
@@ -91,7 +93,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               type="button"
               onClick={() => onUpdate('fontSize', currentFontSize + 2)}
               className="p-1 text-slate-400 hover:text-white rounded-lg transition"
-              title="تكبير الحجم"
+              title={t.tpSizeUp}
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -117,24 +119,24 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
         </div>
 
         <div className="space-y-1 pt-1.5 border-t border-slate-800">
-          <label className="text-xs font-semibold text-slate-300">السُمك (Weight)</label>
+          <label className="text-xs font-semibold text-slate-300">{t.tpWeight}</label>
           <select
             value={properties.fontWeight || 'normal'}
             onChange={(e) => onUpdate('fontWeight', e.target.value)}
             className="w-full bg-[#1C2541] border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer"
           >
-            <option value="300">خفيف (Light 300)</option>
-            <option value="normal">عادي (Regular 400)</option>
-            <option value="600">متوسط (Medium 600)</option>
-            <option value="bold">عريض (Bold 700)</option>
-            <option value="900">عريض جداً (Black 900)</option>
+            <option value="300">{t.tpLight}</option>
+            <option value="normal">{t.tpRegular}</option>
+            <option value="600">{t.tpMedium}</option>
+            <option value="bold">{t.tpBold}</option>
+            <option value="900">{t.tpBlack}</option>
           </select>
         </div>
       </div>
 
       {/* Font Styles & Alignments - Icon Only Toolbar */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-300">التنسيق والمحاذاة (أيقونات فقط)</label>
+        <label className="text-xs font-semibold text-slate-300">{t.tpFormatting}</label>
         <div className="flex items-center gap-1 bg-[#0B132B] p-1.5 rounded-xl border border-slate-700 justify-between">
           <div className="flex items-center gap-1">
             <button
@@ -143,7 +145,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 isBold ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="عريض (Bold)"
+              title={t.tpBoldTitle}
             >
               <Bold className="w-4 h-4" />
             </button>
@@ -153,7 +155,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 isItalic ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="مائل (Italic)"
+              title={t.tpItalicTitle}
             >
               <Italic className="w-4 h-4" />
             </button>
@@ -163,7 +165,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 isUnderline ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="تسطير (Underline)"
+              title={t.tpUnderline}
             >
               <Underline className="w-3.5 h-3.5" />
             </button>
@@ -173,7 +175,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 isLinethrough ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="شطب (Strikethrough)"
+              title={t.tpStrikethrough}
             >
               <Strikethrough className="w-3.5 h-3.5" />
             </button>
@@ -188,7 +190,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 properties.textAlign === 'right' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="محاذاة لليمين"
+              title={t.tpAlignRight}
             >
               <AlignRight className="w-4 h-4" />
             </button>
@@ -198,7 +200,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 properties.textAlign === 'center' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="توسيط"
+              title={t.tpAlignCenter}
             >
               <AlignCenter className="w-4 h-4" />
             </button>
@@ -208,7 +210,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 properties.textAlign === 'left' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="محاذاة لليسار"
+              title={t.tpAlignLeft}
             >
               <AlignLeft className="w-4 h-4" />
             </button>
@@ -218,7 +220,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
               className={`p-2 rounded-lg transition ${
                 properties.textAlign === 'justify' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="ضبط المحاذاة (Justify)"
+              title={t.tpAlignJustify}
             >
               <AlignJustify className="w-4 h-4" />
             </button>
@@ -229,7 +231,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
       {/* Colors: Text Fill & Text Background */}
       <div className="grid grid-cols-1 gap-3">
         <ColorPickerPopover
-          label="لون النص (Text Color)"
+          label={t.tpColor}
           color={properties.fill || '#FFFFFF'}
           onChange={(color) => onUpdate('fill', color)}
         />
@@ -237,17 +239,17 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
         {/* Text Gradient Presets */}
         <div className="space-y-1.5 bg-[#0B132B] p-2.5 rounded-2xl border border-slate-700/80">
           <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-            <span>تدرج لوني للنص (Text Gradient)</span>
-            <span className="text-[10px] text-sky-400 font-normal">فخامة وتأثير</span>
+            <span>{t.tpGradient}</span>
+            <span className="text-[10px] text-sky-400 font-normal">{t.tpLuxury}</span>
           </label>
           <div className="grid grid-cols-3 gap-1.5 pt-1">
             {[
-              { label: 'ذهبي', stops: ['#FDE68A', '#F59E0B', '#D97706'] },
-              { label: 'نيون', stops: ['#38BDF8', '#818CF8', '#C084FC'] },
-              { label: 'غروب', stops: ['#F87171', '#FB923C', '#FBBF24'] },
-              { label: 'زمردي', stops: ['#34D399', '#10B981', '#047857'] },
-              { label: 'فضي', stops: ['#FFFFFF', '#CBD5E1', '#64748B'] },
-              { label: 'عنابي', stops: ['#F43F5E', '#BE123C', '#881337'] }
+              { label: t.tpGold, stops: ['#FDE68A', '#F59E0B', '#D97706'] },
+              { label: t.tpNeon, stops: ['#38BDF8', '#818CF8', '#C084FC'] },
+              { label: t.tpSunset, stops: ['#F87171', '#FB923C', '#FBBF24'] },
+              { label: t.tpEmerald, stops: ['#34D399', '#10B981', '#047857'] },
+              { label: t.tpSilver, stops: ['#FFFFFF', '#CBD5E1', '#64748B'] },
+              { label: t.tpMaroon, stops: ['#F43F5E', '#BE123C', '#881337'] }
             ].map((g, idx) => (
               <button
                 key={idx}
@@ -265,7 +267,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
         </div>
 
         <ColorPickerPopover
-          label="خلفية النص (Highlight Background)"
+          label={t.tpHighlight}
           color={properties.textBackgroundColor || 'transparent'}
           onChange={(color) => onUpdate('textBackgroundColor', color)}
           allowTransparent={true}
@@ -275,7 +277,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
       {/* Curved / Arc Text Slider */}
       <div className="space-y-1.5 bg-[#0B132B] p-2.5 rounded-2xl border border-slate-700/80">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-          <span>تقويس وانحناء النص (Curved / Arc Text)</span>
+          <span>{t.tpCurve}</span>
           <span className="font-mono text-sky-400 font-bold text-xs">{properties.curve || 0}°</span>
         </div>
         <input
@@ -288,15 +290,15 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
           className="w-full accent-sky-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
         />
         <div className="flex justify-between text-[10px] text-slate-400 px-0.5">
-          <span>قوس لأسفل (-100)</span>
+          <span>{t.tpCurveDown}</span>
           <button
             type="button"
             onClick={() => onUpdate('curve', 0)}
             className="text-amber-400 hover:underline"
           >
-            مستقيم (0)
+            {t.tpCurveStraight}
           </button>
-          <span>قوس لأعلى (+100)</span>
+          <span>{t.tpCurveUp}</span>
         </div>
       </div>
 
@@ -304,7 +306,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
       <div className="space-y-3 pt-2 border-t border-slate-800">
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
-            <span>تباعد الأسطر (Line Height)</span>
+            <span>{t.tpLineHeight}</span>
             <span className="font-mono text-sky-400">{properties.lineHeight?.toFixed(1) || '1.2'}</span>
           </div>
           <input
@@ -320,7 +322,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
 
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
-            <span>تباعد الحروف (Letter Spacing)</span>
+            <span>{t.tpLetterSpacing}</span>
             <span className="font-mono text-sky-400">{properties.charSpacing || 0}</span>
           </div>
           <input
@@ -336,7 +338,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
 
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
-            <span>الشفافية (Opacity)</span>
+            <span>{t.tpOpacity}</span>
             <span className="font-mono text-sky-400">{Math.round((properties.opacity ?? 1) * 100)}%</span>
           </div>
           <input

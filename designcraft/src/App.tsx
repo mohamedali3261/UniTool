@@ -4,11 +4,18 @@ import { NewDesignScreen } from './components/Dashboard/NewDesignScreen';
 import { EditorLayout } from './components/Editor/EditorLayout';
 import { ToastContainer } from './components/Common/ToastContainer';
 import { saveProjectToStorage } from './utils/fabricHelpers';
+import { getDcTranslation, DCLang } from './translations';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'editor'>('dashboard');
   const [activeProject, setActiveProject] = useState<ProjectItem | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [lang] = useState<DCLang>(() => {
+    const shared = localStorage.getItem('unitool-lang');
+    return shared === 'en' ? 'en' : 'ar';
+  });
+  const t = getDcTranslation(lang);
+  const dir = 'ltr';
 
   // Toast Notification Trigger
   const showToast = (
@@ -33,7 +40,7 @@ export default function App() {
   const handleSelectPreset = (preset: DimensionPreset) => {
     const newProject: ProjectItem = {
       id: `proj-${Date.now()}`,
-      title: `${preset.titleAr} جديد`,
+      title: `${lang === 'ar' ? preset.titleAr : preset.title} ${lang === 'ar' ? 'جديد' : 'New'}`,
       width: preset.width,
       height: preset.height,
       category: preset.category,
@@ -48,7 +55,11 @@ export default function App() {
     saveProjectToStorage(newProject);
     setActiveProject(newProject);
     setCurrentView('editor');
-    showToast('تم فتح مساحة العمل', `${preset.width} × ${preset.height} px (خلفية بيضاء)`, 'info');
+    showToast(
+      lang === 'ar' ? 'تم فتح مساحة العمل' : 'Workspace opened',
+      `${preset.width} × ${preset.height} px (${lang === 'ar' ? 'خلفية بيضاء' : 'white background'})`,
+      'info'
+    );
   };
 
   // 2. Create Design from Custom Size (Default White Background)
@@ -60,7 +71,7 @@ export default function App() {
   }) => {
     const newProject: ProjectItem = {
       id: `proj-${Date.now()}`,
-      title: data.title || 'تصميم جديد',
+      title: data.title || t.newDesignDefault,
       width: data.width,
       height: data.height,
       category: 'custom',
@@ -75,7 +86,11 @@ export default function App() {
     saveProjectToStorage(newProject);
     setActiveProject(newProject);
     setCurrentView('editor');
-    showToast('تم تجهيز مساحة التصميم', `${data.width} × ${data.height} px`, 'success');
+    showToast(
+      lang === 'ar' ? 'تم تجهيز مساحة التصميم' : 'Design workspace ready',
+      `${data.width} × ${data.height} px`,
+      'success'
+    );
   };
 
   // 3. Open Existing Project
@@ -85,7 +100,7 @@ export default function App() {
   };
 
   return (
-    <main className="min-h-screen bg-[#070D1E] text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <main dir={dir} className="min-h-screen bg-[#070D1E] text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
       {currentView === 'dashboard' && (
         <NewDesignScreen
           onSelectPreset={handleSelectPreset}

@@ -3,6 +3,7 @@ import { SHAPES_CATALOG, SHAPE_CATEGORIES, ShapeItem } from '../../../data/shape
 import { COLOR_PALETTES } from '../../../data/presets';
 import { Search, Shapes, X, Palette, Check, Sparkles } from 'lucide-react';
 import { getEnglishKeywordsForSearch } from '../../../utils/searchTranslator';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ShapesModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
   onClose,
   onSelectShape
 }) => {
+  const { t } = useDcLang();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedColor, setSelectedColor] = useState('#0284C7');
@@ -48,7 +50,7 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>مكتبة الأشكال والرموز</span>
+                <span>{t.shTitle}</span>
                 <span className="text-[10px] bg-sky-500/20 text-sky-300 font-mono px-2 py-0.5 rounded-full border border-sky-500/30">
                   +200
                 </span>
@@ -72,7 +74,7 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="ابحث في أكثر من 200 شكل (مثل: نجوم، درع، ختم، سهم، فقاعة)..."
+                placeholder={t.shSearchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[#0B132B] border border-slate-700/80 rounded-xl pr-10 pl-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"

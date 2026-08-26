@@ -300,29 +300,63 @@ export function sanitizeExtractedText(rawText: string): string {
 export function processTextIntoChunks(
   rawText: string,
   pageNumber: number,
-  fallbackLang: 'ar' | 'en' = 'ar'
+  fallbackLang: 'ar' | 'en' = 'ar',
+  readingMode: 'page' | 'sentence' = 'page'
 ): BookChunk[] {
   const cleanText = sanitizeExtractedText(rawText);
   if (!cleanText) {
     return [];
   }
 
-  // Treat the entire page as a single speech chunk so the TTS engine reads the full page continuously as one unit
-  const continuousText = cleanText.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const lang = detectChunkLanguage(continuousText, fallbackLang);
+  if (readingMode === 'page') {
+    // Treat the entire page as a single speech chunk
+    const continuousText = cleanText.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!continuousText) return [];
+    
+    const lang = detectChunkLanguage(continuousText, fallbackLang);
+    return [
+      {
+        id: `p${pageNumber}-c0`,
+        pageNumber,
+        chunkIndex: 0,
+        text: continuousText,
+        language: lang,
+        startChar: 0,
+        endChar: continuousText.length,
+        isHeading: false,
+      },
+    ];
+  } else {
+    // Split into sentences (by sentence terminators)
+    const segments = cleanText.match(/[^.!?؟؛\n]+(?:[.!?؟؛\n]+|$)/g) || [cleanText];
+    const chunks: BookChunk[] = [];
+    let chunkIndex = 0;
+    let currentIndex = 0;
 
-  return [
-    {
-      id: `p${pageNumber}-c0`,
-      pageNumber,
-      chunkIndex: 0,
-      text: continuousText,
-      language: lang,
-      startChar: 0,
-      endChar: continuousText.length,
-      isHeading: false,
-    },
-  ];
+    for (const segment of segments) {
+      const trimmed = segment.trim();
+      if (!trimmed) {
+          currentIndex += segment.length;
+          continue;
+      }
+      
+      const continuousText = segment.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
+      const lang = detectChunkLanguage(trimmed, fallbackLang);
+      chunks.push({
+        id: `p${pageNumber}-c${chunkIndex}`,
+        pageNumber,
+        chunkIndex,
+        text: continuousText,
+        language: lang,
+        startChar: currentIndex,
+        endChar: currentIndex + segment.length,
+        isHeading: isHeadingText(trimmed),
+      });
+      chunkIndex++;
+      currentIndex += segment.length;
+    }
+    return chunks;
+  }
 }
 
 /**

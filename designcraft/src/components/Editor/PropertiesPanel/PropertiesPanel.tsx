@@ -6,6 +6,7 @@ import { ImageProperties } from './ImageProperties';
 import { AlignProperties } from './AlignProperties';
 import { CanvasProperties } from './CanvasProperties';
 import { Sliders, Sparkles, X, ChevronLeft } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface PropertiesPanelProps {
   activeProperties: ActiveObjectProperties | null;
@@ -50,6 +51,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onDeselect,
   onClosePanel
 }) => {
+  const { t } = useDcLang();
   const isText =
     activeProperties?.type === 'textbox' ||
     activeProperties?.type === 'text' ||
@@ -84,7 +86,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
           <div>
             <h3 className="text-xs font-bold text-white leading-tight">
-              {activeProperties ? 'خصائص العنصر' : 'خصائص الكانفاس'}
+              {activeProperties ? t.propsElement : t.propsCanvas}
             </h3>
             <p className="text-[9px] text-slate-400 font-mono leading-none">
               {activeProperties ? activeProperties.type.toUpperCase() : `${canvasWidth} × ${canvasHeight} PX`}
@@ -98,7 +100,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               type="button"
               onClick={onDeselect}
               className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition"
-              title="إلغاء التحديد"
+              title={t.propsDeselect}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -108,7 +110,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               type="button"
               onClick={onClosePanel}
               className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition"
-              title="طي لوحة الخصائص"
+              title={t.propsCollapse}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>

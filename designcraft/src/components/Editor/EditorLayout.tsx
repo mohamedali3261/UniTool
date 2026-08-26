@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
 import {
   SidebarTabType,
@@ -77,6 +78,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   onBackToDashboard,
   onShowToast
 }) => {
+  const { t, lang } = useDcLang();
+
   // State
   const [projectTitle, setProjectTitle] = useState(initialProject.title);
   const [canvasWidth, setCanvasWidth] = useState(initialProject.width);
@@ -168,22 +171,22 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     const objects = canvas.getObjects();
     const list = objects
       .map((obj: any, index: number) => {
-        let name = 'عنصر';
+        let name = t.layerElement;
         const type = obj.type || 'object';
         if (type === 'textbox' || type === 'i-text' || type === 'text') {
-          name = obj.text ? `نص: "${obj.text.substring(0, 12)}..."` : 'نص';
+          name = obj.text ? `${t.layerTextWithContent} "${obj.text.substring(0, 12)}..."` : t.layerText;
         } else if (type === 'rect') {
-          name = 'مستطيل';
+          name = t.layerRect;
         } else if (type === 'circle') {
-          name = 'دائرة';
+          name = t.layerCircle;
         } else if (type === 'triangle') {
-          name = 'مثلث';
+          name = t.layerTriangle;
         } else if (type === 'image') {
-          name = 'صورة';
+          name = t.layerImage;
         } else if (type === 'group') {
-          name = obj.name || 'مجموعة أو أيقونة';
+          name = obj.name || t.layerGroup;
         } else if (type === 'path') {
-          name = 'مسار فيكتور / شكل';
+          name = t.layerPath;
         }
 
         return {
@@ -215,7 +218,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
-      onShowToast('تراجع', 'تم التراجع عن خطوة واحدة', 'info');
+      onShowToast(t.elUndoTitle, t.elUndoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
 
@@ -234,7 +237,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
-      onShowToast('إعادة', 'تمت إعادة الخطوة الملغاة', 'info');
+      onShowToast(t.elRedoTitle, t.elRedoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
 
@@ -246,7 +249,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (!active) return;
     active.clone((cloned: fabric.Object) => {
       clipboardRef.current = cloned;
-      onShowToast('تم النسخ', 'تم نسخ العنصر بنجاح', 'info');
+      onShowToast(t.elCopyTitle, t.elCopyMsg, 'info');
     });
   }, [onShowToast]);
 
@@ -541,7 +544,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
     setTimeout(() => {
       setIsSaving(false);
-      onShowToast('تم الحفظ بنجاح', 'تم حفظ التغييرات على جهازك بنجاح', 'success');
+      onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
     }, 400);
   }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, onShowToast]);
 
@@ -568,7 +571,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     setCanvasHeight(h);
     canvas.setDimensions({ width: w * zoom, height: h * zoom });
     canvas.renderAll();
-    onShowToast('تغيير الأبعاد', `تم تعديل قياس اللوحة إلى ${w} × ${h} بكسل`, 'info');
+    onShowToast(t.elResizeTitle, `${t.elResizeMsg} ${w} × ${h} px`, 'info');
   }, [zoom, onShowToast]);
 
   // Background Setters
@@ -583,7 +586,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     });
     canvas.renderAll();
     recordHistory();
-    onShowToast('تغيير خلفية الكانفاس', 'تم تطبيق اللون بنجاح', 'success');
+    onShowToast(t.elBgTitle, t.elBgMsg, 'success');
   }, [onShowToast, recordHistory]);
 
   const handleSetBackgroundGradient = useCallback((color1OrStops: string | string[], color2?: string) => {
@@ -620,7 +623,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     });
     setBackgroundColor(c1);
     recordHistory();
-    onShowToast('تغير خلفية الكانفاس', 'تم تطبيق التدرج اللوني بنجاح', 'success');
+    onShowToast(t.elGradientTitle, t.elGradientMsg, 'success');
   }, [onShowToast, recordHistory]);
 
   const handleSetBackgroundPattern = useCallback((patternItem: BackgroundPatternItem) => {
@@ -629,12 +632,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
     if (patternItem.type === 'svg-pattern') {
       setCanvasPatternBackground(canvas, patternItem.sourceUrl, () => {
-        onShowToast('تغيير الخلفية', `تم تطبيق ${patternItem.nameAr}`, 'success');
+        onShowToast(t.elPatternTitle, `${t.elPatternApplied} ${patternItem.nameAr}`, 'success');
         recordHistory();
       });
     } else {
       setCanvasWallpaperBackground(canvas, patternItem.sourceUrl, () => {
-        onShowToast('تغيير الخلفية', `تم تطبيق ${patternItem.nameAr}`, 'success');
+        onShowToast(t.elPatternTitle, `${t.elPatternApplied} ${patternItem.nameAr}`, 'success');
         recordHistory();
       });
     }
@@ -696,7 +699,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       }
     }
     canvas.renderAll();
-    onShowToast('تعديل الصورة', `تم تنفيذ الإجراء: ${filterName}`, 'info');
+    onShowToast(t.elFilterTitle, `${t.elFilterApplied} ${filterName}`, 'info');
   }, [onShowToast]);
 
   // Sidebar Tab Select
@@ -711,13 +714,13 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
   const getTabTitle = (tab: SidebarTabType) => {
     switch (tab) {
-      case 'text': return 'إضافة وتنسيق النصوص';
-      case 'elements': return 'الأشكال والعناصر';
-      case 'ornaments': return 'الزخارف والنقوش الإسلامية';
-      case 'icons': return 'مكتبة الأيقونات والرموز';
-      case 'images': return 'مكتبة صور';
-      case 'layers': return 'إدارة الطبقات';
-      default: return 'الأدوات';
+      case 'text': return t.titleText;
+      case 'elements': return t.titleElements;
+      case 'ornaments': return t.titleOrnaments;
+      case 'icons': return t.titleIcons;
+      case 'images': return t.titleImages;
+      case 'layers': return t.titleLayers;
+      default: return t.tools;
     }
   };
 
@@ -866,7 +869,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 addMobilePhoneMockupToCanvas(fabricCanvasRef.current);
                 updateLayersList();
                 recordHistory();
-                onShowToast('إطار هاتف', 'تم إضافة هيكل هاتف ذكي تفاعلي لموك أب الصور', 'success');
+                onShowToast(t.elPhoneTitle, t.elPhoneMsg, 'success');
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }
             }}
@@ -887,7 +890,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 );
                 updateLayersList();
                 recordHistory();
-                onShowToast('إدراج زخرفة', `تمت إضافة ${item.nameAr} إلى اللوحة`, 'success');
+                onShowToast(t.elOrnamentTitle, `${t.elShapeAdded} ${item.nameAr} ${t.elToBoard}`, 'success');
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }
             }}
@@ -1328,7 +1331,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             setTimeout(() => {
               document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
-            onShowToast('تم إدراج الصورة بنجاح', 'تمت إضافة الصورة إلى لوحة التصميم والانتقال إليها مباشرة', 'success');
+            onShowToast(t.elImageInsertedTitle, t.elImageInsertedMsg, 'success');
           }
         }}
       />
@@ -1354,7 +1357,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             }
             updateLayersList();
             recordHistory();
-            onShowToast('إدراج شكل', `تمت إضافة ${shape.nameAr} إلى اللوحة`, 'success');
+            onShowToast(t.elShapeTitle, `${t.elShapeAdded} ${shape.nameAr} ${t.elToBoard}`, 'success');
           }
         }}
       />
@@ -1367,7 +1370,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             addIconToCanvas(fabricCanvasRef.current, iconName, color);
             updateLayersList();
             recordHistory();
-            onShowToast('إدراج أيقونة', `تمت إضافة أيقونة ${iconName} إلى اللوحة`, 'success');
+            onShowToast(t.elIconTitle, `${t.elIconAdded} ${iconName} ${t.elToBoard}`, 'success');
           }
         }}
       />

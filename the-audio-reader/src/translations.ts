@@ -92,6 +92,8 @@ export const translations = {
     highlightSentence: 'تمييز الجملة الحالية',
     highlightWord: 'تمييز الكلمة الحالية باللون المتوهج',
     highlightParagraph: 'تمييز الفقرة بالكامل',
+    highlightGlow: 'توهج الشفق القطبي (Aurora Glow)',
+    highlightUnderline: 'خط سفلي متقطع (Dashed Underline)',
     resetSettings: 'استعادة الإعدادات الافتراضية',
     close: 'إغلاق',
 
@@ -217,6 +219,8 @@ export const translations = {
     highlightSentence: 'Highlight Current Sentence',
     highlightWord: 'Highlight Current Spoken Word',
     highlightParagraph: 'Highlight Full Paragraph',
+    highlightGlow: 'Aurora Glow',
+    highlightUnderline: 'Dashed Underline',
     resetSettings: 'Reset to Defaults',
     close: 'Close',
 

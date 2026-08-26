@@ -18,14 +18,22 @@ import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('videoToGif');
-  const [lang, setLang] = useState<'ar' | 'en'>('ar');
+  const [lang, setLang] = useState<'ar' | 'en'>(() => {
+    const shared = localStorage.getItem('unitool-lang');
+    if (shared === 'ar' || shared === 'en') return shared;
+    return 'ar';
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = translations[lang];
 
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
   const toggleLang = () => {
-    setLang(prev => prev === 'ar' ? 'en' : 'ar');
+    setLang(prev => {
+      const next = prev === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('unitool-lang', next);
+      return next;
+    });
   };
 
   const {
@@ -59,7 +67,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <Header
         lang={lang}
         t={t}

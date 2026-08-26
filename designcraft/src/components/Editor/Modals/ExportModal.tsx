@@ -10,6 +10,7 @@ import {
   Layers,
   FileCheck
 } from 'lucide-react';
+import { useDcLang } from '../../../hooks/useDcLang';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   canvasHeight,
   onShowToast
 }) => {
+  const { t } = useDcLang();
   const [format, setFormat] = useState<'png' | 'jpeg' | 'webp' | 'svg' | 'pdf'>('png');
   const [quality, setQuality] = useState(0.95);
   const [multiplier, setMultiplier] = useState(1);
@@ -50,7 +52,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (format === 'svg') {
         const svgContent = onExportSvg ? onExportSvg() : '';
         if (!svgContent) {
-          onShowToast('تعذر تصدير SVG', 'يرجى تجربة صيغة أخرى', 'error');
+          onShowToast(t.exSvgError, t.exSvgErrorHint, 'error');
           return;
         }
         const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
@@ -86,11 +88,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         });
       } catch (e) {}
 
-      onShowToast('تم تصدير التصميم بنجاح!', `تم إنشاء ملف ${fileName}.${format === 'jpeg' ? 'jpg' : format}`, 'success');
+      onShowToast(t.exSuccess, `${t.exSuccessFile} ${fileName}.${format === 'jpeg' ? 'jpg' : format}`, 'success');
       onClose();
     } catch (err) {
       console.error(err);
-      onShowToast('حدث خطأ أثناء التصدير', 'يرجى المحاولة مرة أخرى', 'error');
+      onShowToast(t.exError, t.exErrorHint, 'error');
     }
   };
 
@@ -105,10 +107,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         })
       ]);
       setIsCopied(true);
-      onShowToast('تم نسخ الصورة للحافظة', 'يمكنك لصقها الآن في أي برنامج (Ctrl+V)', 'success');
+      onShowToast(t.exCopied, t.exCopiedHint, 'success');
       setTimeout(() => setIsCopied(false), 2500);
     } catch (err) {
-      onShowToast('تعذر النسخ المباشر', 'يرجى استخدام زر التحميل', 'info');
+      onShowToast(t.exCopyFailed, t.exCopyFailedHint, 'info');
     }
   };
 
@@ -125,7 +127,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <Download className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">تصدير التصميم</h2>
+              <h2 className="text-sm font-bold text-white">{t.exTitle}</h2>
             </div>
           </div>
           <button
@@ -140,7 +142,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="p-6 space-y-5">
           {/* File Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">اسم الملف</label>
+            <label className="text-xs font-semibold text-slate-300">{t.exFileName}</label>
             <input
               type="text"
               value={fileName}
@@ -151,14 +153,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           {/* Format Tabs */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">صيغة الملف (Format)</label>
+            <label className="text-xs font-semibold text-slate-300">{t.exFormat}</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
-                { id: 'png', label: 'PNG Image', desc: 'أعلى وضوح وخلفية نقية' },
-                { id: 'jpeg', label: 'JPG Image', desc: 'حجم ملف خفيف وسريع' },
-                { id: 'webp', label: 'WebP', desc: 'مثالي لمواقع الويب' },
-                { id: 'svg', label: 'SVG Vector', desc: 'فيكتور بدون أي فقد في الجودة' },
-                { id: 'pdf', label: 'PDF Document', desc: 'مستند عالي الدقة جاهز للطباعة' }
+                { id: 'png', label: 'PNG Image', desc: t.exFormatPngHint },
+                { id: 'jpeg', label: 'JPG Image', desc: t.exFormatJpgHint },
+                { id: 'webp', label: 'WebP', desc: t.exFormatWebpHint },
+                { id: 'svg', label: 'SVG Vector', desc: t.exFormatSvgHint },
+                { id: 'pdf', label: 'PDF Document', desc: t.exFormatPdfHint }
               ].map((f) => (
                 <button
                   key={f.id}
@@ -180,14 +182,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* Resolution Multiplier */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-slate-300">
-              <span className="font-semibold">دقة التصدير (Resolution Multiplier)</span>
+              <span className="font-semibold">{t.exResolution}</span>
               <span className="font-mono text-sky-400">{finalWidth} × {finalHeight} PX</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { m: 1, label: '1x قياسي', desc: 'للمعاينة والمشاركة' },
-                { m: 2, label: '2x عالي الدقة HD', desc: 'موصى به للسوشيال' },
-                { m: 3, label: '3x فائق الدقة Ultra', desc: 'للطباعة والإعلانات' }
+                { m: 1, label: t.exRes1x, desc: t.exRes1xHint },
+                { m: 2, label: t.exRes2x, desc: t.exRes2xHint },
+                { m: 3, label: t.exRes3x, desc: t.exRes3xHint }
               ].map((item) => (
                 <button
                   key={item.m}
@@ -210,7 +212,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {format !== 'png' && (
             <div className="space-y-1 pt-1">
               <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
-                <span>جودة الضغط (Quality)</span>
+                <span>{t.exQuality}</span>
                 <span className="font-mono text-sky-400">{Math.round(quality * 100)}%</span>
               </div>
               <input
@@ -234,7 +236,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold transition"
           >
             {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-sky-400" />}
-            <span>{isCopied ? 'تم النسخ!' : 'نسخ للحافظة'}</span>
+            <span>{isCopied ? t.exCopyDone : t.exCopyBtn}</span>
           </button>
 
           <button
@@ -243,7 +245,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-sky-500/25 transition transform active:scale-95"
           >
             <Download className="w-4 h-4" />
-            <span>تحميل الصورة الآن</span>
+            <span>{t.exDownload}</span>
           </button>
         </div>
       </div>

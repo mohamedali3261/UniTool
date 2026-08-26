@@ -21,6 +21,7 @@ import { OCRModal } from './components/OCRModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import { parseUploadedFile } from './utils/bookParser';
+import { processTextIntoChunks } from './utils/textProcessor';
 import { speechEngine } from './utils/speechEngine';
 import { ocrProcessor } from './utils/ocrProcessor';
 import { 
@@ -39,11 +40,34 @@ import { getThemeConfig } from './utils/theme';
 export default function App() {
   // 1. Settings & UI Language
   const [settings, setSettings] = useState<ReaderSettings>(() => loadSettings());
-  const [uiLang, setUiLang] = useState<UILanguage>(() => settings.uiLanguage || 'ar');
+  const [uiLang, setUiLang] = useState<UILanguage>(() => {
+    const shared = localStorage.getItem('unitool-lang');
+    if (shared === 'ar' || shared === 'en') return shared;
+    return settings.uiLanguage || 'ar';
+  });
   const t = getTranslation(uiLang);
 
   // 2. Active Book Document
-  const [currentBook, setCurrentBook] = useState<BookDocument | null>(null);
+  const [rawCurrentBook, setCurrentBook] = useState<BookDocument | null>(null);
+
+  const currentBook = useMemo(() => {
+    if (!rawCurrentBook) return null;
+    const updatedPages = rawCurrentBook.pages.reduce((acc, p) => {
+      // Skip empty text pages
+      if (!p.isScannedImage && p.rawText.trim() === '') return acc;
+
+      const fallbackLang = p.chunks[0]?.language || rawCurrentBook.detectedLanguage || 'ar';
+      const chunks = processTextIntoChunks(p.rawText, p.pageNumber, fallbackLang, settings.readingMode);
+      
+      if (chunks.length === 0 && !p.isScannedImage) return acc;
+
+      acc.push({ ...p, chunks });
+      return acc;
+    }, [] as typeof rawCurrentBook.pages);
+
+    return { ...rawCurrentBook, pages: updatedPages };
+  }, [rawCurrentBook, settings.readingMode]);
+
   const [recentBooks, setRecentBooks] = useState<BookDocument[]>(() => loadRecentBooks());
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [fileBufferCache, setFileBufferCache] = useState<ArrayBuffer | null>(null);
@@ -82,6 +106,7 @@ export default function App() {
   const [isOCRModalOpen, setIsOCRModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [sleepTimerLeft, setSleepTimerLeft] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Refs for current mutable state in speech callbacks
@@ -145,6 +170,7 @@ export default function App() {
   const handleToggleLang = useCallback(() => {
     const nextLang: UILanguage = uiLang === 'ar' ? 'en' : 'ar';
     setUiLang(nextLang);
+    localStorage.setItem('unitool-lang', nextLang);
     handleUpdateSettings({ uiLanguage: nextLang });
   }, [uiLang, handleUpdateSettings]);
 
@@ -303,6 +329,35 @@ export default function App() {
     speechEngine.stop();
     setPlaybackState((prev) => ({ ...prev, status: 'idle', currentWordCharRange: null }));
   }, []);
+
+  // Sleep Timer Countdown Effect
+  useEffect(() => {
+    if (sleepTimerLeft === null) return;
+    if (playbackState.status !== 'playing') return;
+
+    const interval = setInterval(() => {
+      setSleepTimerLeft((prev) => {
+        if (prev === null) {
+          clearInterval(interval);
+          return null;
+        }
+        if (prev <= 1) {
+          clearInterval(interval);
+          handlePause();
+          showToast(
+            uiLang === 'ar' 
+              ? '⏰ تم إيقاف القراءة تلقائياً لتفعيل مؤقت النوم.' 
+              : '⏰ Reading paused automatically by sleep timer.',
+            'info'
+          );
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sleepTimerLeft, playbackState.status, handlePause, showToast, uiLang]);
 
   const handleNextChunk = useCallback(() => {
     if (!currentBook) return;
@@ -496,6 +551,52 @@ export default function App() {
     });
   }, []);
 
+  // Update Page Text Handler
+  const handleUpdatePageText = useCallback((pageNumber: number, newRawText: string) => {
+    if (!rawCurrentBook) return;
+
+    const updatedPages = rawCurrentBook.pages.map((p) => {
+      if (p.pageNumber === pageNumber) {
+        const words = newRawText.trim().split(/\s+/).filter(Boolean).length;
+        return {
+          ...p,
+          rawText: newRawText,
+          wordCount: words,
+          isScannedImage: false,
+        };
+      }
+      return p;
+    });
+
+    const totalWords = updatedPages.reduce((acc, p) => acc + p.wordCount, 0);
+
+    const updatedBook: BookDocument = {
+      ...rawCurrentBook,
+      pages: updatedPages,
+      totalWords,
+    };
+
+    setCurrentBook(updatedBook);
+
+    const updatedRecents = recentBooks.map((b) => (b.id === updatedBook.id ? updatedBook : b));
+    setRecentBooks(updatedRecents);
+    saveRecentBooks(updatedRecents);
+
+    speechEngine.stop();
+    setPlaybackState((prev) => ({
+      ...prev,
+      status: 'idle',
+      currentChunkIndex: 0,
+      currentWordIndex: 0,
+      currentWordCharRange: null,
+    }));
+
+    showToast(
+      uiLang === 'ar' ? 'تم حفظ تعديلات الصفحة بنجاح وتحديث الصوتيات!' : 'Page edited successfully and audio updated!',
+      'success'
+    );
+  }, [rawCurrentBook, recentBooks, showToast, uiLang]);
+
   // OCR Execution Handler
   const handleStartOCR = useCallback(async (lang: 'ara' | 'eng' | 'ara+eng', onlyEmptyPages: boolean) => {
     if (!currentBook || !fileBufferCache) {
@@ -639,13 +740,13 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden pt-16">
         {currentBook && currentPageData ? (
           /* Reader Screen Layout */
           <div className="flex-1 flex w-full relative overflow-hidden">
             
             {/* Desktop Sidebar (Left/Right depending on RTL) */}
-            <div className="hidden lg:block w-80 xl:w-96 shrink-0 h-[calc(100vh-4rem)]">
+            <div className="hidden lg:block w-80 xl:w-96 shrink-0 h-screen">
               <ReaderSidebar
                 uiLang={uiLang}
                 book={currentBook}
@@ -714,6 +815,7 @@ export default function App() {
               onOpenOCRModal={() => setIsOCRModalOpen(true)}
               onIncreaseFontSize={() => handleUpdateSettings({ fontSize: Math.min(36, settings.fontSize + 1) })}
               onDecreaseFontSize={() => handleUpdateSettings({ fontSize: Math.max(14, settings.fontSize - 1) })}
+              onUpdatePageText={handleUpdatePageText}
             />
 
           </div>
@@ -753,6 +855,8 @@ export default function App() {
           onVolumeChange={(volume) => handleUpdateSettings({ volume })}
           onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+          sleepTimerLeft={sleepTimerLeft}
+          onSetSleepTimer={(minutes: number | null) => setSleepTimerLeft(minutes !== null ? minutes * 60 : null)}
         />
       )}
 

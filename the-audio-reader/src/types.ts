@@ -3,7 +3,7 @@ export type DetectedLanguage = 'ar' | 'en' | 'mixed';
 export type UILanguage = 'ar' | 'en';
 export type ThemeMode = 'dark' | 'midnight' | 'sepia' | 'light';
 export type FontFamily = 'cairo' | 'amiri' | 'tajawal' | 'sans' | 'serif';
-export type HighlightMode = 'sentence' | 'word' | 'paragraph';
+export type HighlightMode = 'sentence' | 'word' | 'paragraph' | 'glow' | 'underline';
 
 export interface BookChunk {
   id: string;
@@ -42,6 +42,8 @@ export interface BookDocument {
   hasOcrProcessed?: boolean;
 }
 
+export type ReadingMode = 'page' | 'sentence';
+
 export interface ReaderSettings {
   fontSize: number; // 14 to 32
   lineHeight: number; // 1.5 to 2.4
@@ -54,8 +56,10 @@ export interface ReaderSettings {
   selectedEnglishVoiceURI: string | null;
   autoVoiceSelect: boolean;
   autoScroll: boolean;
+  autoScrollSpeed: number;
   highlightMode: HighlightMode;
   uiLanguage: UILanguage;
+  readingMode: ReadingMode;
 }
 
 export interface DeviceVoice {

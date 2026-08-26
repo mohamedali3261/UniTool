@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Play, 
   Pause, 
@@ -13,7 +13,14 @@ import {
   RotateCcw,
   Maximize2,
   Minimize2,
-  BookOpen
+  BookOpen,
+  Clock,
+  CloudRain,
+  Wind,
+  Trees,
+  Coffee,
+  Music,
+  Volume1
 } from 'lucide-react';
 import { PlaybackState, ReaderSettings, UILanguage } from '../types';
 import { getTranslation } from '../translations';
@@ -39,6 +46,8 @@ interface AudioPlayerProps {
   onVolumeChange: (volume: number) => void;
   onOpenVoiceModal: () => void;
   onOpenSettingsModal: () => void;
+  sleepTimerLeft: number | null;
+  onSetSleepTimer: (minutes: number | null) => void;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -62,11 +71,75 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   onVolumeChange,
   onOpenVoiceModal,
   onOpenSettingsModal,
+  sleepTimerLeft,
+  onSetSleepTimer,
 }) => {
   const t = getTranslation(uiLang);
+
+  // Ambient Sound Preset configuration
+  const AMBIENT_PRESETS = [
+    { id: 'rain', labelAr: 'مطر هادئ', labelEn: 'Gentle Rain', url: 'https://raw.githubusercontent.com/jsgrrchg/MoodistMac/refs/heads/main/Moodist/sounds/rain/light-rain.mp3', icon: CloudRain, color: 'text-blue-400 bg-blue-500/10' },
+    { id: 'wind', labelAr: 'رياح طبيعية', labelEn: 'Quiet Wind', url: 'https://raw.githubusercontent.com/jsgrrchg/MoodistMac/refs/heads/main/Moodist/sounds/nature/wind.mp3', icon: Wind, color: 'text-teal-400 bg-teal-500/10' },
+    { id: 'forest', labelAr: 'أصوات الغابة', labelEn: 'Forest Birds', url: 'https://raw.githubusercontent.com/jsgrrchg/MoodistMac/refs/heads/main/Moodist/sounds/animals/birds.mp3', icon: Trees, color: 'text-emerald-400 bg-emerald-500/10' },
+    { id: 'cafe', labelAr: 'مقهى هادئ', labelEn: 'Quiet Cafe', url: 'https://raw.githubusercontent.com/jsgrrchg/MoodistMac/refs/heads/main/Moodist/sounds/places/cafe.mp3', icon: Coffee, color: 'text-amber-400 bg-amber-500/10' },
+  ];
+
+  const [activeAmbientId, setActiveAmbientId] = useState<string | null>(null);
+  const [ambientVolume, setAmbientVolume] = useState<number>(0.3); // Default 30% volume
+  const [showAmbientMenu, setShowAmbientMenu] = useState(false);
+
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Sync ambient volume
+  useEffect(() => {
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.volume = ambientVolume;
+    }
+  }, [ambientVolume]);
+
+  // Handle ambient loop playback
+  const handleToggleAmbient = (id: string, url: string) => {
+    if (activeAmbientId === id) {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+      setActiveAmbientId(null);
+    } else {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+      
+      const audio = new Audio(url);
+      audio.loop = true;
+      audio.volume = ambientVolume;
+      audio.play().catch((err) => console.log('Ambient play error:', err));
+      
+      ambientAudioRef.current = audio;
+      setActiveAmbientId(id);
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+        ambientAudioRef.current = null;
+      }
+    };
+  }, []);
+
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showVolumeMenu, setShowVolumeMenu] = useState(false);
+  const [showSleepTimerMenu, setShowSleepTimerMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Format sleep timer seconds left to MM:SS
+  const formatSleepTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   const isPlaying = playbackState.status === 'playing';
   const isPaused = playbackState.status === 'paused';
@@ -351,6 +424,178 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             >
               <Sliders className="h-4 w-4" />
             </button>
+
+            {/* Ambient Nature Soundscapes Popover */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAmbientMenu(!showAmbientMenu)}
+                className={`rounded-lg p-2 transition focus-ring flex items-center gap-1 ${
+                  activeAmbientId !== null
+                    ? 'text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 font-bold'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                title={uiLang === 'ar' ? 'خلفيات القراءة الطبيعية (صوت المطر، الغابة...)' : 'Ambient Background Sounds (Rain, Forest...)'}
+                id="ambient-soundscape-btn"
+              >
+                <CloudRain className={`h-4 w-4 ${activeAmbientId ? 'animate-bounce' : ''}`} />
+                {activeAmbientId !== null && (
+                  <span className="text-[10px] font-bold bg-teal-500/20 px-1 rounded border border-teal-500/30">
+                    {uiLang === 'ar' ? 'نشط' : 'ON'}
+                  </span>
+                )}
+              </button>
+
+              {showAmbientMenu && (
+                <div
+                  className="absolute bottom-full mb-2 ltr:right-0 ltr:left-auto rtl:left-0 rtl:right-auto w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-800 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl z-50 space-y-3.5"
+                  id="ambient-soundscape-dropdown"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-200">
+                      <CloudRain className="h-4 w-4 text-teal-400 animate-pulse" />
+                      <span>{uiLang === 'ar' ? 'أصوات الطبيعة المساعدة للتركيز' : 'Zen Ambient Soundscapes'}</span>
+                    </div>
+                    {activeAmbientId !== null && (
+                      <button
+                        onClick={() => {
+                          if (ambientAudioRef.current) ambientAudioRef.current.pause();
+                          setActiveAmbientId(null);
+                        }}
+                        className="text-[10px] font-bold text-red-400 hover:underline"
+                      >
+                        {uiLang === 'ar' ? 'إيقاف الكل' : 'Stop All'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Volume Slider for Ambient Noise */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[11px] text-slate-400 font-bold">
+                      <span className="flex items-center gap-1">
+                        <Volume1 className="w-3.5 h-3.5" />
+                        {uiLang === 'ar' ? 'حجم صوت الخلفية' : 'Background Volume'}
+                      </span>
+                      <span className="font-mono">{Math.round(ambientVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={ambientVolume}
+                      onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+                      className="w-full accent-teal-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                      title={uiLang === 'ar' ? 'مؤشر حجم الخلفية' : 'Ambient Volume Slider'}
+                    />
+                  </div>
+
+                  {/* Selection Buttons Grid */}
+                  <div className="grid grid-cols-2 gap-2 pt-1.5">
+                    {AMBIENT_PRESETS.map((preset) => {
+                      const PresetIcon = preset.icon;
+                      const isActive = activeAmbientId === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          onClick={() => handleToggleAmbient(preset.id, preset.url)}
+                          className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all duration-200 gap-1.5 relative ${
+                            isActive
+                              ? 'border-teal-500 bg-teal-500/10 text-white font-bold shadow-lg shadow-teal-500/5'
+                              : 'border-slate-800/80 bg-slate-950/20 hover:border-slate-700 text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          <PresetIcon className={`w-5 h-5 ${isActive ? 'text-teal-400 animate-pulse' : 'text-slate-400'}`} />
+                          <span className="text-[11px] font-semibold">
+                            {uiLang === 'ar' ? preset.labelAr : preset.labelEn}
+                          </span>
+                          
+                          {/* Playing Dot */}
+                          {isActive && (
+                            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sleep Timer Popover */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSleepTimerMenu(!showSleepTimerMenu)}
+                className={`rounded-lg p-2 transition focus-ring flex items-center gap-1 ${
+                  sleepTimerLeft !== null
+                    ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 font-bold'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                title={uiLang === 'ar' ? 'مؤقت النوم الإيقاف التلقائي' : 'Sleep Timer Auto-Stop'}
+                id="sleep-timer-btn"
+              >
+                <Clock className="h-4 w-4" />
+                {sleepTimerLeft !== null && (
+                  <span className="text-[10px] font-mono tabular-nums bg-amber-500/20 px-1 rounded border border-amber-500/30">
+                    {formatSleepTime(sleepTimerLeft)}
+                  </span>
+                )}
+              </button>
+
+              {showSleepTimerMenu && (
+                <div
+                  className="absolute bottom-full mb-2 ltr:right-0 ltr:left-auto rtl:left-0 rtl:right-auto w-56 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-800 bg-slate-900/95 p-3.5 shadow-2xl backdrop-blur-xl z-50 space-y-3"
+                  id="sleep-timer-dropdown"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                      <Clock className="h-4 w-4 text-amber-400 animate-pulse" />
+                      <span>{uiLang === 'ar' ? 'مؤقت النوم' : 'Sleep Timer'}</span>
+                    </div>
+                    {sleepTimerLeft !== null && (
+                      <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                        {formatSleepTime(sleepTimerLeft)}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    {uiLang === 'ar'
+                      ? 'سيتم إيقاف القراءة تلقائياً بعد مرور الوقت المحدد:'
+                      : 'Audio playback will automatically pause after the specified time:'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
+                    {[5, 15, 30, 45, 60].map((mins) => (
+                      <button
+                        key={mins}
+                        onClick={() => {
+                          onSetSleepTimer(mins);
+                          setShowSleepTimerMenu(false);
+                        }}
+                        className="rounded-lg py-1.5 text-xs font-mono font-semibold text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800/80 transition"
+                      >
+                        {mins} {uiLang === 'ar' ? 'دقيقة' : 'mins'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {sleepTimerLeft !== null && (
+                    <button
+                      onClick={() => {
+                        onSetSleepTimer(null);
+                        setShowSleepTimerMenu(false);
+                      }}
+                      className="w-full py-1.5 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/20 hover:bg-red-500/25 transition"
+                    >
+                      {uiLang === 'ar' ? 'إلغاء مؤقت النوم' : 'Cancel Sleep Timer'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
           </div>
 
