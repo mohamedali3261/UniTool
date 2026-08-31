@@ -23,7 +23,7 @@ interface PexelsSearchModalProps {
   onSelectImage: (imageUrl: string, photoTitle?: string) => void;
 }
 
-const POPULAR_SEARCH_SUGGESTIONS = [
+const getPopularSearchSuggestions = (t: ReturnType<typeof useDcLang>['t']) => [
   { ar: t.pxNature, en: 'nature landscape' },
   { ar: t.pxTech, en: 'artificial intelligence tech' },
   { ar: t.pxDarkBg, en: 'dark luxury minimal background' },
@@ -46,6 +46,7 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
   onSelectImage
 }) => {
   const { t } = useDcLang();
+  const POPULAR_SEARCH_SUGGESTIONS = getPopularSearchSuggestions(t);
   const [query, setQuery] = useState('');
   const [translatedQuery, setTranslatedQuery] = useState('');
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
