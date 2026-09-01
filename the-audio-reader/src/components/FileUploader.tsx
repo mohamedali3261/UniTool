@@ -12,7 +12,8 @@ import {
   Trash2,
   HelpCircle,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  BookPlus
 } from 'lucide-react';
 import { BookDocument, UILanguage } from '../types';
 import { getTranslation } from '../translations';
@@ -21,6 +22,7 @@ import { getSampleBooks } from '../constants/sampleBooks';
 interface FileUploaderProps {
   uiLang: UILanguage;
   onFileSelect: (file: File) => void;
+  onCreateNewBook: () => void;
   onSelectSampleBook: (book: BookDocument) => void;
   recentBooks: BookDocument[];
   onSelectRecentBook: (book: BookDocument) => void;
@@ -32,6 +34,7 @@ interface FileUploaderProps {
 export const FileUploader: React.FC<FileUploaderProps> = ({
   uiLang,
   onFileSelect,
+  onCreateNewBook,
   onSelectSampleBook,
   recentBooks,
   onSelectRecentBook,
@@ -181,14 +184,29 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               </div>
 
               {/* Browse Button */}
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:from-indigo-500 hover:to-purple-500 hover:shadow-indigo-500/35 active:scale-95 focus-ring"
-                id="browse-files-btn"
-              >
-                <FileText className="h-4 w-4" />
-                <span>{t.browseFiles}</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:from-indigo-500 hover:to-purple-500 hover:shadow-indigo-500/35 active:scale-95 focus-ring"
+                  id="browse-files-btn"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>{t.browseFiles}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateNewBook();
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-850/80 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-300 active:scale-95 focus-ring"
+                  id="create-new-book-btn"
+                >
+                  <BookPlus className="h-4 w-4" />
+                  <span>{uiLang === 'ar' ? 'إنشاء كتاب جديد' : 'Create New Book'}</span>
+                </button>
+              </div>
 
               <span className="mt-4 text-[11px] text-slate-500 font-medium">
                 {t.maxSizeNotice}

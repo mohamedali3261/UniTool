@@ -131,51 +131,83 @@ async function parsePDFFile(
       const page = await pdfDoc.getPage(i);
       const textContent = await page.getTextContent();
 
-      // Reconstruct textual lines by grouping items with similar Y coordinates
       const items = textContent.items as any[];
 
       if (items && items.length > 0) {
-        // Group text items into lines based on vertical Y placement
-        const lineMap: { y: number; items: { x: number; str: string }[] }[] = [];
+        const allTextItems: { x: number; y: number; str: string; width: number; order: number }[] = [];
 
+        let orderIdx = 0;
         for (const item of items) {
           if (!('str' in item) || !item.str) continue;
           const x = item.transform ? item.transform[4] : 0;
           const y = item.transform ? item.transform[5] : 0;
-
-          const existingLine = lineMap.find((l) => Math.abs(l.y - y) <= 6);
-          if (existingLine) {
-            existingLine.items.push({ x, str: item.str });
-          } else {
-            lineMap.push({ y, items: [{ x, str: item.str }] });
-          }
+          const width = item.width || 0;
+          allTextItems.push({ x, y, str: item.str, width, order: orderIdx++ });
         }
 
-        // Sort lines top-to-bottom (PDF Y goes bottom-to-top, so descending Y)
-        lineMap.sort((a, b) => b.y - a.y);
+        if (allTextItems.length > 0) {
+          const minY = Math.min(...allTextItems.map(it => it.y));
+          const maxY = Math.max(...allTextItems.map(it => it.y));
+          const ySpread = maxY - minY || 1;
+          const adaptiveTolerance = Math.max(8, Math.min(20, ySpread * 0.08));
 
-        const lineStrings: string[] = [];
-        for (const line of lineMap) {
-          const lineTextCombined = line.items.map((it) => it.str).join(' ');
-          const isArabicLine = /[\u0600-\u06FF]/.test(lineTextCombined);
+          const lineMap: { y: number; items: typeof allTextItems }[] = [];
 
-          // Sort items horizontally according to direction
-          if (isArabicLine) {
-            line.items.sort((a, b) => b.x - a.x);
-          } else {
-            line.items.sort((a, b) => a.x - b.x);
+          for (const item of allTextItems) {
+            const existingLine = lineMap.find((l) => Math.abs(l.y - item.y) <= adaptiveTolerance);
+            if (existingLine) {
+              existingLine.items.push(item);
+            } else {
+              lineMap.push({ y: item.y, items: [item] });
+            }
           }
 
-          const lineStr = line.items
-            .map((it) => it.str)
-            .join(' ')
-            .replace(/\s+/g, ' ');
-          if (lineStr.trim()) {
-            lineStrings.push(lineStr);
+          lineMap.sort((a, b) => b.y - a.y);
+
+          const lineStrings: string[] = [];
+          for (const line of lineMap) {
+            line.items.sort((a, b) => a.order - b.order);
+
+            if (line.items.length === 1) {
+              const lineStr = line.items[0].str;
+              if (lineStr.trim()) {
+                lineStrings.push(lineStr.trim());
+              }
+              continue;
+            }
+
+            const firstX = line.items[0].x;
+            const lastX = line.items[line.items.length - 1].x;
+            const isRtlLine = firstX > lastX;
+
+            const parts: string[] = [line.items[0].str];
+            for (let j = 1; j < line.items.length; j++) {
+              const prev = line.items[j - 1];
+              const cur = line.items[j];
+
+              let gap: number;
+              if (isRtlLine) {
+                gap = prev.x - (cur.x + cur.width);
+              } else {
+                gap = cur.x - (prev.x + prev.width);
+              }
+
+              const avgWidth = (prev.width + cur.width) / 2;
+              if (gap > avgWidth * 0.25) {
+                parts.push(' ');
+              }
+
+              parts.push(cur.str);
+            }
+
+            const lineStr = parts.join('').replace(/\s{2,}/g, ' ').trim();
+            if (lineStr) {
+              lineStrings.push(lineStr);
+            }
           }
+
+          extractedText = lineStrings.join('\n');
         }
-
-        extractedText = lineStrings.join('\n');
       }
     } catch (pageErr) {
       console.warn(`Error extracting text from PDF page ${i}:`, pageErr);

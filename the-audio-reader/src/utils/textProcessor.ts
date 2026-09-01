@@ -214,10 +214,21 @@ export function fixArabicTashkeelAndSpacing(text: string): string {
  */
 export function fixSpacedArabicLetters(text: string): string {
   if (!text) return '';
-  return text.replace(/(?:[\u0600-\u06FF]\s+){2,}[\u0600-\u06FF]/g, (match) => {
+  // Exclude diacritics (\u064B-\u065F, \u0670) from the Arabic letter range to preserve tashkeel
+  return text.replace(/(?:[\u0600-\u064A\u0660-\u0669\u0671-\u06FF]\s+){2,}[\u0600-\u064A\u0660-\u0669\u0671-\u06FF]/g, (match) => {
     // Replace single spaces between letters, keeping double spaces for word breaks
     return match.replace(/([^\s])\s([^\s])/g, '$1$2');
   });
+}
+
+/**
+ * Removes all Arabic diacritics (tashkeel/tanween) from text.
+ * e.g. "بِسْمِ ٱللَّهِ" -> "بسم الله", "كِتَابًا" -> "كتابا"
+ */
+export function removeArabicDiacritics(text: string): string {
+  if (!text) return '';
+  // Remove all Arabic diacritics: Fatha, Damma, Kasra, Sukun, Shadda, Tanween, Wasla, Superscript Alef, etc.
+  return text.replace(/[\u064B-\u065F\u0670\u0610-\u061A]/g, '');
 }
 
 /**
@@ -267,6 +278,9 @@ export function sanitizeExtractedText(rawText: string): string {
 
   // 4. Fix spaced-out Arabic letters (e.g. "ك ت ا ب" -> "كتاب")
   text = fixSpacedArabicLetters(text);
+
+  // 4b. Remove all Arabic diacritics (tashkeel) since they often get mangled by PDF extraction
+  text = removeArabicDiacritics(text);
 
   // 5. Strip non-printable control characters, null bytes, BOM, replacement chars (\uFFFD)
   text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\uFFFD\uFEFF]/g, '');

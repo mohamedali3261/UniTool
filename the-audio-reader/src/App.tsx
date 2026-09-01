@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import confetti from 'canvas-confetti';
 import { 
   BookDocument, 
+  BookPage,
   BookChunk, 
   Bookmark, 
   DeviceVoice, 
@@ -19,6 +20,8 @@ import { VoiceSelectorModal } from './components/VoiceSelectorModal';
 import { ReadingSettingsModal } from './components/ReadingSettingsModal';
 import { OCRModal } from './components/OCRModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
+import { AddPageModal } from './components/AddPageModal';
+import { CreateBookModal } from './components/CreateBookModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import { parseUploadedFile } from './utils/bookParser';
 import { processTextIntoChunks } from './utils/textProcessor';
@@ -105,6 +108,8 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isOCRModalOpen, setIsOCRModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [isAddPageModalOpen, setIsAddPageModalOpen] = useState(false);
+  const [isCreateBookModalOpen, setIsCreateBookModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [sleepTimerLeft, setSleepTimerLeft] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -597,6 +602,98 @@ export default function App() {
     );
   }, [rawCurrentBook, recentBooks, showToast, uiLang]);
 
+  // Add Page Handler
+  const handleAddPage = useCallback((title: string, rawText: string) => {
+    if (!rawCurrentBook) return;
+
+    const words = rawText.trim().split(/\s+/).filter(Boolean).length;
+    const newPageNumber = rawCurrentBook.pages.length + 1;
+
+    const newPage = {
+      pageNumber: newPageNumber,
+      title,
+      rawText,
+      chunks: [],
+      wordCount: words,
+    };
+
+    const updatedBook: BookDocument = {
+      ...rawCurrentBook,
+      pages: [...rawCurrentBook.pages, newPage],
+      totalPages: newPageNumber,
+      totalWords: rawCurrentBook.totalWords + words,
+    };
+
+    setCurrentBook(updatedBook);
+
+    const updatedRecents = recentBooks.map((b) => (b.id === updatedBook.id ? updatedBook : b));
+    setRecentBooks(updatedRecents);
+    saveRecentBooks(updatedRecents);
+
+    handleSelectPage(newPageNumber);
+
+    showToast(
+      uiLang === 'ar' ? `تم إضافة الصفحة ${newPageNumber} بنجاح!` : `Page ${newPageNumber} added successfully!`,
+      'success'
+    );
+  }, [rawCurrentBook, recentBooks, showToast, uiLang, handleSelectPage]);
+
+  // Create New Book Handler
+  const handleCreateNewBook = useCallback((title: string, initialText: string) => {
+    const fileId = `book-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const detectedLang = (initialText.match(/[\u0600-\u06FF]/g) || []).length > initialText.length * 0.3 ? 'ar' : 'en';
+
+    let pages: BookPage[] = [];
+
+    if (initialText.trim()) {
+      const words = initialText.trim().split(/\s+/).filter(Boolean).length;
+      pages = [{
+        pageNumber: 1,
+        title: t.page + ' 1',
+        rawText: initialText.trim(),
+        chunks: [],
+        wordCount: words,
+      }];
+    }
+
+    const newBook: BookDocument = {
+      id: fileId,
+      title,
+      fileType: 'txt',
+      fileSize: new TextEncoder().encode(initialText).length,
+      totalPages: pages.length,
+      totalWords: pages.reduce((acc, p) => acc + p.wordCount, 0),
+      detectedLanguage: detectedLang,
+      pages,
+      dateAdded: Date.now(),
+      lastReadPage: 1,
+      lastReadChunkIndex: 0,
+      progressPercentage: 0,
+    };
+
+    setCurrentBook(newBook);
+    speechEngine.stop();
+    setPlaybackState({
+      status: 'idle',
+      currentPage: 1,
+      currentChunkIndex: 0,
+      currentChunkId: null,
+      currentWordIndex: 0,
+      currentWordCharRange: null,
+      totalChunksInBook: 0,
+      globalChunkIndex: 0,
+    });
+
+    const updatedRecents = [newBook, ...recentBooks.filter((b) => b.id !== newBook.id)].slice(0, 5);
+    setRecentBooks(updatedRecents);
+    saveRecentBooks(updatedRecents);
+
+    showToast(
+      uiLang === 'ar' ? `تم إنشاء كتاب "${title}" بنجاح!` : `Book "${title}" created successfully!`,
+      'success'
+    );
+  }, [recentBooks, showToast, uiLang, t]);
+
   // OCR Execution Handler
   const handleStartOCR = useCallback(async (lang: 'ara' | 'eng' | 'ara+eng', onlyEmptyPages: boolean) => {
     if (!currentBook || !fileBufferCache) {
@@ -758,6 +855,7 @@ export default function App() {
                 onSelectChunk={handleSelectChunk}
                 onDeleteBookmark={handleDeleteBookmark}
                 onOpenOCRModal={() => setIsOCRModalOpen(true)}
+                onOpenAddPageModal={() => setIsAddPageModalOpen(true)}
               />
             </div>
 
@@ -781,6 +879,10 @@ export default function App() {
                     onDeleteBookmark={handleDeleteBookmark}
                     onOpenOCRModal={() => {
                       setIsOCRModalOpen(true);
+                      setIsMobileDrawerOpen(false);
+                    }}
+                    onOpenAddPageModal={() => {
+                      setIsAddPageModalOpen(true);
                       setIsMobileDrawerOpen(false);
                     }}
                     onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
@@ -824,6 +926,7 @@ export default function App() {
           <FileUploader
             uiLang={uiLang}
             onFileSelect={handleFileSelect}
+            onCreateNewBook={() => setIsCreateBookModalOpen(true)}
             onSelectSampleBook={handleSelectSampleBook}
             recentBooks={recentBooks}
             onSelectRecentBook={handleSelectRecentBook}
@@ -893,6 +996,23 @@ export default function App() {
       <ShortcutsModal
         isOpen={isShortcutsModalOpen}
         onClose={() => setIsShortcutsModalOpen(false)}
+        uiLang={uiLang}
+      />
+
+      {currentBook && (
+        <AddPageModal
+          isOpen={isAddPageModalOpen}
+          onClose={() => setIsAddPageModalOpen(false)}
+          onAddPage={handleAddPage}
+          uiLang={uiLang}
+          nextPageNumber={currentBook.pages.length + 1}
+        />
+      )}
+
+      <CreateBookModal
+        isOpen={isCreateBookModalOpen}
+        onClose={() => setIsCreateBookModalOpen(false)}
+        onCreateBook={handleCreateNewBook}
         uiLang={uiLang}
       />
 

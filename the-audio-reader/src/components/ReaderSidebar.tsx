@@ -10,7 +10,8 @@ import {
   X, 
   CheckCircle2, 
   Trash2,
-  FileScan
+  FileScan,
+  FilePlus2
 } from 'lucide-react';
 import { BookDocument, Bookmark, UILanguage, ThemeMode } from '../types';
 import { getTranslation } from '../translations';
@@ -28,6 +29,7 @@ interface ReaderSidebarProps {
   onSelectChunk: (pageNumber: number, chunkIndex: number) => void;
   onDeleteBookmark: (bookmarkId: string) => void;
   onOpenOCRModal: () => void;
+  onOpenAddPageModal: () => void;
   onCloseMobileDrawer?: () => void;
 }
 
@@ -44,6 +46,7 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
   onSelectChunk,
   onDeleteBookmark,
   onOpenOCRModal,
+  onOpenAddPageModal,
   onCloseMobileDrawer,
 }) => {
   const t = getTranslation(uiLang);
@@ -238,6 +241,19 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
                 </button>
               );
             })}
+            
+            {/* Add Page Button */}
+            <button
+              onClick={() => {
+                onOpenAddPageModal();
+                onCloseMobileDrawer?.();
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700 p-2.5 text-xs text-slate-400 transition hover:border-indigo-500/50 hover:bg-indigo-500/5 hover:text-indigo-300"
+              id="add-page-btn"
+            >
+              <FilePlus2 className="h-3.5 w-3.5" />
+              <span>{uiLang === 'ar' ? 'إضافة صفحة جديدة' : 'Add New Page'}</span>
+            </button>
           </div>
         )}
 

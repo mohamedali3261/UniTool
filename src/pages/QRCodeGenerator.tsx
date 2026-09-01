@@ -66,12 +66,54 @@ export function QRCodeGenerator({ t, lang }: Props) {
     }).catch(() => {});
   }, [inputValue, wifiSSID, wifiPassword, wifiEncryption, emailTo, emailSubject, emailBody, phone, smsMessage, fgColor, bgColor, qrSize, qrType]);
 
+  const createCanvasWithCredit = (): HTMLCanvasElement | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const creditLine1 = 'Developed by Mohamed Ali';
+    const creditLine2 = 'www.unitool1.vercel.app';
+    const padding = 16;
+    const creditGap = 4;
+    const line1Height = 10;
+    const line2Height = 9;
+    const totalCreditHeight = line1Height + line2Height + creditGap;
+
+    const newCanvas = document.createElement('canvas');
+    newCanvas.width = canvas.width + padding * 2;
+    newCanvas.height = canvas.height + padding * 2 + totalCreditHeight;
+    const ctx = newCanvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+    ctx.drawImage(canvas, padding, padding);
+
+    const centerX = newCanvas.width / 2;
+    const textY = canvas.height + padding + 6;
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = '#4b5563';
+    ctx.fillText(creditLine1, centerX, textY);
+
+    ctx.font = '8px monospace';
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(creditLine2, centerX, textY + line1Height + creditGap);
+
+    return newCanvas;
+  };
+
   const downloadQR = (format: 'png' | 'svg') => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     if (format === 'png') {
-      const url = canvas.toDataURL('image/png');
+      const merged = createCanvasWithCredit();
+      if (!merged) return;
+      const url = merged.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = url;
       a.download = `qrcode_${Date.now()}.png`;
@@ -86,8 +128,25 @@ export function QRCodeGenerator({ t, lang }: Props) {
         margin: 2,
         color: { dark: fgColor, light: bgColor },
         errorCorrectionLevel: 'H',
-      }).then(svg => {
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
+      }).then(svgStr => {
+        const creditLine1 = 'Developed by Mohamed Ali';
+        const creditLine2 = 'www.unitool1.vercel.app';
+        const svgWidth = qrSize + 32;
+        const creditY = qrSize + 32;
+
+        const wrappedSvg = svgStr.replace(
+          /<svg([^>]*)>/,
+          `<svg$1><rect width="100%" height="100%" fill="white"/>`
+        );
+
+        const creditSvg = `
+          <text x="${svgWidth / 2}" y="${creditY}" text-anchor="middle" font-family="monospace" font-size="9" font-weight="bold" fill="#4b5563">${creditLine1}</text>
+          <text x="${svgWidth / 2}" y="${creditY + 12}" text-anchor="middle" font-family="monospace" font-size="8" fill="#6b7280">${creditLine2}</text>
+        </svg>`;
+
+        const finalSvg = wrappedSvg.replace('</svg>', creditSvg);
+
+        const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -101,17 +160,17 @@ export function QRCodeGenerator({ t, lang }: Props) {
   };
 
   const copyToClipboard = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const merged = createCanvasWithCredit();
+    if (!merged) return;
     try {
-      const blob = await new Promise<Blob>((resolve) => canvas.toBlob(b => resolve(b!)));
+      const blob = await new Promise<Blob>((resolve) => merged.toBlob(b => resolve(b!)));
       await navigator.clipboard.write([
         new ClipboardItem({ 'image/png': blob }),
       ]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      const url = canvas.toDataURL('image/png');
+      const url = merged.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = url;
       a.download = `qrcode_${Date.now()}.png`;
@@ -398,9 +457,15 @@ export function QRCodeGenerator({ t, lang }: Props) {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-1.5">
           <div className="bg-white p-4 rounded-xl shadow-2xl shadow-black/40">
             <canvas ref={canvasRef} />
+          </div>
+          <div className="text-center space-y-px">
+            <p className="text-[8px] font-mono text-gray-300">
+              Developed by <span className="text-cyan-400 font-bold">Mohamed Ali</span>
+            </p>
+            <p className="text-[7px] font-mono text-gray-400">www.unitool1.vercel.app</p>
           </div>
           <p className="text-[8px] font-mono text-gray-600 text-center max-w-[280px] truncate">
             {getQRValue()}

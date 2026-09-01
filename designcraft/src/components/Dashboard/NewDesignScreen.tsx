@@ -268,105 +268,45 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
         </div>
       </nav>
 
-      {/* Body: Sidebar + Main */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="hidden sm:flex flex-col" style={{
-          position: 'fixed', top: 0, bottom: 0,
-          [dir === 'rtl' ? 'right' : 'left']: 0,
-          width: 220, paddingTop: 90, paddingInline: 12, paddingBottom: 16,
-          background: 'rgba(13,15,20,.9)', borderInlineStart: 'none',
-          borderInlineEnd: '1px solid #1e2028',
-          backdropFilter: 'blur(24px)', zIndex: 90,
-        }}>
-          <p style={{ fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.15em', color: '#7c7f8a', textTransform: 'uppercase', padding: '0 8px', marginBottom: 8 }}>
-            {lang === 'ar' ? 'الاستوديو' : 'STUDIO'}
-          </p>
-
-          {/* New Design Button */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('create')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-              padding: '10px 12px', borderRadius: 12, marginBottom: 6,
-              border: activeTab === 'create' ? '1px solid rgba(99,102,241,.4)' : '1px solid transparent',
-              background: activeTab === 'create' ? 'rgba(99,102,241,.12)' : 'transparent',
-              color: activeTab === 'create' ? '#a5b4fc' : '#7c7f8a',
-              fontSize: 13, fontWeight: activeTab === 'create' ? 600 : 500,
-              cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit', textAlign: 'start',
-              boxShadow: activeTab === 'create' ? '0 0 16px rgba(99,102,241,.25)' : 'none',
-            }}
-          >
-            <Plus style={{ width: 16, height: 16 }} />
-            <span>{t.newDesign}</span>
-          </button>
-
-          {/* My Projects Button */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('projects')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-              padding: '10px 12px', borderRadius: 12,
-              border: activeTab === 'projects' ? '1px solid rgba(99,102,241,.4)' : '1px solid transparent',
-              background: activeTab === 'projects' ? 'rgba(99,102,241,.12)' : 'transparent',
-              color: activeTab === 'projects' ? '#a5b4fc' : '#7c7f8a',
-              fontSize: 13, fontWeight: activeTab === 'projects' ? 600 : 500,
-              cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit', textAlign: 'start',
-              boxShadow: activeTab === 'projects' ? '0 0 16px rgba(99,102,241,.25)' : 'none',
-            }}
-          >
-            <FolderOpen style={{ width: 16, height: 16 }} />
-            <span style={{ flex: 1 }}>{t.myProjects}</span>
-            {projects.length > 0 && (
-              <span style={{
-                fontSize: 10, padding: '1px 7px', borderRadius: 10,
-                background: activeTab === 'projects' ? '#6366f1' : '#1e2028',
-                color: activeTab === 'projects' ? '#fff' : '#94a3b8',
-                fontWeight: 700, fontFamily: 'monospace',
-              }}>
-                {projects.length}
-              </span>
-            )}
-          </button>
-        </aside>
-
-        {/* Mobile Tab Switcher */}
-        <div className="sm:hidden fixed bottom-0 start-0 end-0 flex" style={{
-          zIndex: 90, background: 'rgba(13,15,20,.95)', borderTop: '1px solid #1e2028',
-          backdropFilter: 'blur(24px)',
-        }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab('create')}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: 14, border: 'none', background: 'transparent',
-              color: activeTab === 'create' ? '#a5b4fc' : '#7c7f8a',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <Plus style={{ width: 16, height: 16 }} />
-            {t.newDesign}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('projects')}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: 14, border: 'none', background: 'transparent',
-              color: activeTab === 'projects' ? '#a5b4fc' : '#7c7f8a',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <FolderOpen style={{ width: 16, height: 16 }} />
-            {t.myProjects}
-          </button>
-        </div>
-
+      {/* Body */}
+      <div className="flex-1">
         {/* Main Container */}
         <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
+          {/* Tab Switcher */}
+          <div className="flex items-center gap-2 bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70">
+            <button
+              type="button"
+              onClick={() => setActiveTab('create')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                activeTab === 'create'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
+                  : 'text-slate-400 hover:text-white border border-transparent'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              <span>{t.newDesign}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('projects')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                activeTab === 'projects'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
+                  : 'text-slate-400 hover:text-white border border-transparent'
+              }`}
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span>{t.myProjects}</span>
+              {projects.length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                  activeTab === 'projects' ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-300'
+                }`}>
+                  {projects.length}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* Create New Design */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
