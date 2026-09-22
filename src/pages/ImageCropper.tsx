@@ -48,11 +48,11 @@ async function processOneImage(entry: ImageEntry, state: {
     const bitmap = await createImageBitmap(entry.file);
     let srcW = bitmap.width, srcH = bitmap.height;
 
-    if (state.mode === 'crop' && entry.displaySize && entry.naturalSize) {
-      const sx = state.cropBox.x * (entry.naturalSize.width / entry.displaySize.width);
-      const sy = state.cropBox.y * (entry.naturalSize.height / entry.displaySize.height);
-      const sw = state.cropBox.width * (entry.naturalSize.width / entry.displaySize.width);
-      const sh = state.cropBox.height * (entry.naturalSize.height / entry.displaySize.height);
+    if (state.mode === 'crop' && state.displaySize) {
+      const sx = state.cropBox.x * (srcW / state.displaySize.width);
+      const sy = state.cropBox.y * (srcH / state.displaySize.height);
+      const sw = state.cropBox.width * (srcW / state.displaySize.width);
+      const sh = state.cropBox.height * (srcH / state.displaySize.height);
       const c = document.createElement('canvas');
       c.width = Math.round(sw); c.height = Math.round(sh);
       const ctx = c.getContext('2d')!;
