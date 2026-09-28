@@ -1328,7 +1328,7 @@ watch(
               : view === 'reglages'
                 ? 'max-w-[min(220px,70vw)] lg:max-w-[min(460px,calc(100dvh_-_var(--timeline)_-_7rem))]'
                 : view === 'personnaliser'
-                    ? 'max-w-[min(800px,92vw,calc(100dvh_-_2rem))]'
+                    ? 'max-w-[min(700px,92vw,calc(100dvh_-_2rem))]'
                 : 'max-w-[min(460px,calc(100dvh_-_var(--timeline)_-_7rem))]',
             nue && 'avatar--intro',
             view === 'reglages' && !preview && 'avatar--geant'
@@ -1342,7 +1342,7 @@ watch(
             v-model:elapsed="elapsed"
             v-model:playing="playing"
             :cycle="played"
-            :size="preview ? 560 : view === 'personnaliser' ? 800 : 440"
+            :size="preview ? 560 : view === 'personnaliser' ? 700 : 440"
             :shape="forme"
             :color="color"
             :expression="humeur ?? expression"
