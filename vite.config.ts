@@ -22,6 +22,7 @@ export default defineConfig(() => {
           main: path.resolve(__dirname, 'app.html'),
           designcraft: path.resolve(__dirname, 'designcraft.html'),
           audioreader: path.resolve(__dirname, 'the-audio-reader.html'),
+          unitoolSvg: path.resolve(__dirname, 'unitool-svg.html'),
         },
       },
     },

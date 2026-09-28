@@ -30,6 +30,8 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
+  const navigateToPage = (page: string) => setCurrentPage(page as PageId);
+
   const toggleLang = () => {
     setLang(prev => {
       const next = prev === 'ar' ? 'en' : 'ar';
@@ -83,7 +85,6 @@ export default function App() {
     <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <Header
         lang={lang}
-        t={t}
         onToggleLang={toggleLang}
         onOpenMobileMenu={() => setMobileMenuOpen(true)}
       />
@@ -93,7 +94,7 @@ export default function App() {
         lang={lang}
         t={t}
         currentPage={currentPage}
-        onNavigate={(page) => setCurrentPage(page as PageId)}
+        onNavigate={navigateToPage}
         onClose={() => setMobileMenuOpen(false)}
       />
 
@@ -101,7 +102,7 @@ export default function App() {
         <Sidebar
           lang={lang}
           currentPage={currentPage}
-          onNavigate={(page) => setCurrentPage(page as PageId)}
+          onNavigate={navigateToPage}
         />
 
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -109,7 +110,7 @@ export default function App() {
             currentPage={currentPage}
             lang={lang}
             t={t}
-            onNavigate={(page) => setCurrentPage(page as PageId)}
+            onNavigate={navigateToPage}
             fileHandoff={fileHandoff?.target === currentPage ? fileHandoff : null}
             onSendFilesToTool={sendFilesToTool}
             onFileHandoffConsumed={consumeFileHandoff}

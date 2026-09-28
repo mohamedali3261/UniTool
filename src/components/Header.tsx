@@ -2,19 +2,19 @@ import { Menu, Globe } from 'lucide-react';
 
 interface Props {
   lang: 'ar' | 'en';
-  t: any;
   onToggleLang: () => void;
   onOpenMobileMenu: () => void;
 }
 
-const pages = [
+export const sitePages = [
   { href: '/index.html', ar: 'الرئيسية', en: 'Home' },
   { href: '/app.html', ar: 'الأدوات', en: 'Tools' },
   { href: '/designcraft.html', ar: 'مصمم الجرافيك', en: 'Design Craft' },
   { href: '/the-audio-reader.html', ar: 'القارئ الصوتي', en: 'Audio Reader' },
+  { href: '/unitool-svg.html', ar: 'UniTool SVG', en: 'UniTool SVG' },
 ];
 
-export function Header({ lang, t, onToggleLang, onOpenMobileMenu }: Props) {
+export function Header({ lang, onToggleLang, onOpenMobileMenu }: Props) {
   return (
     <nav
       style={{
@@ -30,7 +30,7 @@ export function Header({ lang, t, onToggleLang, onOpenMobileMenu }: Props) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div className="hidden md:flex items-center" style={{ gap: 6 }}>
-          {pages.map(p => {
+          {sitePages.map(p => {
             const active = window.location.pathname.endsWith(p.href);
             return (
               <a
