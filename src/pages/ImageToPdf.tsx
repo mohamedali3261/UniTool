@@ -1,11 +1,14 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, Download, Loader2, Trash2, GripVertical, ImagePlus, FileDown, ArrowUp, ArrowDown, FileText } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { cn } from '../lib/utils';
+import type { FileHandoff } from '../types/app';
 
 interface Props {
   t: any;
   lang: 'ar' | 'en';
+  fileHandoff: FileHandoff | null;
+  onFileHandoffConsumed: (id: number) => void;
 }
 
 interface ImageItem {
@@ -16,7 +19,7 @@ interface ImageItem {
   height: number;
 }
 
-export function ImageToPdf({ t, lang }: Props) {
+export function ImageToPdf({ t, lang, fileHandoff, onFileHandoffConsumed }: Props) {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -26,6 +29,7 @@ export function ImageToPdf({ t, lang }: Props) {
   const [margin, setMargin] = useState(20);
   const [nextId, setNextId] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastHandoffId = useRef<number | null>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'images' | 'export'>('upload');
 
   const loadImage = (file: File): Promise<ImageItem> => {
@@ -50,9 +54,8 @@ export function ImageToPdf({ t, lang }: Props) {
     });
   };
 
-  const handleFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const importFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
     setError(null);
     setLoading(true);
 
@@ -60,7 +63,7 @@ export function ImageToPdf({ t, lang }: Props) {
       let idCounter = nextId;
       const newImages: ImageItem[] = [];
 
-      for (const f of Array.from(files)) {
+      for (const f of files) {
         if (!f.type.startsWith('image/')) continue;
         const item = await loadImage(f);
         item.id = idCounter++;
@@ -82,6 +85,17 @@ export function ImageToPdf({ t, lang }: Props) {
       e.target.value = '';
     }
   }, [nextId, lang]);
+
+  const handleFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) void importFiles(Array.from(e.target.files));
+    e.target.value = '';
+  }, [importFiles]);
+
+  useEffect(() => {
+    if (!fileHandoff || lastHandoffId.current === fileHandoff.id) return;
+    lastHandoffId.current = fileHandoff.id;
+    void importFiles(fileHandoff.files).then(() => onFileHandoffConsumed(fileHandoff.id));
+  }, [fileHandoff, importFiles, onFileHandoffConsumed]);
 
   const removeImage = (id: number) => {
     setImages(prev => prev.filter(img => img.id !== id));

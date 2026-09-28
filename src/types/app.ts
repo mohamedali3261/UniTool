@@ -25,3 +25,11 @@ export type PageId =
   | 'pdfSplitter'
   | 'pdfUnlock'
   | 'pdfProtect';
+
+export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf';
+
+export interface FileHandoff {
+  id: number;
+  target: FileHandoffTarget;
+  files: File[];
+}

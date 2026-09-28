@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-import type { PageId } from './types/app';
+import type { FileHandoff, FileHandoffTarget, PageId } from './types/app';
 import { translations } from './lib/translations';
 
 import { Header } from './components/Header';
@@ -18,6 +18,8 @@ import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('videoToGif');
+  const [fileHandoff, setFileHandoff] = useState<FileHandoff | null>(null);
+  const fileHandoffId = useRef(0);
   const [lang, setLang] = useState<'ar' | 'en'>(() => {
     const shared = localStorage.getItem('unitool-lang');
     if (shared === 'ar' || shared === 'en') return shared;
@@ -34,6 +36,17 @@ export default function App() {
       localStorage.setItem('unitool-lang', next);
       return next;
     });
+  };
+
+  const sendFilesToTool = (target: FileHandoffTarget, files: File[]) => {
+    if (files.length === 0) return;
+    const handoff: FileHandoff = { id: ++fileHandoffId.current, target, files };
+    setFileHandoff(handoff);
+    setCurrentPage(target);
+  };
+
+  const consumeFileHandoff = (id: number) => {
+    setFileHandoff(current => current?.id === id ? null : current);
   };
 
   const {
@@ -97,6 +110,9 @@ export default function App() {
             lang={lang}
             t={t}
             onNavigate={(page) => setCurrentPage(page as PageId)}
+            fileHandoff={fileHandoff?.target === currentPage ? fileHandoff : null}
+            onSendFilesToTool={sendFilesToTool}
+            onFileHandoffConsumed={consumeFileHandoff}
             files={files}
             settings={settings}
             onSettingsChange={setSettings}

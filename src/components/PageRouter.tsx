@@ -1,4 +1,4 @@
-import type { PageId } from '../types/app';
+import type { FileHandoff, FileHandoffTarget, PageId } from '../types/app';
 import type { CompressionSettings } from '../types';
 
 import { AudioSplitter } from '../pages/AudioSplitter';
@@ -32,6 +32,9 @@ interface Props {
   lang: 'ar' | 'en';
   t: any;
   onNavigate: (page: string) => void;
+  fileHandoff: FileHandoff | null;
+  onSendFilesToTool: (target: FileHandoffTarget, files: File[]) => void;
+  onFileHandoffConsumed: (id: number) => void;
   // Audio workspace props
   files: any[];
   settings: CompressionSettings;
@@ -58,6 +61,9 @@ export function PageRouter({
   lang,
   t,
   onNavigate,
+  fileHandoff,
+  onSendFilesToTool,
+  onFileHandoffConsumed,
   ...audioProps
 }: Props) {
   const p = { t, lang };
@@ -78,11 +84,11 @@ export function PageRouter({
     case 'videoLogo':
       return <VideoLogo {...p} />;
     case 'imageCropper':
-      return <ImageCropper {...p} />;
+      return <ImageCropper {...p} fileHandoff={fileHandoff} onSendFilesToTool={onSendFilesToTool} onFileHandoffConsumed={onFileHandoffConsumed} />;
     case 'pdfToImage':
-      return <PdfToImage {...p} />;
+      return <PdfToImage {...p} onSendFilesToTool={onSendFilesToTool} />;
     case 'imageCompressor':
-      return <ImageCompressor {...p} />;
+      return <ImageCompressor {...p} fileHandoff={fileHandoff} onSendFilesToTool={onSendFilesToTool} onFileHandoffConsumed={onFileHandoffConsumed} />;
     case 'imageTools':
       return <ImageTools {...p} onNavigate={onNavigate} />;
     case 'officeCompressor':
@@ -96,7 +102,7 @@ export function PageRouter({
     case 'videoToGif':
       return <VideoToGif {...p} />;
     case 'imageToPdf':
-      return <ImageToPdf {...p} />;
+      return <ImageToPdf {...p} fileHandoff={fileHandoff} onFileHandoffConsumed={onFileHandoffConsumed} />;
     case 'pdfToWord':
       return <PdfToWord {...p} />;
     case 'wordToPdf':

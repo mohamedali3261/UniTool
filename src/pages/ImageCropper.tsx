@@ -7,8 +7,15 @@ import {
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
+import type { FileHandoff, FileHandoffTarget } from '../types/app';
 
-interface ImageCropperProps { t: any; lang: 'ar' | 'en'; }
+interface ImageCropperProps {
+  t: any;
+  lang: 'ar' | 'en';
+  fileHandoff: FileHandoff | null;
+  onSendFilesToTool: (target: FileHandoffTarget, files: File[]) => void;
+  onFileHandoffConsumed: (id: number) => void;
+}
 
 type ToolMode = 'crop' | 'resize' | 'convert' | 'rotate' | 'filters' | 'text';
 interface CropBox { x: number; y: number; width: number; height: number; }
@@ -48,11 +55,13 @@ async function processOneImage(entry: ImageEntry, state: {
     const bitmap = await createImageBitmap(entry.file);
     let srcW = bitmap.width, srcH = bitmap.height;
 
-    if (state.mode === 'crop' && entry.displaySize && entry.naturalSize) {
-      const sx = state.cropBox.x * (entry.naturalSize.width / entry.displaySize.width);
-      const sy = state.cropBox.y * (entry.naturalSize.height / entry.displaySize.height);
-      const sw = state.cropBox.width * (entry.naturalSize.width / entry.displaySize.width);
-      const sh = state.cropBox.height * (entry.naturalSize.height / entry.displaySize.height);
+    if (state.mode === 'crop' && state.displaySize && state.displaySize.width > 0 && state.displaySize.height > 0) {
+      const scaleX = bitmap.width / state.displaySize.width;
+      const scaleY = bitmap.height / state.displaySize.height;
+      const sx = state.cropBox.x * scaleX;
+      const sy = state.cropBox.y * scaleY;
+      const sw = state.cropBox.width * scaleX;
+      const sh = state.cropBox.height * scaleY;
       const c = document.createElement('canvas');
       c.width = Math.round(sw); c.height = Math.round(sh);
       const ctx = c.getContext('2d')!;
@@ -120,7 +129,7 @@ function finalizeCanvas(c: HTMLCanvasElement, entry: ImageEntry, convert: Conver
   }) as any;
 }
 
-export function ImageCropper({ t, lang }: ImageCropperProps) {
+export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHandoffConsumed }: ImageCropperProps) {
   const [images, setImages] = useState<ImageEntry[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [mode, setMode] = useState<ToolMode>('crop');
@@ -145,6 +154,7 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastHandoffId = useRef<number | null>(null);
   const dragStartRef = useRef<{ x: number; y: number; box: CropBox }>({ x: 0, y: 0, box: { x: 0, y: 0, width: 0, height: 0 } });
 
   const active = images[activeIndex] || null;
@@ -175,6 +185,21 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
       }
     }
     if (entries.length > 0) setImages(prev => { const u = [...prev, ...entries]; if (prev.length === 0) setActiveIndex(0); return u; });
+  };
+
+  useEffect(() => {
+    if (!fileHandoff || lastHandoffId.current === fileHandoff.id) return;
+    lastHandoffId.current = fileHandoff.id;
+    addImages(fileHandoff.files);
+    onFileHandoffConsumed(fileHandoff.id);
+  }, [fileHandoff]);
+
+  const sendCroppedItemsToTool = (target: FileHandoffTarget) => {
+    const files = croppedItems.map(item => {
+      const extension = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
+      return new File([item.blob], `${item.originalName}.${extension}`, { type: item.blob.type });
+    });
+    onSendFilesToTool(target, files);
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => { if (e.target.files) addImages(e.target.files); e.target.value = ''; };
@@ -530,6 +555,8 @@ export function ImageCropper({ t, lang }: ImageCropperProps) {
                   </h3>
                   <div className="flex gap-1">
                     <button onClick={downloadAllAsZip} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"><FolderDown size={8} className="sm:size-[10px]" /> ZIP</button>
+                    <button onClick={() => sendCroppedItemsToTool('imageCompressor')} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"><RefreshCw size={8} className="sm:size-[10px]" /> {lang === 'ar' ? 'ضغط' : 'Compress'}</button>
+                    <button onClick={() => sendCroppedItemsToTool('imageToPdf')} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"><ImageIcon size={8} className="sm:size-[10px]" /> PDF</button>
                     <button onClick={clearAllItems} className="flex items-center gap-1 px-1.5 sm:px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-[7px] sm:text-[8px] font-bold uppercase transition-all"><Trash2 size={8} className="sm:size-[10px]" /></button>
                   </div>
                 </div>

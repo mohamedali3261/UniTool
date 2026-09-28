@@ -1,11 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, ImagePlus, ArrowDownUp, Percent, FolderOpen } from 'lucide-react';
+import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, ImagePlus, ArrowDownUp, Percent, FolderOpen, Scissors, FileText } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../lib/utils';
+import type { FileHandoff, FileHandoffTarget } from '../types/app';
 
 interface Props {
   t: any;
   lang: 'ar' | 'en';
+  fileHandoff: FileHandoff | null;
+  onSendFilesToTool: (target: FileHandoffTarget, files: File[]) => void;
+  onFileHandoffConsumed: (id: number) => void;
 }
 
 interface CompressedFile {
@@ -21,7 +25,7 @@ interface CompressedFile {
   keptOriginal: boolean;
 }
 
-export function ImageCompressor({ t, lang }: Props) {
+export function ImageCompressor({ t, lang, fileHandoff, onSendFilesToTool, onFileHandoffConsumed }: Props) {
   const [files, setFiles] = useState<CompressedFile[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [format, setFormat] = useState<'jpeg' | 'png' | 'webp'>('webp');
@@ -35,6 +39,7 @@ export function ImageCompressor({ t, lang }: Props) {
   const [rootFolderName, setRootFolderName] = useState<string>('');
   const folderInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastHandoffId = useRef<number | null>(null);
 
   useEffect(() => {
     if (uploadMode === 'folder' && folderInputRef.current) {
@@ -82,9 +87,8 @@ export function ImageCompressor({ t, lang }: Props) {
     });
   };
 
-  const handleFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputFiles = e.target.files;
-    if (!inputFiles || inputFiles.length === 0) return;
+  const importFiles = useCallback(async (inputFiles: File[]) => {
+    if (inputFiles.length === 0) return;
     setError(null);
     setLoading(true);
 
@@ -141,6 +145,17 @@ export function ImageCompressor({ t, lang }: Props) {
       setLoading(false);
     }
   }, [nextId, format, quality, lang, uploadMode]);
+
+  const handleFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) void importFiles(Array.from(e.target.files));
+    e.target.value = '';
+  }, [importFiles]);
+
+  useEffect(() => {
+    if (!fileHandoff || lastHandoffId.current === fileHandoff.id) return;
+    lastHandoffId.current = fileHandoff.id;
+    void importFiles(fileHandoff.files).then(() => onFileHandoffConsumed(fileHandoff.id));
+  }, [fileHandoff, importFiles, onFileHandoffConsumed]);
 
   const compressAll = async () => {
     if (files.length === 0) return;
@@ -218,6 +233,23 @@ export function ImageCompressor({ t, lang }: Props) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const sendSelectedToTool = async (target: FileHandoffTarget) => {
+    const selected = files.filter(file => selectedIds.has(file.id) && file.compressedDataUrl);
+    if (selected.length === 0) return;
+
+    try {
+      const outputFiles = await Promise.all(selected.map(async file => {
+        const dataUrl = file.keptOriginal ? file.originalDataUrl : file.compressedDataUrl;
+        const blob = await fetch(dataUrl).then(response => response.blob());
+        const extension = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/png' ? 'png' : 'jpg';
+        return new File([blob], `${file.name}.${extension}`, { type: blob.type });
+      }));
+      onSendFilesToTool(target, outputFiles);
+    } catch {
+      setError(lang === 'ar' ? 'فشل تجهيز الصور للأداة التالية' : 'Failed to prepare images for the next tool');
+    }
   };
 
   const clearAll = () => {
@@ -492,6 +524,24 @@ export function ImageCompressor({ t, lang }: Props) {
                 <Download size={12} />
                 {lang === 'ar' ? 'تحميل المحدد' : 'Download Selected'}
               </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => sendSelectedToTool('imageCropper')}
+                  disabled={selectedIds.size === 0 || !allCompressed}
+                  className="py-2 flex items-center justify-center gap-1.5 text-[8px] font-mono rounded-md border border-blue-500/30 text-blue-300 hover:bg-blue-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Scissors size={11} />
+                  {lang === 'ar' ? 'إرسال للقص' : 'Send to crop'}
+                </button>
+                <button
+                  onClick={() => sendSelectedToTool('imageToPdf')}
+                  disabled={selectedIds.size === 0 || !allCompressed}
+                  className="py-2 flex items-center justify-center gap-1.5 text-[8px] font-mono rounded-md border border-rose-500/30 text-rose-300 hover:bg-rose-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <FileText size={11} />
+                  {lang === 'ar' ? 'إنشاء PDF' : 'Create PDF'}
+                </button>
+              </div>
             </div>
           </div>
         </aside>
