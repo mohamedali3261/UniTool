@@ -24,6 +24,7 @@ withDefaults(
     expression?: string
     bouche?: string
     size?: number
+    compact?: boolean
   }>(),
   {
     state: 'idle',
@@ -31,7 +32,8 @@ withDefaults(
     color: DEFAULT_COLOR,
     expression: DEFAULT_EXPRESSION,
     bouche: 'aucun',
-    size: 60
+    size: 60,
+    compact: false
   }
 )
 </script>
@@ -39,8 +41,11 @@ withDefaults(
 <template>
   <button
     type="button"
-    class="flex cursor-pointer flex-col items-center rounded-xl border-2 p-1 transition"
-    :class="selected ? 'border-[var(--ink)]' : 'border-transparent hover:border-[var(--line)]'"
+    class="bot-tile flex cursor-pointer flex-col items-center rounded-xl border-2 p-1 transition"
+    :class="[
+      compact && 'bot-tile--compact',
+      selected ? 'border-[var(--ink)]' : 'border-transparent hover:border-[var(--line)]'
+    ]"
     :aria-label="label"
     :aria-pressed="selected"
   >
@@ -57,3 +62,22 @@ withDefaults(
     <span class="text-center text-xs leading-tight text-[var(--muted)]">{{ label }}</span>
   </button>
 </template>
+
+<style scoped>
+@media (width < 64rem) {
+  .bot-tile--compact {
+    gap: 0.125rem;
+    padding: 0.25rem;
+  }
+
+  .bot-tile--compact :deep(svg) {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .bot-tile--compact span {
+    font-size: 0.625rem;
+    line-height: 1.1;
+  }
+}
+</style>

@@ -27,10 +27,10 @@ const date = (savedAt: number) => new Intl.DateTimeFormat(props.lang, {
 </script>
 
 <template>
-  <div class="fixed end-3 top-16 z-40 flex items-center gap-1 rounded-xl border border-[var(--line)] bg-[var(--paper)]/90 p-1 shadow-sm backdrop-blur lg:top-3">
-    <button type="button" class="h-8 w-8 rounded-lg text-sm hover:bg-black/5 disabled:opacity-35" :disabled="!canUndo" :aria-label="text('تراجع', 'Undo')" title="Ctrl+Z" @click="emit('undo')">↶</button>
-    <button type="button" class="h-8 w-8 rounded-lg text-sm hover:bg-black/5 disabled:opacity-35" :disabled="!canRedo" :aria-label="text('إعادة', 'Redo')" title="Ctrl+Shift+Z" @click="emit('redo')">↷</button>
-    <button type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-medium hover:bg-black/5" :aria-expanded="open" @click="open = !open">
+  <div class="grid w-fit shrink-0 grid-cols-2 items-center gap-0 rounded-lg p-0.5 lg:gap-0.5">
+    <button type="button" class="h-6 w-6 rounded-md text-xs leading-none hover:bg-black/5 disabled:opacity-35" :disabled="!canUndo" :aria-label="text('تراجع', 'Undo')" title="Ctrl+Z" @click="emit('undo')">↶</button>
+    <button type="button" class="h-6 w-6 rounded-md text-xs leading-none hover:bg-black/5 disabled:opacity-35" :disabled="!canRedo" :aria-label="text('إعادة', 'Redo')" title="Ctrl+Shift+Z" @click="emit('redo')">↷</button>
+    <button type="button" class="col-span-2 justify-self-center rounded-md px-1 py-1 text-[9px] font-medium leading-none hover:bg-black/5" :aria-expanded="open" @click="open = !open">
       {{ text('السجل', 'History') }}
     </button>
   </div>

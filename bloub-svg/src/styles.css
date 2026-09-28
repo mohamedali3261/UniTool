@@ -692,6 +692,13 @@ body,
         min(460px, 100dvh - var(--timeline) - 7rem) / 2 - 0.5rem
     );
   }
+
+  .scene--personnaliser .barre-export {
+    top: calc(
+      2rem + (100dvh - 3rem) / 2 +
+        min(640px, 92vw, 100dvh - 5rem) / 2 - 0.5rem
+    );
+  }
 }
 
 /*

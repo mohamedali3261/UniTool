@@ -50,10 +50,10 @@ const muted = ref<ViewId | null>(null)
     les proprietes logiques gardent l'inversion gratuite si elle revient.
   -->
   <nav
-    class="fixed top-3 left-1/2 z-20 -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-[var(--carte)]/85 p-1.5 shadow-sm backdrop-blur lg:top-1/2 lg:start-4 lg:translate-x-0 lg:-translate-y-1/2"
+    class="fixed top-3 left-1/2 z-20 w-max -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-[var(--carte)]/85 p-1 shadow-sm backdrop-blur lg:top-1/2 lg:start-4 lg:p-1.5 lg:translate-x-0 lg:-translate-y-1/2"
     :aria-label="t('rail.nav')"
   >
-    <ul class="flex gap-1 lg:flex-col">
+    <ul class="flex w-max items-center gap-0.5 lg:flex-col lg:gap-1">
       <li
         v-for="item in ITEMS"
         :key="item.id"
@@ -62,7 +62,7 @@ const muted = ref<ViewId | null>(null)
       >
         <button
           type="button"
-          class="peer flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl transition"
+          class="peer flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg transition lg:h-10 lg:w-10 lg:rounded-xl"
           :class="
             view === item.id
               ? 'bg-[var(--ink)] text-[var(--paper)]'
@@ -84,8 +84,8 @@ const muted = ref<ViewId | null>(null)
           -->
           <svg
             v-if="item.id === 'animations'"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -104,8 +104,8 @@ const muted = ref<ViewId | null>(null)
           -->
           <svg
             v-else-if="item.id === 'reglages'"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -122,8 +122,8 @@ const muted = ref<ViewId | null>(null)
           -->
           <svg
             v-else-if="item.id === 'galerie'"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -142,8 +142,8 @@ const muted = ref<ViewId | null>(null)
                un morceau de HTML a coller -->
           <svg
             v-else-if="item.id === 'integration'"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -155,8 +155,8 @@ const muted = ref<ViewId | null>(null)
           </svg>
           <svg
             v-else-if="item.id === 'elements'"
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
@@ -169,7 +169,7 @@ const muted = ref<ViewId | null>(null)
             de Solar, qui se lit mal a cette taille. Melange de bibliotheques
             assume : c'est la seule des trois ou Solar ne convenait pas.
           -->
-          <svg v-else width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
               d="M12 2c5.522 0 10 3.978 10 8.889a5.56 5.56 0 0 1-5.556 5.555h-1.966c-.922 0-1.667.745-1.667 1.667c0 .422.167.811.422 1.1c.267.3.434.689.434 1.122C13.667 21.256 12.9 22 12 22C6.478 22 2 17.522 2 12S6.478 2 12 2M7.5 12a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3m9 0a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3M12 9a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3"
@@ -202,6 +202,9 @@ const muted = ref<ViewId | null>(null)
         >
           {{ item.label }}
         </span>
+      </li>
+      <li class="flex shrink-0 items-center justify-center">
+        <slot name="history" />
       </li>
     </ul>
   </nav>

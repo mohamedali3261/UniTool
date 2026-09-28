@@ -1216,17 +1216,19 @@ watch(
          ne libere aucune place — mais effacee et surtout inerte : sans ca elle
          resterait dans l'ordre de tabulation en etant invisible. `|| undefined`
          parce qu'un `inert="false"` serait vrai pour le navigateur. -->
-    <SideRail v-if="!preview" v-model="view" class="rail" :inert="nue || undefined" />
-    <HistoryBar
-      v-if="!preview"
-      :can-undo="canUndo"
-      :can-redo="canRedo"
-      :versions="historyVersions"
-      :lang="langue"
-      @undo="undo"
-      @redo="redo"
-      @restore="restoreHistory"
-    />
+    <SideRail v-if="!preview" v-model="view" class="rail" :inert="nue || undefined">
+      <template #history>
+        <HistoryBar
+          :can-undo="canUndo"
+          :can-redo="canRedo"
+          :versions="historyVersions"
+          :lang="langue"
+          @undo="undo"
+          @redo="redo"
+          @restore="restoreHistory"
+        />
+      </template>
+    </SideRail>
 
     <!-- Sortie d'apercu : le seul element qui reste a l'ecran avec l'avatar. -->
     <button
@@ -1261,6 +1263,7 @@ watch(
         // le seul cas ou le rail est DEMONTE — y reserver sa place descendait
         // l'avatar de 80 px pour rien.
         !preview && 'max-lg:pt-20',
+        view === 'personnaliser' && 'scene--personnaliser',
         nue || preview || estPage ? 'scene--seule' : view === 'reglages' && 'scene--gauche'
       ]"
     >
@@ -1305,6 +1308,8 @@ watch(
         :class="
           preview
             ? 'lg:min-h-[calc(100dvh_-_4rem)]'
+            : view === 'personnaliser'
+              ? 'max-lg:order-1 lg:min-h-[calc(100dvh_-_3rem)]'
             : view === 'reglages'
               ? 'max-lg:order-2 lg:min-h-[calc(100dvh_-_3rem_-_var(--timeline))]'
               : 'max-lg:order-1 lg:min-h-[calc(100dvh_-_3rem_-_var(--timeline))]'
@@ -1322,6 +1327,8 @@ watch(
               ? 'max-w-[min(560px,calc(100dvh_-_6rem))]'
               : view === 'reglages'
                 ? 'max-w-[min(220px,70vw)] lg:max-w-[min(460px,calc(100dvh_-_var(--timeline)_-_7rem))]'
+                : view === 'personnaliser'
+                    ? 'max-w-[min(640px,92vw,calc(100dvh_-_5rem))]'
                 : 'max-w-[min(460px,calc(100dvh_-_var(--timeline)_-_7rem))]',
             nue && 'avatar--intro',
             view === 'reglages' && !preview && 'avatar--geant'
@@ -1335,7 +1342,7 @@ watch(
             v-model:elapsed="elapsed"
             v-model:playing="playing"
             :cycle="played"
-            :size="preview ? 560 : 440"
+            :size="preview ? 560 : view === 'personnaliser' ? 640 : 440"
             :shape="forme"
             :color="color"
             :expression="humeur ?? expression"
@@ -1450,8 +1457,8 @@ watch(
               {{ pluriel('panel.moves', order.length) }}
             </span>
           </div>
-          <section class="mt-1.5 rounded-2xl border border-[var(--line)] p-2">
-            <div class="grid grid-cols-4 gap-1.5">
+          <section class="mt-1.5 rounded-2xl border border-[var(--line)] p-2 max-lg:mx-auto max-lg:max-w-sm max-lg:p-1.5">
+            <div class="grid grid-cols-5 gap-1 lg:grid-cols-4 lg:gap-1.5">
               <BotTile
                 v-for="s in order"
                 :key="s.id"
@@ -1463,6 +1470,7 @@ watch(
                 :expression="expression"
                 :bouche="bouche"
                 :frozen-at="POSES[s.id]"
+                compact
                 @click="addBlock(s.id)"
               />
             </div>
