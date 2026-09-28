@@ -31,7 +31,7 @@ export default function UnitoolSvgApp() {
   };
 
   return (
-    <div lang={lang} className="flex h-screen flex-col overflow-hidden bg-[#0F1115] pt-14 font-sans text-[#D1D5DB]" dir="ltr">
+    <div lang={lang} className="flex min-h-screen flex-col overflow-x-hidden bg-[#0F1115] pt-14 font-sans text-[#D1D5DB]" dir="ltr">
       <Header
         lang={lang}
         onToggleLang={toggleLang}
