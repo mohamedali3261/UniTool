@@ -93,6 +93,9 @@ function readSavedDesign(): LogoDesign | null {
         text: element.text,
         svg: safeSvg?.svg ?? '',
         viewBox: safeSvg?.viewBox ?? '0 0 100 100',
+        ...(element.type === 'text' && element.text === 'YOUR IDEA' && element.x === 0 && element.y === 0
+          ? { y: design.layout === 'horizontal' ? 55 : 180 }
+          : {}),
       });
     }
     return { ...design as LogoDesign, elements };
@@ -166,7 +169,9 @@ export function LogoStudio({ lang }: Props) {
         feedback(text('الحد الأقصى 40 عنصرًا لكل شعار.', 'A logo can contain up to 40 custom elements.'), true);
         return current;
       }
-      return { ...current, elements: [...current.elements, emptyElement(type, current.elements.length + 1)] };
+      const element = emptyElement(type, current.elements.length + 1);
+      if (type === 'text') element.y = current.layout === 'horizontal' ? 55 : 180;
+      return { ...current, elements: [...current.elements, element] };
     });
   };
 
@@ -432,7 +437,7 @@ export function LogoStudio({ lang }: Props) {
                           <input className={inputClass} type="number" min="-120" max="120" value={element.x} onChange={event => updateElement(element.id, 'x', Math.max(-120, Math.min(120, Number(event.target.value))))} />
                         </label>
                         <label className="text-[10px] text-gray-400">Y
-                          <input className={inputClass} type="number" min="-100" max="100" value={element.y} onChange={event => updateElement(element.id, 'y', Math.max(-100, Math.min(100, Number(event.target.value))))} />
+                          <input className={inputClass} type="number" min="-100" max="180" value={element.y} onChange={event => updateElement(element.id, 'y', Math.max(-100, Math.min(180, Number(event.target.value))))} />
                         </label>
                       </div>
                     </div>
@@ -504,7 +509,7 @@ export function LogoStudio({ lang }: Props) {
               backgroundPosition: background === 'transparent' ? '0 0,0 10px,10px -10px,-10px 0' : undefined,
             }}
           >
-            <div className="w-full max-w-[560px]" dangerouslySetInnerHTML={{ __html: svg }} />
+            <div className="w-full max-w-[560px] [&>svg]:block [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">

@@ -101,7 +101,8 @@ export function makeLogoSvg(design: LogoDesign): string {
     return `<g id="layer-${xml(element.id)}" data-name="${xml(element.name)}" opacity="${opacity}" transform="${transform}">${shape}</g>`;
   }).join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="${xml(`${design.name}${design.tagline ? ` — ${design.tagline}` : ''}`)}">
+  const [width, height] = horizontal ? [560, 160] : [360, 300];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" role="img" aria-label="${xml(`${design.name}${design.tagline ? ` — ${design.tagline}` : ''}`)}">
 <defs><linearGradient id="brand-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${design.primary}"/><stop offset="100%" stop-color="${design.secondary}"/></linearGradient></defs>
 <g transform="translate(${markX} ${markY}) scale(${markSize / 100})">${markSvg(design.mark, 'url(#brand-gradient)')}</g>
 ${layers}
