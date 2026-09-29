@@ -12,6 +12,7 @@ export const sitePages = [
   { href: '/designcraft.html', ar: 'مصمم الجرافيك', en: 'Design Craft' },
   { href: '/the-audio-reader.html', ar: 'القارئ الصوتي', en: 'Audio Reader' },
   { href: '/unitool-svg.html', ar: 'UniTool SVG', en: 'UniTool SVG' },
+  { href: '/logo-studio.html', ar: 'مصمم الشعارات', en: 'Logo Studio' },
 ];
 
 export function Header({ lang, onToggleLang, onOpenMobileMenu }: Props) {
