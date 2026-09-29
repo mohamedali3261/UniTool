@@ -4,7 +4,7 @@ import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  base: '/bloub-svg/',
+  base: '/unitool-svg-editor/',
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {
@@ -12,7 +12,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: '../public/bloub-svg',
+    outDir: '../public/unitool-svg-editor',
     emptyOutDir: true
   },
   test: {

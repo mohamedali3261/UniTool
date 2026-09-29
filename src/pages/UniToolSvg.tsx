@@ -19,7 +19,7 @@ export function UniToolSvg({ lang, iframeRef, onIframeLoad }: Props) {
       </div>
       <iframe
         ref={iframeRef}
-        src="/bloub-svg/index.html"
+        src="/unitool-svg-editor/index.html"
         onLoad={onIframeLoad}
         title={lang === 'ar' ? 'محرر UniTool SVG' : 'UniTool SVG editor'}
         className="min-h-[calc(100vh-8rem)] w-full flex-1 shrink-0 border-0 bg-white lg:min-h-[min(900px,calc(100vh+2rem))]"
