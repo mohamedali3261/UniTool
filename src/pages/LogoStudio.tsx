@@ -59,6 +59,7 @@ function readSavedDesign(): LogoDesign | null {
       !/^#[0-9a-f]{6}$/i.test(design.secondary ?? '') ||
       !['orbit', 'spark', 'diamond', 'bolt'].includes(design.mark ?? '') ||
       !['horizontal', 'stacked'].includes(design.layout ?? '') ||
+      (design.showTagline !== undefined && typeof design.showTagline !== 'boolean') ||
       !['sans', 'serif', 'mono'].includes(design.font ?? '') ||
       !Array.isArray(design.elements) ||
       design.elements.length > 40
@@ -98,7 +99,7 @@ function readSavedDesign(): LogoDesign | null {
           : {}),
       });
     }
-    return { ...design as LogoDesign, elements };
+    return { ...design as LogoDesign, showTagline: design.showTagline !== false, elements };
   } catch (error) {
     console.error('Unable to restore saved logo design', error);
     return null;
@@ -115,6 +116,7 @@ export function LogoStudio({ lang }: Props) {
     secondary: '#6366F1',
     mark: 'orbit',
     layout: 'horizontal',
+    showTagline: true,
     font: 'sans',
     elements: [],
   }));
@@ -299,6 +301,7 @@ export function LogoStudio({ lang }: Props) {
       secondary: '#6366F1',
       mark: 'orbit',
       layout: 'horizontal',
+      showTagline: true,
       font: 'sans',
       elements: [],
     });
@@ -338,10 +341,29 @@ export function LogoStudio({ lang }: Props) {
               {text('اسم العلامة', 'Brand name')}
               <input className={inputClass} value={design.name} maxLength={36} onChange={event => update('name', event.target.value)} />
             </label>
-            <label className="text-xs font-medium text-gray-300">
-              {text('الشعار النصي', 'Tagline')}
-              <input className={inputClass} value={design.tagline} maxLength={52} placeholder={text('جملة قصيرة أسفل الاسم', 'A short line below your name')} onChange={event => update('tagline', event.target.value)} />
-            </label>
+            <div>
+              {design.layout === 'stacked' ? (
+                <>
+                  <label className="text-xs font-medium text-gray-300">
+                    {text('الشعار النصي', 'Tagline')}
+                    <input className={inputClass} value={design.tagline} maxLength={52} placeholder={text('جملة قصيرة أسفل الاسم', 'A short line below your name')} onChange={event => update('tagline', event.target.value)} />
+                  </label>
+                  <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[#2D3139] bg-[#0B0D11] px-3 py-2 text-xs text-gray-300">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-indigo-400"
+                      checked={design.showTagline}
+                      onChange={event => update('showTagline', event.target.checked)}
+                    />
+                    {text('إظهار الشعار النصي', 'Show tagline')}
+                  </label>
+                </>
+              ) : (
+                <div className="flex h-full min-h-[72px] items-center rounded-xl border border-dashed border-[#2D3139] bg-[#0B0D11]/60 px-4 text-xs leading-5 text-gray-500">
+                  {text('التخطيط الأفقي يعرض اسم العلامة فقط.', 'Horizontal logos show the brand name only.')}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -399,6 +421,22 @@ export function LogoStudio({ lang }: Props) {
                 <Upload size={12} className="me-1 inline" />{text('استيراد SVG', 'Import SVG')}
               </button>
               <input ref={fileRef} className="sr-only" type="file" accept=".svg,image/svg+xml" aria-label={text('اختيار ملف SVG', 'Choose an SVG file')} onChange={event => void importSvg(event.currentTarget.files?.[0])} />
+            </div>
+            <div className="rounded-xl border border-[#2D3139] bg-[#0B0D11]/70 p-3">
+              <p className="text-[10px] font-medium text-gray-300">{text('مصادر شعارات SVG', 'SVG logo sources')}</p>
+              <p className="mt-1 text-[10px] leading-4 text-gray-500">{text('نزّل SVG من أحد المصادر ثم استورده من الزر أعلاه لتعديله كطبقة.', 'Download an SVG from a source below, then import it above to edit it as a layer.')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { label: 'Simple Icons', href: 'https://simpleicons.org/' },
+                  { label: 'SVG Repo', href: 'https://www.svgrepo.com/' },
+                  { label: 'Wikimedia Commons', href: 'https://commons.wikimedia.org/wiki/Category:SVG_logos' },
+                ].map(source => (
+                  <a key={source.label} href={source.href} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#2D3139] px-2.5 py-1.5 text-[10px] text-indigo-200 transition hover:border-indigo-400 hover:bg-indigo-400/[0.08]">
+                    {source.label}
+                  </a>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-4 text-amber-200/70">{text('تحقق من ترخيص كل شعار وحقوق العلامة التجارية قبل استخدامه.', 'Check each asset’s license and trademark rights before using it.')}</p>
             </div>
             {design.elements.length > 0 && (
               <ol className="space-y-2">
@@ -498,8 +536,18 @@ export function LogoStudio({ lang }: Props) {
         </section>
 
         <section className="flex min-w-0 flex-col gap-4" aria-label={text('معاينة وتصدير', 'Preview and export')}>
+          <div className="flex items-center justify-between rounded-xl border border-[#252A34] bg-[#14171C] px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold text-white">{text('معاينة مباشرة', 'Live preview')}</h2>
+              <p className="mt-1 text-[10px] text-gray-500">{text('تظهر تغييراتك فورًا في الشعار.', 'Your edits appear here instantly.')}</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-2.5 py-1 text-[10px] text-emerald-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              {design.layout === 'horizontal' ? text('أفقي', 'Horizontal') : text('عمودي', 'Stacked')}
+            </span>
+          </div>
           <div
-            className="flex min-h-[260px] flex-1 items-center justify-center overflow-hidden rounded-2xl border border-[#252A34] p-6 sm:min-h-[340px]"
+            className="relative flex min-h-[280px] flex-1 items-center justify-center overflow-hidden rounded-2xl border border-[#303641] p-6 shadow-[0_20px_60px_-36px_rgba(99,102,241,0.4)] sm:min-h-[360px] sm:p-10"
             style={{
               backgroundColor: previewBackground,
               backgroundImage: background === 'transparent'

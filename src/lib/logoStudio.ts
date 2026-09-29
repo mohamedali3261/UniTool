@@ -25,6 +25,7 @@ export interface LogoDesign {
   secondary: string;
   mark: LogoMark;
   layout: LogoLayout;
+  showTagline: boolean;
   font: LogoFont;
   elements: LogoElement[];
 }
@@ -102,12 +103,13 @@ export function makeLogoSvg(design: LogoDesign): string {
   }).join('');
 
   const [width, height] = horizontal ? [560, 160] : [360, 300];
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" role="img" aria-label="${xml(`${design.name}${design.tagline ? ` — ${design.tagline}` : ''}`)}">
+  const taglineVisible = !horizontal && design.showTagline && Boolean(design.tagline);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" role="img" aria-label="${xml(`${design.name}${taglineVisible ? ` — ${design.tagline}` : ''}`)}">
 <defs><linearGradient id="brand-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${design.primary}"/><stop offset="100%" stop-color="${design.secondary}"/></linearGradient></defs>
 <g transform="translate(${markX} ${markY}) scale(${markSize / 100})">${markSvg(design.mark, 'url(#brand-gradient)')}</g>
 ${layers}
 <text x="${textX}" y="${nameY}" fill="url(#brand-gradient)" font-family="${font}" font-size="${nameSize}" font-weight="700" letter-spacing="-.7"${horizontal ? '' : ' text-anchor="middle"'}${direction}>${xml(design.name || 'Your Brand')}</text>
-${design.tagline ? `<text x="${textX}" y="${taglineY}" fill="${design.secondary}" font-family="${font}" font-size="${horizontal ? 15 : 14}" letter-spacing="1.4"${horizontal ? '' : ' text-anchor="middle"'}${taglineDirection}>${xml(design.tagline)}</text>` : ''}
+${taglineVisible ? `<text x="${textX}" y="${taglineY}" fill="${design.secondary}" font-family="${font}" font-size="14" letter-spacing="1.4" text-anchor="middle"${taglineDirection}>${xml(design.tagline)}</text>` : ''}
 </svg>`;
 }
 
