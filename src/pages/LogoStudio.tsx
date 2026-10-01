@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Check, Code2, Copy, Download, Layers3, Plus, RotateCcw, Save, Sparkles, Trash2, Upload } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Code2, Copy, Download, Layers3, Plus, RotateCcw, Save, Sparkles, Trash2, Upload, Shield, Leaf, Hexagon, Crown, Zap, Gem, Orbit, LayoutTemplate, Rows3, Circle, Square, Triangle, Star, Heart, Type } from 'lucide-react';
 import {
   makeKotlinExport,
   makeLogoSvg,
@@ -22,6 +22,11 @@ const PALETTES = [
   { name: 'Forest', primary: '#4ADE80', secondary: '#14B8A6' },
   { name: 'Gold', primary: '#FACC15', secondary: '#F97316' },
   { name: 'Royal', primary: '#C084FC', secondary: '#60A5FA' },
+  { name: 'Fire', primary: '#EF4444', secondary: '#F97316' },
+  { name: 'Neon', primary: '#34D399', secondary: '#3B82F6' },
+  { name: 'Berry', primary: '#F43F5E', secondary: '#8B5CF6' },
+  { name: 'Monochrome', primary: '#374151', secondary: '#111827' },
+  { name: 'Midnight', primary: '#1E3A8A', secondary: '#312E81' },
 ];
 
 const inputClass = 'mt-1.5 w-full rounded-xl border border-[#2D3139] bg-[#0B0D11] px-3 py-2.5 text-sm text-white outline-none transition focus:border-indigo-400';
@@ -57,10 +62,10 @@ function readSavedDesign(): LogoDesign | null {
       typeof design.tagline !== 'string' ||
       !/^#[0-9a-f]{6}$/i.test(design.primary ?? '') ||
       !/^#[0-9a-f]{6}$/i.test(design.secondary ?? '') ||
-      !['orbit', 'spark', 'diamond', 'bolt'].includes(design.mark ?? '') ||
+      !['orbit', 'spark', 'diamond', 'bolt', 'shield', 'leaf', 'hexagon', 'crown'].includes(design.mark ?? '') ||
       !['horizontal', 'stacked'].includes(design.layout ?? '') ||
       (design.showTagline !== undefined && typeof design.showTagline !== 'boolean') ||
-      !['sans', 'serif', 'mono'].includes(design.font ?? '') ||
+      !['sans', 'serif', 'mono', 'cursive', 'impact'].includes(design.font ?? '') ||
       !Array.isArray(design.elements) ||
       design.elements.length > 40
     ) return null;
@@ -72,7 +77,7 @@ function readSavedDesign(): LogoDesign | null {
       if (
         typeof element.id !== 'string' || element.id.length > 100 ||
         typeof element.name !== 'string' || element.name.length > 60 ||
-        !['circle', 'square', 'triangle', 'star', 'text', 'svg'].includes(element.type ?? '') ||
+        !['circle', 'square', 'triangle', 'star', 'heart', 'hexagon', 'text', 'svg'].includes(element.type ?? '') ||
         !['x', 'y', 'size', 'rotation', 'opacity'].every(key => Number.isFinite(element[key as keyof LogoElement])) ||
         !/^#[0-9a-f]{6}$/i.test(element.color ?? '') ||
         typeof element.text !== 'string' || element.text.length > 40 ||
@@ -227,7 +232,7 @@ export function LogoStudio({ lang }: Props) {
         }
         return { ...current, elements: [...current.elements, element] };
       });
-      feedback(text('تم استيراد SVG بأمان وإضافته إلى الطبقات.'));
+      feedback(text('تم استيراد SVG بأمان وإضافته إلى الطبقات.', 'SVG safely imported and added to layers.'));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to import SVG.';
       feedback(`${text('تعذّر استيراد SVG:', 'Could not import SVG:')} ${message}`, true);
@@ -269,6 +274,10 @@ export function LogoStudio({ lang }: Props) {
     spark: text('شرارة', 'Spark'),
     diamond: text('ماسة', 'Diamond'),
     bolt: text('صاعقة', 'Bolt'),
+    shield: text('درع', 'Shield'),
+    leaf: text('ورقة', 'Leaf'),
+    hexagon: text('سداسي', 'Hexagon'),
+    crown: text('تاج', 'Crown'),
   };
   const previewBackground = background === 'light'
     ? '#F4F5F7'
@@ -282,6 +291,8 @@ export function LogoStudio({ lang }: Props) {
     square: text('مربع', 'Square'),
     triangle: text('مثلث', 'Triangle'),
     star: text('نجمة', 'Star'),
+    heart: text('قلب', 'Heart'),
+    hexagon: text('سداسي', 'Hexagon'),
     text: text('نص مخصص', 'Custom text'),
     svg: 'SVG',
   };
@@ -366,40 +377,66 @@ export function LogoStudio({ lang }: Props) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-xs font-medium text-gray-300">
-              {text('شكل الرمز', 'Symbol')}
-              <select className={inputClass} value={design.mark} onChange={event => update('mark', event.target.value as LogoMark)}>
-                {(Object.keys(labels) as LogoMark[]).map(mark => <option key={mark} value={mark}>{labels[mark]}</option>)}
-              </select>
-            </label>
-            <label className="text-xs font-medium text-gray-300">
-              {text('الخط', 'Typography')}
-              <select className={inputClass} value={design.font} onChange={event => update('font', event.target.value as LogoFont)}>
-                <option value="sans">{text('هندسي حديث', 'Modern sans-serif')}</option>
-                <option value="serif">{text('كلاسيكي أنيق', 'Elegant serif')}</option>
-                <option value="mono">{text('تقني', 'Technical mono')}</option>
-              </select>
-            </label>
-          </div>
+          <fieldset>
+            <legend className="mb-2 text-xs font-medium text-gray-300">{text('شكل الرمز', 'Symbol')}</legend>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+              {([
+                ['orbit', Orbit],
+                ['spark', Sparkles],
+                ['diamond', Gem],
+                ['bolt', Zap],
+                ['shield', Shield],
+                ['leaf', Leaf],
+                ['hexagon', Hexagon],
+                ['crown', Crown],
+              ] as const).map(([mark, Icon]) => (
+                <button
+                  key={mark}
+                  type="button"
+                  aria-pressed={design.mark === mark}
+                  aria-label={labels[mark as LogoMark]}
+                  title={labels[mark as LogoMark]}
+                  className={`flex items-center justify-center rounded-xl border p-2 transition ${design.mark === mark ? 'border-indigo-400 bg-indigo-400/10 text-white' : 'border-[#2D3139] text-gray-400 hover:border-gray-500 hover:text-gray-300'}`}
+                  onClick={() => update('mark', mark as LogoMark)}
+                >
+                  <Icon size={18} />
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="block text-xs font-medium text-gray-300">
+            {text('الخط', 'Typography')}
+            <select className={inputClass} value={design.font} onChange={event => update('font', event.target.value as LogoFont)}>
+              <option value="sans">{text('هندسي حديث', 'Modern sans-serif')}</option>
+              <option value="serif">{text('كلاسيكي أنيق', 'Elegant serif')}</option>
+              <option value="mono">{text('تقني', 'Technical mono')}</option>
+              <option value="cursive">{text('توقيع', 'Cursive')}</option>
+              <option value="impact">{text('عريض', 'Impact')}</option>
+            </select>
+          </label>
 
           <fieldset>
             <legend className="mb-2 text-xs font-medium text-gray-300">{text('تكوين الشعار', 'Logo layout')}</legend>
             <div className="grid grid-cols-2 gap-2">
-              {([
-                ['horizontal', text('أفقي', 'Horizontal')],
-                ['stacked', text('عمودي', 'Stacked')],
-              ] as [LogoLayout, string][]).map(([layout, label]) => (
-                <button
-                  key={layout}
-                  type="button"
-                  aria-pressed={design.layout === layout}
-                  className={`${buttonClass} ${design.layout === layout ? 'border-indigo-400 bg-indigo-400/10 text-white' : ''}`}
-                  onClick={() => update('layout', layout)}
-                >
-                  {label}
-                </button>
-              ))}
+              <button
+                type="button"
+                aria-pressed={design.layout === 'horizontal'}
+                className={`${buttonClass} flex flex-col items-center gap-1.5 py-3 ${design.layout === 'horizontal' ? 'border-indigo-400 bg-indigo-400/10 text-white' : ''}`}
+                onClick={() => update('layout', 'horizontal')}
+              >
+                <LayoutTemplate size={20} className={design.layout === 'horizontal' ? 'text-indigo-400' : 'text-gray-400'} />
+                {text('أفقي', 'Horizontal')}
+              </button>
+              <button
+                type="button"
+                aria-pressed={design.layout === 'stacked'}
+                className={`${buttonClass} flex flex-col items-center gap-1.5 py-3 ${design.layout === 'stacked' ? 'border-indigo-400 bg-indigo-400/10 text-white' : ''}`}
+                onClick={() => update('layout', 'stacked')}
+              >
+                <Rows3 size={20} className={design.layout === 'stacked' ? 'text-indigo-400' : 'text-gray-400'} />
+                {text('عمودي', 'Stacked')}
+              </button>
             </div>
           </fieldset>
 
@@ -411,14 +448,37 @@ export function LogoStudio({ lang }: Props) {
               </div>
               <span className="shrink-0 text-[10px] text-gray-500">{design.elements.length}/40</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-              {(['circle', 'square', 'triangle', 'star', 'text'] as LogoElementType[]).map(type => (
-                <button key={type} type="button" className={buttonClass} disabled={design.elements.length >= 40} onClick={() => addElement(type)}>
-                  <Plus size={12} className="me-1 inline" />{elementLabels[type]}
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+              {([
+                ['circle', Circle],
+                ['square', Square],
+                ['triangle', Triangle],
+                ['star', Star],
+                ['heart', Heart],
+                ['hexagon', Hexagon],
+                ['text', Type],
+              ] as const).map(([type, Icon]) => (
+                <button
+                  key={type}
+                  type="button"
+                  aria-label={elementLabels[type as LogoElementType]}
+                  title={elementLabels[type as LogoElementType]}
+                  className={`${buttonClass} flex items-center justify-center p-2`}
+                  disabled={design.elements.length >= 40}
+                  onClick={() => addElement(type as LogoElementType)}
+                >
+                  <Icon size={18} />
                 </button>
               ))}
-              <button type="button" className={buttonClass} disabled={design.elements.length >= 40} onClick={() => fileRef.current?.click()}>
-                <Upload size={12} className="me-1 inline" />{text('استيراد SVG', 'Import SVG')}
+              <button
+                type="button"
+                aria-label={text('استيراد SVG', 'Import SVG')}
+                title={text('استيراد SVG', 'Import SVG')}
+                className={`${buttonClass} flex items-center justify-center p-2`}
+                disabled={design.elements.length >= 40}
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload size={18} />
               </button>
               <input ref={fileRef} className="sr-only" type="file" accept=".svg,image/svg+xml" aria-label={text('اختيار ملف SVG', 'Choose an SVG file')} onChange={event => void importSvg(event.currentTarget.files?.[0])} />
             </div>
