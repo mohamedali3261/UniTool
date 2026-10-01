@@ -1,7 +1,7 @@
-export type LogoMark = 'orbit' | 'spark' | 'diamond' | 'bolt';
+export type LogoMark = 'orbit' | 'spark' | 'diamond' | 'bolt' | 'shield' | 'leaf' | 'hexagon' | 'crown';
 export type LogoLayout = 'horizontal' | 'stacked';
-export type LogoFont = 'sans' | 'serif' | 'mono';
-export type LogoElementType = 'circle' | 'square' | 'triangle' | 'star' | 'text' | 'svg';
+export type LogoFont = 'sans' | 'serif' | 'mono' | 'cursive' | 'impact';
+export type LogoElementType = 'circle' | 'square' | 'triangle' | 'star' | 'heart' | 'hexagon' | 'text' | 'svg';
 
 export interface LogoElement {
   id: string;
@@ -42,6 +42,8 @@ const FONT_FAMILY: Record<LogoFont, string> = {
   sans: 'Arial, Helvetica, sans-serif',
   serif: 'Georgia, Times New Roman, serif',
   mono: 'Courier New, monospace',
+  cursive: 'Brush Script MT, cursive',
+  impact: 'Impact, Charcoal, sans-serif',
 };
 
 function markSvg(mark: LogoMark, color: string): string {
@@ -53,6 +55,14 @@ function markSvg(mark: LogoMark, color: string): string {
       return `<path ${fill} d="M50 4 91 50 50 96 9 50Z"/><path fill="#0F1115" d="m50 23 24 27-24 27-24-27Z"/>`;
     case 'bolt':
       return `<path ${fill} d="M57 3 19 54h25l-5 43 38-54H52Z"/>`;
+    case 'shield':
+      return `<path ${fill} d="M50 4 L90 20 V50 C90 75 70 95 50 96 C30 95 10 75 10 50 V20 Z"/>`;
+    case 'leaf':
+      return `<path ${fill} d="M50 4 C90 4 96 40 96 60 C96 90 70 96 50 96 C10 96 4 70 4 50 C4 10 30 4 50 4 Z"/>`;
+    case 'hexagon':
+      return `<polygon ${fill} points="50,4 90,27 90,73 50,96 10,73 10,27"/>`;
+    case 'crown':
+      return `<path ${fill} d="M10 80 L10 30 L30 55 L50 15 L70 55 L90 30 L90 80 Z"/><rect ${fill} x="10" y="85" width="80" height="10"/>`;
     default:
       return `<circle cx="50" cy="50" r="43" ${fill}/><circle cx="50" cy="50" r="26" fill="#0F1115"/><circle cx="68" cy="30" r="8" fill="#fff"/>`;
   }
@@ -90,6 +100,12 @@ export function makeLogoSvg(design: LogoDesign): string {
         break;
       case 'star':
         shape = `<path d="M0-46 11-15 44-14 18 6 27 39 0 20-27 39-18 6-44-14-11-15Z" fill="${element.color}"/>`;
+        break;
+      case 'heart':
+        shape = `<path d="M0 12 C -20 -15 -45 -5 -45 15 C -45 40 0 55 0 55 C 0 55 45 40 45 15 C 45 -5 20 -15 0 12 Z" fill="${element.color}" transform="translate(0 -25)" />`;
+        break;
+      case 'hexagon':
+        shape = `<polygon points="0,-40 35,-20 35,20 0,40 -35,20 -35,-20" fill="${element.color}"/>`;
         break;
       case 'text':
         shape = `<text x="0" y="8" text-anchor="middle" fill="${element.color}" font-family="${FONT_FAMILY[design.font]}" font-size="26" font-weight="700">${xml(element.text || element.name)}</text>`;
