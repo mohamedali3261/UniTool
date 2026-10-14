@@ -609,6 +609,57 @@ function tryDetectOnce(
 
 /* ================= OCR helpers ================= */
 
+/**
+ * Snap each quad corner to the strongest nearby edge (precision refinement).
+ * Searches a small window around every corner on the edge-magnitude map.
+ * Returns the refined quad, or null when snapping is unsafe.
+ */
+function snapQuadToEdges(rotCanvas: HTMLCanvasElement, quad: Quad): Quad | null {
+  try {
+    const MAXW = 800;
+    const s = Math.min(1, MAXW / Math.max(rotCanvas.width, rotCanvas.height));
+    const w = Math.max(80, Math.round(rotCanvas.width * s));
+    const h = Math.max(80, Math.round(rotCanvas.height * s));
+    const small = document.createElement('canvas');
+    small.width = w; small.height = h;
+    const ctx = small.getContext('2d')!;
+    ctx.drawImage(rotCanvas, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h).data;
+    const g = boxBlur(grayOf(d, w, h), w, h, 2);
+    const mag = sobelNorm(g, w, h);
+    const R = Math.max(10, Math.round(Math.min(w, h) * 0.05));
+    const out: Quad = {
+      tl: [...quad.tl] as Pt, tr: [...quad.tr] as Pt,
+      br: [...quad.br] as Pt, bl: [...quad.bl] as Pt,
+    };
+    (Object.keys(out) as CornerKey[]).forEach(k => {
+      const cx = Math.round(out[k][0] * w), cy = Math.round(out[k][1] * h);
+      let bx = cx, by = cy, best = -1;
+      for (let y = Math.max(0, cy - R); y <= Math.min(h - 1, cy + R); y++) {
+        for (let x = Math.max(0, cx - R); x <= Math.min(w - 1, cx + R); x++) {
+          const m = mag[y * w + x];
+          if (m > best) { best = m; bx = x; by = y; }
+        }
+      }
+      if (best > 30) out[k] = [clamp01(bx / w), clamp01(by / h)];
+    });
+    return isValidQuad(out) ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+function buzz(ms: number) {
+  try { (navigator as any).vibrate?.(ms); } catch { /* unsupported */ }
+}
+
+const CORNER_LABEL: Record<CornerKey, { ar: string; en: string }> = {
+  tl: { ar: 'أعلى-يسار', en: 'Top-Left' },
+  tr: { ar: 'أعلى-يمين', en: 'Top-Right' },
+  br: { ar: 'أسفل-يمين', en: 'Bottom-Right' },
+  bl: { ar: 'أسفل-يسار', en: 'Bottom-Left' },
+};
+
 /** estimate skew angle (degrees) from binary-ish canvas */
 function detectSkewAngle(canvas: HTMLCanvasElement): number {
   const w = 400;
@@ -703,8 +754,14 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   const [editorImgUrl, setEditorImgUrl] = useState<string | null>(null);
   const [editorZoom, setEditorZoom] = useState(1);
   const [detecting, setDetecting] = useState(false);
+  const [snapping, setSnapping] = useState(false);
   const [detectInfo, setDetectInfo] = useState<string | null>(null);
+  const [loupeKey, setLoupeKey] = useState<CornerKey | null>(null);
+  const [nudgeStep, setNudgeStep] = useState<'fine' | 'fast'>('fine');
   const wrapRef = useRef<HTMLDivElement>(null);
+  const rotatedCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const loupeCanvasRef = useRef<HTMLCanvasElement>(null);
+  const quadHistory = useRef<(Quad | null)[]>([]);
   const cornerDrag = useRef<{ key: CornerKey; lastX: number; lastY: number } | null>(null);
 
   const idRef = useRef(1);
@@ -946,10 +1003,14 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   useEffect(() => {
     let alive = true;
     setEditorImgUrl(null);
+    rotatedCanvasRef.current = null;
+    quadHistory.current = [];
+    setLoupeKey(null);
     if (!selected) return;
     loadHtmlImage(selected.dataUrl).then(img => {
       if (!alive) return;
       const c = drawRotated(img, selected.rotation, 1600);
+      rotatedCanvasRef.current = c;
       setEditorImgUrl(c.toDataURL('image/jpeg', 0.9));
     }).catch(() => {});
     return () => { alive = false; };
@@ -969,11 +1030,69 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     return () => clearTimeout(t);
   }, [selected, renderScan]);
 
-  /* ---------- quad interactions ---------- */
+  /* ---------- magnifier loupe for the active corner (precision on mobile) ---------- */
+  useEffect(() => {
+    const canvas = loupeCanvasRef.current;
+    const src = rotatedCanvasRef.current;
+    if (!canvas || !src || !loupeKey || !selected) return;
+    const qq = quadOf(selected);
+    const px = qq[loupeKey][0] * src.width;
+    const py = qq[loupeKey][1] * src.height;
+    const S = 144, Z = 4;
+    canvas.width = S; canvas.height = S;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, S, S);
+    const sw = S / Z, sh = S / Z;
+    ctx.drawImage(src, px - sw / 2, py - sh / 2, sw, sh, 0, 0, S, S);
+    ctx.strokeStyle = 'rgba(20,184,166,.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(S / 2, 0); ctx.lineTo(S / 2, S);
+    ctx.moveTo(0, S / 2); ctx.lineTo(S, S / 2);
+    ctx.stroke();
+    ctx.fillStyle = '#14b8a6';
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, 5, 0, Math.PI * 2); ctx.stroke();
+  }, [loupeKey, selected, editorImgUrl]);
   const quadOf = (p: ScanPage): Quad => p.quad ?? FULL_QUAD;
+
+  const pushQuadHistory = () => {
+    if (selected) {
+      quadHistory.current.push(selected.quad ? { ...selected.quad } : null);
+      if (quadHistory.current.length > 20) quadHistory.current.shift();
+    }
+  };
+
+  const undoQuad = () => {
+    const prev = quadHistory.current.pop();
+    if (prev !== undefined) {
+      updateSelected({ quad: prev });
+      setDetectInfo(lang === 'ar' ? 'تم التراجع ↩' : 'Undone ↩');
+    }
+  };
+
+  const nudgeCorner = (dx: number, dy: number) => {
+    if (selectedId == null || !loupeKey) return;
+    pushQuadHistory();
+    const step = nudgeStep === 'fine' ? 0.002 : 0.01;
+    setPages(prev => prev.map(p => {
+      if (p.id !== selectedId) return p;
+      const base = p.quad ?? FULL_QUAD;
+      const q: Quad = { ...base, [loupeKey]: [...base[loupeKey]] as Pt };
+      q[loupeKey] = [clamp01(q[loupeKey][0] + dx * step), clamp01(q[loupeKey][1] + dy * step)];
+      return { ...p, quad: isValidQuad(q) ? q : p.quad };
+    }));
+    buzz(5);
+  };
 
   const onCornerDown = (key: CornerKey) => (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
+    pushQuadHistory();
+    setLoupeKey(key);
+    buzz(10);
     cornerDrag.current = { key, lastX: e.clientX, lastY: e.clientY };
   };
   const onCornerMove = (e: React.PointerEvent) => {
@@ -991,7 +1110,35 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       return { ...p, quad: q };
     }));
   };
-  const onCornerUp = () => { cornerDrag.current = null; };
+  const onCornerUp = () => {
+    if (cornerDrag.current) buzz(5);
+    cornerDrag.current = null;
+  };
+
+  /** magnet-snap current quad corners to nearest strong edges */
+  const snapManual = async () => {
+    if (!selected || snapping) return;
+    const base = selected.quad ?? FULL_QUAD;
+    setSnapping(true);
+    try {
+      let rot = rotatedCanvasRef.current;
+      if (!rot) {
+        const img = await loadHtmlImage(selected.dataUrl);
+        rot = drawRotated(img, selected.rotation, 1200);
+        rotatedCanvasRef.current = rot;
+      }
+      pushQuadHistory();
+      const snapped = snapQuadToEdges(rot, base);
+      if (snapped) {
+        updateSelected({ quad: snapped });
+        setDetectInfo(lang === 'ar' ? 'تم التثبيت على الحواف 🧲 اسحب للضبط الدقيق' : 'Snapped to edges 🧲 drag to fine-tune');
+      } else {
+        setDetectInfo(lang === 'ar' ? 'لا توجد حافة قوية قريبة — اضبط يدوياً' : 'No strong edge nearby — adjust manually');
+      }
+    } finally {
+      setSnapping(false);
+    }
+  };
 
   const autoDetect = async () => {
     if (!selected || detecting) return;
@@ -1007,9 +1154,11 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         updateSelected({ quad: null });
         setDetectInfo(lang === 'ar' ? 'الورقة مالية الكادر ✅ مش محتاجة قص' : 'Sheet fills the frame ✅ no crop needed');
       } else {
-        updateSelected({ quad: found.quad });
+        pushQuadHistory();
+        const refined = snapQuadToEdges(rotated, found.quad) ?? found.quad;
+        updateSelected({ quad: refined });
         const pct = Math.round(found.confidence * 100);
-        setDetectInfo(lang === 'ar' ? `تم اكتشاف الورقة (ثقة ${pct}%) — اسحب الزوايا للضبط الدقيق` : `Sheet detected (${pct}% conf.) — drag corners to fine-tune`);
+        setDetectInfo(lang === 'ar' ? `تم اكتشاف الورقة (ثقة ${pct}%) مع تثبيت الحواف 🧲 — اسحب للضبط الدقيق` : `Sheet detected (${pct}%) + edge-snapped 🧲 — drag to fine-tune`);
       }
     } catch {
       setDetectInfo(lang === 'ar' ? 'تعذر الاكتشاف التلقائي' : 'Auto-detect failed');
@@ -1043,7 +1192,11 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       const next = [...prev]; next.splice(idx + 1, 0, copy); return next;
     });
   };
-  const rotateSelected = () => selected && updateSelected({ rotation: (selected.rotation + 90) % 360, quad: null });
+  const rotateSelected = () => {
+    if (!selected) return;
+    pushQuadHistory();
+    updateSelected({ rotation: (selected.rotation + 90) % 360, quad: null });
+  };
   const autoEnhance = () => selected && updateSelected({ filter: 'enhanced', brightness: 8, contrast: 18, autoLevels: true, denoise: true, sharpen: 25 });
   const movePage = (index: number, dir: 'up' | 'down') => {
     setPages(prev => {
@@ -1230,6 +1383,20 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
 
   const q = selected ? quadOf(selected) : FULL_QUAD;
   const quadPts = `${q.tl[0] * 100},${q.tl[1] * 100} ${q.tr[0] * 100},${q.tr[1] * 100} ${q.br[0] * 100},${q.br[1] * 100} ${q.bl[0] * 100},${q.bl[1] * 100}`;
+
+  // live output dimensions from current quad (rotated-pixel space)
+  const selDims = (() => {
+    if (!selected) return null;
+    const swap = selected.rotation === 90 || selected.rotation === 270;
+    const rw = swap ? selected.height : selected.width;
+    const rh = swap ? selected.width : selected.height;
+    const P = (p: Pt): [number, number] => [p[0] * rw, p[1] * rh];
+    const [ax, ay] = P(q.tl); const [bx, by] = P(q.tr);
+    const [cx, cy] = P(q.br); const [dx, dy] = P(q.bl);
+    const W = Math.max(Math.hypot(bx - ax, by - ay), Math.hypot(cx - dx, cy - dy));
+    const H = Math.max(Math.hypot(dx - ax, dy - ay), Math.hypot(cx - bx, cy - by));
+    return { w: Math.round(W), h: Math.round(H) };
+  })();
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden"
@@ -1440,23 +1607,39 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                       <button onClick={() => setEditorZoom(z => Math.min(3, +(z + 0.5).toFixed(1)))} className="px-2 py-1 rounded border border-[#2D3139] text-gray-400 text-[10px]">+</button>
                     </div>
                   </div>
-                  <div className="flex gap-2 mb-2">
+                  <div className="grid grid-cols-2 gap-2 mb-2">
                     <button onClick={autoDetect} disabled={detecting || !editorImgUrl}
-                      className="flex-1 py-2 rounded-md bg-teal-600/20 border border-teal-500/40 text-teal-300 text-[9px] font-mono font-bold hover:bg-teal-600/30 disabled:opacity-40 flex items-center justify-center gap-1.5">
+                      className="py-2 rounded-md bg-teal-600/20 border border-teal-500/40 text-teal-300 text-[9px] font-mono font-bold hover:bg-teal-600/30 disabled:opacity-40 flex items-center justify-center gap-1.5">
                       {detecting ? <Loader2 size={11} className="animate-spin" /> : <Crosshair size={11} />}
-                      {detecting ? (lang === 'ar' ? 'جاري الاكتشاف...' : 'Detecting...') : (lang === 'ar' ? 'اكتشاف تلقائي للورقة' : 'Auto-detect sheet')}
+                      {detecting ? (lang === 'ar' ? 'جاري الاكتشاف...' : 'Detecting...') : (lang === 'ar' ? 'اكتشاف تلقائي 🎯' : 'Auto-detect 🎯')}
                     </button>
-                    <button onClick={() => { updateSelected({ quad: null }); setDetectInfo(null); }}
-                      className="px-3 py-2 rounded-md border border-[#2D3139] bg-[#14171C] text-gray-400 hover:text-white text-[9px] font-mono">
-                      {lang === 'ar' ? 'إعادة' : 'Reset'}
+                    <button onClick={snapManual} disabled={snapping || !selected}
+                      className="py-2 rounded-md bg-blue-600/20 border border-blue-500/40 text-blue-300 text-[9px] font-mono font-bold hover:bg-blue-600/30 disabled:opacity-40 flex items-center justify-center gap-1.5">
+                      {snapping ? <Loader2 size={11} className="animate-spin" /> : <span>🧲</span>}
+                      {lang === 'ar' ? 'تثبيت على الحواف' : 'Snap to edges'}
+                    </button>
+                    <button onClick={() => { pushQuadHistory(); updateSelected({ quad: null }); setDetectInfo(null); }}
+                      className="py-2 rounded-md border border-[#2D3139] bg-[#14171C] text-gray-400 hover:text-white text-[9px] font-mono">
+                      {lang === 'ar' ? 'إعادة ↺' : 'Reset ↺'}
+                    </button>
+                    <button onClick={undoQuad} disabled={quadHistory.current.length === 0}
+                      className="py-2 rounded-md border border-[#2D3139] bg-[#14171C] text-gray-400 hover:text-white text-[9px] font-mono disabled:opacity-40">
+                      {lang === 'ar' ? 'تراجع ↩' : 'Undo ↩'}
                     </button>
                   </div>
                   {editorImgUrl ? (
                     <div className="overflow-auto rounded-md border border-[#2D3139] bg-black/40" style={{ maxHeight: 320 }}>
-                      <div ref={wrapRef} className="relative select-none" style={{ width: `${editorZoom * 100}%` }}>
+                      <div ref={wrapRef} className="relative select-none" style={{ width: `${editorZoom * 100}%` }}
+                        onDoubleClick={() => setEditorZoom(z => (z > 1.5 ? 1 : 2.5))} title={lang === 'ar' ? 'ضغطة مزدوجة للتقريب' : 'Double-tap to zoom'}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={editorImgUrl} alt="" draggable={false} className="w-full block pointer-events-none" />
                         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+                          <g stroke="#ffffff" strokeWidth={1} opacity={0.12} vectorEffect="non-scaling-stroke">
+                            <line x1="33.3" y1="0" x2="33.3" y2="100" />
+                            <line x1="66.6" y1="0" x2="66.6" y2="100" />
+                            <line x1="0" y1="33.3" x2="100" y2="33.3" />
+                            <line x1="0" y1="66.6" x2="100" y2="66.6" />
+                          </g>
                           <polygon points={quadPts} fill="rgba(20,184,166,0.12)" stroke="#14b8a6" strokeWidth={1} vectorEffect="non-scaling-stroke" strokeDasharray="6 3" />
                         </svg>
                         {CORNERS.map(k => (
@@ -1477,6 +1660,39 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                       <Loader2 size={14} className="animate-spin" />
                     </div>
                   )}
+                  {/* magnifier loupe + precision nudge pad */}
+                  {loupeKey && (
+                    <div className="mt-2 rounded-lg border border-teal-500/40 bg-[#0F1115] p-2.5 flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        <canvas ref={loupeCanvasRef} width={144} height={144} className="w-[104px] h-[104px] rounded-lg border border-teal-500/50 bg-black" />
+                        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-teal-500 text-white text-[8px] font-mono font-bold">4x</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[9px] font-mono font-bold text-teal-300">
+                            {lang === 'ar' ? 'ركن: ' : 'Corner: '}{lang === 'ar' ? CORNER_LABEL[loupeKey].ar : CORNER_LABEL[loupeKey].en}
+                          </p>
+                          <button onClick={() => setLoupeKey(null)} className="text-gray-500 hover:text-white"><X size={12} /></button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 w-28">
+                          <span />
+                          <button onClick={() => nudgeCorner(0, -1)} className="py-1.5 rounded bg-white/5 border border-white/10 text-gray-200 text-[10px] hover:border-teal-500/60 active:bg-teal-500/20">▲</button>
+                          <span />
+                          <button onClick={() => nudgeCorner(-1, 0)} className="py-1.5 rounded bg-white/5 border border-white/10 text-gray-200 text-[10px] hover:border-teal-500/60 active:bg-teal-500/20">◀</button>
+                          <button onClick={() => nudgeCorner(0, 1)} className="py-1.5 rounded bg-white/5 border border-white/10 text-gray-200 text-[10px] hover:border-teal-500/60 active:bg-teal-500/20">▼</button>
+                          <button onClick={() => nudgeCorner(1, 0)} className="py-1.5 rounded bg-white/5 border border-white/10 text-gray-200 text-[10px] hover:border-teal-500/60 active:bg-teal-500/20">▶</button>
+                        </div>
+                        <div className="flex gap-1 mt-1.5">
+                          {(['fine', 'fast'] as const).map(s => (
+                            <button key={s} onClick={() => setNudgeStep(s)}
+                              className={cn('flex-1 py-1 text-[8px] font-mono rounded border', nudgeStep === s ? 'bg-teal-600/25 border-teal-500/50 text-teal-200 font-bold' : 'border-white/10 text-gray-500')}>
+                              {s === 'fine' ? (lang === 'ar' ? 'دقيق' : 'Fine') : (lang === 'ar' ? 'سريع' : 'Fast')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {detectInfo && <p className="text-[8px] font-mono text-teal-300/90 mt-1.5 leading-relaxed">{detectInfo}</p>}
                   <p className="text-[8px] font-mono text-gray-600 mt-1.5 leading-relaxed">{lang === 'ar' ? 'اسحب النقاط الفيروزية الأربع لأركان الورقة — تُصحَّح زاوية التصوير تلقائياً' : 'Drag the 4 teal dots to the sheet corners — perspective is corrected automatically'}</p>
                 </div>
@@ -1485,6 +1701,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                 <div className="rounded-lg overflow-hidden border border-teal-500/30 bg-white">
                   <canvas ref={previewCanvasRef} className="w-full h-auto block" />
                 </div>
+                {selDims && (
+                  <p className="-mt-1.5 text-center text-[8px] font-mono text-gray-500">
+                    {lang === 'ar' ? 'الإخراج' : 'Output'} ≈ {selDims.w}×{selDims.h}px
+                    {!isValidQuad(selected.quad) && selected.quad ? (lang === 'ar' ? ' — الزوايا غير صالحة، يُستخدم الإطار الكامل' : ' — invalid corners, full frame used') : ''}
+                  </p>
+                )}
 
                 <div className="flex gap-2">
                   <button onClick={rotateSelected} className="flex-1 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300 text-[9px] font-mono hover:border-teal-500/50 flex items-center justify-center gap-1.5"><RotateCw size={11} />{lang === 'ar' ? 'تدوير' : 'Rotate'}</button>
