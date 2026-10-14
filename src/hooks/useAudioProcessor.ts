@@ -27,19 +27,14 @@ export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
   const selectedFile = files.find(f => f.id === selectedFileId);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await Promise.all([
-          loadFFmpeg(),
-          new Promise(resolve => setTimeout(resolve, 3000)),
-        ]);
-        setIsFfmpegLoaded(true);
-      } catch (err) {
+    // Warm up FFmpeg in the background (non-blocking).
+    // Actual audio/video tools load it lazily on first use via loadFFmpeg().
+    loadFFmpeg()
+      .then(() => setIsFfmpegLoaded(true))
+      .catch((err) => {
         console.error('Failed to load FFmpeg:', err);
         setLoadingError(t.failureMsg);
-      }
-    };
-    init();
+      });
   }, [lang]);
 
   const updateFileStatus = useCallback((id: string, updates: Partial<AudioFile>) => {

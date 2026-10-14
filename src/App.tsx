@@ -13,7 +13,6 @@ import { Sidebar } from './components/Sidebar';
 import { MobileMenu } from './components/MobileMenu';
 import { PageRouter } from './components/PageRouter';
 import { Footer } from './components/Footer';
-import { ErrorScreen, LoadingScreen } from './components/LoadingScreen';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
@@ -52,8 +51,6 @@ export default function App() {
   };
 
   const {
-    isFfmpegLoaded,
-    loadingError,
     files,
     selectedFile,
     selectedFileId,
@@ -72,14 +69,6 @@ export default function App() {
     hasIdleFiles,
     hasCompletedFiles,
   } = useAudioProcessor(lang, t);
-
-  if (loadingError) {
-    return <ErrorScreen error={loadingError} />;
-  }
-
-  if (!isFfmpegLoaded) {
-    return <LoadingScreen lang={lang} t={t} />;
-  }
 
   return (
     <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
