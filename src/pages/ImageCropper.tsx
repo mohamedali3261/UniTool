@@ -612,7 +612,8 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
               <h3 className="text-[10px] sm:text-xs font-mono text-gray-300 uppercase flex-1">{lang === 'ar' ? 'كل الصور' : 'All Images'} ({images.length})</h3>
               <button onClick={() => { setShowGallery(false); fileInputRef.current?.click(); }} className="p-1 hover:bg-blue-500/20 rounded-lg text-blue-400 transition-colors"><Plus size={14} /></button>
             </div>
-            <div className="grid grid-cols-3 gap-1.5 overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1">
+              <div className="grid grid-cols-3 gap-1.5">
               {images.map((entry, i) => (
                 <button key={i} onClick={() => switchImage(i)} className={cn("relative aspect-square rounded-lg overflow-hidden border-2 transition-all group/gal", i === activeIndex ? 'border-blue-500' : 'border-[#2D3139] hover:border-gray-500')}>
                   <img src={entry.url} alt="" className="w-full h-full object-cover" />
@@ -620,6 +621,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
                   <button onClick={e => { e.stopPropagation(); removeImage(i); }} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center opacity-0 group/gal:opacity-100 transition-opacity"><X size={8} className="text-white" /></button>
                 </button>
               ))}
+              </div>
             </div>
           </div>
         </div>

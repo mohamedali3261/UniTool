@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { FileHandoff, FileHandoffTarget, PageId } from './types/app';
 import { translations } from './lib/translations';
@@ -13,6 +13,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileMenu } from './components/MobileMenu';
 import { PageRouter } from './components/PageRouter';
 import { Footer } from './components/Footer';
+import { ErrorScreen, LoadingScreen } from './components/LoadingScreen';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
@@ -25,7 +26,14 @@ export default function App() {
     return 'ar';
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [minDelayDone, setMinDelayDone] = useState(false);
   const t = translations[lang];
+
+  // Keep the logo-video splash visible long enough to be seen
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayDone(true), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
@@ -51,6 +59,8 @@ export default function App() {
   };
 
   const {
+    isFfmpegLoaded,
+    loadingError,
     files,
     selectedFile,
     selectedFileId,
@@ -69,6 +79,14 @@ export default function App() {
     hasIdleFiles,
     hasCompletedFiles,
   } = useAudioProcessor(lang, t);
+
+  if (loadingError) {
+    return <ErrorScreen error={loadingError} />;
+  }
+
+  if (!isFfmpegLoaded || !minDelayDone) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>

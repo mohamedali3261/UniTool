@@ -137,6 +137,38 @@ function isFullQuad(q: Quad | null): boolean {
     Math.abs(q.bl[0]) < e && Math.abs(q.bl[1] - 1) < e;
 }
 
+function quadAreaNorm(q: Quad): number {
+  return polyArea([q.tl, q.tr, q.br, q.bl]);
+}
+
+/** guards against degenerate quads (collapsed/crossed/tiny) that would distort the warp */
+function isValidQuad(q: Quad | null): q is Quad {
+  if (!q) return false;
+  const pts = [q.tl, q.tr, q.br, q.bl];
+  for (const [x, y] of pts) {
+    if (!isFinite(x) || !isFinite(y) || x < -0.05 || x > 1.05 || y < -0.05 || y > 1.05) return false;
+  }
+  for (let i = 0; i < 4; i++) {
+    for (let j = i + 1; j < 4; j++) {
+      if (Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]) < 0.02) return false;
+    }
+  }
+  let sign = 0;
+  for (let i = 0; i < 4; i++) {
+    const [ax, ay] = pts[i];
+    const [bx, by] = pts[(i + 1) % 4];
+    const [cx, cy] = pts[(i + 2) % 4];
+    const cross = (bx - ax) * (cy - by) - (by - ay) * (cx - bx);
+    if (Math.abs(cross) < 1e-9) continue;
+    const s = cross > 0 ? 1 : -1;
+    if (sign === 0) sign = s;
+    else if (sign !== s) return false;
+  }
+  if (sign === 0) return false;
+  const area = quadAreaNorm(q);
+  return area > 0.03 && area <= 1.0;
+}
+
 /** perspective warp of quad region to outW x outH rect (bilinear, white outside) */
 function warpQuadToRect(srcCanvas: HTMLCanvasElement, quad: Quad, outW: number, outH: number): HTMLCanvasElement | null {
   const sw = srcCanvas.width, sh = srcCanvas.height;
@@ -513,12 +545,35 @@ function detectDocumentQuad(srcCanvas: HTMLCanvasElement): { quad: Quad; confide
     const sctx = small.getContext('2d')!;
     sctx.drawImage(srcCanvas, 0, 0, w, h);
     const data = sctx.getImageData(0, 0, w, h).data;
-    const gray = boxBlur(grayOf(data, w, h), w, h, 2);
+    const grayBase = grayOf(data, w, h);
+    // multiple attempts: clean shots first, then stronger connect + lower threshold
+    const paramSets = [
+      { blur: 2, dilateIters: 2, tScale: 1 },
+      { blur: 3, dilateIters: 3, tScale: 0.7 },
+      { blur: 2, dilateIters: 4, tScale: 0.55 },
+    ];
+    for (const ps of paramSets) {
+      const found = tryDetectOnce(grayBase, w, h, ps);
+      if (found) return found;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** single detection attempt with given blur/dilate/threshold params */
+function tryDetectOnce(
+  grayBase: Float32Array, w: number, h: number,
+  ps: { blur: number; dilateIters: number; tScale: number },
+): { quad: Quad; confidence: number } | null {
+  try {
+    const gray = boxBlur(grayBase, w, h, ps.blur);
     const mag = sobelNorm(gray, w, h);
-    const t = otsuThreshold(mag);
+    const t = otsuThreshold(mag) * ps.tScale;
     let bin = new Uint8Array(w * h);
     for (let i = 0; i < w * h; i++) bin[i] = mag[i] > t ? 1 : 0;
-    bin = dilate(bin, w, h, 2);
+    bin = dilate(bin, w, h, ps.dilateIters);
     const comp = largestComponent(bin, w, h);
     if (!comp) return null;
     const hull = convexHull(comp);
@@ -542,8 +597,10 @@ function detectDocumentQuad(srcCanvas: HTMLCanvasElement): { quad: Quad; confide
     const ordered = orderCorners(quadPts);
     const norm = (p: Pt): Pt => [clamp01(p[0] / w), clamp01(p[1] / h)];
     const quad: Quad = { tl: norm(ordered.tl), tr: norm(ordered.tr), br: norm(ordered.br), bl: norm(ordered.bl) };
+    if (!isValidQuad(quad)) return null;
     const confidence = polyArea(quadPts) / (w * h);
-    if (confidence < 0.08 || confidence > 0.985) return null;
+    if (confidence < 0.1) return null;
+    // note: >0.97 (sheet fills the frame) is returned so the caller can inform the user
     return { quad, confidence };
   } catch {
     return null;
@@ -826,7 +883,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     const img = await loadHtmlImage(page.dataUrl);
     const rotated = drawRotated(img, page.rotation, 3000);
     const rw = rotated.width, rh = rotated.height;
-    const q = page.quad ?? FULL_QUAD;
+    const q = isValidQuad(page.quad) ? page.quad : FULL_QUAD;
     // destination size from quad edge lengths
     const px = (p: Pt): [number, number] => [p[0] * rw, p[1] * rh];
     const [ax, ay] = px(q.tl); const [bx, by] = px(q.tr);
@@ -944,12 +1001,15 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       const img = await loadHtmlImage(selected.dataUrl);
       const rotated = drawRotated(img, selected.rotation, 800);
       const found = detectDocumentQuad(rotated);
-      if (found) {
+      if (!found || !isValidQuad(found.quad)) {
+        setDetectInfo(lang === 'ar' ? 'تعذر الاكتشاف التلقائي — اضبط الزوايا يدوياً' : 'Auto-detect failed — adjust corners manually');
+      } else if (found.confidence > 0.97) {
+        updateSelected({ quad: null });
+        setDetectInfo(lang === 'ar' ? 'الورقة مالية الكادر ✅ مش محتاجة قص' : 'Sheet fills the frame ✅ no crop needed');
+      } else {
         updateSelected({ quad: found.quad });
         const pct = Math.round(found.confidence * 100);
-        setDetectInfo(lang === 'ar' ? `تم اكتشاف الورقة (ثقة ${pct}%) — اسحب الزوايا للضبط` : `Sheet detected (${pct}% conf.) — drag corners to fine-tune`);
-      } else {
-        setDetectInfo(lang === 'ar' ? 'تعذر الاكتشاف التلقائي — اضبط الزوايا يدوياً' : 'Auto-detect failed — adjust corners manually');
+        setDetectInfo(lang === 'ar' ? `تم اكتشاف الورقة (ثقة ${pct}%) — اسحب الزوايا للضبط الدقيق` : `Sheet detected (${pct}% conf.) — drag corners to fine-tune`);
       }
     } catch {
       setDetectInfo(lang === 'ar' ? 'تعذر الاكتشاف التلقائي' : 'Auto-detect failed');
@@ -1406,7 +1466,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                             onPointerUp={onCornerUp}
                             onPointerCancel={onCornerUp}
                             title={k}
-                            className="absolute w-5 h-5 rounded-full bg-teal-500 border-2 border-white shadow-lg cursor-grab active:cursor-grabbing touch-none z-10"
+                            className="absolute w-7 h-7 sm:w-5 sm:h-5 rounded-full bg-teal-500 border-2 border-white shadow-lg cursor-grab active:cursor-grabbing touch-none z-10"
                             style={{ left: `${q[k][0] * 100}%`, top: `${q[k][1] * 100}%`, transform: 'translate(-50%,-50%)' }}
                           />
                         ))}

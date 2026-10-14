@@ -119,6 +119,21 @@ input[type="range"]::-moz-range-thumb:active {
   height: 6px;
 }
 
+/* ===== Vertical scrollbars always on the RIGHT side =====
+   A scroll container's scrollbar follows its `direction`, so every
+   vertical scroller is forced to LTR (scrollbar -> right) while its
+   direct children keep the app direction (default RTL, LTR in EN mode).
+   Pure-horizontal scrollers and plain <p> text boxes are excluded. */
+[class*="overflow-auto"]:not([class*="overflow-x-auto"]):not(p) {
+  direction: ltr;
+}
+[class*="overflow-auto"]:not([class*="overflow-x-auto"]):not(p) > * {
+  direction: rtl;
+}
+[dir="ltr"] [class*="overflow-auto"]:not([class*="overflow-x-auto"]):not(p) > * {
+  direction: ltr;
+}
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
