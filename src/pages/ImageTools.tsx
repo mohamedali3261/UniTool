@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Percent, Scissors, LayoutGrid, Sparkles, ArrowRight } from 'lucide-react';
+import { Percent, Scissors, LayoutGrid, Sparkles, ArrowRight, ScanLine } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -33,6 +33,19 @@ const tools = [
     border: 'border-amber-500/20 hover:border-amber-400/40',
     iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
     glow: 'group-hover:shadow-amber-500/20',
+    featured: false,
+  },
+  {
+    id: 'documentScanner',
+    icon: ScanLine,
+    titleAr: 'سكانر المستندات',
+    titleEn: 'Document Scanner',
+    descAr: 'صوّر مستنداتك بالكاميرا — تحسين تلقائي و OCR وتصدير PDF',
+    descEn: 'Scan docs with camera — auto enhance, OCR and PDF export',
+    color: 'from-teal-500/20 to-emerald-500/20',
+    border: 'border-teal-500/20 hover:border-teal-400/40',
+    iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+    glow: 'group-hover:shadow-teal-500/20',
     featured: false,
   },
 ];

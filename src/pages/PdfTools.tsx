@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles, Merge, Scissors, Lock, Unlock } from 'lucide-react';
+import { FileText, Image, Type, ArrowDownToLine, Shrink, ArrowRight, Sparkles, Merge, Scissors, Lock, Unlock, ScanLine } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -92,6 +92,18 @@ const tools = [
     border: 'border-emerald-500/20 hover:border-emerald-400/40',
     iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
     glow: 'group-hover:shadow-emerald-500/20',
+  },
+  {
+    id: 'documentScanner',
+    icon: ScanLine,
+    titleAr: 'سكانر المستندات',
+    titleEn: 'Document Scanner',
+    descAr: 'صوّر مستنداتك وحسّنها واستخرج نصها ثم صدّرها PDF',
+    descEn: 'Capture, enhance and OCR your documents then export PDF',
+    color: 'from-teal-500/20 to-emerald-500/20',
+    border: 'border-teal-500/20 hover:border-teal-400/40',
+    iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+    glow: 'group-hover:shadow-teal-500/20',
   },
   {
     id: 'pdfProtect',

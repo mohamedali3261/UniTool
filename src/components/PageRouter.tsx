@@ -26,6 +26,7 @@ import { PdfMerger } from '../pages/PdfMerger';
 import { PdfSplitter } from '../pages/PdfSplitter';
 import { PdfUnlock } from '../pages/PdfUnlock';
 import { PdfProtect } from '../pages/PdfProtect';
+import { DocumentScanner } from '../pages/DocumentScanner';
 
 interface Props {
   currentPage: PageId;
@@ -117,6 +118,8 @@ export function PageRouter({
       return <PdfUnlock {...p} />;
     case 'pdfProtect':
       return <PdfProtect {...p} />;
+    case 'documentScanner':
+      return <DocumentScanner {...p} fileHandoff={fileHandoff} onFileHandoffConsumed={onFileHandoffConsumed} />;
     case 'compressionTools':
       return <CompressionTools {...p} onNavigate={onNavigate} />;
     default:

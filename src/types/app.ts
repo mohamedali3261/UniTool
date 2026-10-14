@@ -24,9 +24,10 @@ export type PageId =
   | 'pdfMerger'
   | 'pdfSplitter'
   | 'pdfUnlock'
-  | 'pdfProtect';
+  | 'pdfProtect'
+  | 'documentScanner';
 
-export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf';
+export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf' | 'documentScanner';
 
 export interface FileHandoff {
   id: number;
