@@ -27,6 +27,7 @@ import { PdfSplitter } from '../pages/PdfSplitter';
 import { PdfUnlock } from '../pages/PdfUnlock';
 import { PdfProtect } from '../pages/PdfProtect';
 import { DocumentScanner } from '../pages/DocumentScanner';
+import { QrScanner } from '../pages/QrScanner';
 
 interface Props {
   currentPage: PageId;
@@ -99,7 +100,9 @@ export function PageRouter({
     case 'pdfCompressor':
       return <PdfCompressor {...p} />;
     case 'qrCode':
-      return <QRCodeGenerator {...p} />;
+      return <QRCodeGenerator {...p} onNavigate={onNavigate} />;
+    case 'qrScanner':
+      return <QrScanner {...p} onNavigate={onNavigate} />;
     case 'videoToGif':
       return <VideoToGif {...p} />;
     case 'imageToPdf':

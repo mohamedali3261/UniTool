@@ -25,7 +25,8 @@ export type PageId =
   | 'pdfSplitter'
   | 'pdfUnlock'
   | 'pdfProtect'
-  | 'documentScanner';
+  | 'documentScanner'
+  | 'qrScanner';
 
 export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf' | 'documentScanner';
 

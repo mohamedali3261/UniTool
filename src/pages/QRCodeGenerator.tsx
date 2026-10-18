@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { Download, Link, Type, Wifi, Mail, Phone, MessageSquare, Copy, Check, Palette, Eye, Settings2 } from 'lucide-react';
+import { Download, Link, Type, Wifi, Mail, Phone, MessageSquare, Copy, Check, Palette, Eye, Settings2, ScanQrCode } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
   t: any;
   lang: 'ar' | 'en';
+  onNavigate?: (page: string) => void;
 }
 
 type QRType = 'text' | 'url' | 'wifi' | 'email' | 'phone' | 'sms';
 
-export function QRCodeGenerator({ t, lang }: Props) {
+export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
   const [qrType, setQRType] = useState<QRType>('url');
   const [inputValue, setInputValue] = useState('');
   const [wifiSSID, setWifiSSID] = useState('');
@@ -493,6 +494,16 @@ export function QRCodeGenerator({ t, lang }: Props) {
           <h1 className="text-xs font-bold text-white sm:text-sm">{lang === 'ar' ? 'مولّد QR Code' : 'QR Code Generator'}</h1>
           <p className="text-[8px] text-gray-500 font-mono sm:text-[9px]">{lang === 'ar' ? 'إنشاء أكواد QR مخصصة' : 'Create custom QR codes'}</p>
         </div>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('qrScanner')}
+            title={lang === 'ar' ? 'قارئ QR' : 'QR Scanner'}
+            className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-blue-600/15 border border-white/[0.06] hover:border-blue-500/30 transition-colors"
+          >
+            <ScanQrCode size={10} className="text-blue-400" />
+            <span className="text-[9px] font-mono text-gray-400 hover:text-blue-300">{lang === 'ar' ? 'قارئ QR' : 'QR Scanner'}</span>
+          </button>
+        )}
       </div>
 
       {/* Mobile Tabs */}
