@@ -15,7 +15,7 @@ interface Props {
   onFileHandoffConsumed?: (id: number) => void;
 }
 
-type ScanFilter = 'color' | 'gray' | 'bw' | 'enhanced';
+type ScanFilter = 'color' | 'gray' | 'bw' | 'enhanced' | 'magic';
 type CornerKey = 'tl' | 'tr' | 'br' | 'bl';
 type Pt = [number, number];
 
@@ -37,6 +37,8 @@ interface ScanPage {
   autoLevels: boolean;
   denoise: boolean;
   sharpen: number; // 0..100
+  shadowRemove: boolean; // flat-field shadow/uneven lighting removal
+  deskew: boolean; // straighten text lines after perspective fix
   quad: Quad | null; // null = full frame, normalized in rotated-image space
   sizeBytes: number;
 }
@@ -47,8 +49,9 @@ const CORNERS: CornerKey[] = ['tl', 'tr', 'br', 'bl'];
 
 const FILTERS: { id: ScanFilter; ar: string; en: string }[] = [
   { id: 'color', ar: 'ملوّن', en: 'Color' },
+  { id: 'magic', ar: 'ألوان حية', en: 'Vivid' },
   { id: 'gray', ar: 'رمادي', en: 'Gray' },
-  { id: 'bw', ar: 'مستند أبيض/أسود', en: 'B&W Doc' },
+  { id: 'bw', ar: 'أبيض/أسود', en: 'B&W Doc' },
   { id: 'enhanced', ar: 'محسّن', en: 'Enhanced' },
 ];
 
@@ -326,6 +329,97 @@ function unsharp(d: Uint8ClampedArray, w: number, h: number, amount: number) {
         d[o + ch] = Math.max(0, Math.min(255, src[o + ch] + amount * (src[o + ch] - blur)));
       }
     }
+  }
+}
+
+/**
+ * Flat-field shadow / uneven-lighting removal.
+ * Estimates a smooth background illumination field (heavy box blur of a
+ * downscaled copy), then divides every pixel by it — dark corners and phone
+ * shadows across the page lift back to paper-white like a real scanner.
+ */
+function flatFieldShadowRemove(d: Uint8ClampedArray, w: number, h: number) {
+  try {
+    const S = 96; // illumination field resolution
+    const sw = Math.max(8, Math.round((w * S) / Math.max(w, h)));
+    const sh = Math.max(8, Math.round((h * S) / Math.max(w, h)));
+    // blurred average illumination per channel on a tiny canvas
+    const tiny = document.createElement('canvas');
+    tiny.width = sw; tiny.height = sh;
+    const tctx = tiny.getContext('2d')!;
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tmpCtx = tmp.getContext('2d')!;
+    tmpCtx.putImageData(new ImageData(new Uint8ClampedArray(d), w, h), 0, 0);
+    tctx.drawImage(tmp, 0, 0, sw, sh);
+    let field = tctx.getImageData(0, 0, sw, sh).data;
+    // extra box blur passes on the tiny field for extra smoothness
+    const blurTiny = (fd: Uint8ClampedArray) => {
+      const out = new Uint8ClampedArray(fd.length);
+      for (let y = 0; y < sh; y++) {
+        for (let x = 0; x < sw; x++) {
+          for (let ch = 0; ch < 3; ch++) {
+            let s = 0, n = 0;
+            for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+              const xx = x + dx, yy = y + dy;
+              if (xx < 0 || yy < 0 || xx >= sw || yy >= sh) continue;
+              s += fd[(yy * sw + xx) * 4 + ch]; n++;
+            }
+            out[(y * sw + x) * 4 + ch] = s / n;
+          }
+          out[(y * sw + x) * 4 + 3] = 255;
+        }
+      }
+      return out;
+    };
+    field = blurTiny(field);
+    field = blurTiny(field);
+    // sample field bilinearly and divide
+    for (let y = 0; y < h; y++) {
+      const fy = (y / h) * (sh - 1);
+      const y0 = Math.floor(fy), y1 = Math.min(sh - 1, y0 + 1);
+      const wy = fy - y0;
+      for (let x = 0; x < w; x++) {
+        const fx = (x / w) * (sw - 1);
+        const x0 = Math.floor(fx), x1 = Math.min(sw - 1, x0 + 1);
+        const wx = fx - x0;
+        const o = (y * w + x) * 4;
+        for (let ch = 0; ch < 3; ch++) {
+          const f00 = field[(y0 * sw + x0) * 4 + ch], f10 = field[(y0 * sw + x1) * 4 + ch];
+          const f01 = field[(y1 * sw + x0) * 4 + ch], f11 = field[(y1 * sw + x1) * 4 + ch];
+          const bg = Math.max(20, f00 * (1 - wx) * (1 - wy) + f10 * wx * (1 - wy) + f01 * (1 - wx) * wy + f11 * wx * wy);
+          d[o + ch] = (d[o + ch] / bg) * 244; // normalize paper to near-white
+        }
+      }
+    }
+  } catch { /* skip on failure */ }
+}
+
+/** per-channel percentage contrast stretch + saturation boost (vivid scan look) */
+function applyVividColor(d: Uint8ClampedArray) {
+  const hist: Uint32Array[] = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+  for (let i = 0; i < d.length; i += 4) {
+    hist[0][d[i]]++; hist[1][d[i + 1]]++; hist[2][d[i + 2]]++;
+  }
+  const total = d.length / 4;
+  const cut = Math.max(8, total * 0.02);
+  const lo = [0, 0, 0], hi = [255, 255, 255];
+  for (let c = 0; c < 3; c++) {
+    let acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hist[c][v]; if (acc > cut) { lo[c] = v; break; } }
+    acc = 0;
+    for (let v = 255; v >= 0; v--) { acc += hist[c][v]; if (acc > cut) { hi[c] = v; break; } }
+    if (hi[c] - lo[c] < 24) { lo[c] = 0; hi[c] = 255; }
+  }
+  const sat = 1.35;
+  for (let i = 0; i < d.length; i += 4) {
+    const r0 = Math.max(0, Math.min(255, ((d[i] - lo[0]) * 255) / (hi[0] - lo[0])));
+    const g0 = Math.max(0, Math.min(255, ((d[i + 1] - lo[1]) * 255) / (hi[1] - lo[1])));
+    const b0 = Math.max(0, Math.min(255, ((d[i + 2] - lo[2]) * 255) / (hi[2] - lo[2])));
+    const lum = 0.299 * r0 + 0.587 * g0 + 0.114 * b0;
+    d[i] = lum + (r0 - lum) * sat;
+    d[i + 1] = lum + (g0 - lum) * sat;
+    d[i + 2] = lum + (b0 - lum) * sat;
   }
 }
 
@@ -733,6 +827,9 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   const [facing, setFacing] = useState<'user' | 'environment'>('environment');
   const [camError, setCamError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchOk, setTorchOk] = useState(false);
+  const [burstMode, setBurstMode] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -769,6 +866,10 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const lastHandoffId = useRef<number | null>(null);
   const [mobileTab, setMobileTab] = useState<'capture' | 'pages' | 'edit' | 'export'>('capture');
+  const [detectingAll, setDetectingAll] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [imgFormat, setImgFormat] = useState<'jpeg' | 'png'>('jpeg');
+  const [ocrProgress, setOcrProgress] = useState<{ done: number; total: number } | null>(null);
 
   const selected = pages.find(p => p.id === selectedId) ?? null;
 
@@ -783,11 +884,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         if (s.fileName) setFileName(s.fileName);
         if (typeof s.pageNumbers === 'boolean') setPageNumbers(s.pageNumbers);
         if (s.ocrPsm) setOcrPsm(s.ocrPsm);
+        if (s.imgFormat) setImgFormat(s.imgFormat);
       }
     } catch { /* ignore */ }
   }, []);
   useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ pageSize, quality, exportScale, fileName, pageNumbers, ocrPsm }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ pageSize, quality, exportScale, fileName, pageNumbers, ocrPsm, imgFormat }));
   }, [pageSize, quality, exportScale, fileName, pageNumbers, ocrPsm]);
   useEffect(() => {
     if (!success) return;
@@ -800,6 +902,8 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     streamRef.current?.getTracks().forEach(tr => tr.stop());
     streamRef.current = null;
     setCameraOn(false);
+    setTorchOn(false);
+    setTorchOk(false);
   }, []);
   useEffect(() => () => stopCamera(), [stopCamera]);
 
@@ -809,10 +913,16 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('unsupported');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: mode, width: { ideal: 2560 }, height: { ideal: 1440 } },
         audio: false,
       });
       streamRef.current = stream;
+      // torch (flashlight) support check — great for documents in dim light
+      try {
+        const track = stream.getVideoTracks()[0];
+        const caps: any = track?.getCapabilities?.() ?? {};
+        setTorchOk(!!caps.torch);
+      } catch { setTorchOk(false); }
       setCameraOn(true);
       requestAnimationFrame(() => {
         if (videoRef.current) {
@@ -822,6 +932,17 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       });
     } catch {
       setCamError(lang === 'ar' ? 'تعذر فتح الكاميرا — تأكد من الصلاحيات و HTTPS' : 'Cannot open camera — check permission & HTTPS');
+    }
+  };
+
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: !torchOn }] } as any);
+      setTorchOn(t => !t);
+    } catch {
+      setCamError(lang === 'ar' ? 'الفلاش غير مدعوم على الجهاز ده' : 'Flash not supported on this device');
     }
   };
 
@@ -871,9 +992,9 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         try {
           const base = await loadImageFile(f);
           fresh.push({
-            ...base, id: idRef.current++, rotation: 0, filter: 'enhanced',
-            brightness: 8, contrast: 18, threshold: 128, autoLevels: true,
-            denoise: true, sharpen: 25, quad: null,
+            ...base, id: idRef.current++, rotation: 0, filter: 'magic',
+            brightness: 0, contrast: 0, threshold: 128, autoLevels: true,
+            denoise: true, sharpen: 25, shadowRemove: true, deskew: true, quad: null,
           });
         } catch { /* skip */ }
       }
@@ -881,6 +1002,8 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         setPages(prev => [...prev, ...fresh]);
         setSelectedId(fresh[0].id);
         setMobileTab('pages');
+        // background auto-crop on import — scanner behaviour
+        void autoDetectForPages(fresh);
       }
     } finally {
       setLoading(false);
@@ -922,14 +1045,17 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       const page: ScanPage = {
         id: idRef.current++, name: `scan_${new Date().toLocaleTimeString().replace(/:/g, '-')}`,
-        dataUrl, width: vw, height: vh, rotation: 0, filter: 'enhanced',
-        brightness: 8, contrast: 18, threshold: 128, autoLevels: true,
-        denoise: true, sharpen: 25, quad: null,
+        dataUrl, width: vw, height: vh, rotation: 0, filter: 'magic',
+        brightness: 0, contrast: 0, threshold: 128, autoLevels: true,
+        denoise: true, sharpen: 25, shadowRemove: true, deskew: true, quad: null,
         sizeBytes: Math.round(dataUrl.length * 0.75),
       };
       setPages(prev => [...prev, page]);
-      setSelectedId(page.id);
-      setSuccess(lang === 'ar' ? 'تم التقاط الصفحة 📸' : 'Page captured 📸');
+      if (!burstMode) {
+        setSelectedId(page.id);
+        setSuccess(lang === 'ar' ? 'تم التقاط الصفحة 📸' : 'Page captured 📸');
+      }
+      void autoDetectForPages([page]);
     } finally {
       setCapturing(false);
     }
@@ -972,6 +1098,9 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     const ctx = canvas.getContext('2d')!;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const d = imageData.data;
+    // 1) shadow/uneven-lighting removal (flat-field division) FIRST — fixes dark corners & shadows
+    if (page.shadowRemove && page.filter !== 'color') flatFieldShadowRemove(d, canvas.width, canvas.height);
+    // 2) auto levels re-balance after shadow removal
     if (page.filter !== 'color' && page.autoLevels) autoLevelsRGB(d);
     if (page.brightness !== 0 || page.contrast !== 0) applyBrightnessContrast(d, page.brightness, page.contrast);
     if (page.filter === 'gray' || page.filter === 'bw' || page.filter === 'enhanced') {
@@ -992,10 +1121,19 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       } else {
         if (page.sharpen > 0) unsharp(d, canvas.width, canvas.height, (page.sharpen / 100) * 0.6);
       }
+    } else if (page.filter === 'magic') {
+      // vivid color mode: saturation/contrast pop while removing yellowish cast
+      applyVividColor(d);
+      if (page.sharpen > 0) unsharp(d, canvas.width, canvas.height, (page.sharpen / 100) * 0.9);
     } else if (page.sharpen > 0) {
       unsharp(d, canvas.width, canvas.height, (page.sharpen / 100) * 0.5);
     }
     ctx.putImageData(imageData, 0, 0);
+    // 3) auto deskew straightens text lines (runs after pixel pipeline)
+    if (page.deskew && page.filter !== 'color') {
+      const angle = detectSkewAngle(canvas);
+      if (angle) canvas = rotateCanvas(canvas, -angle);
+    }
     return canvas;
   }, []);
 
@@ -1020,15 +1158,19 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   useEffect(() => {
     if (!selected || !previewCanvasRef.current) return;
     const target = previewCanvasRef.current;
+    // before/after: "before" shows the warped (but unfiltered) scan
+    const src: ScanPage = showOriginal
+      ? { ...selected, filter: 'color', brightness: 0, contrast: 0, sharpen: 0, autoLevels: false, denoise: false, shadowRemove: false, deskew: false }
+      : selected;
     const t = setTimeout(() => {
-      renderScan(selected, 900).then(canvas => {
+      renderScan(src, 900).then(canvas => {
         target.width = canvas.width;
         target.height = canvas.height;
         target.getContext('2d')!.drawImage(canvas, 0, 0);
       }).catch(() => {});
     }, 140);
     return () => clearTimeout(t);
-  }, [selected, renderScan]);
+  }, [selected, renderScan, showOriginal]);
 
   /* ---------- magnifier loupe for the active corner (precision on mobile) ---------- */
   useEffect(() => {
@@ -1197,7 +1339,46 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     pushQuadHistory();
     updateSelected({ rotation: (selected.rotation + 90) % 360, quad: null });
   };
-  const autoEnhance = () => selected && updateSelected({ filter: 'enhanced', brightness: 8, contrast: 18, autoLevels: true, denoise: true, sharpen: 25 });
+  const autoEnhance = () => selected && updateSelected({ filter: 'magic', brightness: 0, contrast: 0, autoLevels: true, denoise: true, shadowRemove: true, sharpen: 25 });
+
+  /** background auto-crop for a batch of pages (import / capture) */
+  const autoDetectForPages = async (list: ScanPage[]) => {
+    for (const p of list) {
+      try {
+        const img = await loadHtmlImage(p.dataUrl);
+        const c = drawRotated(img, p.rotation, 640);
+        const found = detectDocumentQuad(c);
+        if (found && isValidQuad(found.quad) && found.confidence <= 0.97) {
+          const refined = snapQuadToEdges(c, found.quad) ?? found.quad;
+          setPages(prev => prev.map(x => (x.id === p.id && !x.quad) ? { ...x, quad: refined } : x));
+        }
+      } catch { /* ignore */ }
+    }
+  };
+
+  /** force re-detect corners on all pages */
+  const detectAllQuads = async () => {
+    if (!pages.length || detectingAll) return;
+    setDetectingAll(true);
+    let n = 0;
+    try {
+      for (const p of pages) {
+        try {
+          const img = await loadHtmlImage(p.dataUrl);
+          const c = drawRotated(img, p.rotation, 640);
+          const found = detectDocumentQuad(c);
+          if (found && isValidQuad(found.quad) && found.confidence <= 0.97) {
+            const refined = snapQuadToEdges(c, found.quad) ?? found.quad;
+            setPages(prev => prev.map(x => x.id === p.id ? { ...x, quad: refined } : x));
+            n++;
+          }
+        } catch { /* ignore */ }
+      }
+      setSuccess(lang === 'ar' ? `تم اكتشاف الزوايا في ${n} صفحة 🎯` : `Detected corners on ${n} pages 🎯`);
+    } finally {
+      setDetectingAll(false);
+    }
+  };
   const movePage = (index: number, dir: 'up' | 'down') => {
     setPages(prev => {
       const next = [...prev];
@@ -1253,6 +1434,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     const targets = onlySelected ? pages.filter(p => p.id === selectedId) : pages;
     if (!targets.length || ocrBusy) return;
     setOcrBusy(true);
+    setOcrProgress({ done: 0, total: targets.length });
     setError(null);
     try {
       const { createWorker } = await import('tesseract.js');
@@ -1262,19 +1444,23 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         await worker.setParameters({ tessedit_pageseg_mode: ocrPsm });
       } catch { /* non-fatal */ }
       const out: Record<number, string> = {};
+      let done = 0;
       for (const p of targets) {
         const ocrCanvas = await prepareOcrCanvas(p);
         const { data } = await worker.recognize(ocrCanvas.toDataURL('image/png'));
         out[p.id] = data?.text?.trim() || (lang === 'ar' ? '(لا يوجد نص)' : '(no text)');
+        done++;
+        setOcrProgress({ done, total: targets.length });
       }
       await worker.terminate?.();
       setOcrText(prev => ({ ...prev, ...out }));
-      setSuccess(lang === 'ar' ? 'تم استخراج النص ✅' : 'OCR done ✅');
+      setSuccess(lang === 'ar' ? `تم استخراج النص ✅ (${targets.length} ${lang === 'ar' ? 'صفحات' : 'pages'})` : `OCR done ✅ (${targets.length} pages)`);
     } catch (e) {
       console.error(e);
       setError(lang === 'ar' ? 'فشل OCR — يحتاج إنترنت لتحميل نموذج اللغة' : 'OCR failed — needs internet for language data');
     } finally {
       setOcrBusy(false);
+      setOcrProgress(null);
     }
   };
 
@@ -1296,6 +1482,23 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
   const getPageDims = () => {
     if (pageSize === 'fit') return null;
     return pageSize === 'a4' ? { w: 595.28, h: 841.89 } : { w: 612, h: 792 };
+  };
+
+  /** download the currently selected page as a standalone image */
+  const exportSingleImage = async () => {
+    if (!selected || exporting) return;
+    setExporting(true);
+    try {
+      const canvas = await renderScan(selected, exportScale);
+      const url = canvas.toDataURL(imgFormat === 'png' ? 'image/png' : 'image/jpeg', quality);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeName(imgFormat === 'png' ? 'png' : 'jpg');
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setSuccess(lang === 'ar' ? 'تم تحميل الصفحة ✅' : 'Page downloaded ✅');
+    } catch {
+      setError(lang === 'ar' ? 'فشل تحميل الصفحة' : 'Page export failed');
+    } finally { setExporting(false); }
   };
 
   const buildPdf = async (): Promise<Uint8Array> => {
@@ -1361,11 +1564,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     try {
       const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
+      const ext = imgFormat === 'png' ? 'png' : 'jpg';
       let i = 0;
       for (const p of pages) {
         const canvas = await renderScan(p, exportScale);
-        const buf = await (await fetch(canvas.toDataURL('image/jpeg', quality))).arrayBuffer();
-        zip.file(`${String(++i).padStart(2, '0')}_${p.name}.jpg`, buf);
+        const buf = await (await fetch(imgFormat === 'png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality))).arrayBuffer();
+        zip.file(`${String(++i).padStart(2, '0')}_${p.name}.${ext}`, buf);
         setProgress(Math.round((i / pages.length) * 85));
       }
       const blob = await zip.generateAsync({ type: 'blob' });
@@ -1410,7 +1614,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         </div>
         <div className="flex-1">
           <h1 className="text-xs font-bold text-white sm:text-sm">{lang === 'ar' ? 'سكانر المستندات' : 'Document Scanner'}</h1>
-          <p className="text-[8px] text-gray-500 font-mono sm:text-[9px]">{lang === 'ar' ? 'قص منظوري دقيق + اكتشاف تلقائي + OCR عالي الدقة' : 'Precise perspective crop + auto-detect + accurate OCR'}</p>
+          <p className="text-[8px] text-gray-500 font-mono sm:text-[9px]">{lang === 'ar' ? 'اكتشاف تلقائي + إزالة ظلال + قص منظوري + تصحيح ميلان + OCR' : 'Auto-detect + shadow removal + perspective crop + deskew + OCR'}</p>
         </div>
         {pages.length > 0 && (
           <span className="text-[9px] font-mono text-gray-400 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">📄 {pages.length} {lang === 'ar' ? 'صفحة' : 'pages'}</span>
@@ -1462,8 +1666,18 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                     <button onClick={capturePhoto} disabled={capturing} className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-[10px] font-mono font-bold hover:from-teal-500 hover:to-emerald-500 flex items-center justify-center gap-2 disabled:opacity-50">
                       {capturing ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}{lang === 'ar' ? 'التقاط 📸' : 'Capture 📸'}
                     </button>
+                    {torchOk && (
+                      <button onClick={toggleTorch} title={lang === 'ar' ? 'الفلاش' : 'Torch'}
+                        className={cn('px-3 rounded-lg border', torchOn ? 'bg-amber-500/20 border-amber-400/60 text-amber-300' : 'border-[#2D3139] bg-[#0F1115] text-gray-400 hover:text-white')}>
+                        <Zap size={14} />
+                      </button>
+                    )}
                     <button onClick={stopCamera} className="px-3 rounded-lg border border-[#2D3139] bg-[#0F1115] text-gray-400 hover:text-white"><X size={14} /></button>
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={burstMode} onChange={e => setBurstMode(e.target.checked)} className="accent-teal-500 w-3.5 h-3.5" />
+                    <span className="text-[9px] font-mono text-gray-400">{lang === 'ar' ? 'وضع دفعة — التقاط متتابع بدون تحديد' : 'Burst mode — continuous capture'}</span>
+                  </label>
                 </div>
               )}
               {camError && <p className="text-[9px] text-red-400 mt-2 font-mono bg-red-500/10 border border-red-500/20 rounded p-2">{camError}</p>}
@@ -1496,6 +1710,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                 </div>
                 <label className="text-[9px] font-mono text-gray-500 uppercase block mt-2">{lang === 'ar' ? 'جودة JPEG' : 'JPEG Quality'}: {Math.round(quality * 100)}%</label>
                 <input type="range" min={0.4} max={1} step={0.02} value={quality} onChange={e => setQuality(+e.target.value)} className="w-full accent-teal-500" />
+                <label className="text-[9px] font-mono text-gray-500 uppercase block mt-2">{lang === 'ar' ? 'صيغة صور ZIP' : 'ZIP image format'}</label>
+                <div className="flex gap-1 mt-1">
+                  {(['jpeg', 'png'] as const).map(v => (
+                    <button key={v} onClick={() => setImgFormat(v)} className={cn('flex-1 py-1.5 text-[9px] font-mono uppercase rounded-md border', imgFormat === v ? 'bg-teal-600/20 border-teal-500/40 text-teal-300 font-bold' : 'bg-[#14171C] border-[#2D3139] text-gray-500')}>{v.toUpperCase()}</button>
+                  ))}
+                </div>
                 <input value={fileName} onChange={e => setFileName(e.target.value)} placeholder={lang === 'ar' ? 'اسم الملف' : 'File name'} className="mt-2 w-full bg-[#14171C] border border-[#2D3139] rounded-md px-2.5 py-2 text-[10px] font-mono text-white placeholder:text-gray-600 outline-none focus:border-teal-500/60" />
                 <input value={pdfTitle} onChange={e => setPdfTitle(e.target.value)} placeholder={lang === 'ar' ? 'عنوان المستند' : 'Doc title'} className="mt-2 w-full bg-[#14171C] border border-[#2D3139] rounded-md px-2.5 py-2 text-[10px] font-mono text-white placeholder:text-gray-600 outline-none focus:border-teal-500/60" />
                 <label className="flex items-center gap-2 mt-2 cursor-pointer">
@@ -1519,6 +1739,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                   ))}
                 </div>
                 <p className="text-[8px] font-mono text-gray-600 mb-2 leading-relaxed">{lang === 'ar' ? 'تكبير تلقائي + تصحيح الميلان + عتبة تكيفية قبل التعرف' : 'Auto-upscale + deskew + adaptive threshold before recognition'}</p>
+                {ocrBusy && ocrProgress && (
+                  <p className="text-[9px] font-mono text-teal-300 mb-2 flex items-center gap-1.5">
+                    <Loader2 size={10} className="animate-spin" />
+                    OCR {ocrProgress.done}/{ocrProgress.total} …
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <button onClick={() => runOcr(true)} disabled={!selected || ocrBusy} className="flex-1 py-2 rounded-md bg-teal-600/20 border border-teal-500/40 text-teal-300 text-[9px] font-mono font-bold hover:bg-teal-600/30 disabled:opacity-40 flex items-center justify-center gap-1.5">
                     {ocrBusy ? <Loader2 size={11} className="animate-spin" /> : null}{lang === 'ar' ? 'صفحة' : 'Page'}
@@ -1566,7 +1792,21 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-3">
+                  <button onClick={detectAllQuads} disabled={detectingAll}
+                    className="py-1.5 px-2.5 rounded-md bg-teal-600/20 border border-teal-500/40 text-teal-300 text-[9px] font-mono font-bold hover:bg-teal-600/30 disabled:opacity-40 flex items-center gap-1.5">
+                    {detectingAll ? <Loader2 size={11} className="animate-spin" /> : <Crosshair size={11} />}
+                    {lang === 'ar' ? 'كشف زوايا الكل 🎯' : 'Detect all 🎯'}
+                  </button>
+                  <button onClick={() => { if (window.confirm(lang === 'ar' ? 'مسح كل الصفحات؟' : 'Clear all pages?')) { setPages([]); setSelectedId(null); setOcrText({}); } }}
+                    disabled={!pages.length}
+                    className="py-1.5 px-2.5 rounded-md border border-red-500/30 bg-red-500/10 text-red-300 text-[9px] font-mono hover:bg-red-500/20 disabled:opacity-40 flex items-center gap-1.5">
+                    <Trash2 size={11} />{lang === 'ar' ? 'مسح الكل' : 'Clear all'}
+                  </button>
+                  <span className="text-[8px] font-mono text-gray-600 ml-auto">{lang === 'ar' ? 'اسحب الكروت لإعادة الترتيب' : 'drag cards to reorder'}</span>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 {pages.map((p, i) => (
                   <div key={p.id} draggable onDragStart={() => onDragStart(i)} onDragOver={e => onDragOverCard(e, i)} onDragEnd={() => setDragIndex(null)}
                     onClick={() => { setSelectedId(p.id); setMobileTab('edit'); }}
@@ -1574,7 +1814,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                     <div className="relative aspect-[3/4] bg-white flex items-center justify-center overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.dataUrl} alt={p.name} draggable={false} className="max-w-full max-h-full object-contain pointer-events-none"
-                        style={{ transform: `rotate(${p.rotation}deg)`, filter: p.filter === 'gray' || p.filter === 'bw' || p.filter === 'enhanced' ? 'grayscale(1) contrast(1.15)' : undefined }} />
+                        style={{ transform: `rotate(${p.rotation}deg)`, filter: p.filter === 'gray' || p.filter === 'bw' || p.filter === 'enhanced' ? 'grayscale(1) contrast(1.15)' : p.filter === 'magic' ? 'saturate(1.35) contrast(1.1)' : undefined }} />
                       <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-black/70 text-[8px] font-mono font-bold text-white">#{i + 1}</div>
                       <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-teal-600/90 text-[7px] font-mono text-white">{FILTERS.find(f => f.id === p.filter)?.[lang === 'ar' ? 'ar' : 'en']}</div>
                       {p.quad && !isFullQuad(p.quad) && <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-blue-600/90 text-[7px] font-mono text-white">◈ {lang === 'ar' ? 'مقصوص' : 'cropped'}</div>}
@@ -1587,6 +1827,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             )}
           </section>
@@ -1707,10 +1948,18 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                     {!isValidQuad(selected.quad) && selected.quad ? (lang === 'ar' ? ' — الزوايا غير صالحة، يُستخدم الإطار الكامل' : ' — invalid corners, full frame used') : ''}
                   </p>
                 )}
+                <button onClick={() => setShowOriginal(o => !o)} disabled={!selected}
+                  className="w-full py-1.5 rounded-md border border-[#2D3139] bg-[#0F1115] text-[9px] font-mono text-gray-400 hover:text-teal-300 flex items-center justify-center gap-1.5">
+                  <Eye size={11} />
+                  {showOriginal
+                    ? (lang === 'ar' ? 'عرض بعد التحسين ✨' : 'Show enhanced ✨')
+                    : (lang === 'ar' ? 'عرض قبل التحسين 👁' : 'Show original 👁')}
+                </button>
 
                 <div className="flex gap-2">
                   <button onClick={rotateSelected} className="flex-1 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300 text-[9px] font-mono hover:border-teal-500/50 flex items-center justify-center gap-1.5"><RotateCw size={11} />{lang === 'ar' ? 'تدوير' : 'Rotate'}</button>
                   <button onClick={autoEnhance} className="flex-1 py-2 rounded-md bg-teal-600/20 border border-teal-500/40 text-teal-300 text-[9px] font-mono font-bold hover:bg-teal-600/30 flex items-center justify-center gap-1.5"><Sparkles size={11} />{lang === 'ar' ? 'تحسين تلقائي' : 'Auto'}</button>
+                  <button onClick={exportSingleImage} disabled={exporting} title={lang === 'ar' ? 'تحميل الصفحة كصورة' : 'Download page as image'} className="px-3 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300 hover:border-teal-500/50 disabled:opacity-40 flex items-center"><Download size={11} /></button>
                   <button onClick={() => selected && duplicatePage(selected.id)} className="px-3 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300 hover:border-teal-500/50"><Copy size={11} /></button>
                   <button onClick={() => movePage(pages.findIndex(p => p.id === selected.id), 'up')} className="px-2 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300">↑</button>
                   <button onClick={() => movePage(pages.findIndex(p => p.id === selected.id), 'down')} className="px-2 py-2 rounded-md border border-[#2D3139] bg-[#0F1115] text-gray-300">↓</button>
@@ -1719,15 +1968,15 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                 {/* filters */}
                 <div>
                   <label className="text-[9px] font-mono text-gray-500 uppercase">{lang === 'ar' ? 'فلتر المسح' : 'Scan filter'}</label>
-                  <div className="grid grid-cols-4 gap-1 mt-1.5">
+                  <div className="grid grid-cols-5 gap-1 mt-1.5">
                     {FILTERS.map(f => (
                       <button key={f.id} onClick={() => updateSelected({ filter: f.id })}
-                        className={cn('py-2 text-[8px] font-mono rounded-md border', selected.filter === f.id ? 'bg-teal-600/20 border-teal-500/50 text-teal-300 font-bold' : 'bg-[#0F1115] border-[#2D3139] text-gray-500')}>
+                        className={cn('py-2 text-[7px] font-mono rounded-md border leading-tight', selected.filter === f.id ? 'bg-teal-600/20 border-teal-500/50 text-teal-300 font-bold' : 'bg-[#0F1115] border-[#2D3139] text-gray-500')}>
                         {lang === 'ar' ? f.ar : f.en}
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => selected && applyToAll({ filter: selected.filter, brightness: selected.brightness, contrast: selected.contrast, threshold: selected.threshold, autoLevels: selected.autoLevels, denoise: selected.denoise, sharpen: selected.sharpen })}
+                  <button onClick={() => selected && applyToAll({ filter: selected.filter, brightness: selected.brightness, contrast: selected.contrast, threshold: selected.threshold, autoLevels: selected.autoLevels, denoise: selected.denoise, sharpen: selected.sharpen, shadowRemove: selected.shadowRemove, deskew: selected.deskew })}
                     className="w-full mt-1.5 py-1.5 text-[8px] font-mono text-gray-500 hover:text-teal-300 border border-dashed border-[#2D3139] rounded-md">
                     {lang === 'ar' ? 'تطبيق الفلتر على الكل ✨' : 'Apply filter to all ✨'}
                   </button>
@@ -1765,6 +2014,18 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
                     <input type="checkbox" checked={selected.denoise} onChange={e => updateSelected({ denoise: e.target.checked })} className="accent-teal-500 w-3.5 h-3.5" />
                     <span className="text-[9px] font-mono text-gray-400">{lang === 'ar' ? 'إزالة ضجيج الحساس (median)' : 'Sensor denoise (median)'}</span>
                   </label>
+                  {selected.filter !== 'color' && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={selected.shadowRemove} onChange={e => updateSelected({ shadowRemove: e.target.checked })} className="accent-teal-500 w-3.5 h-3.5" />
+                      <span className="text-[9px] font-mono text-gray-400">{lang === 'ar' ? 'إزالة الظلال والتظليل غير المستوي' : 'Remove shadows / uneven light'}</span>
+                    </label>
+                  )}
+                  {selected.filter !== 'color' && selected.filter !== 'magic' && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={selected.deskew} onChange={e => updateSelected({ deskew: e.target.checked })} className="accent-teal-500 w-3.5 h-3.5" />
+                      <span className="text-[9px] font-mono text-gray-400">{lang === 'ar' ? 'تقويم ميلان النص تلقائياً' : 'Auto-straighten text lines'}</span>
+                    </label>
+                  )}
                 </div>
 
                 {/* ocr result */}
