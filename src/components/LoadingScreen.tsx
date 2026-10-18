@@ -17,18 +17,15 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
   );
 }
 
-/** Fullscreen logo-video splash (mobile + desktop) */
+/** Logo splash: compact centered box on mobile, fullscreen on desktop */
 export function LoadingScreen() {
   return (
-    <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
-      <video
-        src="/logoveo.MP4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="absolute inset-0 w-full h-full object-cover"
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex items-center justify-center">
+      <img
+        src="/logoveo.gif"
+        alt="UniTool"
+        draggable={false}
+        className="w-56 h-56 sm:w-full sm:h-full object-contain sm:object-cover"
       />
     </div>
   );
