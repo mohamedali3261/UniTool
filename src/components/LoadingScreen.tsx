@@ -22,7 +22,7 @@ export function LoadingScreen() {
   return (
     <div className="fixed inset-0 z-[100] bg-[#0A0C0F] overflow-hidden flex items-center justify-center">
       <img
-        src="/logoveo.gif"
+        src="/UniTool_logo.png"
         alt="UniTool"
         draggable={false}
         className="w-40 h-40 sm:w-56 sm:h-56 object-contain"
