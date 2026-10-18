@@ -25,6 +25,7 @@ import {
   Globe
 } from 'lucide-react';
 import { getDcTranslation, DCLang } from '../../translations';
+import { ToolsMenu } from '../../../../src/components/ToolsMenu';
 
 interface NewDesignScreenProps {
   onSelectPreset: (preset: DimensionPreset) => void;
@@ -231,7 +232,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
           <div className="hidden lg:flex items-center" style={{ gap: 4 }}>
             {navPages.map(p => {
               const active = window.location.pathname.endsWith(p.href);
-              return (
+              const linkEl = (
                 <a
                   key={p.href}
                   href={p.href}
@@ -248,6 +249,22 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   {t[p.key]}
                 </a>
               );
+              // Floating tools mega-menu on hover for the "الأدوات" entry
+              if (p.key === 'tools') {
+                return (
+                  <ToolsMenu
+                    key={p.href}
+                    lang={lang}
+                    labels={{
+                      allTools: lang === 'ar' ? 'كل الأدوات' : 'All Tools',
+                      toolsCount: lang === 'ar' ? 'أدوات %' : '% tools',
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex' }}>{linkEl}</span>
+                  </ToolsMenu>
+                );
+              }
+              return linkEl;
             })}
           </div>
 
@@ -391,7 +408,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                       {/* Quick Fast-Click Aspect Presets */}
                       <div className="space-y-1.5">
                         <span className="text-[11px] font-semibold text-slate-300">{t.quickSizes}</span>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
                           <button
                             type="button"
                             onClick={() => setRatioPreset(1024, 500, 'بانر جوجل بلاي', 'Google Play Banner')}
@@ -447,7 +464,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                           <button
                             type="button"
                             onClick={() => setRatioPreset(512, 512, 'أيقونة تطبيق', 'App Icon')}
-                            className={`col-span-2 sm:col-span-1 p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                            className={`col-span-2 md:col-span-1 p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                               customWidth === 512 && customHeight === 512
                                 ? 'bg-sky-500/20 border-sky-400 text-sky-300 ring-1 ring-sky-400'
                                 : 'bg-[#0B132B] hover:bg-[#152042] border-slate-700/80 text-slate-200'
@@ -474,9 +491,9 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                         </div>
 
                         {/* Width & Height + Lock Switch */}
-                        <div className="sm:col-span-5 grid grid-cols-7 gap-2 items-end">
+                        <div className="sm:col-span-5 grid grid-cols-3 sm:grid-cols-7 gap-2 items-end">
                           {/* Width */}
-                          <div className="col-span-3 space-y-1">
+                          <div className="col-span-1 sm:col-span-3 space-y-1">
                             <label className="text-[11px] font-semibold text-slate-300">{t.width}</label>
                             <input
                               type="number"
@@ -505,7 +522,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                           </div>
 
                           {/* Height */}
-                          <div className="col-span-3 space-y-1">
+                          <div className="col-span-1 sm:col-span-3 space-y-1">
                             <label className="text-[11px] font-semibold text-slate-300">{t.height}</label>
                             <input
                               type="number"

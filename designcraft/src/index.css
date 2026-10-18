@@ -94,3 +94,20 @@ input, textarea {
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
+
+/* ===== Floating tools mega-menu (navbar dropdown) ===== */
+.tools-mega-menu {
+  animation: toolsMenuIn 0.2s ease-out;
+  will-change: opacity, transform;
+}
+
+@keyframes toolsMenuIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.985);
+  }
+}
+
+.tools-menu-item:active {
+  background: rgba(255, 255, 255, 0.08);
+}

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { FileHandoff, FileHandoffTarget, PageId } from './types/app';
 import { translations } from './lib/translations';
+import { navItems } from './config/navigation';
 
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -17,7 +18,11 @@ import { ErrorScreen, LoadingScreen } from './components/LoadingScreen';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageId>('videoToGif');
+  // Deep-link support: /app.html#<toolId> opens that tool directly
+  const [currentPage, setCurrentPage] = useState<PageId>(() => {
+    const hashId = window.location.hash.replace('#', '').trim();
+    return (navItems.some(i => i.id === hashId) ? hashId : 'videoToGif') as PageId;
+  });
   const [fileHandoff, setFileHandoff] = useState<FileHandoff | null>(null);
   const fileHandoffId = useRef(0);
   const [lang, setLang] = useState<'ar' | 'en'>(() => {
@@ -37,7 +42,12 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
-  const navigateToPage = (page: string) => setCurrentPage(page as PageId);
+  const navigateToPage = (page: string) => {
+    if (navItems.some(i => i.id === page) && window.location.hash.slice(1) !== page) {
+      history.replaceState(null, '', `#${page}`);
+    }
+    setCurrentPage(page as PageId);
+  };
 
   const toggleLang = () => {
     setLang(prev => {

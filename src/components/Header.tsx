@@ -1,4 +1,5 @@
 import { Menu, Globe } from 'lucide-react';
+import { ToolsMenu } from './ToolsMenu';
 
 interface Props {
   lang: 'ar' | 'en';
@@ -35,7 +36,7 @@ export function Header({ lang, onToggleLang, onOpenMobileMenu }: Props) {
         <div className="hidden md:flex items-center" style={{ gap: 6 }}>
           {sitePages.map(p => {
             const active = window.location.pathname.endsWith(p.href);
-            return (
+            const linkEl = (
               <a
                 key={p.href}
                 href={p.href}
@@ -52,6 +53,24 @@ export function Header({ lang, onToggleLang, onOpenMobileMenu }: Props) {
                 {lang === 'ar' ? p.ar : p.en}
               </a>
             );
+            // Floating tools mega-menu on hover for the "الأدوات" entry
+            if (p.href === '/app.html') {
+              return (
+                <ToolsMenu
+                  key={p.href}
+                  lang={lang}
+                  labels={{
+                    allTools: lang === 'ar' ? 'كل الأدوات' : 'All Tools',
+                    toolsCount: lang === 'ar' ? 'أدوات %' : '% tools',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex' }}>
+                    {linkEl}
+                  </span>
+                </ToolsMenu>
+              );
+            }
+            return linkEl;
           })}
         </div>
 

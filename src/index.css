@@ -178,3 +178,20 @@ html {
   scrollbar-color: #f97316 transparent;
 }
 
+
+/* ===== Floating tools mega-menu (navbar dropdown) ===== */
+.tools-mega-menu {
+  animation: toolsMenuIn 0.2s ease-out;
+  will-change: opacity, transform;
+}
+
+@keyframes toolsMenuIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.985);
+  }
+}
+
+.tools-menu-item:active {
+  background: rgba(255, 255, 255, 0.08);
+}
