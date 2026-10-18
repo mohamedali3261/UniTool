@@ -13,8 +13,7 @@ type QRType = 'text' | 'url' | 'wifi' | 'email' | 'phone' | 'sms';
 
 export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
   const [qrType, setQRType] = useState<QRType>('url');
-  const [inputValue, setInputValue] = useState('');
-  const [wifiSSID, setWifiSSID] = useState('');
+  const [inputValue, setInputValue] = useState('');  const [wifiSSID, setWifiSSID] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
   const [wifiEncryption, setWifiEncryption] = useState<'WPA' | 'WEP' | 'nopass'>('WPA');
   const [emailTo, setEmailTo] = useState('');
@@ -29,6 +28,48 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [mobileTab, setMobileTab] = useState<'settings' | 'preview'>('settings');
+
+  // Prefill from QR Scanner: scanned codes land here ready to edit & regenerate
+  useEffect(() => {
+    let pre: string | null = null;
+    try {
+      pre = sessionStorage.getItem('unitool-qr-prefill');
+      if (pre) sessionStorage.removeItem('unitool-qr-prefill');
+    } catch { return; }
+    if (!pre) return;
+    const v = pre.trim();
+    const dec = (x: string) => { try { return decodeURIComponent(x); } catch { return x; } };
+    if (/^wifi:/i.test(v)) {
+      setQRType('wifi');
+      setWifiSSID(dec(v.match(/S:([^;]*)/)?.[1] || ''));
+      setWifiPassword(dec(v.match(/P:([^;]*)/)?.[1] || ''));
+      const enc = (v.match(/T:([^;]*)/)?.[1] || '').toUpperCase();
+      setWifiEncryption(enc === 'NOPASS' ? 'nopass' : enc === 'WEP' ? 'WEP' : 'WPA');
+    } else if (/^mailto:/i.test(v)) {
+      try {
+        const u = new URL(v);
+        setQRType('email');
+        setEmailTo(decodeURIComponent(u.pathname || ''));
+        setEmailSubject(u.searchParams.get('subject') || '');
+        setEmailBody(u.searchParams.get('body') || '');
+      } catch { setQRType('text'); setInputValue(v); }
+    } else if (/^smsto?:/i.test(v)) {
+      const m = /^smsto?:([^:?;]+)/i.exec(v);
+      setQRType('sms');
+      setPhone(dec(m?.[1] || ''));
+      const body = v.split(/[?&]body=/)[1];
+      if (body) setSmsMessage(dec(body));
+    } else if (/^tel[:=]/i.test(v)) {
+      setQRType('phone');
+      setPhone(dec(v.replace(/^tel[:=]/i, '')));
+    } else if (/^https?:\/\//i.test(v)) {
+      setQRType('url');
+      setInputValue(v);
+    } else {
+      setQRType('text');
+      setInputValue(v);
+    }
+  }, []);
 
   const getQRValue = (): string => {
     switch (qrType) {

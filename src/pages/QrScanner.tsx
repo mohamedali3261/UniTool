@@ -4,6 +4,8 @@ import {
   Camera, CameraOff, Copy, Check, ExternalLink, ImagePlus, History,
   Trash2, X, Link, Wifi, Mail, Phone, MessageSquare, MapPin, Text,
   ScanQrCode, RefreshCw, Loader2, AlertTriangle, QrCode,
+  Flashlight, Volume2, VolumeX, Vibrate, VibrateOff, Repeat,
+  Search, FileJson2, FileText, Wand2,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -19,7 +21,13 @@ interface HistoryItem {
   ts: number;
 }
 
+interface Prefs {
+  beep: boolean;
+  vibrate: boolean;
+}
+
 const HISTORY_KEY = 'unitool_qr_history';
+const PREFS_KEY = 'unitool_qr_prefs';
 const HISTORY_LIMIT = 50;
 
 type ScanMode = 'camera' | 'image';
@@ -40,12 +48,35 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
       return raw ? JSON.parse(raw) : [];
     } catch { return []; }
   });
+  const [prefs, setPrefs] = useState<Prefs>(() => {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      return raw ? { beep: true, vibrate: true, ...JSON.parse(raw) } : { beep: true, vibrate: true };
+    } catch { return { beep: true, vibrate: true }; }
+  });
+  const [continuous, setContinuous] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [deviceId, setDeviceId] = useState('');
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState('');
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const loopRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastFoundRef = useRef<{ text: string; ts: number } | null>(null);
+  const continuousRef = useRef(continuous);
+
+  useEffect(() => { continuousRef.current = continuous; }, [continuous]);
+
+  const savePrefs = (next: Prefs) => {
+    setPrefs(next);
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
 
   const ar = (a: string, e: string) => (lang === 'ar' ? a : e);
 
@@ -92,17 +123,6 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
     });
   }, []);
 
-  const onFound = useCallback((text: string) => {
-    setResult(text);
-    setError(null);
-    setCopied(false);
-    setScanningVisual(false);
-    pushHistory(text);
-    beep();
-    try { navigator.vibrate?.(120); } catch { /* ignore */ }
-    stopCamera();
-  }, [beep, pushHistory]);
-
   // ---------- camera ----------
 
   const stopCamera = useCallback(() => {
@@ -112,16 +132,36 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraOn(false);
     setScanningVisual(false);
+    setTorchOn(false);
   }, []);
 
-  const startCamera = async (mode: 'environment' | 'user' = facing) => {
+  const onFound = useCallback((text: string, keepScanning = false) => {
+    setResult(text);
+    setError(null);
+    setCopied(false);
+    setSessionCount(c => c + 1);
+    pushHistory(text);
+    if (prefs.beep) beep();
+    if (prefs.vibrate) { try { navigator.vibrate?.(120); } catch { /* ignore */ } }
+    if (!keepScanning) {
+      stopCamera();
+    } else {
+      setScanningVisual(true);
+    }
+  }, [beep, pushHistory, stopCamera, prefs.beep, prefs.vibrate]);
+
+  const startCamera = async (mode: 'environment' | 'user' = facing, devId: string = '') => {
     setError(null);
     setCameraLoading(true);
     stopCamera();
+    setSessionCount(0);
+    lastFoundRef.current = null;
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('unsupported');
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: devId
+          ? { deviceId: { exact: devId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -131,9 +171,20 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
       setFacing(mode);
       setCameraOn(true);
       setScanningVisual(true);
+      setTorchOn(false);
 
-      // clear loop when stream dies
-      stream.getVideoTracks()[0].addEventListener('ended', () => stopCamera());
+      // torch + device list
+      const track = stream.getVideoTracks()[0];
+      try {
+        const caps = track.getCapabilities?.() as any;
+        setTorchSupported(!!caps?.torch);
+      } catch { setTorchSupported(false); }
+      track.addEventListener('ended', () => stopCamera());
+      try {
+        const list = await navigator.mediaDevices.enumerateDevices();
+        setDevices(list.filter(d => d.kind === 'videoinput'));
+        if (devId) setDeviceId(devId);
+      } catch { /* ignore */ }
 
       // scan loop: throttled ~8 fps scaled-down frames
       const tick = () => {
@@ -149,7 +200,13 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
         try {
           const img = ctx.getImageData(0, 0, c.width, c.height);
           const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-          if (code?.data) onFound(code.data);
+          if (code?.data) {
+            const last = lastFoundRef.current;
+            // ignore the same code flashing in front of the lens repeatedly
+            if (last?.text === code.data && Date.now() - last.ts < 2500) return;
+            lastFoundRef.current = { text: code.data, ts: Date.now() };
+            onFound(code.data, continuousRef.current);
+          }
         } catch { /* ignore frame errors */ }
       };
       loopRef.current = window.setInterval(tick, 150);
@@ -167,6 +224,15 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
   const flipCamera = () => {
     const next = facing === 'environment' ? 'user' : 'environment';
     startCamera(next);
+  };
+
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track || !torchSupported) return;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: !torchOn }] } as any);
+      setTorchOn(!torchOn);
+    } catch { /* ignore */ }
   };
 
   // ---------- image scanning ----------
@@ -231,6 +297,38 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
 
   const clearHistory = () => saveHistory([]);
   const removeHistoryItem = (id: number) => saveHistory(history.filter(h => h.id !== id));
+
+  const filteredHistory = historyQuery.trim()
+    ? history.filter(h => h.text.toLowerCase().includes(historyQuery.trim().toLowerCase()))
+    : history;
+
+  const exportHistory = (kind: 'json' | 'txt') => {
+    if (history.length === 0) return;
+    const content = kind === 'json'
+      ? JSON.stringify(history, null, 2)
+      : history.map(h => `[${fmtDate(h.ts)}] ${h.text}`).join('\n');
+    // BOM so Arabic text opens correctly in Notepad / Excel
+    const blob = new Blob(['\uFEFF' + content], { type: (kind === 'json' ? 'application/json' : 'text/plain') + ';charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr-scan-history_${new Date().toISOString().slice(0, 10)}.${kind}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyHistoryItem = async (item: HistoryItem) => {
+    try { await navigator.clipboard.writeText(item.text); } catch {
+      const ta = document.createElement('textarea');
+      ta.value = item.text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
 
   const copyResult = async () => {
     if (!result) return;
@@ -306,7 +404,7 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
       <div className="flex-1 qr-scan-scroll">
         <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-4">
 
-          {/* Mode toggle */}
+          {/* Mode toggle + prefs */}
           <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
             {([
               { id: 'camera' as ScanMode, label: ar('الكاميرا', 'Camera'), icon: Camera },
@@ -324,6 +422,42 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                 {m.label}
               </button>
             ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => savePrefs({ ...prefs, beep: !prefs.beep })}
+              title={prefs.beep ? ar('إيقاف صوت التنبيه', 'Mute beep') : ar('تشغيل صوت التنبيه', 'Enable beep')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-mono border transition-colors',
+                prefs.beep ? 'bg-blue-600/15 border-blue-500/25 text-blue-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500'
+              )}
+            >
+              {prefs.beep ? <Volume2 size={10} /> : <VolumeX size={10} />}
+              {ar('الصوت', 'Sound')}
+            </button>
+            <button
+              onClick={() => savePrefs({ ...prefs, vibrate: !prefs.vibrate })}
+              title={prefs.vibrate ? ar('إيقاف الاهتزاز', 'Disable vibration') : ar('تشغيل الاهتزاز', 'Enable vibration')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-mono border transition-colors',
+                prefs.vibrate ? 'bg-blue-600/15 border-blue-500/25 text-blue-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500'
+              )}
+            >
+              {prefs.vibrate ? <Vibrate size={10} /> : <VibrateOff size={10} />}
+              {ar('الاهتزاز', 'Vibrate')}
+            </button>
+            <button
+              onClick={() => setContinuous(c => !c)}
+              title={ar('مسح متصل: يدخل كل الأكواد الجديدة في السجل من غير ما يوقف الكاميرا', 'Continuous scan: collects new codes without stopping the camera')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-mono border transition-colors',
+                continuous ? 'bg-emerald-600/15 border-emerald-500/25 text-emerald-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
+              )}
+            >
+              <Repeat size={10} />
+              {ar('مسح متصل', 'Continuous')}
+            </button>
           </div>
 
           {error && (
@@ -359,6 +493,14 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                     <div className="absolute top-3 end-3 w-8 h-8 border-t-2 border-e-2 border-blue-400 rounded-tr-xl pointer-events-none" />
                     <div className="absolute bottom-3 start-3 w-8 h-8 border-b-2 border-s-2 border-blue-400 rounded-bl-xl pointer-events-none" />
                     <div className="absolute bottom-3 end-3 w-8 h-8 border-b-2 border-e-2 border-blue-400 rounded-br-xl pointer-events-none" />
+                    {continuous && (
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-black/60 border border-emerald-500/30 flex items-center gap-1.5 backdrop-blur-sm">
+                        <Repeat size={9} className="text-emerald-400 shrink-0" />
+                        <span className="text-[8px] font-mono text-emerald-300 whitespace-nowrap">
+                          {ar(`مسح متصل · ${sessionCount} كود`, `Continuous · ${sessionCount} found`)}
+                        </span>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -402,8 +544,21 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                       <Camera size={12} />
                       {ar('مسح كود آخر', 'Scan another')}
                     </button>
+                    {torchSupported && (
+                      <button
+                        onClick={toggleTorch}
+                        title={torchOn ? ar('إطفاء الفلاش', 'Torch off') : ar('إضاءة الفلاش', 'Torch on')}
+                        className={cn(
+                          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-mono border transition-colors',
+                          torchOn ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' : 'bg-white/[0.04] border-white/[0.08] text-gray-300 hover:bg-white/[0.07]'
+                        )}
+                      >
+                        <Flashlight size={12} />
+                      </button>
+                    )}
                     <button
                       onClick={flipCamera}
+                      title={ar('تبديل الكاميرا', 'Flip camera')}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-300 text-[10px] font-mono hover:bg-white/[0.07] transition-colors"
                     >
                       <RefreshCw size={12} />
@@ -418,6 +573,23 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                   </>
                 )}
               </div>
+
+              {cameraOn && devices.length > 1 && (
+                <div className="flex justify-center mt-2">
+                  <select
+                    value={deviceId}
+                    onChange={e => startCamera(facing, e.target.value)}
+                    className="max-w-xs px-3 py-1.5 rounded-lg bg-[#14171C] border border-white/[0.08] text-[9px] font-mono text-gray-300 focus:outline-none focus:border-blue-500/40 truncate"
+                    title={ar('اختر الكاميرا', 'Choose camera')}
+                  >
+                    {devices.map((d, i) => (
+                      <option key={d.deviceId || i} value={d.deviceId} className="bg-[#14171C]">
+                        {d.label || `${ar('كاميرا', 'Camera')} ${i + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
@@ -509,6 +681,19 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                     <ScanQrCode size={10} />
                     {ar('امسح كود تاني', 'Scan another')}
                   </button>
+                  {onNavigate && (
+                    <button
+                      onClick={() => {
+                        try { sessionStorage.setItem('unitool-qr-prefill', result); } catch { /* ignore */ }
+                        onNavigate('qrCode');
+                      }}
+                      title={ar('افتح الكود في مولّد QR معدَّل وجاهز للتعديل', 'Open this code in the QR generator, ready to edit')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-mono bg-cyan-600/15 border border-cyan-500/25 text-cyan-300 hover:bg-cyan-600/25 transition-colors"
+                    >
+                      <Wand2 size={10} />
+                      {ar('عدّل في المولّد', 'Edit in Generator')}
+                    </button>
+                  )}
                 </div>
 
                 {isLink(result) && (
@@ -533,20 +718,49 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
               <span className="text-[10px] font-bold text-white flex-1">{ar('سجل المسح', 'Scan History')}</span>
               <span className="text-[8px] font-mono text-gray-500">{history.length}</span>
               {history.length > 0 && (
-                <button onClick={clearHistory} className="flex items-center gap-1 text-[8px] font-mono text-gray-500 hover:text-red-400 transition-colors">
-                  <Trash2 size={9} />
-                  {ar('مسح الكل', 'Clear all')}
-                </button>
+                <>
+                  <button onClick={() => exportHistory('json')} title="JSON" className="flex items-center gap-1 p-1.5 rounded-md text-[8px] font-mono text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                    <FileJson2 size={10} />
+                  </button>
+                  <button onClick={() => exportHistory('txt')} title="TXT" className="flex items-center gap-1 p-1.5 rounded-md text-[8px] font-mono text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                    <FileText size={10} />
+                  </button>
+                  <button onClick={clearHistory} className="flex items-center gap-1 text-[8px] font-mono text-gray-500 hover:text-red-400 transition-colors">
+                    <Trash2 size={9} />
+                    {ar('مسح الكل', 'Clear all')}
+                  </button>
+                </>
               )}
             </div>
+
+            {history.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.04]">
+                <Search size={9} className="text-gray-600 shrink-0" />
+                <input
+                  value={historyQuery}
+                  onChange={e => setHistoryQuery(e.target.value)}
+                  placeholder={ar('ابحث في نتايج المسح...', 'Search scan results...')}
+                  className="flex-1 bg-transparent text-[9px] font-mono text-gray-200 placeholder:text-gray-600 focus:outline-none"
+                />
+                {historyQuery && (
+                  <button onClick={() => setHistoryQuery('')} className="p-0.5 text-gray-600 hover:text-gray-300 transition-colors">
+                    <X size={9} />
+                  </button>
+                )}
+              </div>
+            )}
 
             {history.length === 0 ? (
               <div className="p-6 text-center">
                 <p className="text-[9px] text-gray-600 font-mono">{ar('لسه مفيش نتايج محفوظة — كل كود تمسحه هيظهر هنا', 'No saved scans yet — every code you scan shows up here')}</p>
               </div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-[9px] text-gray-600 font-mono">{ar('مفيش نتايج مطابقة للبحث', 'No results match your search')}</p>
+              </div>
             ) : (
               <div className="divide-y divide-white/[0.04]">
-                {history.map(h => {
+                {filteredHistory.map(h => {
                   const ht = detectType(h.text);
                   const HIcon = ht.icon;
                   return (
@@ -574,6 +788,25 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                           <ExternalLink size={10} />
                         </a>
                       )}
+                      {onNavigate && (
+                        <button
+                          onClick={() => {
+                            try { sessionStorage.setItem('unitool-qr-prefill', h.text); } catch { /* ignore */ }
+                            onNavigate('qrCode');
+                          }}
+                          className="p-1.5 rounded-md text-gray-600 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors shrink-0"
+                          title={ar('تعديل في المولّد', 'Edit in Generator')}
+                        >
+                          <Wand2 size={10} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => copyHistoryItem(h)}
+                        className="p-1.5 rounded-md text-gray-600 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors shrink-0"
+                        title={ar('نسخ', 'Copy')}
+                      >
+                        {copiedId === h.id ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+                      </button>
                       <button
                         onClick={() => removeHistoryItem(h.id)}
                         className="p-1.5 rounded-md text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
