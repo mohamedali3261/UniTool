@@ -40,7 +40,8 @@ body {
   background-color: #070D1E;
   color: #F8FAFC;
   font-family: 'Cairo', 'Tajawal', sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   user-select: none;
   -webkit-user-select: none;
 }
