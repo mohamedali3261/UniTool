@@ -101,11 +101,11 @@ export const TopBar: React.FC<TopBarProps> = ({
       id="editor-top-bar"
       dir={dir}
       style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        position: 'relative', zIndex: 100, flexShrink: 0,
         padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-        /* Logo always pinned to the RIGHT edge regardless of language/direction */
+        /* In normal flow so nothing sits under it; logo pinned to the RIGHT via ltr + row-reverse */
         direction: 'ltr', flexDirection: 'row-reverse',
-        background: 'rgba(7,8,11,.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        background: 'rgba(7,8,11,.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         borderBottom: '1px solid #1e2028', userSelect: 'none',
       }}
     >
@@ -115,19 +115,20 @@ export const TopBar: React.FC<TopBarProps> = ({
       </a>
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      {/* Left Section: Navigation */}
+      {/* Left Section: Navigation (home + sidebar toggle in a segmented pill) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 2 }}>
 
         <button
           type="button"
           onClick={onBackToDashboard}
           style={{
-            display: 'flex', alignItems: 'center', gap: 4, padding: 6,
-            background: 'none', border: 'none', color: '#7c7f8a',
-            cursor: 'pointer', transition: 'color .2s', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
+            background: 'none', border: 'none', color: '#7c7f8a', borderRadius: 8,
+            cursor: 'pointer', transition: 'all .2s', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
           }}
-          onMouseEnter={e => e.currentTarget.style.color = '#e4e6eb'}
-          onMouseLeave={e => e.currentTarget.style.color = '#7c7f8a'}
+          onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
           title={t.backHome}
 
         >
@@ -136,25 +137,27 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         {onToggleSidebar && (
+          <>
+          <div style={{ width: 1, height: 14, background: '#262b36' }} />
           <button
             type="button"
             onClick={onToggleSidebar}
             title={isSidebarOpen ? t.closeSidebar : t.openSidebar}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 6, borderRadius: 8, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'color .2s',
+              padding: '5px 8px', borderRadius: 8, background: 'none', border: 'none',
+              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
             }}
-            onMouseEnter={e => e.currentTarget.style.color = '#e4e6eb'}
-            onMouseLeave={e => e.currentTarget.style.color = '#7c7f8a'}
+            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
           >
             {isSidebarOpen ? <PanelLeftClose style={{ width: 16, height: 16 }} /> : <PanelLeftOpen style={{ width: 16, height: 16 }} />}
           </button>
+          </>
         )}
+        </div>
 
-        <div style={{ width: 1, height: 16, background: '#1e2028' }} />
-
-        {/* Project Title */}
+        {/* Project Title chip */}
         {isEditingTitle ? (
           <form onSubmit={handleTitleSubmit} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <input
@@ -186,7 +189,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="hidden md:flex max-w-[110px] lg:max-w-[180px]"
             style={{
               alignItems: 'center', gap: 4, cursor: 'pointer',
-              padding: '2px 6px', borderRadius: 6, transition: 'background .2s',
+              padding: '4px 8px', borderRadius: 8, transition: 'background .2s',
+              background: '#0d0f14', border: '1px solid #1e2028',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -317,8 +321,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right Section: Actions (Preview, Save, Export) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      {/* Right Section: Actions (lang, props, preview, save in a segmented pill + Export CTA) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 3 }}>
         {/* Language Toggle */}
         <button
           type="button"
@@ -328,18 +333,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             window.location.reload();
           }}
           style={{
-            display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px',
-            borderRadius: 20, border: '1px solid #1e2028', background: 'transparent',
+            display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
+            borderRadius: 8, border: 'none', background: 'transparent',
             color: '#7c7f8a', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-            transition: 'all .2s', fontFamily: 'inherit', marginRight: 4,
+            transition: 'all .2s', fontFamily: 'inherit',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.color = '#6366f1'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e2028'; e.currentTarget.style.color = '#7c7f8a'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; e.currentTarget.style.color = '#e4e6eb'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7c7f8a'; }}
           title={t.switchLang}
         >
           <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
           <span className="hidden sm:inline">{lang === 'ar' ? 'EN' : 'عربي'}</span>
         </button>
+
+        <div style={{ width: 1, height: 14, background: '#262b36' }} />
 
         {onToggleProperties && (
           <button
@@ -348,15 +355,17 @@ export const TopBar: React.FC<TopBarProps> = ({
             title={isPropertiesOpen ? t.hideProps : t.showProps}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 6, borderRadius: 8, fontSize: 12,
-              border: `1px solid ${isPropertiesOpen ? 'rgba(99,102,241,.4)' : '#1e2028'}`,
-              background: isPropertiesOpen ? 'rgba(99,102,241,.15)' : '#0d0f14',
+              padding: '5px 7px', borderRadius: 8, fontSize: 12,
+              border: 'none',
+              background: isPropertiesOpen ? 'rgba(99,102,241,.18)' : 'transparent',
               color: isPropertiesOpen ? '#818cf8' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
             }}
           >
             <SlidersHorizontal style={{ width: 14, height: 14 }} />
           </button>
         )}
+
+        <div style={{ width: 1, height: 14, background: '#262b36' }} />
 
         {/* Preview Button */}
         <button
@@ -365,12 +374,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           title={t.previewDesign}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            border: '1px solid #1e2028', background: '#0d0f14',
+            padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+            border: 'none', background: 'transparent',
             color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#0d0f14'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
         >
           <Eye style={{ width: 14, height: 14, color: '#818cf8' }} />
           <span className="hidden sm:inline">{t.preview}</span>
@@ -384,17 +393,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           title={t.saveProject}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            border: '1px solid #1e2028', background: '#0d0f14',
+            padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+            border: 'none', background: 'transparent',
             color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s',
             fontFamily: 'inherit', opacity: isSaving ? 0.5 : 1,
           }}
           onMouseEnter={e => { if (!isSaving) e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#0d0f14'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
         >
           <Save style={{ width: 14, height: 14, color: '#34d399' }} />
           <span className="hidden sm:inline">{isSaving ? '...' : t.save}</span>
         </button>
+        </div>
 
         {/* Export CTA */}
         <button
@@ -405,6 +415,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
             border: 'none', background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
             color: '#fff', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+            boxShadow: '0 4px 14px rgba(79,70,229,.35)',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ProjectItem, DimensionPreset } from '../../types';
 import { DIMENSION_PRESETS } from '../../data/presets';
 import { PresetSilhouette } from './PresetSilhouette';
@@ -72,7 +72,29 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectSearch, setProjectSearch] = useState<string>('');
 
-  const dir: string = 'ltr';
+  // Direction follows the chosen language (Arabic = RTL) — truncation & alignment stay correct
+  const dir: string = lang === 'ar' ? 'rtl' : 'ltr';
+
+  // True-shape mini preview: measure the preview stage and fit the ratio inside it
+  const previewStageRef = useRef<HTMLDivElement | null>(null);
+  const [stageSize, setStageSize] = useState({ w: 0, h: 116 });
+  useEffect(() => {
+    const el = previewStageRef.current;
+    if (!el) return;
+    const update = () => setStageSize({ w: el.clientWidth, h: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const pw = Math.max(1, customWidth);
+  const ph = Math.max(1, customHeight);
+  const previewPad = 10;
+  const availW = Math.max(24, stageSize.w - previewPad);
+  const availH = Math.max(24, stageSize.h - previewPad);
+  const fitScale = Math.min(availW / pw, availH / ph);
+  const dispW = Math.max(24, Math.round(pw * fitScale));
+  const dispH = Math.max(16, Math.round(ph * fitScale));
 
   useEffect(() => {
     try {
@@ -337,7 +359,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   {/* Header of custom size */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b border-slate-700/60">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400 shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500/30 to-cyan-500/10 border border-sky-400/40 flex items-center justify-center text-sky-300 shrink-0 shadow-sm shadow-sky-500/10">
                         <Sliders className="w-4 h-4" />
                       </div>
                       <div>
@@ -361,33 +383,31 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   {/* Form & Live Proportional Canvas Preview Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
                     {/* Preview Box */}
-                    <div className="lg:col-span-4 bg-[#0B132B]/90 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-between gap-3 min-h-[170px] relative overflow-hidden">
+                    <div className="lg:col-span-4 bg-gradient-to-b from-[#101A33]/95 to-[#0B132B]/95 border border-sky-500/20 rounded-2xl p-4 flex flex-col items-center justify-between gap-3 min-h-[170px] relative overflow-hidden shadow-lg shadow-sky-950/40">
                       <div className="w-full flex items-center justify-between text-[11px] text-slate-400">
                         <span className="flex items-center gap-1 font-semibold text-slate-300">
                           <Sparkles className="w-3.5 h-3.5 text-sky-400" />
                           <span>{t.sizePreview}</span>
                         </span>
-                        <span className="font-mono text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                        <span dir="ltr" className="font-mono text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
                           {customWidth} × {customHeight} px
                         </span>
                       </div>
 
-                      <div className="w-full h-28 flex items-center justify-center p-2 relative">
+                      <div ref={previewStageRef} className="w-full h-28 flex items-center justify-center p-2 relative">
                         <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:8px_8px] opacity-40 pointer-events-none" />
 
                         <div
-                          className="relative rounded-lg border-2 border-sky-400/80 flex flex-col items-center justify-center transition-all duration-300 shadow-lg shadow-sky-500/10 overflow-hidden"
+                          className="relative rounded-lg border-2 border-sky-400/80 flex items-center justify-center transition-all duration-300 shadow-lg shadow-sky-500/10 overflow-hidden"
                           style={{
-                            aspectRatio: `${customWidth} / ${customHeight}`,
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            width: customWidth >= customHeight ? '100%' : `${Math.max(25, Math.min(100, Math.round((customWidth / customHeight) * 100)))}%`,
-                            height: customHeight > customWidth ? '100%' : `${Math.max(25, Math.min(100, Math.round((customHeight / customWidth) * 100)))}%`,
+                            /* Exact fitted pixels — the mini preview always keeps the REAL ratio */
+                            width: dispW,
+                            height: dispH,
                             backgroundColor: selectedBg
                           }}
                         >
                           <div className="absolute inset-0 flex items-center justify-center p-1 pointer-events-none">
-                            <div className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded shadow-sm ${
+                            <div dir="ltr" className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded shadow-sm ${
                               selectedBg === '#FFFFFF' ? 'text-slate-800 bg-white/90' : 'text-white bg-slate-950/70'
                             }`}>
                               {customWidth}×{customHeight}
@@ -419,7 +439,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             }`}
                           >
                             <span className="font-bold text-emerald-400 text-[11px]">{t.googlePlay}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">1024 × 500</span>
+                            <span dir="ltr" className="text-[10px] text-slate-400 font-mono">1024 × 500</span>
                           </button>
 
                           <button
@@ -432,7 +452,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             }`}
                           >
                             <span className="font-bold text-white text-[11px]">{t.square1x1}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">1080 × 1080</span>
+                            <span dir="ltr" className="text-[10px] text-slate-400 font-mono">1080 × 1080</span>
                           </button>
 
                           <button
@@ -445,7 +465,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             }`}
                           >
                             <span className="font-bold text-pink-400 text-[11px]">{t.story9x16}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">1080 × 1920</span>
+                            <span dir="ltr" className="text-[10px] text-slate-400 font-mono">1080 × 1920</span>
                           </button>
 
                           <button
@@ -458,7 +478,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             }`}
                           >
                             <span className="font-bold text-rose-400 text-[11px]">{t.youtube16x9}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">1280 × 720</span>
+                            <span dir="ltr" className="text-[10px] text-slate-400 font-mono">1280 × 720</span>
                           </button>
 
                           <button
@@ -471,7 +491,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             }`}
                           >
                             <span className="font-bold text-amber-400 text-[11px]">{t.icon512}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">512 × 512</span>
+                            <span dir="ltr" className="text-[10px] text-slate-400 font-mono">512 × 512</span>
                           </button>
                         </div>
                       </div>
@@ -578,7 +598,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                           type="submit"
                           className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5"
                         >
-                          <span>{t.openWorkspace} ({customWidth}×{customHeight}px)</span>
+                          <span>{t.openWorkspace} (<span dir="ltr">{customWidth}×{customHeight}px</span>)</span>
                           <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -590,12 +610,12 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
               {/* Presets Catalog Section */}
               <section className="space-y-4">
                 {/* Section Header & Filters */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[#141E38] p-3.5 sm:p-4 rounded-2xl border border-slate-700/70">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#141E38] p-3.5 sm:p-4 rounded-2xl border border-slate-700/70">
+                  <div className="flex items-center gap-2.5 shrink-0 lg:max-w-[46%]">
+                    <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
                       <Maximize2 className="w-4 h-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-sm font-bold text-white">
                         {t.libraryTitle}
                       </h3>
@@ -606,7 +626,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   </div>
 
                   {/* Search & Category Tabs */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch lg:items-center gap-2">
                     {/* Search Input */}
                     <div className="relative min-w-[200px]">
                       <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
@@ -672,7 +692,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
                     {filteredPresets.map((preset) => {
                       const isGp = preset.category === 'google-play';
                       const isVideo = preset.category === 'video';
@@ -722,10 +742,10 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             </div>
 
                             <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-700/60">
-                              <span className="text-[11px] sm:text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">
+                              <span dir="ltr" className="text-[11px] sm:text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">
                                 {preset.width} × {preset.height} px
                               </span>
-                              <span className="text-[10px] font-mono text-slate-400 bg-[#0B132B] px-2 py-0.5 rounded-md border border-slate-700/70">
+                              <span dir="ltr" className="text-[10px] font-mono text-slate-400 bg-[#0B132B] px-2 py-0.5 rounded-md border border-slate-700/70">
                                 {preset.aspectRatio}
                               </span>
                             </div>
