@@ -111,7 +111,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     >
       {/* Logo — always the far-RIGHT element */}
       <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0, flexShrink: 0 }}>
-        <img src="/UniTool_logo.png" alt="UniTool" style={{ width: 104, height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
+        <img src="/UniTool_logo.png" alt="UniTool" className="w-[80px] md:w-[104px]" style={{ height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
       </a>
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -183,10 +183,10 @@ export const TopBar: React.FC<TopBarProps> = ({
         ) : (
           <div
             onClick={() => { setTempTitle(title); setIsEditingTitle(true); }}
+            className="hidden md:flex max-w-[110px] lg:max-w-[180px]"
             style={{
-              display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+              alignItems: 'center', gap: 4, cursor: 'pointer',
               padding: '2px 6px', borderRadius: 6, transition: 'background .2s',
-              maxWidth: 180,
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -200,8 +200,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </div>
 
-      {/* Center Section: Canvas Tools (Undo/Redo, Zoom, Pan, Grid) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {/* Center Section: Canvas Tools (Undo/Redo, Zoom, Pan, Grid) — hidden below xl (floating control pill covers these) */}
+      <div className="hidden xl:flex items-center" style={{ gap: 4 }}>
         {/* Undo / Redo */}
         <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028' }}>
           <button
@@ -338,7 +338,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           title={t.switchLang}
         >
           <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
-          <span>{lang === 'ar' ? 'EN' : 'عربي'}</span>
+          <span className="hidden sm:inline">{lang === 'ar' ? 'EN' : 'عربي'}</span>
         </button>
 
         {onToggleProperties && (
@@ -410,7 +410,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           <Download style={{ width: 14, height: 14 }} />
-          <span>{t.export}</span>
+          <span className="hidden sm:inline">{t.export}</span>
         </button>
       </div>
       </div>
