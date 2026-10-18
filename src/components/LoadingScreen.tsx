@@ -17,15 +17,15 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
   );
 }
 
-/** Logo splash: compact centered box on mobile, fullscreen on desktop */
+/** Logo splash: original dark background, compact centered logo */
 export function LoadingScreen() {
   return (
-    <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] bg-[#0A0C0F] overflow-hidden flex items-center justify-center">
       <img
         src="/logoveo.gif"
         alt="UniTool"
         draggable={false}
-        className="w-56 h-56 sm:w-full sm:h-full object-contain sm:object-cover"
+        className="w-40 h-40 sm:w-56 sm:h-56 object-contain"
       />
     </div>
   );
