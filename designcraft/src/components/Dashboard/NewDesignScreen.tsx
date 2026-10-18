@@ -207,7 +207,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   };
 
   const linkStyle: React.CSSProperties = {
-    fontSize: 13, textDecoration: 'none', padding: '6px 14px', borderRadius: 16,
+    fontSize: 12, textDecoration: 'none', padding: '5px 11px', borderRadius: 16,
     transition: 'all .25s',
   };
 
@@ -217,6 +217,8 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        /* Logo always pinned to the RIGHT edge regardless of language/direction */
+        direction: 'ltr', flexDirection: 'row-reverse',
         background: 'rgba(7,8,11,.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         borderBottom: '1px solid #1e2028',
       }}>
@@ -224,9 +226,9 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
           <img src="/UniTool_logo.png" alt="UniTool" style={{ width: 128, height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
         </a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* Page Links */}
-          <div className="hidden lg:flex items-center" style={{ gap: 6 }}>
+          <div className="hidden lg:flex items-center" style={{ gap: 4 }}>
             {navPages.map(p => {
               const active = window.location.pathname.endsWith(p.href);
               return (

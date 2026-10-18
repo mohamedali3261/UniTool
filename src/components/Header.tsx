@@ -21,6 +21,8 @@ export function Header({ lang, onToggleLang, onOpenMobileMenu }: Props) {
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        /* Keep the bar layout fixed: logo always pinned to the RIGHT edge regardless of language/direction */
+        direction: 'ltr', flexDirection: 'row-reverse',
         background: 'rgba(7,8,11,.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         borderBottom: '1px solid #1e2028',
       }}

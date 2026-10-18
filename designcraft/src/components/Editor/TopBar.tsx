@@ -102,18 +102,21 @@ export const TopBar: React.FC<TopBarProps> = ({
       dir={dir}
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+        /* Logo always pinned to the RIGHT edge regardless of language/direction */
+        direction: 'ltr', flexDirection: 'row-reverse',
         background: 'rgba(7,8,11,.88)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
         borderBottom: '1px solid #1e2028', userSelect: 'none',
       }}
     >
-      {/* Left Section: Logo + Navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0 }}>
-          <img src="/UniTool_logo.png" alt="UniTool" style={{ width: 128, height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
-        </a>
+      {/* Logo — always the far-RIGHT element */}
+      <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0, flexShrink: 0 }}>
+        <img src="/UniTool_logo.png" alt="UniTool" style={{ width: 104, height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
+      </a>
 
-        <div style={{ width: 1, height: 16, background: '#1e2028' }} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      {/* Left Section: Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
 
         <button
           type="button"
@@ -316,35 +319,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right Section: Actions (Preview, Save, Export) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {/* Nav Links */}
-        <div className="hidden xl:flex items-center" style={{ gap: 6, marginRight: 8 }}>
-          {[
-            { href: '/index.html', label: t.home },
-            { href: '/app.html', label: t.tools },
-            { href: '/designcraft.html', label: t.designCraft },
-            { href: '/the-audio-reader.html', label: t.audioReader },
-          ].map(p => {
-            const active = window.location.pathname.endsWith(p.href);
-            return (
-              <a
-                key={p.href}
-                href={p.href}
-                style={{
-                  fontSize: 13, textDecoration: 'none', padding: '6px 14px', borderRadius: 16,
-                  transition: 'all .25s', fontWeight: active ? 600 : 500,
-                  color: active ? '#a5b4fc' : '#7c7f8a',
-                  background: active ? 'rgba(99,102,241,.12)' : 'transparent',
-                  boxShadow: active ? '0 0 16px rgba(99,102,241,.35), inset 0 0 0 1px rgba(99,102,241,.25)' : 'none',
-                }}
-                onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.04)'; } }}
-                onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'transparent'; } }}
-              >
-                {p.label}
-              </a>
-            );
-          })}
-        </div>
-
         {/* Language Toggle */}
         <button
           type="button"
@@ -438,6 +412,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Download style={{ width: 14, height: 14 }} />
           <span>{t.export}</span>
         </button>
+      </div>
       </div>
     </nav>
   );
