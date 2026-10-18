@@ -952,13 +952,22 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 recordHistory();
               }
             }}
-            onMoveLayer={(id, direction) => {
+            onMoveLayerUp={(id) => {
               const canvas = fabricCanvasRef.current;
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                if (direction === 'up') bringForward(canvas);
-                else sendBackwards(canvas);
+                bringForward(canvas);
+                updateLayersList();
+                recordHistory();
+              }
+            }}
+            onMoveLayerDown={(id) => {
+              const canvas = fabricCanvasRef.current;
+              if (!canvas) return;
+              const found = layersList.find((l) => l.id === id);
+              if (found && found.rawObject) {
+                sendBackwards(canvas);
                 updateLayersList();
                 recordHistory();
               }

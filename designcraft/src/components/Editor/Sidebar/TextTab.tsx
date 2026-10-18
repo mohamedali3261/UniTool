@@ -89,7 +89,7 @@ export const TextTab: React.FC<TextTabProps> = ({
       onUpdateProperty('fontFamily', preset.fontFamily);
       onUpdateProperty('fontWeight', preset.fontWeight);
       if (preset.fill) onUpdateProperty('fill', preset.fill);
-      if (preset.backgroundColor) onUpdateProperty('backgroundColor', preset.backgroundColor);
+      if (preset.backgroundColor) onUpdateProperty('textBackgroundColor', preset.backgroundColor);
       if (preset.fontStyle) onUpdateProperty('fontStyle', preset.fontStyle);
       return;
     }

@@ -1,5 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@300;400;500;600;700;800;900&family=Readex+Pro:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Bebas+Neue&family=Cairo:wght@300;400;500;600;700;800;900&family=Changa:wght@400;600;700;800&family=El+Messiri:wght@400;600;700&family=Inter:wght@400;600;700&family=Lalezar&family=Montserrat:wght@400;600;700;900&family=Outfit:wght@400;600;700;900&family=Poppins:wght@400;600;700&family=Playfair+Display:wght@400;700;900&family=Readex+Pro:wght@300;400;600&family=Reem+Kufi:wght@400;600;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
 @import "tailwindcss";
+
+/* Design system fonts (Tailwind v4 theme tokens) */
+@theme {
+  --font-sans: 'Cairo', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Alexandria', 'Cairo', 'Tajawal', sans-serif;
+}
 
 /* Elegant Sleek Custom Scrollbars Across All Browsers */
 * {
@@ -39,11 +45,47 @@ body {
   padding: 0;
   background-color: #070D1E;
   color: #F8FAFC;
-  font-family: 'Cairo', 'Tajawal', sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
   overflow-y: auto;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  line-height: 1.6;
+}
+
+/* Display font for headings */
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+/* Keyboard focus visibility (accessibility) */
+:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 2px;
+}
+
+/* Text selection & caret polish */
+::selection {
+  background: rgba(56, 189, 248, 0.35);
+  color: #FFFFFF;
+}
+
+input, textarea {
+  caret-color: #38BDF8;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Fabric canvas custom controls */

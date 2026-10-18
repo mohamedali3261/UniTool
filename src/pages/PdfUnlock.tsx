@@ -47,7 +47,7 @@ export function PdfUnlock({ t, lang }: Props) {
           setUnlocking(false);
           return;
         }
-        doc = await PDFDocument.load(file.data, { password });
+        doc = await PDFDocument.load(file.data, { password } as any);
       }
       const bytes = await doc.save();
       const blob = new Blob([bytes], { type: 'application/pdf' });

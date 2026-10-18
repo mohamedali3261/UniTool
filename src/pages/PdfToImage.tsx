@@ -71,7 +71,7 @@ export function PdfToImage({ t, lang, onSendFilesToTool }: Props) {
       const ctx = canvas.getContext('2d')!;
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      await (page.render as any)({ canvas, canvasContext: ctx, viewport }).promise;
       result.push({
         id: 0,
         dataUrl: canvas.toDataURL('image/png'),

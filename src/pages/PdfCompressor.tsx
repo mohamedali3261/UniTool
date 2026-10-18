@@ -112,7 +112,7 @@ export function PdfCompressor({ t, lang }: Props) {
         canvas.height = viewport.height;
         const ctx = canvas.getContext('2d')!;
 
-        await page.render({ canvas, viewport }).promise;
+        await (page.render as any)({ canvas, viewport }).promise;
 
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', jpegQuality));
         if (!blob) { pdf.destroy(); throw new Error('Canvas conversion failed'); }

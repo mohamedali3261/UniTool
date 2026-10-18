@@ -227,7 +227,7 @@ export function LogoStudio({ lang }: Props) {
         }
         return { ...current, elements: [...current.elements, element] };
       });
-      feedback(text('تم استيراد SVG بأمان وإضافته إلى الطبقات.'));
+      feedback(text('تم استيراد SVG بأمان وإضافته إلى الطبقات.', 'SVG imported safely and added to layers.'));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to import SVG.';
       feedback(`${text('تعذّر استيراد SVG:', 'Could not import SVG:')} ${message}`, true);

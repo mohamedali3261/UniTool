@@ -109,6 +109,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     fabricCanvasRef.current = canvas;
     onCanvasReady(canvas);
 
+    // Re-render once webfonts finish loading so canvas text uses real glyph metrics
+    document.fonts?.ready.then(() => {
+      canvas.requestRenderAll();
+    }).catch(() => { /* ignore */ });
+
     const updateSelection = () => {
       const active = canvas.getActiveObject();
       if (!active) {

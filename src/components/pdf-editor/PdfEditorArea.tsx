@@ -269,7 +269,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
           justifyContent: 'center',
           overflow: 'hidden',
           wordBreak: 'break-word',
-          direction: 'auto',
+          direction: 'auto' as any,
           backgroundColor: element.backgroundColor,
           borderRadius: element.type === 'ellipse' ? '50%' : '0',
         }}

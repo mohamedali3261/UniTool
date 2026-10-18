@@ -71,7 +71,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectSearch, setProjectSearch] = useState<string>('');
 
-  const dir = 'ltr';
+  const dir: string = 'ltr';
 
   useEffect(() => {
     try {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Mic, MicOff, Languages, Copy, Download, Trash2, FileText, AlertCircle,
-  Pause, Play, Plus, X, Timer, Type, Quote, Waveform, BookOpen,
+  Pause, Play, Plus, X, Timer, Type, Quote, AudioWaveform, BookOpen,
   FileOutput, MessageSquareText
 } from 'lucide-react';
 
@@ -102,7 +102,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
 
   // Check support
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSupported(!!SpeechRecognition);
     if (!SpeechRecognition) {
       setError(lang === 'ar' ? 'المتصفح لا يدعم التعرف على الصوت، استخدم Chrome أو Edge' : 'Speech recognition not supported, use Chrome or Edge');
@@ -211,7 +211,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
 
   // Recognition
   const startRecognition = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition || !shouldListenRef.current) return;
 
     const recognition = new SpeechRecognition();
