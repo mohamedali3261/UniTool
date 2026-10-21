@@ -39,7 +39,10 @@ export type SidebarTabType =
   | 'icons' 
   | 'images' 
   | 'ornaments' 
-  | 'layers';
+  | 'layers'
+  | 'templates'
+  | 'media'
+  | 'background';
 
 export interface StockPhoto {
   id: string;

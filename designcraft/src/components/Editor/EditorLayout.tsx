@@ -23,6 +23,9 @@ import { ElementsTab } from './Sidebar/ElementsTab';
 import { IconsTab } from './Sidebar/IconsTab';
 import { ImagesTab } from './Sidebar/ImagesTab';
 import { OrnamentsTab } from './Sidebar/OrnamentsTab';
+import { MediaTab } from './Sidebar/MediaTab';
+import { TemplatesTab } from './Sidebar/TemplatesTab';
+import { BackgroundTab } from './Sidebar/BackgroundTab';
 import { LayersTab } from './Sidebar/LayersTab';
 import { PropertiesPanel } from './PropertiesPanel/PropertiesPanel';
 import { CanvasArea } from './CanvasArea';
@@ -66,6 +69,7 @@ import {
   addMobilePhoneMockupToCanvas
 } from '../../utils/fabricHelpers';
 import { BackgroundPatternItem } from '../../data/patternsCatalog';
+import { DesignTemplate } from '../../data/templatesCatalog';
 
 interface EditorLayoutProps {
   initialProject: ProjectItem;
@@ -90,7 +94,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const [zoom, setZoom] = useState(0.85);
   const [showGrid, setShowGrid] = useState(false);
   const [isPanMode, setIsPanMode] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('text');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('templates');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const [activeProperties, setActiveProperties] = useState<ActiveObjectProperties | null>(null);
@@ -644,8 +648,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }, [onShowToast, recordHistory]);
 
   // Image Filter Handler
-  const handleApplyImageFilter = useCallback((filterName: string) => {
-    const canvas = fabricCanvasRef.current;
+  const handleApplyImageFilter = useCallback((filterName: string) => {    const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     const active = canvas.getActiveObject();
     if (!active || active.type !== 'image') return;
@@ -688,6 +691,27 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         if ((fabric.Image.filters as any).Contrast) {
           img.filters.push(new (fabric.Image.filters as any).Contrast({ contrast: 0.2 }));
         }
+      } else if (filterName === 'vivid') {
+        const F = fabric.Image.filters as any;
+        if (F.Saturation) img.filters.push(new F.Saturation({ saturation: 0.5 }));
+        if (F.Contrast) img.filters.push(new F.Contrast({ contrast: 0.15 }));
+        if (F.Brightness) img.filters.push(new F.Brightness({ brightness: 0.05 }));
+      } else if (filterName === 'noir') {
+        const F = fabric.Image.filters as any;
+        if (F.Grayscale) img.filters.push(new F.Grayscale());
+        if (F.Contrast) img.filters.push(new F.Contrast({ contrast: 0.3 }));
+      } else if (filterName === 'warm') {
+        const F = fabric.Image.filters as any;
+        if (F.BlendColor) {
+          img.filters.push(new F.BlendColor({ color: '#FFB266', mode: 'multiply', alpha: 0.35 }));
+        }
+        if (F.Saturation) img.filters.push(new F.Saturation({ saturation: 0.15 }));
+      } else if (filterName === 'cool') {
+        const F = fabric.Image.filters as any;
+        if (F.BlendColor) {
+          img.filters.push(new F.BlendColor({ color: '#9EC5FF', mode: 'multiply', alpha: 0.35 }));
+        }
+        if (F.Contrast) img.filters.push(new F.Contrast({ contrast: 0.1 }));
       }
     }
 
@@ -702,6 +726,127 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     onShowToast(t.elFilterTitle, `${t.elFilterApplied} ${filterName}`, 'info');
   }, [onShowToast]);
 
+  // ---- Apply a ready-made template: replaces background + adds composed objects ----
+  // NOTE: canvas.getWidth() returns the ZOOMED screen size, not the design size.
+  // Fabric object coordinates live in design space, so we use canvasWidth/canvasHeight.
+  const handleApplyTemplate = useCallback((tpl: DesignTemplate) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    const cW = canvasWidth || 1080;
+    const cH = canvasHeight || 1080;
+    const scale = Math.min(cW / tpl.baseW, cH / tpl.baseH);
+
+    // If the canvas already has objects, ask to REPLACE them with the template
+    const existing = canvas.getObjects();
+    if (existing.length > 0) {
+      const ok = window.confirm(t.tplOverlayConfirm);
+      if (!ok) return;
+      canvas.remove(...existing);
+    }
+
+    // Background: solid or diagonal gradient
+    canvas.backgroundImage = undefined;
+    if (tpl.bg2) {
+      const grad = new fabric.Gradient({
+        type: 'linear',
+        coords: { x1: 0, y1: 0, x2: cW, y2: cH },
+        colorStops: [
+          { offset: 0, color: tpl.bg },
+          { offset: 1, color: tpl.bg2 }
+        ]
+      });
+      canvas.setBackgroundColor(grad as any, () => canvas.renderAll());
+    } else {
+      canvas.setBackgroundColor(tpl.bg, () => canvas.renderAll());
+    }
+    setBackgroundColor(tpl.bg);
+
+    // Compose objects
+    tpl.objects.forEach((o) => {
+      const left = o.x * cW;
+      const top = o.y * cH;
+
+
+      if (o.type === 'circle') {
+        const circle = new fabric.Circle({
+          left,
+          top,
+          originX: 'center',
+          originY: 'center',
+          radius: Math.max(4, (o.size ?? 0.1) * tpl.baseW * scale / 2),
+          fill: o.fill || '#0284C7',
+          opacity: o.opacity ?? 1
+        });
+        canvas.add(circle);
+      } else if (o.type === 'rect') {
+        const rect = new fabric.Rect({
+          left,
+          top,
+          originX: 'center',
+          originY: 'center',
+          width: Math.max(4, (o.w ?? 0.3) * cW),
+          height: Math.max(3, (o.h ?? 0.05) * cH),
+          fill: o.fill || '#0284C7',
+          rx: (o.rx ?? 0) * cW / 2,
+          ry: (o.rx ?? 0) * cW / 2,
+          opacity: o.opacity ?? 1,
+          angle: o.rotation ?? 0
+        });
+        canvas.add(rect);
+      } else {
+        const fontSize = Math.max(10, (o.size ?? 0.06) * tpl.baseW * scale);
+        const textbox = new fabric.Textbox(o.text || ' ', {
+          left,
+          top,
+          originX: 'center',
+          originY: 'center',
+          fontFamily: o.fontFamily || 'Cairo',
+          fontSize,
+          fontWeight: o.fontWeight ?? 700,
+          fill: o.fill || '#FFFFFF',
+          textAlign: 'center',
+          lineHeight: 1.25,
+          width: Math.min(cW * 0.92, fontSize * 14),
+          styles: {},
+          angle: o.rotation ?? 0,
+          splitByGrapheme: false
+        });
+        canvas.add(textbox);
+      }
+    });
+
+    canvas.renderAll();
+    updateLayersList();
+    recordHistory();
+    onShowToast(t.tplToastTitle, lang === 'ar' ? tpl.nameAr : tpl.nameEn, 'success');
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+    // scroll canvas into view on mobile
+    setTimeout(() => {
+      document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  }, [onShowToast, recordHistory, lang, canvasWidth, canvasHeight]);
+
+  // ---- Quick PNG download straight from the top bar ----
+  // Multiplier compensates for the active zoom so we always export at design size × 2
+  const handleQuickExportPng = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    handleSaveProject();
+    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2 / (zoom || 1));
+    if (!dataUrl) {
+      onShowToast(t.quickExportErrorTitle, t.quickExportErrorMsg, 'error');
+      return;
+    }
+    const link = document.createElement('a');
+    link.download = `${(projectTitle || 'design').trim()}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    onShowToast(t.quickExportTitle, `${t.quickExportMsg} PNG · 2×`, 'success');
+  }, [onShowToast, projectTitle, zoom]);
+
   // Sidebar Tab Select
   const handleSelectSidebarTab = (tab: SidebarTabType) => {
     if (activeSidebarTab === tab && isSidebarOpen) {
@@ -714,11 +859,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
   const getTabTitle = (tab: SidebarTabType) => {
     switch (tab) {
+      case 'templates': return t.titleTemplates;
       case 'text': return t.titleText;
       case 'elements': return t.titleElements;
-      case 'ornaments': return t.titleOrnaments;
-      case 'icons': return t.titleIcons;
-      case 'images': return t.titleImages;
+      case 'media': return t.titleMedia;
+      case 'background': return t.titleBackground;
       case 'layers': return t.titleLayers;
       default: return t.tools;
     }
@@ -835,68 +980,83 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             onOpenShapesModal={() => setIsShapesModalOpen(true)}
           />
         );
-      case 'icons':
+      case 'templates':
         return (
-          <IconsTab
-            onAddIcon={(iconName, color) => {
-              if (fabricCanvasRef.current) {
-                addIconToCanvas(fabricCanvasRef.current, iconName, color);
-                updateLayersList();
-                recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
-              }
-            }}
-            onOpenIconsModal={() => setIsIconsModalOpen(true)}
+          <TemplatesTab onApplyTemplate={handleApplyTemplate} />
+        );
+      case 'media':
+        return (
+          <MediaTab
+            imagesContent={
+              <ImagesTab
+                onAddImage={(url) => {
+                  if (fabricCanvasRef.current) {
+                    addImageToCanvas(fabricCanvasRef.current, url);
+                    updateLayersList();
+                    recordHistory();
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    setTimeout(() => {
+                      document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                  }
+                }}
+                onOpenPexelsModal={() => setIsPexelsModalOpen(true)}
+                onAddMobileMockup={() => {
+                  if (fabricCanvasRef.current) {
+                    addMobilePhoneMockupToCanvas(fabricCanvasRef.current);
+                    updateLayersList();
+                    recordHistory();
+                    onShowToast(t.elPhoneTitle, t.elPhoneMsg, 'success');
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  }
+                }}
+              />
+            }
+            iconsContent={
+              <IconsTab
+                onAddIcon={(iconName, color) => {
+                  if (fabricCanvasRef.current) {
+                    addIconToCanvas(fabricCanvasRef.current, iconName, color);
+                    updateLayersList();
+                    recordHistory();
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  }
+                }}
+                onOpenIconsModal={() => setIsIconsModalOpen(true)}
+              />
+            }
+            ornamentsContent={
+              <OrnamentsTab
+                onAddOrnament={(item, fillColor) => {
+                  if (fabricCanvasRef.current) {
+                    addSvgShapeToCanvas(
+                      fabricCanvasRef.current,
+                      item.svgPath,
+                      item.viewBox || '0 0 200 200',
+                      fillColor || item.defaultFill || '#F59E0B',
+                      item.defaultStroke || '',
+                      item.defaultStrokeWidth || 0
+                    );
+                    updateLayersList();
+                    recordHistory();
+                    onShowToast(t.elOrnamentTitle, `${t.elShapeAdded} ${item.nameAr} ${t.elToBoard}`, 'success');
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  }
+                }}
+                canvasBackgroundColor={backgroundColor}
+                onChangeCanvasColor={handleSetBackgroundColor}
+                onChangeCanvasGradient={handleSetBackgroundGradient}
+              />
+            }
           />
         );
-      case 'images':
+      case 'background':
         return (
-          <ImagesTab
-            onAddImage={(url) => {
-              if (fabricCanvasRef.current) {
-                addImageToCanvas(fabricCanvasRef.current, url);
-                updateLayersList();
-                recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
-                setTimeout(() => {
-                  document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-              }
-            }}
-            onOpenPexelsModal={() => setIsPexelsModalOpen(true)}
-            onAddMobileMockup={() => {
-              if (fabricCanvasRef.current) {
-                addMobilePhoneMockupToCanvas(fabricCanvasRef.current);
-                updateLayersList();
-                recordHistory();
-                onShowToast(t.elPhoneTitle, t.elPhoneMsg, 'success');
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
-              }
-            }}
-          />
-        );
-      case 'ornaments':
-        return (
-          <OrnamentsTab
-            onAddOrnament={(item, fillColor) => {
-              if (fabricCanvasRef.current) {
-                addSvgShapeToCanvas(
-                  fabricCanvasRef.current,
-                  item.svgPath,
-                  item.viewBox || '0 0 200 200',
-                  fillColor || item.defaultFill || '#F59E0B',
-                  item.defaultStroke || '',
-                  item.defaultStrokeWidth || 0
-                );
-                updateLayersList();
-                recordHistory();
-                onShowToast(t.elOrnamentTitle, `${t.elShapeAdded} ${item.nameAr} ${t.elToBoard}`, 'success');
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
-              }
-            }}
-            canvasBackgroundColor={backgroundColor}
-            onChangeCanvasColor={handleSetBackgroundColor}
-            onChangeCanvasGradient={handleSetBackgroundGradient}
+          <BackgroundTab
+            currentColor={backgroundColor}
+            onSelectColor={handleSetBackgroundColor}
+            onSelectGradient={handleSetBackgroundGradient}
+            onSelectPattern={handleSetBackgroundPattern}
           />
         );
       case 'layers':
@@ -1084,6 +1244,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         onOpenPreview={handleOpenPreview}
         onOpenExport={handleOpenExport}
         onSave={handleSaveProject}
+        onQuickDownload={handleQuickExportPng}
         onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
         isSaving={isSaving}
         width={canvasWidth}

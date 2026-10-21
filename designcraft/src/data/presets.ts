@@ -466,7 +466,14 @@ export const POPULAR_FONTS = [
   { name: 'Inter', label: 'Inter (High Readability)', font: 'Inter, sans-serif' },
   { name: 'Outfit', label: 'Outfit (Trendy Tech)', font: 'Outfit, sans-serif' },
   { name: 'Bebas Neue', label: 'Bebas Neue (Heavy Display)', font: 'Bebas Neue, sans-serif' },
-  { name: 'Playfair Display', label: 'Playfair Display (Luxury Serif)', font: 'Playfair Display, serif' }
+  { name: 'Playfair Display', label: 'Playfair Display (Luxury Serif)', font: 'Playfair Display, serif' },
+  { name: 'Noto Kufi Arabic', label: 'Noto Kufi (كوفي عصري متعدد الأوزان)', font: '"Noto Kufi Arabic", sans-serif' },
+  { name: 'Noto Naskh Arabic', label: 'Noto Naskh (نسخ واضح للقراءة)', font: '"Noto Naskh Arabic", serif' },
+  { name: 'Rakkas', label: 'Rakkas (ديواني عرضي فخم)', font: 'Rakkas, cursive' },
+  { name: 'Marhey', label: 'Marhey (خط مرح للجميع)', font: 'Marhey, cursive' },
+  { name: 'Anton', label: 'Anton (EN Ultra Condensed)', font: 'Anton, sans-serif' },
+  { name: 'Audiowide', label: 'Audiowide (EN Retro Tech)', font: 'Audiowide, cursive' },
+  { name: 'Dancing Script', label: 'Dancing Script (EN Handwritten)', font: '"Dancing Script", cursive' }
 ];
 
 export const ICONS_CATALOG = [

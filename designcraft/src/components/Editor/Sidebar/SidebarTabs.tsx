@@ -3,9 +3,9 @@ import { SidebarTabType } from '../../../types';
 import {
   Type,
   Shapes,
-  SmilePlus,
-  Image as ImageIcon,
-  Sparkles,
+  LayoutTemplate,
+  Image,
+  Palette,
   Layers,
   Sliders
 } from 'lucide-react';
@@ -37,12 +37,13 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
 }) => {
   const { t } = useDcLang();
 
+  // Order follows usage flow: start from templates, end by layers
   const TABS: TabItem[] = [
+    { id: 'templates', label: t.tabTemplates, labelEn: 'Templates', icon: <LayoutTemplate className="w-4 h-4 text-violet-400" /> },
     { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
     { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
-    { id: 'ornaments', label: t.tabOrnaments, labelEn: 'Ornaments', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
-    { id: 'icons', label: t.tabIcons, labelEn: 'Icons', icon: <SmilePlus className="w-4 h-4" /> },
-    { id: 'images', label: t.tabImages, labelEn: 'Photo Library', icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" /> },
+    { id: 'background', label: t.tabBackground, labelEn: 'Background', icon: <Palette className="w-4 h-4 text-amber-400" /> },
     { id: 'layers', label: t.tabLayers, labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
   ];
   // Mobile Bottom Bar Navigation

@@ -686,6 +686,38 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => onApplyFilter('vivid')}
+                title={t.ipVividDesc}
+                className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
+              >
+                {t.ipVivid}
+              </button>
+              <button
+                type="button"
+                onClick={() => onApplyFilter('noir')}
+                title={t.ipNoirDesc}
+                className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition text-center"
+              >
+                {t.ipNoir}
+              </button>
+              <button
+                type="button"
+                onClick={() => onApplyFilter('warm')}
+                title={t.ipWarmDesc}
+                className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-amber-300 transition text-center"
+              >
+                {t.ipWarm}
+              </button>
+              <button
+                type="button"
+                onClick={() => onApplyFilter('cool')}
+                title={t.ipCoolDesc}
+                className="p-2 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/80 text-sky-300 transition text-center"
+              >
+                {t.ipCool}
+              </button>
+              <button
+                type="button"
                 onClick={() => onApplyFilter('reset')}
                 className="p-2 rounded-xl bg-[#0B132B] hover:bg-rose-900/30 border border-rose-800/40 text-rose-300 transition text-center"
               >

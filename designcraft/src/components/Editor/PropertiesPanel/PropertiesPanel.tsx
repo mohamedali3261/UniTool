@@ -5,7 +5,7 @@ import { ShapeProperties } from './ShapeProperties';
 import { ImageProperties } from './ImageProperties';
 import { AlignProperties } from './AlignProperties';
 import { CanvasProperties } from './CanvasProperties';
-import { Sliders, Sparkles, X, ChevronLeft } from 'lucide-react';
+import { X, ChevronLeft, Type, Image as ImageIcon, Shapes, Layers, Palette } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
 interface PropertiesPanelProps {
@@ -73,6 +73,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     activeProperties?.lockRotation
   );
 
+  // Type-aware header badge: icon + color per selection kind
+  const heading = (() => {
+    if (isText) return { Icon: Type, cls: 'bg-sky-500/15 text-sky-300' };
+    if (isImage) return { Icon: ImageIcon, cls: 'bg-emerald-500/15 text-emerald-300' };
+    if (isShape) return { Icon: Shapes, cls: 'bg-amber-500/15 text-amber-300' };
+    if (isGroupOrIcon) return { Icon: Layers, cls: 'bg-violet-500/15 text-violet-300' };
+    if (activeProperties) return { Icon: Shapes, cls: 'bg-amber-500/15 text-amber-300' };
+    return { Icon: Palette, cls: 'bg-sky-500/15 text-sky-300' };
+  })();
+
   return (
     <aside
       id="editor-properties-panel"
@@ -81,8 +91,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {/* Panel Header */}
       <div className="h-10 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
         <div className="flex items-center gap-2">
-          <div className="p-1 rounded-md bg-sky-500/15 text-sky-400">
-            <Sliders className="w-3.5 h-3.5" />
+          <div className={`p-1 rounded-md ${heading.cls}`}>
+            <heading.Icon className="w-3.5 h-3.5" />
           </div>
           <div>
             <h3 className="text-xs font-bold text-white leading-tight">

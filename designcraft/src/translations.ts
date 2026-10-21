@@ -108,6 +108,14 @@ export const dcTranslations = {
     tabImages: 'مكتبة صور',
     tabLayers: 'الطبقات',
     tabProperties: 'الخصائص',
+    tabTemplates: 'قوالب',
+    tabMedia: 'مكتبة',
+    tabBackground: 'الخلفية',
+
+    // Media merged section
+    mediaImages: 'صور',
+    mediaIcons: 'أيقونات',
+    mediaOrnaments: 'زخارف',
 
     // BackgroundTab
     bgCustomize: 'تخصيص خلفية الكانفاس',
@@ -125,6 +133,35 @@ export const dcTranslations = {
     titleIcons: 'مكتبة الأيقونات والرموز',
     titleImages: 'مكتبة صور',
     titleLayers: 'إدارة الطبقات',
+    titleTemplates: 'قوالب تصميم جاهزة',
+    titleMedia: 'مكتبة الوسائط · صور · أيقونات · زخارف',
+    titleBackground: 'خلفية الكانفاس',
+
+    // TemplatesTab
+    tplTitle: 'قوالب جاهزة بضغطة زر',
+    tplDesc: 'اختر قالبًا وصمم فورًا — يطبّق الخلفية والعناصر كلها مركّبة',
+    tplSearch: 'ابحث في القوالب...',
+    tplApply: 'تطبيق',
+    tplObjects: 'عنصر',
+    tplNoResults: 'مفيش قوالب مطابقة للبحث',
+    tplHint: 'القالب بيضيف عناصره فوق التصميم الحالي — تقدر تعدّل النصوص والألوان من اللوحة بعد التطبيق.',
+    tplOverlayConfirm: 'الكانفس فيه عناصر حاليًا.\nهيتم استبدالها بعناصر القالب الجديد.\n(اعتمد للمتابعة — التراجع متاح بعدها)',
+    tplToastTitle: 'تم تطبيق القالب',
+
+    // Quick export
+    quickExportTitle: 'تحميل سريع PNG',
+    quickExportMsg: 'تم حفظ التصميم بنجاح بجودة عالية',
+    quickExportErrorTitle: 'فشل التصدير',
+    quickExportErrorMsg: 'تعذر تصدير الكانفاس — جرب تاني',
+
+    // Image filter presets
+    ipVivid: 'حيوي',    ipVividDesc: 'تشبع أعلى وتباين/سطوع خفيف — ألوان جامحة',
+    ipNoir: 'أبيض وأسود صارم',
+    ipNoirDesc: 'رمادي صريح مع تباين عالي',
+    ipWarm: 'دافئ',
+    ipWarmDesc: 'تلطيف برتقالي بألوان البريك',
+    ipCool: 'بارد',
+    ipCoolDesc: 'تلطيف زرقة هادئة مهنية',
 
     // TextTab
     addNewText: 'نص جديد',
@@ -257,6 +294,8 @@ export const dcTranslations = {
     tpLineHeight: 'تباعد الأسطر (Line Height)',
     tpLetterSpacing: 'تباعد الحروف (Letter Spacing)',
     tpOpacity: 'الشفافية (Opacity)',
+    tpTextColors: 'الألوان والتدرجات',
+    tpFineTune: 'ضبط دقيق',
 
     // ShapeProperties
     spFill: 'لون التعبئة (Fill Color)',
@@ -264,6 +303,8 @@ export const dcTranslations = {
     spStrokeWidth: 'سُمك الإطار (Border Width)',
     spCornerRadius: 'استدارة الحواف (Corner Radius)',
     spOpacity: 'الشفافية (Opacity)',
+    spColorsTitle: 'تعبئة وحدود',
+    spAdjustTitle: 'حدود وزوايا',
 
     // ImageProperties
     ipFade: 'تلاشي جزئي',
@@ -350,6 +391,7 @@ export const dcTranslations = {
     apLocked: 'مقفل',
     apLock: 'قفل',
     apDelete: 'حذف',
+    apQuickActions: 'إجراءات سريعة',
 
     // ExportModal
     exTitle: 'تصدير التصميم',
@@ -617,6 +659,14 @@ export const dcTranslations = {
     tabImages: 'Photos',
     tabLayers: 'Layers',
     tabProperties: 'Properties',
+    tabTemplates: 'Templates',
+    tabMedia: 'Media',
+    tabBackground: 'Background',
+
+    // Media merged section
+    mediaImages: 'Photos',
+    mediaIcons: 'Icons',
+    mediaOrnaments: 'Ornaments',
 
     // BackgroundTab
     bgCustomize: 'Customize Canvas Background',
@@ -634,6 +684,36 @@ export const dcTranslations = {
     titleIcons: 'Icons & Symbols Library',
     titleImages: 'Photo Library',
     titleLayers: 'Layers Management',
+    titleTemplates: 'Ready-made Design Templates',
+    titleMedia: 'Media Library · Photos · Icons · Ornaments',
+    titleBackground: 'Canvas Background',
+
+    // TemplatesTab
+    tplTitle: 'One-click Ready Templates',
+    tplDesc: 'Pick a template and design instantly — background & composed objects applied together',
+    tplSearch: 'Search templates...',
+    tplApply: 'Apply',
+    tplObjects: 'objects',
+    tplNoResults: 'No templates match your search',
+    tplHint: 'Template objects are added on top of your current design — tweak text & colors from the properties panel afterwards.',
+    tplOverlayConfirm: 'The canvas already has elements.\nThey will be replaced with the new template objects.\n(Accept to continue — Undo remains available)',
+    tplToastTitle: 'Template applied',
+
+    // Quick export
+    quickExportTitle: 'Quick PNG download',
+    quickExportMsg: 'Design saved successfully in high quality',
+    quickExportErrorTitle: 'Export failed',
+    quickExportErrorMsg: 'Could not export the canvas — try again',
+
+    // Image filter presets
+    ipVivid: 'Vivid',
+    ipVividDesc: 'Higher saturation with light contrast/brightness boost',
+    ipNoir: 'Sharp B&W',
+    ipNoirDesc: 'Purely grayscale with high contrast',
+    ipWarm: 'Warm',
+    ipWarmDesc: 'Orange-tinted warm tone',
+    ipCool: 'Cool',
+    ipCoolDesc: 'Calm professional blue tint',
 
     // TextTab
     addNewText: 'New Text',
@@ -766,6 +846,8 @@ export const dcTranslations = {
     tpLineHeight: 'Line Height',
     tpLetterSpacing: 'Letter Spacing',
     tpOpacity: 'Opacity',
+    tpTextColors: 'Colors & Gradients',
+    tpFineTune: 'Fine Tuning',
 
     // ShapeProperties
     spFill: 'Fill Color',
@@ -773,6 +855,8 @@ export const dcTranslations = {
     spStrokeWidth: 'Border Width',
     spCornerRadius: 'Corner Radius',
     spOpacity: 'Opacity',
+    spColorsTitle: 'Fill & Stroke',
+    spAdjustTitle: 'Stroke & Corners',
 
     // ImageProperties
     ipFade: 'Edge Fade',
@@ -859,6 +943,7 @@ export const dcTranslations = {
     apLocked: 'Locked',
     apLock: 'Lock',
     apDelete: 'Delete',
+    apQuickActions: 'Quick Actions',
 
     // ExportModal
     exTitle: 'Export Design',
