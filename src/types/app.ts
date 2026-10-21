@@ -28,7 +28,8 @@ export type PageId =
   | 'documentScanner'
   | 'qrScanner'
   | 'formatConverter'
-  | 'videoFrames';
+  | 'videoFrames'
+  | 'pdfSigner';
 
 export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf' | 'documentScanner';
 

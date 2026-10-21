@@ -15,6 +15,7 @@ import {
   ScanQrCode,
   ArrowLeftRight,
   Images,
+  FileSignature,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -41,6 +42,7 @@ export const navItems: NavItem[] = [
   { id: 'qrScanner', labelAr: 'قارئ رمز QR', labelEn: 'QR Code Scanner', icon: ScanQrCode, color: 'from-blue-600 to-indigo-600', activeBg: 'bg-blue-600/15 ring-1 ring-blue-500/30' },
   { id: 'formatConverter', labelAr: 'محول الصيغ', labelEn: 'Format Converter', icon: ArrowLeftRight, color: 'from-violet-600 to-purple-600', activeBg: 'bg-violet-600/15 ring-1 ring-violet-500/30' },
   { id: 'videoFrames', labelAr: 'استخراج إطارات الفيديو', labelEn: 'Video Frame Extractor', icon: Images, color: 'from-rose-600 to-pink-600', activeBg: 'bg-rose-600/15 ring-1 ring-rose-500/30' },
+  { id: 'pdfSigner', labelAr: 'توقيع PDF', labelEn: 'PDF Signer', icon: FileSignature, color: 'from-lime-600 to-green-600', activeBg: 'bg-lime-600/15 ring-1 ring-lime-500/30' },
   { id: 'speechToText', labelAr: 'تحويل الكلام إلى نص', labelEn: 'Speech to Text', icon: MessageSquareText, color: 'from-purple-600 to-fuchsia-600', activeBg: 'bg-purple-600/15 ring-1 ring-purple-500/30' },
   { id: 'audioTranscriber', labelAr: 'تفريغ الصوت', labelEn: 'Audio Transcriber', icon: FileAudio, color: 'from-teal-600 to-cyan-600', activeBg: 'bg-teal-600/15 ring-1 ring-teal-500/30' },
   { id: 'documentScanner', labelAr: 'سكانر المستندات', labelEn: 'Document Scanner', icon: ScanLine, color: 'from-teal-600 to-emerald-600', activeBg: 'bg-teal-600/15 ring-1 ring-teal-500/30' },

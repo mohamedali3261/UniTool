@@ -30,6 +30,7 @@ import { DocumentScanner } from '../pages/DocumentScanner';
 import { QrScanner } from '../pages/QrScanner';
 import { FormatConverter } from '../pages/FormatConverter';
 import { VideoFrames } from '../pages/VideoFrames';
+import { PdfSigner } from '../pages/PdfSigner';
 
 interface Props {
   currentPage: PageId;
@@ -109,6 +110,8 @@ export function PageRouter({
       return <FormatConverter {...p} onNavigate={onNavigate} />;
     case 'videoFrames':
       return <VideoFrames {...p} onNavigate={onNavigate} />;
+    case 'pdfSigner':
+      return <PdfSigner {...p} onNavigate={onNavigate} />;
     case 'videoToGif':
       return <VideoToGif {...p} />;
     case 'imageToPdf':
