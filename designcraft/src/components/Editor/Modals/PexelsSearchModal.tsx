@@ -54,6 +54,25 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
   const [page, setPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [selectedPhotoId, setSelectedPhotoId] = useState<number | null>(null);
+  // Fallback: when dropping the direct image URL fails (network/proxy), refetch via fetch → blob → objectURL
+  const [fallbackSrcs, setFallbackSrcs] = useState<Record<number, string>>({});
+
+  const handleImgError = async (photo: PexelsPhoto) => {
+    if (fallbackSrcs[photo.id]) return;
+    const url = photo.src.medium || photo.src.large || photo.src.original;
+    try {
+      const blob = await fetch(url).then((r) => {
+        if (!r.ok) throw new Error('bad status');
+        return r.blob();
+      });
+      setFallbackSrcs((prev) => ({
+        ...prev,
+        [photo.id]: URL.createObjectURL(blob)
+      }));
+    } catch {
+      // still unreachable — keep the alt-text placeholder card
+    }
+  };
 
   // Load curated photos initially
   useEffect(() => {
@@ -263,9 +282,10 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
                       style={{ aspectRatio: photo.width / photo.height || '4/3' }}
                     >
                       <img
-                        src={photo.src.medium || photo.src.large}
+                        src={fallbackSrcs[photo.id] || photo.src.medium || photo.src.large}
                         alt={photo.alt || 'Stock Photo'}
                         loading="lazy"
+                        onError={() => handleImgError(photo)}
                         className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
                       />
 

@@ -61,12 +61,14 @@ const CAT_COLORS: Record<string, string> = {
   neon: '#22D3EE',
   calligraphy: '#F472B6',
   badges: '#34D399',
-  '3d': '#FB923C'
+  '3d': '#FB923C',
+  english: '#F472B6'
 };
 
 export const TextTab: React.FC<TextTabProps> = ({
   onAddText,
   onAddHeading,
+  onAddSubheading,
   onAddBodyText,
   activeProperties,
   onUpdateProperty
@@ -103,6 +105,19 @@ export const TextTab: React.FC<TextTabProps> = ({
     } else if (typeof onAddHeading === 'function') {
       onAddHeading();
     }
+  };
+
+  const safeAddStyled = (kind: 'heading' | 'subheading' | 'body') => {
+    if (kind === 'heading' && typeof onAddHeading === 'function') onAddHeading();
+    else if (kind === 'subheading' && typeof onAddSubheading === 'function') onAddSubheading();
+    else if (typeof onAddBodyText === 'function') onAddBodyText();
+    else safeAddText({
+      text: t.addNewText,
+      fontSize: kind === 'heading' ? 48 : kind === 'subheading' ? 32 : 20,
+      fontWeight: kind === 'body' ? 400 : 800,
+      fontFamily: selectedFont,
+      fill: selectedColor
+    });
   };
 
   const handleAddCustomText = (e?: React.FormEvent) => {
@@ -151,7 +166,8 @@ export const TextTab: React.FC<TextTabProps> = ({
     { id: 'neon', label: t.catNeon },
     { id: 'calligraphy', label: t.catArabicFonts },
     { id: 'badges', label: t.catBadges },
-    { id: '3d', label: t.cat3D }
+    { id: '3d', label: t.cat3D },
+    { id: 'english', label: t.catEnglish }
   ];
 
   const filteredPresets = TEXT_PRESETS.filter((p) => {
@@ -196,6 +212,24 @@ export const TextTab: React.FC<TextTabProps> = ({
             <span>{t.addBtn}</span>
           </button>
         </form>
+
+        {/* Quick structure add chips */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { kind: 'heading' as const, label: t.quickHeading, cls: 'border-sky-500/40 text-sky-300 hover:bg-sky-500/15' },
+            { kind: 'subheading' as const, label: t.quickSubheading, cls: 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/15' },
+            { kind: 'body' as const, label: t.quickBody, cls: 'border-slate-600 text-slate-300 hover:bg-slate-800' }
+          ].map((c) => (
+            <button
+              key={c.kind}
+              type="button"
+              onClick={() => safeAddStyled(c.kind)}
+              className={`py-1.5 rounded-xl border text-[10px] font-bold transition ${c.cls}`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
       </Section>
 
       {/* 2. Customizer: scale + color before adding */}
@@ -283,34 +317,43 @@ export const TextTab: React.FC<TextTabProps> = ({
           {filteredPresets.map((preset) => {
             const previewText = customText.trim() || preset.text;
             const previewColor = overridePresetColor || preset.fill;
-            const scaledFontSize = Math.min(Math.round(preset.fontSize * (presetScale / 100)), 22);
+            // Live-scaled preview: base size + proportional transform so the
+            // slider visibly scales the card at every step (not clamp-flat)
+            const baseFontSize = Math.max(6, Math.min(18, Math.round(preset.fontSize * 0.18)));
+            const scaleFactor = Math.max(0.45, Math.min(2.2, presetScale / 100));
 
             return (
               <button
                 key={preset.id}
                 type="button"
                 onClick={() => handleApplyPreset(preset)}
-                className="h-20 px-2 rounded-xl bg-slate-900/60 hover:bg-[#152042] border border-slate-800 hover:border-sky-400/70 hover:shadow-md hover:shadow-sky-500/10 transition group flex flex-col items-center justify-center gap-1 text-center"
+                className="h-16 px-2 rounded-xl bg-slate-900/60 hover:bg-[#152042] border border-slate-800 hover:border-sky-400/70 hover:shadow-md hover:shadow-sky-500/10 transition group flex flex-col items-center justify-center gap-0.5 text-center"
               >
-                <div className="flex-1 flex items-center justify-center min-w-0 w-full">
+                <div className="flex-1 flex items-center justify-center min-w-0 w-full overflow-hidden">
                   <div
-                    className="truncate max-w-full transition group-hover:scale-105"
+                    className="truncate max-w-full"
                     style={{
                       fontFamily: preset.fontFamily,
                       color: previewColor,
-                      fontSize: scaledFontSize,
+                      fontSize: baseFontSize,
                       fontWeight: preset.fontWeight,
                       fontStyle: preset.fontStyle || 'normal',
                       backgroundColor: preset.backgroundColor || 'transparent',
-                      padding: preset.backgroundColor ? '3px 10px' : '0',
-                      borderRadius: '8px',
-                      display: 'inline-block'
+                      padding: preset.backgroundColor ? '2px 8px' : '0',
+                      borderRadius: '6px',
+                      letterSpacing: preset.letterSpacing ? `${preset.letterSpacing / 16}px` : 'normal',
+                      display: 'inline-block',
+                      transform: `scale(${scaleFactor})`,
+                      transition: 'transform .12s ease-out'
                     }}
                   >
                     {previewText}
                   </div>
                 </div>
-                <div className="text-[9px] text-slate-400 group-hover:text-sky-300 transition truncate max-w-full font-sans">
+                <div
+                  className="text-[9px] text-slate-400 group-hover:text-sky-300 transition truncate max-w-full font-sans"
+                  title={preset.labelAr}
+                >
                   {preset.labelAr}
                 </div>
               </button>

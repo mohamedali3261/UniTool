@@ -296,6 +296,10 @@ export const dcTranslations = {
     tpOpacity: 'الشفافية (Opacity)',
     tpTextColors: 'الألوان والتدرجات',
     tpFineTune: 'ضبط دقيق',
+    catEnglish: 'إنجليزي (عرض)',
+    quickHeading: 'عنوان رئيسي',
+    quickSubheading: 'عنوان فرعي',
+    quickBody: 'نص عادي',
 
     // ShapeProperties
     spFill: 'لون التعبئة (Fill Color)',
@@ -848,6 +852,10 @@ export const dcTranslations = {
     tpOpacity: 'Opacity',
     tpTextColors: 'Colors & Gradients',
     tpFineTune: 'Fine Tuning',
+    catEnglish: 'English (Display)',
+    quickHeading: 'Main heading',
+    quickSubheading: 'Subheading',
+    quickBody: 'Body text',
 
     // ShapeProperties
     spFill: 'Fill Color',

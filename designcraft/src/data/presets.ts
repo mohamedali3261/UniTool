@@ -416,6 +416,203 @@ export const TEXT_PRESETS: TextPreset[] = [
     fill: '#FEF08A',
     shadow: 'rgba(234, 88, 12, 0.8) 0px 6px 14px',
     text: '🎉 أهلاً وسهلاً بكم'
+  },
+
+  // 7. Expanded Arabic Library (new fonts)
+  {
+    id: 'preset-kufi-modern',
+    label: 'Modern Kufi',
+    labelAr: 'كوفي عصري هندسي',
+    category: 'calligraphy',
+    fontFamily: 'Noto Kufi Arabic',
+    fontSize: 62,
+    fontWeight: 800,
+    fill: '#F1F5F9',
+    text: 'كوفي حديث واضح'
+  },
+  {
+    id: 'preset-naskh-classic',
+    label: 'Classic Naskh',
+    labelAr: 'نسخ كلاسيكي للقراءة',
+    category: 'calligraphy',
+    fontFamily: 'Noto Naskh Arabic',
+    fontSize: 56,
+    fontWeight: 500,
+    fill: '#E2E8F0',
+    text: 'نص مقروء وأنيق'
+  },
+  {
+    id: 'preset-scheherazade',
+    label: 'Scheherazade Traditional',
+    labelAr: 'شهرزاد تقليدي فاخر',
+    category: 'calligraphy',
+    fontFamily: 'Scheherazade New',
+    fontSize: 64,
+    fontWeight: 600,
+    fill: '#FDE68A',
+    text: 'خيال شهرزاد واسع'
+  },
+  {
+    id: 'preset-rakkas-big',
+    label: 'Rakkas Display',
+    labelAr: 'رقاص عرضي لافت',
+    category: 'calligraphy',
+    fontFamily: 'Rakkas',
+    fontSize: 66,
+    fontWeight: 400,
+    fill: '#FDBA74',
+    text: 'لافتة العرض الكبير'
+  },
+  {
+    id: 'preset-katibeh-title',
+    label: 'Katibeh Poster',
+    labelAr: 'كتيبة بوستر العناوين',
+    category: 'headings',
+    fontFamily: 'Katibeh',
+    fontSize: 84,
+    fontWeight: 400,
+    fill: '#FFFFFF',
+    text: 'الكلمة تفرق'
+  },
+  {
+    id: 'preset-lemonada-soft',
+    label: 'Lemonada Soft',
+    labelAr: 'ليمونادة دائري ودود',
+    category: 'headings',
+    fontFamily: 'Lemonada',
+    fontSize: 48,
+    fontWeight: 700,
+    fill: '#FFD166',
+    text: 'أهلاً بك مجددًا'
+  },
+  {
+    id: 'preset-mada-cover',
+    label: 'Mada Bold Cover',
+    labelAr: 'مدى غلاف سميك',
+    category: 'headings',
+    fontFamily: 'Mada',
+    fontSize: 56,
+    fontWeight: 900,
+    fill: '#FFFFFF',
+    text: 'غلاف استعراضي'
+  },
+  {
+    id: 'preset-harmattan-clean',
+    label: 'Harmattan Clean',
+    labelAr: 'هارماتان نظيف للإعلانات',
+    category: 'headings',
+    fontFamily: 'Harmattan',
+    fontSize: 52,
+    fontWeight: 700,
+    fill: '#F8FAFC',
+    text: 'إعلان نظيف مباشر'
+  },
+  {
+    id: 'preset-marhey-fun',
+    label: 'Marhey Fun',
+    labelAr: 'مرحي كرتوني مرح',
+    category: 'badges',
+    fontFamily: 'Marhey',
+    fontSize: 46,
+    fontWeight: 700,
+    fill: '#A7F3D0',
+    backgroundColor: 'rgba(6, 95, 70, 0.85)',
+    text: 'عرض مميز لفترة'
+  },
+  {
+    id: 'preset-plex-brands',
+    label: 'Plex Brand',
+    labelAr: 'بلكس برند هندسي',
+    category: 'badges',
+    fontFamily: 'IBM Plex Sans Arabic',
+    fontSize: 44,
+    fontWeight: 700,
+    fill: '#E0F2FE',
+    backgroundColor: 'rgba(2, 132, 199, 0.85)',
+    letterSpacing: 30,
+    text: 'برَند جديد'
+  },
+
+  // 8. English Display Library
+  {
+    id: 'preset-orbitron-sci',
+    label: 'Orbitron Sci-Fi',
+    labelAr: 'أوربيترون خيال علمي',
+    category: 'english',
+    fontFamily: 'Orbitron',
+    fontSize: 46,
+    fontWeight: 900,
+    fill: '#67E8F9',
+    letterSpacing: 20,
+    text: 'FUTURE IS NOW'
+  },
+  {
+    id: 'preset-bungee-street',
+    label: 'Bungee Street',
+    labelAr: 'بانجي لافتات الشوارع',
+    category: 'english',
+    fontFamily: 'Bungee',
+    fontSize: 48,
+    fontWeight: 400,
+    fill: '#FBBF24',
+    text: 'BIG SALE 50%'
+  },
+  {
+    id: 'preset-sora-clean',
+    label: 'Sora Clean',
+    labelAr: 'سورا نظيف تقني',
+    category: 'english',
+    fontFamily: 'Sora',
+    fontSize: 44,
+    fontWeight: 800,
+    fill: '#F8FAFC',
+    text: 'Launch Day'
+  },
+  {
+    id: 'preset-grotesk-startup',
+    label: 'Space Grotesk Startup',
+    labelAr: 'جروتِسك ستارتبات',
+    category: 'english',
+    fontFamily: 'Space Grotesk',
+    fontSize: 48,
+    fontWeight: 700,
+    fill: '#DDD6FE',
+    text: 'Built to scale'
+  },
+  {
+    id: 'preset-fredoka-friendly',
+    label: 'Fredoka Friendly',
+    labelAr: 'فريدوكا ودود دائري',
+    category: 'english',
+    fontFamily: 'Fredoka',
+    fontSize: 46,
+    fontWeight: 600,
+    fill: '#FFFFFF',
+    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+    text: 'Try it free!'
+  },
+  {
+    id: 'preset-righteous-retro',
+    label: 'Righteous Retro',
+    labelAr: 'رايتِس رِترو كلاسيك',
+    category: 'english',
+    fontFamily: 'Righteous',
+    fontSize: 50,
+    fontWeight: 400,
+    fill: '#FDA4AF',
+    shadow: 'rgba(190, 18, 60, 0.7) 0px 4px 10px',
+    text: 'Retro Vibes'
+  },
+  {
+    id: 'preset-anton-poster',
+    label: 'Anton Poster',
+    labelAr: 'أنتون بوستر ضخم',
+    category: 'english',
+    fontFamily: 'Anton',
+    fontSize: 54,
+    fontWeight: 400,
+    fill: '#FFFFFF',
+    text: 'NEW DROP'
   }
 ];
 
@@ -473,7 +670,26 @@ export const POPULAR_FONTS = [
   { name: 'Marhey', label: 'Marhey (خط مرح للجميع)', font: 'Marhey, cursive' },
   { name: 'Anton', label: 'Anton (EN Ultra Condensed)', font: 'Anton, sans-serif' },
   { name: 'Audiowide', label: 'Audiowide (EN Retro Tech)', font: 'Audiowide, cursive' },
-  { name: 'Dancing Script', label: 'Dancing Script (EN Handwritten)', font: '"Dancing Script", cursive' }
+  { name: 'Dancing Script', label: 'Dancing Script (EN Handwritten)', font: '"Dancing Script", cursive' },
+  // --- New Arabic fonts ---
+  { name: 'Harmattan', label: 'Harmattan (عربي كوخي نظيف)', font: 'Harmattan, sans-serif' },
+  { name: 'Mada', label: 'Mada (عربي هندسي متنوع الأوزان)', font: 'Mada, sans-serif' },
+  { name: 'Lemonada', label: 'Lemonada (عربي دائري ودود)', font: 'Lemonada, cursive' },
+  { name: 'Mirza', label: 'Mirza (عربي نسخي رشيق)', font: 'Mirza, cursive' },
+  { name: 'Scheherazade New', label: 'Scheherazade (نسخ تقليدي فاخر)', font: '"Scheherazade New", serif' },
+  { name: 'Noto Sans Arabic', label: 'Noto Sans Arabic (واضح للحملات)', font: '"Noto Sans Arabic", sans-serif' },
+  { name: 'IBM Plex Sans Arabic', label: 'IBM Plex Arabic (بالحاسوب أنيق)', font: '"IBM Plex Sans Arabic", sans-serif' },
+  { name: 'Katibeh', label: 'Katibeh (خط عناوين كوفي)', font: 'Katibeh, cursive' },
+  { name: 'Ruqaa', label: 'Ruqaa (رقعة معاصرة)', font: 'Ruqaa, serif' },
+  // --- New English fonts ---
+  { name: 'Rubik', label: 'Rubik (Rounded Modern)', font: 'Rubik, sans-serif' },
+  { name: 'Sora', label: 'Sora (Tech Clean)', font: 'Sora, sans-serif' },
+  { name: 'Space Grotesk', label: 'Space Grotesk (Startup Style)', font: '"Space Grotesk", sans-serif' },
+  { name: 'Bungee', label: 'Bungee (Street Signage)', font: 'Bungee, cursive' },
+  { name: 'Orbitron', label: 'Orbitron (Sci-Fi Display)', font: 'Orbitron, sans-serif' },
+  { name: 'Righteous', label: 'Righteous (Retro Fun)', font: 'Righteous, cursive' },
+  { name: 'Russo One', label: 'Russo One (Sporty Bold)', font: '"Russo One", sans-serif' },
+  { name: 'Fredoka', label: 'Fredoka (Friendly Rounded)', font: 'Fredoka, sans-serif' }
 ];
 
 export const ICONS_CATALOG = [

@@ -65,7 +65,7 @@ export interface TextPreset {
   shadow?: string;
   backgroundColor?: string;
   text: string;
-  category?: 'all' | 'headings' | 'gold' | 'neon' | 'calligraphy' | 'badges' | '3d';
+  category?: 'all' | 'headings' | 'gold' | 'neon' | 'calligraphy' | 'badges' | '3d' | 'english';
   stroke?: string;
   strokeWidth?: number;
   letterSpacing?: number;
