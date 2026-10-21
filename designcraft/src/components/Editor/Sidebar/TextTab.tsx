@@ -39,7 +39,7 @@ const Section: React.FC<{
   trailing?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ icon, iconBg, title, trailing, children }) => (
-  <div className="rounded-2xl bg-[#0B132B]/80 border border-slate-800 shadow-xs overflow-hidden">
+  <div className="shrink-0 rounded-2xl bg-[#0B132B]/80 border border-slate-800 shadow-xs overflow-hidden">
     <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-800/80 bg-white/[0.02]">
       <div className="flex items-center gap-2 min-w-0">
         <span className={`shrink-0 p-1 rounded-lg ${iconBg} flex items-center justify-center`}>
@@ -160,10 +160,10 @@ export const TextTab: React.FC<TextTabProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-full gap-2.5 overflow-y-auto pr-0.5 select-none">
+    <div className="space-y-3 select-none">
 
       {/* Page intro header */}
-      <div className="flex items-start gap-2.5 px-1 pt-1">
+      <div className="shrink-0 flex items-start gap-2.5 px-1 pt-1">
         <span className="shrink-0 p-1.5 rounded-xl bg-gradient-to-br from-sky-500/25 to-indigo-500/25 border border-sky-500/30 text-sky-300 flex items-center justify-center">
           <Type className="w-4 h-4" />
         </span>
@@ -386,7 +386,7 @@ export const TextTab: React.FC<TextTabProps> = ({
       </Section>
 
       {/* bottom spacing */}
-      <div className="pb-1" />
+      <div className="shrink-0 pb-1" />
     </div>
   );
 };
