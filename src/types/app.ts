@@ -27,7 +27,8 @@ export type PageId =
   | 'pdfProtect'
   | 'documentScanner'
   | 'qrScanner'
-  | 'formatConverter';
+  | 'formatConverter'
+  | 'videoFrames';
 
 export type FileHandoffTarget = 'imageCropper' | 'imageCompressor' | 'imageToPdf' | 'documentScanner';
 
