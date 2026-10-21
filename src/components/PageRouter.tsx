@@ -28,6 +28,7 @@ import { PdfUnlock } from '../pages/PdfUnlock';
 import { PdfProtect } from '../pages/PdfProtect';
 import { DocumentScanner } from '../pages/DocumentScanner';
 import { QrScanner } from '../pages/QrScanner';
+import { FormatConverter } from '../pages/FormatConverter';
 
 interface Props {
   currentPage: PageId;
@@ -103,6 +104,8 @@ export function PageRouter({
       return <QRCodeGenerator {...p} onNavigate={onNavigate} />;
     case 'qrScanner':
       return <QrScanner {...p} onNavigate={onNavigate} />;
+    case 'formatConverter':
+      return <FormatConverter {...p} onNavigate={onNavigate} />;
     case 'videoToGif':
       return <VideoToGif {...p} />;
     case 'imageToPdf':
