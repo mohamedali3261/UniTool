@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X as XIcon } from 'lucide-react';
-import { navItems } from '../config/navigation';
+import { navItems, navGroupLabels } from '../config/navigation';
 
 interface Props {
   open: boolean;
@@ -45,26 +45,39 @@ export function MobileMenu({ open, lang, t, currentPage, onNavigate, onClose }: 
               </div>
 
               <div className="px-3 pb-4 overflow-y-auto space-y-1">
-                {navItems.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => { onNavigate(item.id); onClose(); }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-start ${
-                      currentPage === item.id
-                        ? item.activeBg
-                        : 'hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg shrink-0`}>
-                      <item.icon size={18} className="text-white" />
+                {navItems.map((item, index) => {
+                  const prev = navItems[index - 1];
+                  const showGroup = item.group !== 'overview' && (!prev || prev.group !== item.group);
+                  return (
+                    <div key={item.id}>
+                      {showGroup && (
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
+                          <span className="text-[8px] font-mono uppercase tracking-[0.18em] text-gray-500">
+                            {lang === 'ar' ? navGroupLabels[item.group].ar : navGroupLabels[item.group].en}
+                          </span>
+                          <span className="h-px flex-1 bg-white/[0.06]" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => { onNavigate(item.id); onClose(); }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-start ${
+                          currentPage === item.id
+                            ? item.activeBg
+                            : 'hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg shrink-0`}>
+                          <item.icon size={18} className="text-white" />
+                        </div>
+                        <span className={`text-[12px] font-medium leading-snug ${
+                          currentPage === item.id ? 'text-white' : 'text-gray-300'
+                        }`}>
+                          {lang === 'ar' ? item.labelAr : item.labelEn}
+                        </span>
+                      </button>
                     </div>
-                    <span className={`text-[12px] font-medium leading-snug ${
-                      currentPage === item.id ? 'text-white' : 'text-gray-300'
-                    }`}>
-                      {lang === 'ar' ? item.labelAr : item.labelEn}
-                    </span>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="px-5 pb-4 pt-2 border-t border-[#2D3139] shrink-0">

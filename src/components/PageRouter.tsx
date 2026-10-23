@@ -31,6 +31,7 @@ import { QrScanner } from '../pages/QrScanner';
 import { FormatConverter } from '../pages/FormatConverter';
 import { VideoFrames } from '../pages/VideoFrames';
 import { PdfSigner } from '../pages/PdfSigner';
+import { ToolsHome } from '../pages/ToolsHome';
 
 interface Props {
   currentPage: PageId;
@@ -74,6 +75,8 @@ export function PageRouter({
   const p = { t, lang };
 
   switch (currentPage) {
+    case 'toolsHome':
+      return <ToolsHome {...p} onNavigate={onNavigate} />;
     case 'videoSubtitles':
       return <VideoSubtitles {...p} />;
     case 'audioExtractor':

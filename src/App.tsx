@@ -21,7 +21,7 @@ export default function App() {
   // Deep-link support: /app.html#<toolId> opens that tool directly
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     const hashId = window.location.hash.replace('#', '').trim();
-    return (navItems.some(i => i.id === hashId) ? hashId : 'videoToGif') as PageId;
+    return (navItems.some(i => i.id === hashId) ? hashId : 'toolsHome') as PageId;
   });
   const [fileHandoff, setFileHandoff] = useState<FileHandoff | null>(null);
   const fileHandoffId = useRef(0);

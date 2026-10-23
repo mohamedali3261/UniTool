@@ -1,4 +1,5 @@
 export type PageId =
+  | 'toolsHome'
   | 'compress'
   | 'splitter'
   | 'videoLogo'
