@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, ImagePlus, ArrowDownUp, Percent, FolderOpen, Scissors, FileText } from 'lucide-react';
 import JSZip from 'jszip';
-import { cn } from '../lib/utils';
-import type { FileHandoff, FileHandoffTarget } from '../types/app';
+import { cn } from '../../lib/utils';
+import type { FileHandoff, FileHandoffTarget } from '../../types/app';
 
 interface Props {
   t: any;

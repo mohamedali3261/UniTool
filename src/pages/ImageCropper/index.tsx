@@ -6,8 +6,8 @@ import {
   FlipHorizontal, FlipVertical, Lock, Unlock,
 } from 'lucide-react';
 import JSZip from 'jszip';
-import { cn } from '../lib/utils';
-import type { FileHandoff, FileHandoffTarget } from '../types/app';
+import { cn } from '../../lib/utils';
+import type { FileHandoff, FileHandoffTarget } from '../../types/app';
 
 interface ImageCropperProps {
   t: any;
