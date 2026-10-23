@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, FileType2, FileSpreadsheet, FileText as FileTextIcon, ArrowDownUp, FileArchive } from 'lucide-react';
 import JSZip from 'jszip';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;

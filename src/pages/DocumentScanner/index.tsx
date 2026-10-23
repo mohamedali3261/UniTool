@@ -5,8 +5,8 @@ import {
   Crosshair, ZoomIn,
 } from 'lucide-react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import { cn } from '../lib/utils';
-import type { FileHandoff } from '../types/app';
+import { cn } from '../../lib/utils';
+import type { FileHandoff } from '../../types/app';
 
 interface Props {
   t: any;

@@ -4,9 +4,9 @@ import {
   Check, X, FileImage, FileAudio, Zap, Image as ImageIcon, Music4,
   FileDown, Repeat,
 } from 'lucide-react';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;

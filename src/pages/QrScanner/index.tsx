@@ -7,7 +7,7 @@ import {
   Flashlight, Volume2, VolumeX, Vibrate, VibrateOff, Repeat,
   Search, FileJson2, FileText, Wand2,
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;

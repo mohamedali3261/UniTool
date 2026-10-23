@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { FileText, FileImage } from 'lucide-react';
-import { PDFElement } from '../types/pdf';
-import { fileToArrayBuffer, fileToDataURL } from '../utils/file-utils';
-import { exportEditedPDF } from '../utils/pdf-export';
-import { PdfEditorArea } from '../components/pdf-editor/PdfEditorArea';
-import { PdfToolbar } from '../components/pdf-editor/PdfToolbar';
-import { PdfProperties } from '../components/pdf-editor/PdfProperties';
-import { PdfPages } from '../components/pdf-editor/PdfPages';
+import { PDFElement } from '../../types/pdf';
+import { fileToArrayBuffer, fileToDataURL } from '../../utils/file-utils';
+import { exportEditedPDF } from '../../utils/pdf-export';
+import { PdfEditorArea } from '../../components/pdf-editor/PdfEditorArea';
+import { PdfToolbar } from '../../components/pdf-editor/PdfToolbar';
+import { PdfProperties } from '../../components/pdf-editor/PdfProperties';
+import { PdfPages } from '../../components/pdf-editor/PdfPages';
 import { PDFDocument } from 'pdf-lib';
 
 interface Props {

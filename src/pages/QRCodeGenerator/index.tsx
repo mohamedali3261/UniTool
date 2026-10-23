@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { Download, Link, Type, Wifi, Mail, Phone, MessageSquare, Copy, Check, Palette, Eye, Settings2, ScanQrCode } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;

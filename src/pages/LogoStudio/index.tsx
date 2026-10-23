@@ -10,7 +10,7 @@ import {
   type LogoFont,
   type LogoLayout,
   type LogoMark,
-} from '../lib/logoStudio';
+} from '../../lib/logoStudio';
 
 interface Props {
   lang: 'ar' | 'en';

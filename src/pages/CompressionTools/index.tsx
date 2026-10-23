@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Zap, Music, Image, Film, FileType2, FileBox, Sparkles, ArrowRight, LayoutGrid } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;
