@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Download, Loader2, Trash2, ImagePlus, FileDown, ArrowUp, ArrowDown, FileText, RotateCw, Copy, Eye, ArrowLeftRight, Palette, Settings2, FileCog } from 'lucide-react';
+import { Upload, Download, Loader2, Trash2, ImagePlus, FileDown, ArrowUp, ArrowDown, FileText, RotateCw, Copy, Eye, ArrowLeftRight, Palette, Settings2, FileCog, Scissors, X, RotateCcw, Check } from 'lucide-react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { cn } from '../lib/utils';
 import type { FileHandoff } from '../types/app';
@@ -19,7 +19,19 @@ interface ImageItem {
   height: number;
   rotation: number; // 0 | 90 | 180 | 270
   sizeBytes: number;
+  originalDataUrl?: string;
+  originalWidth?: number;
+  originalHeight?: number;
 }
+
+interface CropBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const MIN_CROP_SIZE = 20;
 
 type PageSizeKey = 'fit' | 'a5' | 'a4' | 'a3' | 'letter' | 'legal';
 type FitMode = 'contain' | 'cover' | 'stretch';
@@ -64,6 +76,13 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
   const lastHandoffId = useRef<number | null>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'images' | 'export'>('upload');
+
+  const [cropTarget, setCropTarget] = useState<ImageItem | null>(null);
+  const [cropBox, setCropBox] = useState<CropBox>({ x: 0, y: 0, width: 0, height: 0 });
+  const [cropDisplaySize, setCropDisplaySize] = useState({ width: 0, height: 0 });
+  const [cropDrag, setCropDrag] = useState<{ type: 'move' | 'resize'; handle: string } | null>(null);
+  const cropImgRef = useRef<HTMLImageElement | null>(null);
+  const cropDragRef = useRef<{ startX: number; startY: number; box: CropBox } | null>(null);
 
   // load persisted settings
   useEffect(() => {
@@ -212,6 +231,149 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
       [next[index], next[t]] = [next[t], next[index]];
       return next;
     });
+  };
+
+  // ---- crop ----
+  const openCrop = (image: ImageItem) => {
+    setCropTarget(image);
+    setCropDisplaySize({ width: 0, height: 0 });
+    setCropBox({ x: 0, y: 0, width: 0, height: 0 });
+  };
+
+  const closeCrop = () => {
+    setCropTarget(null);
+    setCropDrag(null);
+    cropDragRef.current = null;
+  };
+
+  const handleCropImageLoad = () => {
+    const img = cropImgRef.current;
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+    if (width === 0 || height === 0) return;
+    setCropDisplaySize({ width, height });
+    setCropBox({
+      x: Math.round(width * 0.08),
+      y: Math.round(height * 0.08),
+      width: Math.round(width * 0.84),
+      height: Math.round(height * 0.84),
+    });
+  };
+
+  const startCropDrag = (e: React.PointerEvent, type: 'move' | 'resize', handle = '') => {
+    if (cropDisplaySize.width === 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    cropDragRef.current = { startX: e.clientX, startY: e.clientY, box: { ...cropBox } };
+    setCropDrag({ type, handle });
+  };
+
+  useEffect(() => {
+    if (!cropDrag) return;
+    const move = (e: PointerEvent) => {
+      const start = cropDragRef.current;
+      if (!start) return;
+      const { width: dsW, height: dsH } = cropDisplaySize;
+      if (dsW === 0 || dsH === 0) return;
+      const dx = e.clientX - start.startX;
+      const dy = e.clientY - start.startY;
+      const b = start.box;
+      const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+      if (cropDrag.type === 'move') {
+        setCropBox({
+          ...b,
+          x: clamp(b.x + dx, 0, dsW - b.width),
+          y: clamp(b.y + dy, 0, dsH - b.height),
+        });
+        return;
+      }
+
+      let nx = b.x;
+      let ny = b.y;
+      let nw = b.width;
+      let nh = b.height;
+      const h = cropDrag.handle;
+      if (h.includes('e')) nw = clamp(b.width + dx, MIN_CROP_SIZE, dsW - b.x);
+      if (h.includes('s')) nh = clamp(b.height + dy, MIN_CROP_SIZE, dsH - b.y);
+      if (h.includes('w')) {
+        nw = clamp(b.width - dx, MIN_CROP_SIZE, b.x + b.width);
+        nx = b.x + b.width - nw;
+      }
+      if (h.includes('n')) {
+        nh = clamp(b.height - dy, MIN_CROP_SIZE, b.y + b.height);
+        ny = b.y + b.height - nh;
+      }
+      setCropBox({ x: nx, y: ny, width: nw, height: nh });
+    };
+    const end = () => setCropDrag(null);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [cropDrag, cropDisplaySize]);
+
+  useEffect(() => {
+    if (!cropTarget) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCrop(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cropTarget]);
+
+  const applyCrop = () => {
+    const image = cropTarget;
+    const img = cropImgRef.current;
+    if (!image || !img || cropDisplaySize.width === 0) return;
+
+    const scaleX = image.width / cropDisplaySize.width;
+    const scaleY = image.height / cropDisplaySize.height;
+    const sx = Math.max(0, Math.round(cropBox.x * scaleX));
+    const sy = Math.max(0, Math.round(cropBox.y * scaleY));
+    const sw = Math.min(image.width - sx, Math.max(1, Math.round(cropBox.width * scaleX)));
+    const sh = Math.min(image.height - sy, Math.max(1, Math.round(cropBox.height * scaleY)));
+
+    const c = document.createElement('canvas');
+    c.width = sw;
+    c.height = sh;
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    const dataUrl = c.toDataURL('image/png');
+    const sizeBytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75);
+
+    setImages(prev => prev.map(item => item.id === image.id ? {
+      ...item,
+      dataUrl,
+      width: sw,
+      height: sh,
+      sizeBytes,
+      originalDataUrl: item.originalDataUrl ?? item.dataUrl,
+      originalWidth: item.originalWidth ?? item.width,
+      originalHeight: item.originalHeight ?? item.height,
+    } : item));
+    closeCrop();
+  };
+
+  const resetCrop = () => {
+    const image = cropTarget;
+    if (!image || !image.originalDataUrl) return;
+    setImages(prev => prev.map(item => item.id === image.id ? {
+      ...item,
+      dataUrl: image.originalDataUrl!,
+      width: image.originalWidth ?? item.width,
+      height: image.originalHeight ?? item.height,
+      originalDataUrl: undefined,
+      originalWidth: undefined,
+      originalHeight: undefined,
+    } : item));
+    closeCrop();
   };
 
   // HTML5 drag reorder
@@ -399,6 +561,13 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
     const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
+
+  const cropOutputWidth = cropTarget && cropDisplaySize.width > 0
+    ? Math.max(1, Math.round(cropBox.width * cropTarget.width / cropDisplaySize.width))
+    : 0;
+  const cropOutputHeight = cropTarget && cropDisplaySize.height > 0
+    ? Math.max(1, Math.round(cropBox.height * cropTarget.height / cropDisplaySize.height))
+    : 0;
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden" ref={dropRef}
@@ -662,10 +831,20 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
                     <div className="p-2">
                       <input value={img.name} onChange={e => renameImage(img.id, e.target.value)}
                         className="w-full bg-transparent text-[9px] font-mono text-white truncate leading-tight outline-none focus:bg-black/40 rounded px-1 -mx-1 border border-transparent focus:border-red-500/40" />
-                      <p className="text-[7px] font-mono text-gray-500 mt-0.5">{img.width}×{img.height} · {formatBytes(img.sizeBytes)}</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <p className="text-[7px] font-mono text-gray-500">{img.width}×{img.height} · {formatBytes(img.sizeBytes)}</p>
+                        {img.originalDataUrl && (
+                          <span className="px-1 py-0.5 rounded bg-red-500/90 text-[6px] font-mono text-white shrink-0">
+                            {lang === 'ar' ? 'مقصوص' : 'Cropped'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {/* actions */}
                     <div className="absolute bottom-9 right-1 flex gap-1 opacity-0 group-hover:opacity-100 max-sm:opacity-100 transition-opacity">
+                      <button onClick={() => openCrop(img)} title={lang === 'ar' ? 'قص' : 'Crop'} className="w-6 h-6 rounded-full bg-black/70 hover:bg-red-500 flex items-center justify-center transition-colors">
+                        <Scissors size={11} className="text-white" />
+                      </button>
                       <button onClick={() => rotateImage(img.id)} title={lang === 'ar' ? 'تدوير' : 'Rotate'} className="w-6 h-6 rounded-full bg-black/70 hover:bg-blue-600 flex items-center justify-center transition-colors">
                         <RotateCw size={11} className="text-white" />
                       </button>
@@ -695,6 +874,118 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
           )}
         </section>
       </div>
+
+      {/* Crop Modal */}
+      {cropTarget && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6">
+          <div className="bg-[#14171C] border border-[#2D3139] rounded-xl w-full max-w-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl">
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[#2D3139] shrink-0 sm:px-4">
+              <div className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center shrink-0">
+                <Scissors size={12} className="text-red-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[11px] font-bold text-white truncate sm:text-xs">
+                  {lang === 'ar' ? 'قص الصورة' : 'Crop image'}
+                </h2>
+                <p className="text-[8px] font-mono text-gray-500 truncate">
+                  {cropTarget.name} · {cropOutputWidth}×{cropOutputHeight} px
+                </p>
+              </div>
+              <button
+                onClick={closeCrop}
+                className="w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                title={lang === 'ar' ? 'إغلاق' : 'Close'}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-auto bg-[#0A0C0F] p-3 flex items-center justify-center sm:p-5">
+              <div className="relative inline-block select-none">
+                <img
+                  ref={cropImgRef}
+                  src={cropTarget.dataUrl}
+                  alt={cropTarget.name}
+                  onLoad={handleCropImageLoad}
+                  className="block max-w-full max-h-[60vh] w-auto h-auto"
+                  draggable={false}
+                />
+                {cropDisplaySize.width > 0 && (
+                  <>
+                    <div
+                      className="absolute inset-0 pointer-events-none bg-black/60 z-10"
+                      style={{ clipPath: `inset(${cropBox.y}px ${cropDisplaySize.width - cropBox.x - cropBox.width}px ${cropDisplaySize.height - cropBox.y - cropBox.height}px ${cropBox.x}px)` }}
+                    />
+                    <div
+                      className="absolute cursor-move border-2 border-white/90 z-20"
+                      style={{ left: cropBox.x, top: cropBox.y, width: cropBox.width, height: cropBox.height, touchAction: 'none' }}
+                      onPointerDown={e => startCropDrag(e, 'move')}
+                    >
+                      <div
+                        className="absolute inset-0 opacity-25 pointer-events-none"
+                        style={{ backgroundImage: 'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)', backgroundSize: '33.333% 33.333%' }}
+                      />
+                      {[
+                        { id: 'nw', cls: '-top-2 -left-2 cursor-nwse-resize' },
+                        { id: 'ne', cls: '-top-2 -right-2 cursor-nesw-resize' },
+                        { id: 'sw', cls: '-bottom-2 -left-2 cursor-nesw-resize' },
+                        { id: 'se', cls: '-bottom-2 -right-2 cursor-nwse-resize' },
+                        { id: 'n', cls: '-top-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize' },
+                        { id: 's', cls: '-bottom-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize' },
+                        { id: 'w', cls: 'top-1/2 -left-1.5 -translate-y-1/2 cursor-ew-resize' },
+                        { id: 'e', cls: 'top-1/2 -right-1.5 -translate-y-1/2 cursor-ew-resize' },
+                      ].map(h => (
+                        <div
+                          key={h.id}
+                          className={cn("absolute w-4 h-4 bg-white border border-red-500 rounded-sm z-10 shadow", h.cls)}
+                          style={{ touchAction: 'none' }}
+                          onPointerDown={e => startCropDrag(e, 'resize', h.id)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 px-3 py-2.5 border-t border-[#2D3139] shrink-0 sm:flex-row sm:items-center sm:px-4">
+              <p className="text-[8px] font-mono text-gray-500 flex-1">
+                {lang === 'ar' ? 'اسحب المربع لتحريكه، واسحب المقابض لتغيير الحجم' : 'Drag the box to move it, drag handles to resize'}
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                {cropTarget.originalDataUrl && (
+                  <button
+                    onClick={resetCrop}
+                    className="px-2.5 py-2 flex items-center justify-center gap-1 text-[9px] font-mono rounded-md border border-[#2D3139] text-gray-300 hover:border-gray-500 hover:text-white transition-all"
+                  >
+                    <RotateCcw size={11} />
+                    {lang === 'ar' ? 'استعادة الأصل' : 'Restore original'}
+                  </button>
+                )}
+                <button
+                  onClick={closeCrop}
+                  className="px-3 py-2 text-[9px] font-mono rounded-md border border-[#2D3139] text-gray-400 hover:text-white hover:border-gray-500 transition-all"
+                >
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  onClick={applyCrop}
+                  disabled={cropDisplaySize.width === 0}
+                  className={cn(
+                    "px-3 py-2 flex items-center justify-center gap-1.5 text-[9px] font-mono rounded-md transition-all",
+                    cropDisplaySize.width > 0
+                      ? "bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/20"
+                      : "bg-[#2D3139] text-gray-600 cursor-not-allowed"
+                  )}
+                >
+                  <Check size={12} />
+                  {lang === 'ar' ? 'تطبيق القص' : 'Apply crop'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
