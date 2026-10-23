@@ -8,11 +8,11 @@ import { Plus, Loader2, Scissors, AudioWaveform, ListMusic, AlertTriangle, Rotat
 import JSZip from 'jszip';
 import WaveSurfer from 'wavesurfer.js';
 
-import { CompressionSettings } from '../types';
-import { compressAudio, loadFFmpeg } from '../lib/ffmpeg';
-import { WaveformPlayer } from '../components/splitter/WaveformPlayer';
-import { SegmentsSidebar } from '../components/splitter/SegmentsSidebar';
-import { SplitControls } from '../components/splitter/SplitControls';
+import { CompressionSettings } from '../../types';
+import { compressAudio, loadFFmpeg } from '../../lib/ffmpeg';
+import { WaveformPlayer } from '../../components/splitter/WaveformPlayer';
+import { SegmentsSidebar } from '../../components/splitter/SegmentsSidebar';
+import { SplitControls } from '../../components/splitter/SplitControls';
 
 interface SplitSegment {
   id: string;

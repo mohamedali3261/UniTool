@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, Video, ArrowDownUp, Film } from 'lucide-react';
 import JSZip from 'jszip';
-import { cn } from '../lib/utils';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { cn } from '../../lib/utils';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 
 interface Props {

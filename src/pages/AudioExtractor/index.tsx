@@ -10,10 +10,10 @@ import {
   Eye,
   AudioLines,
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { cn } from '../../lib/utils';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
-import { VIDEO_ACCEPT, getFileExtension, isVideoFile } from '../utils/video-formats';
+import { VIDEO_ACCEPT, getFileExtension, isVideoFile } from '../../utils/video-formats';
 
 interface Props {
   t: any;

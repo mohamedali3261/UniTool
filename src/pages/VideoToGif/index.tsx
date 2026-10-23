@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, Download, Loader2, Film, Trash2, Scissors, Settings2, Eye, Wand2, Pipette, ScanSearch } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { cn } from '../../lib/utils';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 
 interface Props {

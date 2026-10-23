@@ -23,8 +23,8 @@ import {
   Scissors,
   Clock
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { cn } from '../../lib/utils';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 
 interface VideoLogoProps {
   t: any;

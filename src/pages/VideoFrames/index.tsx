@@ -3,9 +3,9 @@ import {
   Images, Upload, Download, Loader2, AlertTriangle, X, Film,
   FileImage, FileDown, Trash2, Clock, Grid3x3, Play,
 } from 'lucide-react';
-import { loadFFmpeg } from '../lib/ffmpeg';
+import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface Props {
   t: any;
