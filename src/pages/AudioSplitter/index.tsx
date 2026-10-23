@@ -4,15 +4,27 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Scissors, AudioWaveform, ListMusic, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Plus, Loader2, Scissors, AudioWaveform, ListMusic, AlertTriangle, RotateCcw, Settings2 } from 'lucide-react';
 import JSZip from 'jszip';
 import WaveSurfer from 'wavesurfer.js';
 
 import { CompressionSettings } from '../../types';
+import { cn } from '../../lib/utils';
 import { compressAudio, loadFFmpeg } from '../../lib/ffmpeg';
 import { WaveformPlayer } from '../../components/splitter/WaveformPlayer';
 import { SegmentsSidebar } from '../../components/splitter/SegmentsSidebar';
-import { SplitControls } from '../../components/splitter/SplitControls';
+import { SplitControls, type SplitMode } from '../../components/splitter/SplitControls';
+
+type OutputFormat = 'mp3' | 'aac' | 'wav' | 'ogg';
+
+const OUTPUT_FORMATS: { id: OutputFormat; label: string }[] = [
+  { id: 'mp3', label: 'MP3' },
+  { id: 'aac', label: 'AAC' },
+  { id: 'wav', label: 'WAV' },
+  { id: 'ogg', label: 'OGG' },
+];
+
+const BITRATES = ['96k', '128k', '192k', '256k', '320k'];
 
 interface SplitSegment {
   id: string;
@@ -48,16 +60,24 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [playingSegmentId, setPlayingSegmentId] = useState<string | null>(null);
-  const [splitMode, setSplitMode] = useState<'manual' | 'auto'>('manual');
+  const [splitMode, setSplitMode] = useState<SplitMode>('manual');
   const [autoSplitCount, setAutoSplitCount] = useState(4);
   const playbackIntervalRef = useRef<any>(null);
   const [mobileTab, setMobileTab] = useState<'waveform' | 'segments'>('waveform');
 
-  const [settings] = useState<CompressionSettings>({
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('mp3');
+  const [bitrate, setBitrate] = useState('192k');
+  const [normalize, setNormalize] = useState(true);
+  const [silenceThresholdDb, setSilenceThresholdDb] = useState(-35);
+  const [minSilenceSec, setMinSilenceSec] = useState(0.4);
+  const [detectingSilence, setDetectingSilence] = useState(false);
+  const [splitNotice, setSplitNotice] = useState<string | null>(null);
+
+  const settings: CompressionSettings = {
     quality: 'medium',
-    format: 'mp3',
-    bitrate: '128k',
-    normalize: true,
+    format: outputFormat,
+    bitrate,
+    normalize,
     bassBoost: false,
     noiseReduction: false,
     deEsser: false,
@@ -65,7 +85,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     humRemover: false,
     dynamicCompressor: false,
     windNoiseFilter: false,
-  });
+  };
 
   const retryFfmpeg = () => {
     setFfmpegError(false);
@@ -80,6 +100,12 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
 
   useEffect(() => {
     retryFfmpeg();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+    };
   }, []);
 
   const handleWaveformReady = (ws: WaveSurfer, regions: any) => {
@@ -105,19 +131,21 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     });
 
     regions.on('region-created', (region: any) => {
+      const index = Math.max(0, regions.getRegions().findIndex((r: any) => r.id === region.id));
+      const color = SEGMENT_COLORS[index % SEGMENT_COLORS.length];
       const newSegment: SplitSegment = {
         id: region.id,
-        name: `${lang === 'ar' ? 'مقطع' : 'Segment'} ${segments.length + 1}`,
+        name: `${lang === 'ar' ? 'مقطع' : 'Segment'} ${index + 1}`,
         startTime: region.start,
         endTime: region.end,
         status: 'idle',
         progress: 0,
-        color: SEGMENT_COLORS[segments.length % SEGMENT_COLORS.length],
+        color,
       };
       setSegments(prev => [...prev, newSegment]);
-      
+
       region.setOptions({
-        color: newSegment.color + '50',
+        color: color + '50',
         resize: true,
         drag: true,
       });
@@ -282,6 +310,86 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
       }
     } catch (error) {
       console.error('Error auto-splitting:', error);
+    }
+  };
+
+  const autoSplitBySilence = async () => {
+    if (!audioFile || !regionsPlugin || !duration) return;
+    setDetectingSilence(true);
+    setSplitNotice(null);
+
+    try {
+      const arrayBuffer = await audioFile.arrayBuffer();
+      const audioCtx = new AudioContext();
+      const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      await audioCtx.close();
+
+      const channel = decoded.getChannelData(0);
+      const frameSec = 0.02;
+      const frameSize = Math.max(1, Math.floor(decoded.sampleRate * frameSec));
+      const frameCount = Math.ceil(channel.length / frameSize);
+      const rms: number[] = new Array(frameCount);
+      let maxRms = 0;
+
+      for (let i = 0; i < frameCount; i++) {
+        const start = i * frameSize;
+        const end = Math.min(start + frameSize, channel.length);
+        let sum = 0;
+        for (let j = start; j < end; j++) sum += channel[j] * channel[j];
+        const value = Math.sqrt(sum / Math.max(1, end - start));
+        rms[i] = value;
+        if (value > maxRms) maxRms = value;
+      }
+
+      const threshold = Math.max(0.0005, maxRms * Math.pow(10, silenceThresholdDb / 20));
+      const minFrames = Math.max(1, Math.ceil(minSilenceSec / frameSec));
+      const total = decoded.duration || duration;
+      const cuts: number[] = [];
+      let runStart = -1;
+
+      for (let i = 0; i <= frameCount; i++) {
+        const silent = i < frameCount && rms[i] <= threshold;
+        if (silent && runStart === -1) runStart = i;
+        if (!silent && runStart !== -1) {
+          const runEnd = i - 1;
+          const length = runEnd - runStart + 1;
+          if (length >= minFrames && runStart > 0 && runEnd < frameCount - 1) {
+            cuts.push(((runStart + runEnd + 1) / 2) * frameSec);
+          }
+          runStart = -1;
+        }
+      }
+
+      const boundaries = [0, ...cuts.filter(t => t > 0.2 && t < total - 0.2), total];
+      const existingRegions = regionsPlugin.getRegions();
+      existingRegions.forEach((region: any) => region.remove());
+      setSegments([]);
+
+      let created = 0;
+      for (let i = 0; i < boundaries.length - 1 && created < 60; i++) {
+        const start = boundaries[i];
+        const end = boundaries[i + 1];
+        if (end - start < 0.15) continue;
+        regionsPlugin.addRegion({
+          start,
+          end,
+          color: SEGMENT_COLORS[created % SEGMENT_COLORS.length] + '50',
+          drag: true,
+          resize: true,
+        });
+        created++;
+      }
+
+      setSplitNotice(
+        created > 0
+          ? (lang === 'ar' ? `تم إنشاء ${created} مقطع حسب الصمت` : `Created ${created} segments from pauses`)
+          : (lang === 'ar' ? 'لم يتم العثور على صمت كافٍ — جرّب حساسية أعلى' : 'No clear pauses found — try higher sensitivity')
+      );
+    } catch (error) {
+      console.error('Silence detection failed:', error);
+      setSplitNotice(lang === 'ar' ? 'تعذّر تحليل الصوت' : 'Could not analyze the audio');
+    } finally {
+      setDetectingSilence(false);
     }
   };
 
@@ -474,7 +582,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const downloadAllSegments = () => {
@@ -504,7 +612,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const isAnyProcessing = segments.some(s => s.status === 'processing');
@@ -661,9 +769,79 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
               onAddSegment={addSegment}
               onSplitAtCurrentTime={splitAtCurrentTime}
               onAutoSplit={autoSplit}
+              onSilenceSplit={autoSplitBySilence}
+              silenceThresholdDb={silenceThresholdDb}
+              onSilenceThresholdChange={setSilenceThresholdDb}
+              minSilenceSec={minSilenceSec}
+              onMinSilenceChange={setMinSilenceSec}
+              detectingSilence={detectingSilence}
               disabled={!duration}
               lang={lang}
             />
+
+            {splitNotice && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2 text-xs text-emerald-300">
+                {splitNotice}
+              </div>
+            )}
+
+            {/* Output Settings */}
+            <div className="bg-gradient-to-br from-[#14171C] to-[#0A0C0F] border border-[#2D3139] rounded-xl p-3 sm:p-4 shadow-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                <Settings2 size={12} className="text-blue-500 sm:size-[14px]" />
+                <h3 className="text-xs sm:text-sm font-bold text-white">
+                  {lang === 'ar' ? 'إعدادات التصدير' : 'Export Settings'}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-4 gap-1.5 mb-2">
+                {OUTPUT_FORMATS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setOutputFormat(opt.id)}
+                    className={cn(
+                      'py-1.5 text-[10px] font-mono rounded-md border transition-all',
+                      outputFormat === opt.id
+                        ? 'bg-blue-600/20 border-blue-500/40 text-blue-300'
+                        : 'bg-[#0A0C0F] border-[#2D3139] text-gray-500 hover:border-gray-500'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {outputFormat !== 'wav' && (
+                <div className="grid grid-cols-5 gap-1 mb-2">
+                  {BITRATES.map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => setBitrate(rate)}
+                      className={cn(
+                        'py-1 text-[9px] font-mono rounded border transition-all',
+                        bitrate === rate
+                          ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-300'
+                          : 'bg-[#0A0C0F] border-[#2D3139] text-gray-500 hover:border-gray-500'
+                      )}
+                    >
+                      {rate}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <label className="flex items-center gap-2 cursor-pointer mt-1">
+                <input
+                  type="checkbox"
+                  checked={normalize}
+                  onChange={(e) => setNormalize(e.target.checked)}
+                  className="accent-blue-500"
+                />
+                <span className="text-[10px] text-gray-400">
+                  {lang === 'ar' ? 'تطبيع مستوى الصوت (Normalize)' : 'Normalize loudness'}
+                </span>
+              </label>
+            </div>
 
             {/* Waveform Player */}
             <WaveformPlayer

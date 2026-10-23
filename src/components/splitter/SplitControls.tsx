@@ -3,17 +3,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Plus, Scissors, Divide } from 'lucide-react';
+import { Plus, Scissors, Divide, AudioWaveform, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+export type SplitMode = 'manual' | 'auto' | 'silence';
+
 interface SplitControlsProps {
-  splitMode: 'manual' | 'auto';
+  splitMode: SplitMode;
   autoSplitCount: number;
-  onSplitModeChange: (mode: 'manual' | 'auto') => void;
+  onSplitModeChange: (mode: SplitMode) => void;
   onAutoSplitCountChange: (count: number) => void;
   onAddSegment: () => void;
   onSplitAtCurrentTime: () => void;
   onAutoSplit: () => void;
+  onSilenceSplit: () => void;
+  silenceThresholdDb: number;
+  onSilenceThresholdChange: (value: number) => void;
+  minSilenceSec: number;
+  onMinSilenceChange: (value: number) => void;
+  detectingSilence: boolean;
   disabled: boolean;
   lang: 'ar' | 'en';
 }
@@ -26,6 +34,12 @@ export function SplitControls({
   onAddSegment,
   onSplitAtCurrentTime,
   onAutoSplit,
+  onSilenceSplit,
+  silenceThresholdDb,
+  onSilenceThresholdChange,
+  minSilenceSec,
+  onMinSilenceChange,
+  detectingSilence,
   disabled,
   lang,
 }: SplitControlsProps) {
@@ -39,7 +53,7 @@ export function SplitControls({
       </div>
       
       {/* Mode Selector */}
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2 sm:mb-3">
         <button
           onClick={() => onSplitModeChange('manual')}
           className={cn(
@@ -61,6 +75,18 @@ export function SplitControls({
           )}
         >
           {lang === 'ar' ? 'تلقائي' : 'Auto'}
+        </button>
+        <button
+          onClick={() => onSplitModeChange('silence')}
+          className={cn(
+            "px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs rounded-lg border transition-all font-medium flex items-center justify-center gap-1",
+            splitMode === 'silence'
+              ? "bg-gradient-to-br from-emerald-600 to-teal-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/30"
+              : "bg-[#0A0C0F] text-gray-400 border-[#2D3139] hover:border-emerald-500/50"
+          )}
+        >
+          <AudioWaveform size={11} className="sm:size-[13px]" />
+          {lang === 'ar' ? 'صمت' : 'Silence'}
         </button>
       </div>
 
@@ -114,6 +140,53 @@ export function SplitControls({
           >
             <Scissors size={12} className="sm:size-[14px]" />
             {lang === 'ar' ? 'تقسيم تلقائي' : 'Auto Split'}
+          </button>
+        </div>
+      )}
+
+      {/* Silence Mode Controls */}
+      {splitMode === 'silence' && (
+        <div className="space-y-2 sm:space-y-3">
+          <div>
+            <label className="text-[10px] sm:text-xs text-gray-400 mb-1.5 sm:mb-2 block font-medium">
+              {lang === 'ar' ? 'حساسية الصمت:' : 'Silence sensitivity:'} {silenceThresholdDb} dB
+            </label>
+            <input
+              type="range"
+              min="-60"
+              max="-20"
+              step="1"
+              value={silenceThresholdDb}
+              onChange={(e) => onSilenceThresholdChange(Number(e.target.value))}
+              className="w-full accent-emerald-500"
+            />
+            <p className="text-[9px] text-gray-600 mt-1">
+              {lang === 'ar' ? 'كلما قل الرقم زادت الحساسية' : 'Lower values detect quieter pauses'}
+            </p>
+          </div>
+          <div>
+            <label className="text-[10px] sm:text-xs text-gray-400 mb-1.5 sm:mb-2 block font-medium">
+              {lang === 'ar' ? 'أقل مدة صمت:' : 'Min pause length:'} {minSilenceSec.toFixed(1)}s
+            </label>
+            <input
+              type="range"
+              min="0.2"
+              max="2"
+              step="0.1"
+              value={minSilenceSec}
+              onChange={(e) => onMinSilenceChange(Number(e.target.value))}
+              className="w-full accent-emerald-500"
+            />
+          </div>
+          <button
+            onClick={onSilenceSplit}
+            disabled={disabled || detectingSilence}
+            className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-lg hover:from-emerald-500 hover:to-teal-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-[10px] sm:text-xs font-medium transition-all shadow-lg"
+          >
+            {detectingSilence ? <Loader2 size={12} className="animate-spin" /> : <AudioWaveform size={12} className="sm:size-[14px]" />}
+            {detectingSilence
+              ? (lang === 'ar' ? 'جاري التحليل...' : 'Analyzing...')
+              : (lang === 'ar' ? 'تقسيم حسب الصمت' : 'Split by Silence')}
           </button>
         </div>
       )}

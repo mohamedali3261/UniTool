@@ -86,6 +86,10 @@ export const compressAudio = async (
       command = [...command, '-c:a', 'aac', '-b:a', settings.bitrate];
     } else if (settings.format === 'opus') {
       command = [...command, '-c:a', 'libopus', '-b:a', settings.bitrate];
+    } else if (settings.format === 'wav') {
+      command = [...command, '-c:a', 'pcm_s16le'];
+    } else if (settings.format === 'ogg') {
+      command = [...command, '-c:a', 'libvorbis', '-q:a', '5'];
     } else {
       // Default to mp3 if format not recognized
       command = [...command, '-c:a', 'libmp3lame', '-b:a', settings.bitrate || '128k'];

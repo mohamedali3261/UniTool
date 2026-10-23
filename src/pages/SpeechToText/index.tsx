@@ -25,13 +25,24 @@ const STORAGE_KEY = 'audioflow_stt_transcript';
 const STORAGE_SEGMENTS_KEY = 'audioflow_stt_segments';
 const ACTIVITY_BUFFER_SIZE = 120;
 
+type RecognitionLang = 'ar-SA' | 'en-US' | 'fr-FR' | 'es-ES' | 'de-DE' | 'tr-TR';
+
+const RECOGNITION_LANGUAGES: { id: RecognitionLang; label: string }[] = [
+  { id: 'ar-SA', label: 'العربية' },
+  { id: 'en-US', label: 'English' },
+  { id: 'fr-FR', label: 'Français' },
+  { id: 'es-ES', label: 'Español' },
+  { id: 'de-DE', label: 'Deutsch' },
+  { id: 'tr-TR', label: 'Türkçe' },
+];
+
 export function SpeechToText({ t, lang }: SpeechToTextProps) {
   const [isListening, setIsListening] = useState(false);
   const [paused, setPaused] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimText, setInterimText] = useState('');
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
-  const [recognitionLang, setRecognitionLang] = useState<'ar-SA' | 'en-US'>('ar-SA');
+  const [recognitionLang, setRecognitionLang] = useState<RecognitionLang>('ar-SA');
   const [error, setError] = useState<string | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -338,7 +349,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
     stopAudioVisualization();
   }, [stopTimer, stopAudioVisualization]);
 
-  const handleLanguageChange = (newLang: 'ar-SA' | 'en-US') => {
+  const handleLanguageChange = (newLang: RecognitionLang) => {
     if (isListening || paused) {
       setRecognitionLang(newLang);
       if (isListening) {
@@ -473,7 +484,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
           <MessageSquareText size={14} className="text-white sm:size-4" />
         </div>
         <div>
-          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'نص إلى كلام' : 'Speech to Text'}</h1>
+          <h1 className="text-xs sm:text-sm font-bold text-white sm:text-base">{lang === 'ar' ? 'تحويل الكلام إلى نص' : 'Speech to Text'}</h1>
           <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'تحويل الصوت المباشر إلى نص' : 'Real-time speech recognition'}</p>
         </div>
       </div>
@@ -678,15 +689,21 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
                 <Languages size={12} className="text-purple-500" />
                 <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'اللغة' : 'Language'}</h3>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => handleLanguageChange('ar-SA')}
-                  className={cn("flex-1 py-2 text-[9px] font-mono uppercase rounded transition-all tracking-wider",
-                    recognitionLang === 'ar-SA' ? "bg-purple-600 text-white" : "bg-[#1A1D23] text-gray-400 hover:text-white border border-[#2D3139]"
-                  )}>العربية</button>
-                <button onClick={() => handleLanguageChange('en-US')}
-                  className={cn("flex-1 py-2 text-[9px] font-mono uppercase rounded transition-all tracking-wider",
-                    recognitionLang === 'en-US' ? "bg-purple-600 text-white" : "bg-[#1A1D23] text-gray-400 hover:text-white border border-[#2D3139]"
-                  )}>English</button>
+              <div className="grid grid-cols-3 gap-1">
+                {RECOGNITION_LANGUAGES.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => handleLanguageChange(option.id)}
+                    className={cn(
+                      "py-2 text-[9px] font-mono rounded transition-all tracking-wider truncate px-1",
+                      recognitionLang === option.id
+                        ? "bg-purple-600 text-white"
+                        : "bg-[#1A1D23] text-gray-400 hover:text-white border border-[#2D3139]"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
 

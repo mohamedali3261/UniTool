@@ -10,6 +10,7 @@ import {
   Eye,
   AudioLines,
 } from 'lucide-react';
+import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
@@ -21,19 +22,44 @@ interface Props {
 }
 
 type AudioFormat = 'mp3' | 'aac' | 'wav' | 'ogg';
+type ChannelMode = 'original' | 'mono' | 'stereo';
 
 const FORMAT_OPTIONS: {
   id: AudioFormat;
   label: string;
   mime: string;
   ext: string;
-  args: string[];
 }[] = [
-  { id: 'mp3', label: 'MP3', mime: 'audio/mpeg', ext: 'mp3', args: ['-c:a', 'libmp3lame', '-b:a', '192k'] },
-  { id: 'aac', label: 'AAC', mime: 'audio/aac', ext: 'm4a', args: ['-c:a', 'aac', '-b:a', '192k'] },
-  { id: 'wav', label: 'WAV', mime: 'audio/wav', ext: 'wav', args: ['-c:a', 'pcm_s16le'] },
-  { id: 'ogg', label: 'OGG', mime: 'audio/ogg', ext: 'ogg', args: ['-c:a', 'libvorbis', '-q:a', '5'] },
+  { id: 'mp3', label: 'MP3', mime: 'audio/mpeg', ext: 'mp3' },
+  { id: 'aac', label: 'AAC', mime: 'audio/aac', ext: 'm4a' },
+  { id: 'wav', label: 'WAV', mime: 'audio/wav', ext: 'wav' },
+  { id: 'ogg', label: 'OGG', mime: 'audio/ogg', ext: 'ogg' },
 ];
+
+const QUALITY_OPTIONS = ['96k', '128k', '192k', '256k', '320k'];
+
+const getFormatArgs = (
+  format: AudioFormat,
+  quality: string,
+  channels: ChannelMode,
+  normalize: boolean
+): string[] => {
+  const args: string[] = [];
+  if (format === 'mp3') {
+    args.push('-c:a', 'libmp3lame', '-b:a', quality);
+  } else if (format === 'aac') {
+    args.push('-c:a', 'aac', '-b:a', quality);
+  } else if (format === 'wav') {
+    args.push('-c:a', 'pcm_s16le');
+  } else {
+    const q = quality === '320k' ? '9' : quality === '256k' ? '7' : quality === '128k' ? '3' : '5';
+    args.push('-c:a', 'libvorbis', '-q:a', q);
+  }
+  if (channels === 'mono') args.push('-ac', '1');
+  else if (channels === 'stereo') args.push('-ac', '2');
+  if (normalize) args.push('-af', 'loudnorm');
+  return args;
+};
 
 export function AudioExtractor({ lang }: Props) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -44,6 +70,9 @@ export function AudioExtractor({ lang }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'upload' | 'preview'>('upload');
   const [format, setFormat] = useState<AudioFormat>('mp3');
+  const [quality, setQuality] = useState('192k');
+  const [channels, setChannels] = useState<ChannelMode>('original');
+  const [normalize, setNormalize] = useState(false);
   const [trimEnabled, setTrimEnabled] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -103,20 +132,25 @@ export function AudioExtractor({ lang }: Props) {
     setAudioUrl('');
     setResultSize(0);
 
+    let ffmpeg: FFmpeg | null = null;
+    let progressHandler: ((payload: { progress: number }) => void) | null = null;
+
     try {
-      const ffmpeg = await loadFFmpeg();
+      ffmpeg = await loadFFmpeg();
       const fmt = FORMAT_OPTIONS.find((f) => f.id === format)!;
       const ext = getFileExtension(videoFile);
       const inputName = `extract_input.${ext}`;
       const outputName = `extract_output.${fmt.ext}`;
+      const formatArgs = getFormatArgs(format, quality, channels, normalize);
 
-      ffmpeg.on('progress', ({ progress: p }) => {
+      progressHandler = ({ progress: p }) => {
         setProgress(Math.min(99, Math.round(p * 100)));
-      });
+      };
+      ffmpeg.on('progress', progressHandler);
 
       await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
 
-      const command = ['-i', inputName, '-vn', '-sn', '-dn', ...fmt.args];
+      const command = ['-i', inputName, '-vn', '-sn', '-dn', ...formatArgs];
 
       if (trimEnabled && duration > 0) {
         const start = Math.max(0, startTime);
@@ -128,9 +162,9 @@ export function AudioExtractor({ lang }: Props) {
 
       let code = await ffmpeg.exec(command);
 
-      // Some containers need stream copy first attempt fallback without -dn
+      // Some containers need a stream-mapped fallback without -dn
       if (code !== 0) {
-        const fallback = ['-i', inputName, '-vn', '-map', '0:a:0', ...fmt.args, '-y', outputName];
+        const fallback = ['-i', inputName, '-vn', '-map', '0:a:0', ...formatArgs, '-y', outputName];
         if (trimEnabled && duration > 0) {
           const start = Math.max(0, startTime);
           const end = Math.min(duration, Math.max(start + 0.1, endTime));
@@ -156,6 +190,7 @@ export function AudioExtractor({ lang }: Props) {
       console.error('Audio extract error:', err);
       setError(lang === 'ar' ? 'فشل استخراج الصوت من الفيديو' : 'Failed to extract audio from video');
     } finally {
+      if (ffmpeg && progressHandler) ffmpeg.off('progress', progressHandler);
       setExtracting(false);
     }
   };
@@ -265,6 +300,71 @@ export function AudioExtractor({ lang }: Props) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="p-3 border-b border-[#2D3139] sm:p-4 space-y-3">
+            {format !== 'wav' && (
+              <div>
+                <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 sm:text-[10px]">
+                  <Settings2 size={11} className="text-emerald-500" />
+                  {lang === 'ar' ? 'الجودة' : 'Quality'}
+                </h3>
+                <div className="grid grid-cols-5 gap-1">
+                  {QUALITY_OPTIONS.map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => setQuality(rate)}
+                      className={cn(
+                        'py-1.5 text-[8px] font-mono rounded border transition-all',
+                        quality === rate
+                          ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                          : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500'
+                      )}
+                    >
+                      {rate}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 sm:text-[10px]">
+                {lang === 'ar' ? 'القنوات' : 'Channels'}
+              </h3>
+              <div className="grid grid-cols-3 gap-1">
+                {([
+                  { id: 'original' as ChannelMode, ar: 'الأصل', en: 'Original' },
+                  { id: 'mono' as ChannelMode, ar: 'أحادي', en: 'Mono' },
+                  { id: 'stereo' as ChannelMode, ar: 'ستيريو', en: 'Stereo' },
+                ]).map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setChannels(opt.id)}
+                    className={cn(
+                      'py-1.5 text-[8px] font-mono rounded border transition-all',
+                      channels === opt.id
+                        ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                        : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500'
+                    )}
+                  >
+                    {lang === 'ar' ? opt.ar : opt.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={normalize}
+                onChange={(e) => setNormalize(e.target.checked)}
+                className="accent-emerald-500"
+              />
+              <span className="text-[8px] font-mono text-gray-400">
+                {lang === 'ar' ? 'تطبيع مستوى الصوت' : 'Normalize loudness'}
+              </span>
+            </label>
           </div>
 
           <div className="p-3 border-b border-[#2D3139] sm:p-4 space-y-3">

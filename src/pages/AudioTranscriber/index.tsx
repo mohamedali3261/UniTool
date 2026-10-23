@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Upload, FileAudio, AlertCircle, Loader2, Copy, Download,
   FileText, Trash2, Key, CheckCircle2, FileOutput, Quote, Timer, X, Mic
@@ -11,6 +11,13 @@ interface AudioTranscriberProps {
 
 const API_KEY_STORAGE = 'audioflow_gemini_key';
 const SUPPORTED_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/webm', 'audio/m4a', 'audio/x-m4a', 'audio/mp4'];
+const SUPPORTED_EXTENSIONS = ['mp3', 'wav', 'ogg', 'oga', 'm4a', 'mp4', 'webm', 'aac', 'flac', 'opus', 'aiff', 'aif'];
+
+const isSupportedAudio = (file: File) => {
+  if (SUPPORTED_TYPES.includes(file.type)) return true;
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  return SUPPORTED_EXTENSIONS.includes(ext);
+};
 
 export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -21,11 +28,34 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
   const [showKey, setShowKey] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [segments, setSegments] = useState<{ text: string; i: number }[]>([]);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const copiedTimerRef = useRef(0);
   const timerRef = useRef(0);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+
+  const loadAudioDuration = (f: File) => {
+    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    const url = URL.createObjectURL(f);
+    audioUrlRef.current = url;
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) setAudioDuration(audio.duration);
+    };
+    audio.src = url;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      clearInterval(copiedTimerRef.current);
+    };
+  }, []);
 
   const startTimer = () => {
     setElapsed(0);
@@ -57,11 +87,13 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files[0];
-    if (f && SUPPORTED_TYPES.includes(f.type)) {
+    if (f && isSupportedAudio(f)) {
       setFile(f);
       setTranscript('');
       setError(null);
       setSegments([]);
+      setAudioDuration(0);
+      loadAudioDuration(f);
     } else {
       setError(lang === 'ar' ? 'صيغة ملف غير مدعومة' : 'Unsupported file format');
     }
@@ -69,12 +101,18 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) {
-      setFile(f);
-      setTranscript('');
-      setError(null);
-      setSegments([]);
+    if (!f) return;
+    if (!isSupportedAudio(f)) {
+      setError(lang === 'ar' ? 'صيغة ملف غير مدعومة' : 'Unsupported file format');
+      e.target.value = '';
+      return;
     }
+    setFile(f);
+    setTranscript('');
+    setError(null);
+    setSegments([]);
+    setAudioDuration(0);
+    loadAudioDuration(f);
   };
 
   const removeFile = () => {
@@ -82,6 +120,11 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
     setTranscript('');
     setError(null);
     setSegments([]);
+    setAudioDuration(0);
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -160,12 +203,12 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
     a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.txt`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const exportSrt = () => {
     if (segments.length === 0) return;
-    const dur = Math.max(elapsed, 60);
+    const dur = audioDuration > 0 ? audioDuration : Math.max(elapsed, 60);
     const segDur = dur / segments.length;
     let srt = '';
     segments.forEach((seg, i) => {
@@ -187,7 +230,32 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
     a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.srt`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
+
+  const exportVtt = () => {
+    if (segments.length === 0) return;
+    const dur = audioDuration > 0 ? audioDuration : Math.max(elapsed, 60);
+    const segDur = dur / segments.length;
+    const fmt = (s: number) => {
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = Math.floor(s % 60);
+      const ms = Math.floor((s % 1) * 1000);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+    };
+    let vtt = 'WEBVTT\n\n';
+    segments.forEach((seg, i) => {
+      vtt += `${fmt(i * segDur)} --> ${fmt((i + 1) * segDur)}\n${seg.text}\n\n`;
+    });
+    const blob = new Blob([vtt], { type: 'text/vtt;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.vtt`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   const exportMd = () => {
@@ -200,11 +268,19 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
     a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.md`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
-  const copyText = () => {
-    if (transcript) navigator.clipboard.writeText(transcript);
+  const copyText = async () => {
+    if (!transcript) return;
+    try {
+      await navigator.clipboard.writeText(transcript);
+      setCopied(true);
+      clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError(lang === 'ar' ? 'تعذّر نسخ النص' : 'Could not copy text');
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -437,12 +513,13 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
                   <FileOutput size={12} className="text-cyan-500" />
                   <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'تصدير' : 'Export'}</h3>
                 </div>
-                <div className="grid grid-cols-4 gap-1">
+                <div className="grid grid-cols-5 gap-1">
                   <button onClick={exportTxt} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-cyan-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">TXT</button>
                   <button onClick={exportSrt} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-cyan-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">SRT</button>
+                  <button onClick={exportVtt} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-cyan-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">VTT</button>
                   <button onClick={exportMd} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-cyan-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">MD</button>
-                  <button onClick={copyText} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-blue-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">
-                    <Copy size={10} className="inline" />
+                  <button onClick={copyText} title={copied ? (lang === 'ar' ? 'تم النسخ' : 'Copied') : undefined} className="py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-blue-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">
+                    {copied ? <CheckCircle2 size={10} className="inline text-emerald-400" /> : <Copy size={10} className="inline" />}
                   </button>
                 </div>
               </div>

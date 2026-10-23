@@ -5,7 +5,7 @@
 
 export interface CompressionSettings {
   quality: 'high' | 'medium' | 'low';
-  format: 'mp3' | 'aac' | 'opus';
+  format: 'mp3' | 'aac' | 'opus' | 'wav' | 'ogg';
   bitrate: string;
   sampleRate?: string;
   channels?: '1' | '2';
