@@ -8,20 +8,29 @@ import { useEffect, useRef, useState } from 'react';
 import type { FileHandoff, FileHandoffTarget, PageId } from './types/app';
 import { translations } from './lib/translations';
 import { navItems } from './config/navigation';
+import { toolCategories } from './pages/ToolsHome/data';
 
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { MobileMenu } from './components/MobileMenu';
 import { PageRouter } from './components/PageRouter';
 import { Footer } from './components/Footer';
-import { ErrorScreen, LoadingScreen } from './components/LoadingScreen';
+import { LoadingScreen } from './components/LoadingScreen';
+import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { useAudioProcessor } from './hooks/useAudioProcessor';
+
+// Every navigable page: sidebar entries plus tools that live inside hubs
+const knownPageIds = new Set([
+  ...navItems.map(i => i.id),
+  ...toolCategories.flatMap(c => c.tools.map(t => t.id)),
+  'compress',
+]);
 
 export default function App() {
   // Deep-link support: /app.html#<toolId> opens that tool directly
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     const hashId = window.location.hash.replace('#', '').trim();
-    return (navItems.some(i => i.id === hashId) ? hashId : 'toolsHome') as PageId;
+    return (knownPageIds.has(hashId) ? hashId : 'toolsHome') as PageId;
   });
   const [fileHandoff, setFileHandoff] = useState<FileHandoff | null>(null);
   const fileHandoffId = useRef(0);
@@ -43,7 +52,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
   const navigateToPage = (page: string) => {
-    if (navItems.some(i => i.id === page) && window.location.hash.slice(1) !== page) {
+    if (knownPageIds.has(page) && window.location.hash.slice(1) !== page) {
       history.replaceState(null, '', `#${page}`);
     }
     setCurrentPage(page as PageId);
@@ -69,8 +78,6 @@ export default function App() {
   };
 
   const {
-    isFfmpegLoaded,
-    loadingError,
     files,
     selectedFile,
     selectedFileId,
@@ -90,11 +97,7 @@ export default function App() {
     hasCompletedFiles,
   } = useAudioProcessor(lang, t);
 
-  if (loadingError) {
-    return <ErrorScreen error={loadingError} />;
-  }
-
-  if (!isFfmpegLoaded || !minDelayDone) {
+  if (!minDelayDone) {
     return <LoadingScreen />;
   }
 
@@ -123,6 +126,7 @@ export default function App() {
         />
 
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          <ToolErrorBoundary lang={lang} pageKey={currentPage} onNavigate={navigateToPage}>
           <PageRouter
             currentPage={currentPage}
             lang={lang}
@@ -150,6 +154,7 @@ export default function App() {
             hasIdleFiles={hasIdleFiles}
             hasCompletedFiles={hasCompletedFiles}
           />
+          </ToolErrorBoundary>
         </div>
       </div>
 

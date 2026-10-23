@@ -7,7 +7,6 @@ import { playCompletionSound } from '../lib/soundEffects';
 
 export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
   const [isFfmpegLoaded, setIsFfmpegLoaded] = useState(false);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
   const [files, setFiles] = useState<AudioFile[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [settings, setSettings] = useState<CompressionSettings>({
@@ -28,14 +27,14 @@ export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
 
   useEffect(() => {
     // Warm up FFmpeg in the background (non-blocking).
-    // Actual audio/video tools load it lazily on first use via loadFFmpeg().
+    // PDF/image tools must stay usable even if the FFmpeg CDN is unreachable;
+    // media tools load it lazily on first use and surface their own errors.
     loadFFmpeg()
       .then(() => setIsFfmpegLoaded(true))
       .catch((err) => {
         console.error('Failed to load FFmpeg:', err);
-        setLoadingError(t.failureMsg);
       });
-  }, [lang]);
+  }, []);
 
   const updateFileStatus = useCallback((id: string, updates: Partial<AudioFile>) => {
     setFiles(prev => prev.map(f => {
@@ -178,7 +177,6 @@ export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
 
   return {
     isFfmpegLoaded,
-    loadingError,
     files,
     selectedFile,
     selectedFileId,

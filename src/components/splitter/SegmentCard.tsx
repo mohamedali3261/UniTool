@@ -14,6 +14,7 @@ interface Segment {
   endTime: number;
   status: 'idle' | 'processing' | 'completed' | 'error';
   progress: number;
+  error?: string;
   resultBlob?: Blob;
   color: string;
 }
@@ -153,7 +154,10 @@ export function SegmentCard({
           )}
           
           {segment.status === 'error' && (
-            <div className="flex-1 py-1.5 sm:py-2 bg-red-500/20 text-red-400 rounded-lg text-[9px] sm:text-[10px] font-medium text-center">
+            <div
+              className="flex-1 py-1.5 sm:py-2 bg-red-500/20 text-red-400 rounded-lg text-[9px] sm:text-[10px] font-medium text-center"
+              title={segment.error}
+            >
               {lang === 'ar' ? 'فشل' : 'Failed'}
             </div>
           )}

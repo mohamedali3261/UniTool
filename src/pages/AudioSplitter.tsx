@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Scissors, AudioWaveform, ListMusic } from 'lucide-react';
+import { Plus, Loader2, Scissors, AudioWaveform, ListMusic, AlertTriangle, RotateCcw } from 'lucide-react';
 import JSZip from 'jszip';
 import WaveSurfer from 'wavesurfer.js';
 
@@ -21,6 +21,7 @@ interface SplitSegment {
   endTime: number;
   status: 'idle' | 'processing' | 'completed' | 'error';
   progress: number;
+  error?: string;
   resultBlob?: Blob;
   color: string;
 }
@@ -42,6 +43,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   const [regionsPlugin, setRegionsPlugin] = useState<any>(null);
   const [duration, setDuration] = useState<number>(0);
   const [isFfmpegLoaded, setIsFfmpegLoaded] = useState(false);
+  const [ffmpegError, setFfmpegError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
@@ -65,8 +67,19 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     windNoiseFilter: false,
   });
 
+  const retryFfmpeg = () => {
+    setFfmpegError(false);
+    setIsFfmpegLoaded(false);
+    loadFFmpeg()
+      .then(() => setIsFfmpegLoaded(true))
+      .catch((err) => {
+        console.error('Audio splitter: FFmpeg load failed', err);
+        setFfmpegError(true);
+      });
+  };
+
   useEffect(() => {
-    loadFFmpeg().then(() => setIsFfmpegLoaded(true));
+    retryFfmpeg();
   }, []);
 
   const handleWaveformReady = (ws: WaveSurfer, regions: any) => {
@@ -432,7 +445,9 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     } catch (error) {
       console.error('Processing error:', error);
       setSegments(prev => prev.map(seg =>
-        seg.id === segment.id ? { ...seg, status: 'error', progress: 0 } : seg
+        seg.id === segment.id
+          ? { ...seg, status: 'error', progress: 0, error: error instanceof Error ? error.message : String(error) }
+          : seg
       ));
     }
   };
@@ -496,6 +511,31 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   const hasIdleSegments = segments.some(s => s.status === 'idle');
   const hasCompletedSegments = segments.some(s => s.status === 'completed');
   const playingSegment = segments.find(s => s.id === playingSegmentId);
+
+  if (ffmpegError) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#0A0C0F] p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-6 text-center">
+          <AlertTriangle size={28} className="mx-auto mb-3 text-red-400" />
+          <p className="text-sm font-semibold text-white">
+            {lang === 'ar' ? 'تعذّر تحميل محرك الصوت' : 'Audio engine failed to load'}
+          </p>
+          <p className="mt-1.5 text-[10px] leading-relaxed text-gray-500">
+            {lang === 'ar'
+              ? 'تأكد من اتصال الإنترنت ثم أعد المحاولة. باقي الأدوات لا تتأثر.'
+              : 'Check your internet connection and try again. Other tools are unaffected.'}
+          </p>
+          <button
+            onClick={retryFfmpeg}
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-[10px] font-semibold text-white hover:bg-indigo-500"
+          >
+            <RotateCcw size={12} />
+            {lang === 'ar' ? 'إعادة المحاولة' : 'Try again'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isFfmpegLoaded) {
     return (
