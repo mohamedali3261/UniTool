@@ -380,9 +380,10 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
         created++;
       }
 
+      const segmentsLabel = created === 1 ? 'مقطع واحد' : created === 2 ? 'مقطعين' : `${created} مقاطع`;
       setSplitNotice(
         created > 0
-          ? (lang === 'ar' ? `تم إنشاء ${created} مقطع حسب الصمت` : `Created ${created} segments from pauses`)
+          ? (lang === 'ar' ? `تم إنشاء ${segmentsLabel} حسب الصمت` : `Created ${created} segment${created === 1 ? '' : 's'} from pauses`)
           : (lang === 'ar' ? 'لم يتم العثور على صمت كافٍ — جرّب حساسية أعلى' : 'No clear pauses found — try higher sensitivity')
       );
     } catch (error) {
@@ -645,19 +646,6 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     );
   }
 
-  if (!isFfmpegLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#0A0C0F]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">
-            {lang === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Page Header */}
@@ -670,6 +658,15 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
           <p className="text-[8px] sm:text-[9px] text-gray-500 font-mono">{lang === 'ar' ? 'قص وتقسيم ملفاتك الصوتية' : 'Cut and split your audio files'}</p>
         </div>
       </div>
+      {!isFfmpegLoaded && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-300 shrink-0 sm:px-6">
+          <Loader2 size={11} className="animate-spin" />
+          {lang === 'ar'
+            ? 'جاري تجهيز محرك الصوت في الخلفية — يمكنك رفع الملف والتقسيم الآن'
+            : 'Preparing the audio engine — you can upload and split now'}
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
@@ -786,7 +783,10 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
             )}
 
             {/* Output Settings */}
-            <div className="bg-gradient-to-br from-[#14171C] to-[#0A0C0F] border border-[#2D3139] rounded-xl p-3 sm:p-4 shadow-lg">
+            <div className={cn(
+              "bg-gradient-to-br from-[#14171C] to-[#0A0C0F] border border-[#2D3139] rounded-xl p-3 sm:p-4 shadow-lg transition-opacity",
+              isAnyProcessing && "opacity-60 pointer-events-none"
+            )}>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                 <Settings2 size={12} className="text-blue-500 sm:size-[14px]" />
                 <h3 className="text-xs sm:text-sm font-bold text-white">
@@ -878,6 +878,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
             onDownloadZip={downloadAllAsZip}
             onProcessAll={processAllSegments}
             isProcessing={isAnyProcessing}
+            engineReady={isFfmpegLoaded}
             hasCompleted={hasCompletedSegments}
             hasIdle={hasIdleSegments}
             lang={lang}

@@ -28,6 +28,7 @@ interface SegmentCardProps {
   onDownload: () => void;
   onDelete: () => void;
   isProcessing: boolean;
+  engineReady: boolean;
   lang: 'ar' | 'en';
 }
 
@@ -40,6 +41,7 @@ export function SegmentCard({
   onDownload,
   onDelete,
   isProcessing,
+  engineReady,
   lang,
 }: SegmentCardProps) {
   const formatTime = (seconds: number) => {
@@ -135,10 +137,11 @@ export function SegmentCard({
           {segment.status === 'idle' && (
             <button
               onClick={onProcess}
-              disabled={isProcessing}
+              disabled={isProcessing || !engineReady}
+              title={!engineReady ? (lang === 'ar' ? 'جاري تجهيز محرك الصوت...' : 'Preparing the audio engine...') : undefined}
               className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[9px] sm:text-[10px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <Scissors size={10} className="sm:size-3" />
+              {engineReady ? <Scissors size={10} className="sm:size-3" /> : <Loader2 size={10} className="sm:size-3 animate-spin" />}
               {lang === 'ar' ? 'قص' : 'Cut'}
             </button>
           )}

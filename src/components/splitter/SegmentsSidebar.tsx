@@ -4,7 +4,7 @@
  */
 
 import { createElement } from 'react';
-import { Download, Scissors } from 'lucide-react';
+import { Download, Loader2, Scissors } from 'lucide-react';
 import { SegmentCard } from './SegmentCard';
 
 interface Segment {
@@ -30,6 +30,7 @@ interface SegmentsSidebarProps {
   onDownloadZip: () => void;
   onProcessAll: () => void;
   isProcessing: boolean;
+  engineReady: boolean;
   hasCompleted: boolean;
   hasIdle: boolean;
   lang: 'ar' | 'en';
@@ -47,6 +48,7 @@ export function SegmentsSidebar({
   onDownloadZip,
   onProcessAll,
   isProcessing,
+  engineReady,
   hasCompleted,
   hasIdle,
   lang,
@@ -92,11 +94,14 @@ export function SegmentsSidebar({
         {hasIdle && (
           <button
             onClick={onProcessAll}
-            disabled={isProcessing}
+            disabled={isProcessing || !engineReady}
+            title={!engineReady ? (lang === 'ar' ? 'جاري تجهيز محرك الصوت...' : 'Preparing the audio engine...') : undefined}
             className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1.5 sm:gap-2"
           >
-            <Scissors size={12} className="sm:size-[14px]" />
-            {isProcessing 
+            {!engineReady ? <Loader2 size={12} className="sm:size-[14px] animate-spin" /> : <Scissors size={12} className="sm:size-[14px]" />}
+            {!engineReady
+              ? (lang === 'ar' ? 'تجهيز المحرك...' : 'Preparing engine...')
+              : isProcessing
               ? `${lang === 'ar' ? 'معالجة' : 'Processing'}...`
               : `${lang === 'ar' ? 'قص الكل' : 'Cut All'} (${segments.filter(s => s.status === 'idle').length})`
             }
@@ -158,6 +163,7 @@ export function SegmentsSidebar({
               onDownload: () => onDownloadSegment(segment),
               onDelete: () => onDeleteSegment(segment.id),
               isProcessing,
+              engineReady,
               lang,
             })
           )
