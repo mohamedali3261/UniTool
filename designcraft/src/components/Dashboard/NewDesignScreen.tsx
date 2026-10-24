@@ -18,13 +18,13 @@ import {
   Trash2,
   Copy,
   FolderOpen,
-  ArrowUpRight,
+  ArrowUpDown,
   Sliders,
   Plus,
   X,
   Globe
 } from 'lucide-react';
-import { getDcTranslation, DCLang } from '../../translations';
+import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
 
 interface NewDesignScreenProps {
@@ -52,11 +52,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   onOpenProject,
   onShowToast
 }) => {
-  const [lang, setLang] = useState<DCLang>(() => {
-    const shared = localStorage.getItem('unitool-lang');
-    return shared === 'en' ? 'en' : 'ar';
-  });
-  const t = getDcTranslation(lang);
+  const { lang, t } = useDcLang();
 
   const [activeTab, setActiveTab] = useState<'create' | 'projects'>('create');
   const [customWidth, setCustomWidth] = useState<number>(1080);
@@ -71,6 +67,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   // Saved projects
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectSearch, setProjectSearch] = useState<string>('');
+  const [projectSort, setProjectSort] = useState<'newest' | 'oldest' | 'name'>('newest');
 
   // Direction follows the chosen language (Arabic = RTL) — truncation & alignment stay correct
   const dir: string = lang === 'ar' ? 'rtl' : 'ltr';
@@ -105,11 +102,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     }
   }, []);
 
-  const toggleLang = () => {
-    const next: DCLang = lang === 'ar' ? 'en' : 'ar';
-    setLang(next);
-    localStorage.setItem('unitool-lang', next);
-  };
+  const toggleLang = () => setDcLang(lang === 'ar' ? 'en' : 'ar');
 
   const handleWidthChange = (val: number) => {
     const safeVal = Math.max(50, Math.min(val, 5000));
@@ -208,15 +201,24 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     return DIMENSION_PRESETS.filter((p) => p.id !== 'custom' && p.category === catId).length;
   };
 
-  const filteredProjects = projects.filter((p) => {
-    if (!projectSearch.trim()) return true;
-    const q = projectSearch.toLowerCase().trim();
-    return (
-      (p.title && p.title.toLowerCase().includes(q)) ||
-      p.width.toString().includes(q) ||
-      p.height.toString().includes(q)
-    );
-  });
+  const filteredProjects = projects
+    .filter((p) => {
+      if (!projectSearch.trim()) return true;
+      const q = projectSearch.toLowerCase().trim();
+      return (
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        p.width.toString().includes(q) ||
+        p.height.toString().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (projectSort === 'name') {
+        return a.title.localeCompare(b.title, lang === 'ar' ? 'ar' : 'en');
+      }
+      const aTime = a.updatedAt || a.createdAt;
+      const bTime = b.updatedAt || b.createdAt;
+      return projectSort === 'oldest' ? aTime - bTime : bTime - aTime;
+    });
 
   // Calculate live custom ratio text
   const customRatioNum = (customWidth / (customHeight || 1));
@@ -312,13 +314,54 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
       {/* Body */}
       <div className="flex-1">
         {/* Main Container */}
-        <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
+        <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
+          {/* Page Header */}
+          <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
+            <div className="absolute -top-16 -end-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -start-10 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2.5 py-1 rounded-full">
+                  <Sparkles className="w-3 h-3" />
+                  {t.studioBadge}
+                </span>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">{t.studioTitle}</h1>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+                  {t.studioDesc}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[120px]">
+                  <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
+                    <FolderOpen className="w-4 h-4" />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-lg font-bold text-white font-mono">{projects.length}</div>
+                    <div className="text-[10px] text-slate-400">{t.statProjects}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[120px]">
+                  <div className="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
+                    <Maximize2 className="w-4 h-4" />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-lg font-bold text-white font-mono">{getCategoryCount('all')}</div>
+                    <div className="text-[10px] text-slate-400">{t.statPresets}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
           {/* Tab Switcher */}
-          <div className="flex items-center gap-2 bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70">
+          <div className="flex items-center gap-2 bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70 w-full sm:w-fit">
             <button
               type="button"
               onClick={() => setActiveTab('create')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                 activeTab === 'create'
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
                   : 'text-slate-400 hover:text-white border border-transparent'
@@ -330,7 +373,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('projects')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                 activeTab === 'projects'
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
                   : 'text-slate-400 hover:text-white border border-transparent'
@@ -594,13 +637,12 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                           </div>
                         </div>
 
-                        <button
-                          type="submit"
-                          className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5"
-                        >
-                          <span>{t.openWorkspace} (<span dir="ltr">{customWidth}×{customHeight}px</span>)</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span dir="ltr" className="font-mono text-slate-300">{customWidth} × {customHeight} px</span>
+                          <span className="text-slate-600">·</span>
+                          <span>{getCustomRatioLabel()}</span>
+                        </div>
                       </div>
                     </form>
                   </div>
@@ -771,18 +813,48 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   </div>
                 </div>
 
-                {projects.length > 0 && (
-                  <div className="relative min-w-[220px]">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={projectSearch}
-                      onChange={(e) => setProjectSearch(e.target.value)}
-                      placeholder={t.searchProjects}
-                      className="w-full bg-[#0B132B] border border-slate-700 rounded-xl ps-8 pe-4 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                    />
-                  </div>
-                )}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  {projects.length > 0 && (
+                    <div className="relative min-w-[200px]">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={projectSearch}
+                        onChange={(e) => setProjectSearch(e.target.value)}
+                        placeholder={t.searchProjects}
+                        className="w-full bg-[#0B132B] border border-slate-700 rounded-xl ps-8 pe-4 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                  )}
+
+                  {projects.length > 0 && (
+                    <div className="relative">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <select
+                        value={projectSort}
+                        onChange={(e) => setProjectSort(e.target.value as 'newest' | 'oldest' | 'name')}
+                        aria-label={t.sortProjects}
+                        title={t.sortProjects}
+                        className="w-full sm:w-auto bg-[#0B132B] border border-slate-700 rounded-xl ps-3 pe-9 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer appearance-none"
+                      >
+                        <option value="newest">{t.sortNewest}</option>
+                        <option value="oldest">{t.sortOldest}</option>
+                        <option value="name">{t.sortNameAsc}</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {projects.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('create')}
+                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-bold hover:bg-sky-500/25 hover:text-white transition shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{t.newDesign}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {projects.length === 0 ? (
@@ -825,13 +897,13 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                       {/* Thumbnail Preview */}
                       <div
                         onClick={() => onOpenProject(p)}
-                        className="relative aspect-video bg-[#070D1E] cursor-pointer overflow-hidden flex items-center justify-center border-b border-slate-800"
+                        className="relative aspect-[4/3] bg-[#070D1E] bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:14px_14px] cursor-pointer overflow-hidden flex items-center justify-center border-b border-slate-800"
                       >
                         {p.thumbnail ? (
                           <img
                             src={p.thumbnail}
                             alt={p.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            className="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300"
                           />
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5 text-slate-500">

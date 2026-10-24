@@ -28,7 +28,7 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
   onApplyFilter
 }) => {
   const { t } = useDcLang();
-  const [activeTab, setActiveTab] = useState<'softFade' | 'corners' | 'hardCrop' | 'style' | 'filters'>('softFade');
+  const [activeTab, setActiveTab] = useState<'softFade' | 'corners' | 'style' | 'filters'>('softFade');
 
   // Soft Fade values (0 - 100 percentage)
   const fadeTop = properties.fadeTop ?? 0;
@@ -509,6 +509,49 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Hard edge crop */}
+          <div className="space-y-2 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-300">{t.ipCropTitle}</label>
+              {(cropT > 0 || cropB > 0 || cropL > 0 || cropR > 0) && (
+                <button
+                  type="button"
+                  onClick={handleResetHardCrops}
+                  className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 transition"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{t.ipCropReset}</span>
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {[
+                { label: t.ipCropTop, key: 'cropTop' as const, value: cropT },
+                { label: t.ipCropBottom, key: 'cropBottom' as const, value: cropB },
+                { label: t.ipCropLeft, key: 'cropLeft' as const, value: cropL },
+                { label: t.ipCropRight, key: 'cropRight' as const, value: cropR }
+              ].map((crop) => (
+                <div
+                  key={crop.key}
+                  className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1"
+                >
+                  <div className="flex justify-between text-[11px] text-slate-300">
+                    <span>{crop.label}</span>
+                    <span className="font-mono text-sky-400">{crop.value}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={maxCrop}
+                    value={crop.value}
+                    onChange={(e) => onUpdate(crop.key, parseInt(e.target.value) || 0)}
+                    className="w-full accent-sky-400 cursor-pointer"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -585,6 +628,8 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
               <button
                 key={c}
                 type="button"
+                title={c}
+                aria-label={c}
                 onClick={() => {
                   onUpdate('stroke', c);
                   if (!properties.strokeWidth) onUpdate('strokeWidth', 2);

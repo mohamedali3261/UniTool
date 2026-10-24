@@ -73,7 +73,8 @@ export const TextTab: React.FC<TextTabProps> = ({
   activeProperties,
   onUpdateProperty
 }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
   const [customText, setCustomText] = useState('');
   const [selectedFont, setSelectedFont] = useState('Cairo');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
@@ -273,6 +274,8 @@ export const TextTab: React.FC<TextTabProps> = ({
               <button
                 key={c}
                 type="button"
+                title={c}
+                aria-label={c}
                 onClick={() => setOverridePresetColor(c)}
                 className={`w-[18px] h-[18px] rounded-md border transition hover:scale-110 ${
                   overridePresetColor === c ? 'border-white ring-2 ring-sky-400 scale-110' : 'border-slate-700'
@@ -352,9 +355,9 @@ export const TextTab: React.FC<TextTabProps> = ({
                 </div>
                 <div
                   className="text-[9px] text-slate-400 group-hover:text-sky-300 transition truncate max-w-full font-sans"
-                  title={preset.labelAr}
+                  title={isAr ? preset.labelAr : preset.label}
                 >
-                  {preset.labelAr}
+                  {isAr ? preset.labelAr : preset.label}
                 </div>
               </button>
             );
@@ -413,6 +416,8 @@ export const TextTab: React.FC<TextTabProps> = ({
             <button
               key={i}
               type="button"
+              title={c}
+              aria-label={c}
               onClick={() => {
                 setSelectedColor(c);
                 if (isTextSelected && onUpdateProperty) {

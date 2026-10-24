@@ -69,6 +69,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [isLocked, setIsLocked] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
+  const nudgedRef = useRef(false);
   const panStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number }>({
     x: 0,
     y: 0,
@@ -310,6 +311,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   }, [setZoom]);
 
   // 6. Keyboard Shortcuts
+  // Undo/redo/duplicate/delete live in EditorLayout's global handler — handling
+  // them here as well made every Ctrl+Z undo two steps and Ctrl+D duplicate twice.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -320,30 +323,39 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       if (e.code === 'Space' && !isSpacePressed) {
         setIsSpacePressed(true);
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) onRedo();
-        else onUndo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        onRedo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
-        e.preventDefault();
-        onDuplicate();
-      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         onSave();
       }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
+        const objects = canvas.getObjects().filter((obj) => obj.visible !== false);
+        if (objects.length === 0) return;
+        e.preventDefault();
+        const selection = new fabric.ActiveSelection(objects, { canvas });
+        canvas.setActiveObject(selection);
+        canvas.requestRenderAll();
+      }
+      if (e.key.startsWith('Arrow') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const canvas = fabricCanvasRef.current;
+        const active = canvas?.getActiveObject();
+        if (!canvas || !active) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowLeft') active.left = (active.left || 0) - step;
+        else if (e.key === 'ArrowRight') active.left = (active.left || 0) + step;
+        else if (e.key === 'ArrowUp') active.top = (active.top || 0) - step;
+        else if (e.key === 'ArrowDown') active.top = (active.top || 0) + step;
+        active.setCoords();
+        canvas.requestRenderAll();
+        nudgedRef.current = true;
+      }
+      if (e.key === 'Escape') {
         const canvas = fabricCanvasRef.current;
         if (canvas && canvas.getActiveObject()) {
-          const active = canvas.getActiveObject();
-          if (active && (active as any).isEditing) return;
-          e.preventDefault();
-          onDelete();
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
         }
       }
     };
@@ -353,6 +365,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         setIsSpacePressed(false);
         setIsPanning(false);
       }
+      if (e.key.startsWith('Arrow') && nudgedRef.current) {
+        nudgedRef.current = false;
+        onRecordHistory();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -361,7 +377,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isSpacePressed, onUndo, onRedo, onDuplicate, onSave, onDelete]);
+  }, [isSpacePressed, onSave, onRecordHistory]);
 
   // 7. Touch Pinch-to-Zoom & Touch Pan
   useEffect(() => {
@@ -488,7 +504,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!canvas) return;
     const active = canvas.getActiveObject();
     if (active) {
-      active.center();
+      // Center in DESIGN space (canvas.getCenter() returns zoomed viewport units)
+      active.setPositionByOrigin(new fabric.Point(width / 2, height / 2), 'center', 'center');
       active.setCoords();
       canvas.renderAll();
       onRecordHistory();

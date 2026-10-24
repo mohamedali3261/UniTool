@@ -1,50 +1,62 @@
 import React, { useState, useMemo } from 'react';
-import { TEMPLATE_CATALOG, TEMPLATE_CATEGORIES, DesignTemplate, TemplateCategory } from '../../../data/templatesCatalog';
-import { Search, LayoutTemplate, X, Zap } from 'lucide-react';
+import {
+  TEMPLATE_CATALOG,
+  TEMPLATE_CATEGORIES,
+  GOOGLE_PLAY_CATEGORIES,
+  DesignTemplate,
+  TemplateCategory
+} from '../../../data/templates';
+import { Search, LayoutTemplate, X, Zap, Smartphone } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
 interface TemplatesTabProps {
   onApplyTemplate: (template: DesignTemplate) => void;
 }
 
+const GP_CATEGORY_IDS = new Set<string>(GOOGLE_PLAY_CATEGORIES);
+const MAIN_CATEGORIES = TEMPLATE_CATEGORIES.filter((c) => c.id === 'all' || !GP_CATEGORY_IDS.has(c.id));
+const GP_CATEGORIES = TEMPLATE_CATEGORIES.filter((c) => GP_CATEGORY_IDS.has(c.id));
+
+const gradientOf = (from: string, to?: string) =>
+  to ? `linear-gradient(135deg, ${from} 0%, ${to} 100%)` : from;
+
 /**
- * Tiny CSS mock preview built from the template definition itself:
- * every object is rendered as a scaled placeholder inside a mini stage.
+ * Faithful miniature of the template, built from its own object definitions.
+ * The stage uses container queries (cqw) so every element keeps the exact
+ * proportions of the real canvas at any card width.
  */
 const TemplatePreview: React.FC<{ tpl: DesignTemplate }> = ({ tpl }) => {
-  const stageW = 232; // logical px; card height follows the canvas ratio
-  const ratio = tpl.baseH / tpl.baseW;
-  const stageH = Math.max(96, Math.min(260, Math.round(stageW * ratio)));
-  const k = stageW / tpl.baseW; // object scale factor for the mini stage
-
   return (
     <div
-      className="relative w-full rounded-xl overflow-hidden border border-white/10 shadow-inner"
+      className="relative w-full rounded-lg overflow-hidden border border-white/10 shadow-inner"
       style={{
-        height: stageH,
-        background: tpl.bg2
-          ? `linear-gradient(135deg, ${tpl.bg} 0%, ${tpl.bg2} 100%)`
-          : tpl.bg
+        aspectRatio: `${tpl.baseW} / ${tpl.baseH}`,
+        background: gradientOf(tpl.bg, tpl.bg2),
+        containerType: 'inline-size'
       }}
     >
       {tpl.objects.map((o, i) => {
-        const left = o.x * stageW;
-        const top = o.y * stageH;
+        const rotate = o.rotation ? ` rotate(${o.rotation}deg)` : '';
+        const common: React.CSSProperties = {
+          left: `${o.x * 100}%`,
+          top: `${o.y * 100}%`,
+          transform: `translate(-50%, -50%)${rotate}`,
+          opacity: o.opacity ?? 1
+        };
 
         if (o.type === 'circle') {
-          const d = o.size ? o.size * stageW * 2 : 24;
           return (
             <div
               key={i}
               className="absolute rounded-full"
               style={{
-                left,
-                top,
-                width: d,
-                height: d,
-                transform: 'translate(-50%, -50%)',
-                background: o.fill,
-                opacity: o.opacity ?? 1
+                ...common,
+                width: `${(o.size ?? 0.1) * 100}cqw`,
+                height: `${(o.size ?? 0.1) * 100}cqw`,
+                background: gradientOf(o.fill || '#0284C7', o.fill2),
+                boxShadow: o.shadow
+                  ? `${(o.shadow.offsetX ?? 0) * 100}cqw ${(o.shadow.offsetY ?? 0) * 100}cqw ${o.shadow.blur * 100}cqw ${o.shadow.color}`
+                  : undefined
               }}
             />
           );
@@ -56,38 +68,43 @@ const TemplatePreview: React.FC<{ tpl: DesignTemplate }> = ({ tpl }) => {
               key={i}
               className="absolute"
               style={{
-                left,
-                top,
-                width: (o.w ?? 0.3) * stageW,
-                height: Math.max(2, (o.h ?? 0.05) * stageH),
-                transform: 'translate(-50%, -50%)',
-                background: o.fill,
-                borderRadius: ((o.rx ?? 0) * stageW) / 2,
-                opacity: o.opacity ?? 1
+                ...common,
+                width: `${(o.w ?? 0.3) * 100}%`,
+                height: `${(o.h ?? 0.05) * 100}%`,
+                background: gradientOf(o.fill || '#0284C7', o.fill2),
+                borderRadius: `${(o.rx ?? 0) * 100}cqw`,
+                boxShadow: o.shadow
+                  ? `${(o.shadow.offsetX ?? 0) * 100}cqw ${(o.shadow.offsetY ?? 0) * 100}cqw ${o.shadow.blur * 100}cqw ${o.shadow.color}`
+                  : undefined
               }}
             />
           );
         }
 
-        // text preview — scaled to stay readable at this size
-        const fs = Math.max(7, Math.min(22, Math.round((o.size ?? 0.06) * stageW * 0.62)));
-        const isMonoBg = (tpl.bg || '').toLowerCase() <= '#4a4a4a'; // rough: darker bg => light text ok
+        const gradientText = !!o.fill2;
+        const textShadow = o.shadow && !gradientText
+          ? `${(o.shadow.offsetX ?? 0) * 100}cqw ${(o.shadow.offsetY ?? 0) * 100}cqw ${o.shadow.blur * 100}cqw ${o.shadow.color}`
+          : undefined;
+
         return (
           <div
             key={i}
-            className="absolute whitespace-pre text-center font-bold leading-tight"
+            className="absolute whitespace-pre-line text-center"
             style={{
-              left,
-              top,
-              transform: `translate(-50%, -50%)${o.rotation ? ` rotate(${o.rotation}deg)` : ''}`,
+              ...common,
+              width: `${Math.min(94, (o.w ?? 0.9) * 100)}%`,
               fontFamily: o.fontFamily || 'Cairo, sans-serif',
-              fontSize: fs,
-              color: o.fill,
-              width: Math.min(stageW * 0.92, (o.w ?? 0.8) * stageW),
-              textShadow: isMonoBg ? 'none' : '0 1px 2px rgba(0,0,0,.35)'
+              fontWeight: (o.fontWeight ?? 700) as React.CSSProperties['fontWeight'],
+              fontSize: `max(3px, ${(o.size ?? 0.06) * 100}cqw)`,
+              lineHeight: 1.3,
+              color: gradientText ? 'transparent' : o.fill || '#FFFFFF',
+              backgroundImage: gradientText ? gradientOf(o.fill || '#FFFFFF', o.fill2) : undefined,
+              WebkitBackgroundClip: gradientText ? 'text' : undefined,
+              backgroundClip: gradientText ? 'text' : undefined,
+              textShadow
             }}
           >
-            {(o.text ?? '').replace(/\n/g, ' ')}
+            {o.text ?? ''}
           </div>
         );
       })}
@@ -113,6 +130,14 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
       );
     });
   }, [query, category]);
+
+  const groups = useMemo(
+    () =>
+      TEMPLATE_CATEGORIES.filter((c) => c.id !== 'all')
+        .map((cat) => ({ cat, items: filtered.filter((tpl) => tpl.cat === cat.id) }))
+        .filter((g) => g.items.length > 0),
+    [filtered]
+  );
 
   const catCount = (id: string) =>
     id === 'all' ? TEMPLATE_CATALOG.length : TEMPLATE_CATALOG.filter((x) => x.cat === id).length;
@@ -150,8 +175,8 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
       </div>
 
       {/* Category pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-        {TEMPLATE_CATEGORIES.map((cat) => (
+      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        {MAIN_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             type="button"
@@ -170,7 +195,35 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
         ))}
       </div>
 
-      {/* Template cards */}
+      {/* Official Google Play asset sizes */}
+      <div className="rounded-xl border border-emerald-500/20 bg-[#0B132B]/70 p-1.5 space-y-1.5">
+        <div className="flex items-center gap-1.5 px-1 text-[9px] font-bold uppercase tracking-wide text-emerald-300/90">
+          <Smartphone className="w-3 h-3" />
+          <span>{t.tplGpSizes}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {GP_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategory(cat.id as TemplateCategory | 'all')}
+              title={lang === 'ar' ? cat.nameAr : cat.nameEn}
+              className={`flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg text-[9px] font-medium transition border ${
+                category === cat.id
+                  ? 'bg-emerald-500 text-white font-bold border-emerald-400 shadow-sm'
+                  : 'bg-[#0B132B] text-slate-400 hover:text-white border-slate-800'
+              }`}
+            >
+              <span className="truncate">{lang === 'ar' ? cat.nameAr : cat.nameEn}</span>
+              <span className={`shrink-0 text-[8px] px-1 py-0.5 rounded-full font-mono ${category === cat.id ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                {catCount(cat.id)}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Template cards grouped by section */}
       {filtered.length === 0 ? (
         <div className="p-8 text-center rounded-2xl bg-[#141E38] border border-dashed border-slate-700/80 space-y-2">
           <LayoutTemplate className="w-8 h-8 text-slate-500 mx-auto" />
@@ -184,32 +237,51 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-          {filtered.map((tpl) => (
-            <button
-              key={tpl.id}
-              type="button"
-              onClick={() => onApplyTemplate(tpl)}
-              className="group text-start rounded-2xl bg-[#141E38]/90 hover:bg-[#192444] border border-slate-700/80 hover:border-sky-400/90 transition-all duration-200 p-2.5 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:-translate-y-0.5 active:scale-[0.98] w-full"
-              title={lang === 'ar' ? tpl.descAr : tpl.descEn}
-            >
-              <TemplatePreview tpl={tpl} />
-
-              <div className="flex items-start justify-between gap-2 mt-2 px-0.5">
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-white group-hover:text-sky-300 transition truncate">
-                    {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
-                  </h4>
-                  <p className="text-[9px] text-slate-500 font-mono truncate">
-                    {tpl.baseW} × {tpl.baseH} · {tpl.objects.length} {t.tplObjects}
-                  </p>
-                </div>
-                <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 text-[9px] font-bold border border-sky-500/30 shrink-0 opacity-80 group-hover:opacity-100 transition">
-                  <Zap className="w-3 h-3" />
-                  {t.tplApply}
-                </span>
+        <div className="space-y-4">
+          {groups.map(({ cat, items }) => (
+            <section key={cat.id} className="space-y-2">
+              <div className="flex items-center justify-between gap-2 px-0.5">
+                <h4 className="text-[10px] font-bold text-slate-300 flex items-center gap-1.5 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${GP_CATEGORY_IDS.has(cat.id) ? 'bg-emerald-400' : 'bg-sky-400'}`} />
+                  <span className="truncate">{lang === 'ar' ? cat.nameAr : cat.nameEn}</span>
+                </h4>
+                <span className="text-[9px] text-slate-500 font-mono shrink-0">{items.length}</span>
               </div>
-            </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                {items.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => onApplyTemplate(tpl)}
+                    className="group text-start rounded-xl bg-[#141E38]/90 hover:bg-[#192444] border border-slate-700/80 hover:border-sky-400/90 transition-all duration-200 p-1.5 shadow-sm hover:shadow-lg hover:shadow-sky-500/10 hover:-translate-y-0.5 active:scale-[0.98] w-full"
+                    title={lang === 'ar' ? tpl.descAr : tpl.descEn}
+                  >
+                    <div className="relative">
+                      <TemplatePreview tpl={tpl} />
+                      {tpl.isNew && (
+                        <span className="absolute top-1 start-1 px-1 py-0.5 rounded-md bg-gradient-to-r from-fuchsia-500 to-sky-400 text-[7px] font-black tracking-wide text-white shadow-md">
+                          {t.tplNew}
+                        </span>
+                      )}
+                      <div className="absolute inset-0 rounded-lg bg-slate-950/45 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500 text-white text-[9px] font-bold shadow-lg">
+                          <Zap className="w-2.5 h-2.5" />
+                          {t.tplApply}
+                        </span>
+                      </div>
+                    </div>
+
+                    <h4 className="text-[10px] leading-tight font-bold text-white group-hover:text-sky-300 transition truncate mt-1.5 px-0.5">
+                      {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
+                    </h4>
+                    <p className="text-[8px] text-slate-500 font-mono truncate px-0.5">
+                      {tpl.baseW} × {tpl.baseH} · {tpl.objects.length} {t.tplObjects}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

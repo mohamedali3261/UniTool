@@ -11,7 +11,8 @@ interface IconsTabProps {
 }
 
 export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
   const [search, setSearch] = useState('');
   const [selectedColor, setSelectedColor] = useState('#38BDF8');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -109,6 +110,8 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
             <button
               key={c}
               type="button"
+              title={c}
+              aria-label={c}
               onClick={() => setSelectedColor(c)}
               className={`w-5 h-5 rounded-md transition flex items-center justify-center ${
                 selectedColor === c ? 'ring-2 ring-white scale-110 shadow-sm' : 'hover:scale-105'
@@ -147,7 +150,7 @@ export const IconsTab: React.FC<IconsTabProps> = ({ onAddIcon, onOpenIconsModal 
                 : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            {cat.categoryAr} ({cat.icons.length})
+            {isAr ? cat.categoryAr : cat.category} ({cat.icons.length})
           </button>
         ))}
       </div>

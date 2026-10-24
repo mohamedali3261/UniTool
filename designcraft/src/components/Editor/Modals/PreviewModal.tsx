@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Smartphone, Monitor, Download, Maximize2 } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
@@ -23,6 +23,15 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 }) => {
   const { t } = useDcLang();
   const [deviceFrame, setDeviceFrame] = useState<'fit' | 'mobile' | 'clean'>('fit');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -88,7 +97,10 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             </button>
 
             <button
+              type="button"
               onClick={onClose}
+              aria-label={t.close}
+              title={t.close}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition"
             >
               <X className="w-5 h-5" />

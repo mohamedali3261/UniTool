@@ -21,7 +21,7 @@ import {
   Globe,
   Zap
 } from 'lucide-react';
-import { getDcTranslation, DCLang } from '../../translations';
+import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 
 interface TopBarProps {
   title: string;
@@ -84,11 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(title);
-  const [lang] = useState<DCLang>(() => {
-    const shared = localStorage.getItem('unitool-lang');
-    return shared === 'en' ? 'en' : 'ar';
-  });
-  const t = getDcTranslation(lang);
+  const { lang, t } = useDcLang();
   const dir = 'ltr';
 
   const handleTitleSubmit = (e: React.FormEvent) => {
@@ -169,6 +165,12 @@ export const TopBar: React.FC<TopBarProps> = ({
               onChange={(e) => setTempTitle(e.target.value)}
               autoFocus
               onBlur={handleTitleSubmit}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setTempTitle(title);
+                  setIsEditingTitle(false);
+                }
+              }}
               style={{
                 background: '#0d0f14', border: '1px solid #6366f1', borderRadius: 6,
                 padding: '2px 8px', fontSize: 12, color: '#e4e6eb', outline: 'none',
@@ -188,8 +190,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           </form>
         ) : (
           <div
+            role="button"
+            tabIndex={0}
             onClick={() => { setTempTitle(title); setIsEditingTitle(true); }}
-            className="hidden md:flex max-w-[110px] lg:max-w-[180px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setTempTitle(title);
+                setIsEditingTitle(true);
+              }
+            }}
+            title={title}
+            className="hidden md:flex max-w-[110px] lg:max-w-[180px] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             style={{
               alignItems: 'center', gap: 4, cursor: 'pointer',
               padding: '4px 8px', borderRadius: 8, transition: 'background .2s',
@@ -330,11 +342,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Language Toggle */}
         <button
           type="button"
-          onClick={() => {
-            const next = lang === 'ar' ? 'en' : 'ar';
-            localStorage.setItem('unitool-lang', next);
-            window.location.reload();
-          }}
+          onClick={() => setDcLang(lang === 'ar' ? 'en' : 'ar')}
           style={{
             display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
             borderRadius: 8, border: 'none', background: 'transparent',

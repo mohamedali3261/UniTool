@@ -151,6 +151,8 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
             <button
               key={c}
               type="button"
+              title={c}
+              aria-label={c}
               onClick={() => setSelectedColor(c)}
               className={`w-5 h-5 rounded-md transition ${
                 selectedColor === c ? 'ring-2 ring-white scale-110' : 'hover:scale-105'

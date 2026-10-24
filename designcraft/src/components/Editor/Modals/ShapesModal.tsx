@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SHAPES_CATALOG, SHAPE_CATEGORIES, ShapeItem } from '../../../data/shapesCatalog';
 import { COLOR_PALETTES } from '../../../data/presets';
 import { Search, Shapes, X, Palette, Check, Sparkles } from 'lucide-react';
@@ -16,10 +16,20 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
   onClose,
   onSelectShape
 }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
+  const isAr = lang === 'ar';
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedColor, setSelectedColor] = useState('#0284C7');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -52,7 +62,7 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
               <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <span>{t.shTitle}</span>
                 <span className="text-[10px] bg-sky-500/20 text-sky-300 font-mono px-2 py-0.5 rounded-full border border-sky-500/30">
-                  +200
+                  +{SHAPES_CATALOG.length}
                 </span>
               </h2>
             </div>
@@ -60,6 +70,8 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label={t.close}
+            title={t.close}
             className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
@@ -90,6 +102,8 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
                     key={c}
                     type="button"
                     onClick={() => setSelectedColor(c)}
+                    title={c}
+                    aria-label={c}
                     className={`w-6 h-6 rounded-lg transition flex items-center justify-center shrink-0 ${
                       selectedColor === c ? 'ring-2 ring-white scale-110 shadow-sm' : 'hover:scale-105'
                     }`}
@@ -105,6 +119,8 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
                 type="color"
                 value={selectedColor}
                 onChange={(e) => setSelectedColor(e.target.value)}
+                title={selectedColor}
+                aria-label={selectedColor}
                 className="w-6 h-6 rounded-lg bg-transparent cursor-pointer border-0 shrink-0"
               />
             </div>
@@ -123,13 +139,19 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
                     : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                {cat.label}
+                {isAr ? cat.label : cat.labelEn}
               </button>
             ))}
           </div>
         </div>
 
         {/* Shapes Grid */}
+        {filteredShapes.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-500 py-16">
+            <Shapes className="w-10 h-10 text-slate-600" />
+            <p className="text-sm font-semibold text-slate-300">{t.shNoResults}</p>
+          </div>
+        ) : (
         <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
           {filteredShapes.map((shape) => (
             <button
@@ -139,7 +161,8 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
                 onSelectShape(shape, selectedColor);
                 onClose();
               }}
-              title={`${shape.nameAr} (${shape.name})`}
+              title={isAr ? shape.nameAr : shape.name}
+              aria-label={isAr ? shape.nameAr : shape.name}
               className="group aspect-square rounded-2xl bg-[#0B132B] hover:bg-[#131d38] border border-slate-800 hover:border-sky-400 transition flex flex-col items-center justify-center p-2.5 relative hover:scale-105 active:scale-95 shadow-sm"
             >
               <div className="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-110">
@@ -166,11 +189,12 @@ export const ShapesModal: React.FC<ShapesModalProps> = ({
                 )}
               </div>
               <span className="text-[10px] text-slate-400 group-hover:text-slate-100 font-medium truncate w-full text-center mt-1.5">
-                {shape.nameAr}
+                {isAr ? shape.nameAr : shape.name}
               </span>
             </button>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

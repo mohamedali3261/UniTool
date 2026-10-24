@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -41,6 +41,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [multiplier, setMultiplier] = useState(1);
   const [fileName, setFileName] = useState(defaultTitle || 'design');
   const [isCopied, setIsCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -131,7 +140,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t.close}
+            title={t.close}
             className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition"
           >
             <X className="w-5 h-5" />
@@ -209,7 +221,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           {/* Quality Slider for JPG/WebP */}
-          {format !== 'png' && (
+          {(format === 'jpeg' || format === 'webp') && (
             <div className="space-y-1 pt-1">
               <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
                 <span>{t.exQuality}</span>

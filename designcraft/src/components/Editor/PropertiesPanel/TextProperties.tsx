@@ -295,6 +295,7 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
           label={t.tpColor}
           color={properties.fill || '#FFFFFF'}
           onChange={(color) => onUpdate('fill', color)}
+          onApplyGradient={(stops) => onUpdate('textGradient', stops)}
         />
 
         <div className="grid grid-cols-3 gap-1.5">

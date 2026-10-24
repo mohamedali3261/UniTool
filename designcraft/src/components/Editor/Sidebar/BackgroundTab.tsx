@@ -22,7 +22,8 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
   onSelectGradient,
   onSelectPattern
 }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'colors' | 'patterns'>('patterns');
   const [selectedPatternId, setSelectedPatternId] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                     : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                {cat.nameAr}
+                {isAr ? cat.nameAr : cat.name}
               </button>
             ))}
           </div>
@@ -103,7 +104,8 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                   <button
                     key={item.id}
                     type="button"
-                    title={item.nameAr}
+                    title={isAr ? item.nameAr : item.name}
+                    aria-label={isAr ? item.nameAr : item.name}
                     onClick={() => {
                       setSelectedPatternId(item.id);
                       if (onSelectPattern) {
@@ -116,11 +118,21 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                         : 'border-slate-800 hover:border-sky-400/80 hover:scale-[1.03]'
                     }`}
                   >
+                    {/* Fallback stays behind the image so a broken URL never leaves an empty card */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center text-slate-600">
+                      <ImageIcon className="w-5 h-5" />
+                    </div>
+
                     {/* Live Pattern Full Bleed Preview Image */}
                     <img
                       src={item.thumbnail}
-                      alt={item.nameAr}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      alt={isAr ? item.nameAr : item.name}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      className="relative w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
 
                     {/* Subtle Overlay Badge on Hover */}
@@ -153,6 +165,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
               label={t.bgColorSolid}
               color={currentColor || '#0B132B'}
               onChange={onSelectColor}
+              onApplyGradient={(stops) => onSelectGradient(stops[0], stops[1])}
               allowTransparent={true}
             />
 
@@ -163,6 +176,8 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                   <button
                     key={c}
                     type="button"
+                    title={c}
+                    aria-label={c}
                     onClick={() => onSelectColor(c)}
                     className={`w-5 h-5 rounded-md transition ${
                       currentColor?.toLowerCase() === c.toLowerCase()
@@ -196,7 +211,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                     style={{ background: g.gradient }}
                   />
                   <span className="text-[10px] font-medium text-slate-300 group-hover:text-sky-300">
-                    {g.nameAr}
+                    {isAr ? g.nameAr : g.name}
                   </span>
                 </button>
               ))}

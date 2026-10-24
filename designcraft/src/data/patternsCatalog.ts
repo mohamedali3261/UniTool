@@ -13,13 +13,13 @@ export interface BackgroundPatternItem {
 }
 
 export const PATTERN_CATEGORIES = [
-  { id: 'all', nameAr: 'الكل' },
-  { id: 'islamic', nameAr: 'زخارف إسلامية' },
-  { id: 'luxury', nameAr: 'رخام وذهب فاخر' },
-  { id: 'geometric', nameAr: 'أنماط هندسية' },
-  { id: 'tech', nameAr: 'تكنولوجيا ونيون' },
-  { id: 'vintage', nameAr: 'نقوش كلاسيكية' },
-  { id: 'abstract', nameAr: 'تجريدي وفني' }
+  { id: 'all', name: 'All', nameAr: 'الكل' },
+  { id: 'islamic', name: 'Islamic Ornaments', nameAr: 'زخارف إسلامية' },
+  { id: 'luxury', name: 'Marble & Gold', nameAr: 'رخام وذهب فاخر' },
+  { id: 'geometric', name: 'Geometric Patterns', nameAr: 'أنماط هندسية' },
+  { id: 'tech', name: 'Tech & Neon', nameAr: 'تكنولوجيا ونيون' },
+  { id: 'vintage', name: 'Classic Patterns', nameAr: 'نقوش كلاسيكية' },
+  { id: 'abstract', name: 'Abstract Art', nameAr: 'تجريدي وفني' }
 ];
 
 // Helper to encode SVG string into data URI for Fabric.js pattern creation

@@ -45,7 +45,8 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
   onClose,
   onSelectImage
 }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
+  const isAr = lang === 'ar';
   const POPULAR_SEARCH_SUGGESTIONS = getPopularSearchSuggestions(t);
   const [query, setQuery] = useState('');
   const [translatedQuery, setTranslatedQuery] = useState('');
@@ -80,6 +81,15 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
       loadInitialPhotos();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   const loadInitialPhotos = async () => {
     setIsLoading(true);
@@ -164,7 +174,10 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t.close}
+            title={t.close}
             className="w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
           >
             <X className="w-4 h-4" />
@@ -196,6 +209,8 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
                     setQuery('');
                     loadInitialPhotos();
                   }}
+                  aria-label={t.clearSearch}
+                  title={t.clearSearch}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
                   <X className="w-4 h-4" />
@@ -236,19 +251,22 @@ export const PexelsSearchModal: React.FC<PexelsSearchModalProps> = ({
 
           {/* Quick Suggestions Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-            {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => (
+            {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => {
+              const term = isAr ? item.ar : item.en;
+              return (
               <button
                 key={idx}
                 type="button"
                 onClick={() => {
-                  setQuery(item.ar);
-                  handleSearch(item.ar);
+                  setQuery(term);
+                  handleSearch(term);
                 }}
                 className="px-3 py-1 rounded-xl bg-[#0B132B] hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white text-[11px] font-medium whitespace-nowrap transition"
               >
-                {item.ar}
+                {term}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 

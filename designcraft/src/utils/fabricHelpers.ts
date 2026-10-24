@@ -80,14 +80,22 @@ const getDefaultContrastingColor = (canvas: fabric.Canvas) => {
   return '#FFFFFF';
 };
 
+// The canvas is sized to designSize × zoom, so canvas.getWidth()/getCenter()
+// return VIEWPORT units. Fabric object coordinates live in DESIGN space, so
+// creators, insertion and alignment must convert through the zoom first.
+export const getDesignMetrics = (canvas: fabric.Canvas) => {
+  const zoom = canvas.getZoom() || 1;
+  const width = canvas.getWidth() / zoom;
+  const height = canvas.getHeight() / zoom;
+  return { zoom, width, height, centerLeft: width / 2, centerTop: height / 2 };
+};
+
 // Shape Creators
 export const addRectangleToCanvas = (
   canvas: fabric.Canvas,
   options: { rounded?: boolean; fill?: string; stroke?: string; rx?: number } | string = {}
 ) => {
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
-  const cHeight = canvas.getHeight();
+  const { width: cWidth, height: cHeight, centerLeft, centerTop } = getDesignMetrics(canvas);
 
   const fill = typeof options === 'string' ? options : options.fill || '#0284C7';
   const rx =
@@ -102,8 +110,8 @@ export const addRectangleToCanvas = (
   const h = Math.min(Math.round(cHeight * 0.3), 220);
 
   const rect = new fabric.Rect({
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     width: w,
@@ -128,14 +136,13 @@ export const addRectangleToCanvas = (
 };
 
 export const addCircleToCanvas = (canvas: fabric.Canvas, options: { fill?: string } | string = {}) => {
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
   const fill = typeof options === 'string' ? options : options.fill || '#0077B6';
   const radius = Math.min(Math.round(cWidth * 0.18), 120);
 
   const circle = new fabric.Circle({
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     radius,
@@ -157,14 +164,13 @@ export const addCircleToCanvas = (canvas: fabric.Canvas, options: { fill?: strin
 };
 
 export const addTriangleToCanvas = (canvas: fabric.Canvas, options: { fill?: string } | string = {}) => {
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
   const fill = typeof options === 'string' ? options : options.fill || '#4F46E5';
   const w = Math.min(Math.round(cWidth * 0.3), 200);
 
   const triangle = new fabric.Triangle({
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     width: w,
@@ -181,7 +187,7 @@ export const addTriangleToCanvas = (canvas: fabric.Canvas, options: { fill?: str
 };
 
 export const addStarToCanvas = (canvas: fabric.Canvas, options: { fill?: string } | string = {}) => {
-  const center = canvas.getCenter();
+  const { centerLeft, centerTop } = getDesignMetrics(canvas);
   const fill = typeof options === 'string' ? options : options.fill || '#F59E0B';
   const points = [
     { x: 100, y: 10 },
@@ -197,8 +203,8 @@ export const addStarToCanvas = (canvas: fabric.Canvas, options: { fill?: string 
   ];
 
   const star = new fabric.Polygon(points, {
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     fill,
@@ -215,11 +221,10 @@ export const addStarToCanvas = (canvas: fabric.Canvas, options: { fill?: string 
 };
 
 export const addLineToCanvas = (canvas: fabric.Canvas, stroke: string = '#0284C7') => {
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
   const lineLen = Math.min(Math.round(cWidth * 0.4), 260);
 
-  const line = new fabric.Line([center.left - lineLen / 2, center.top, center.left + lineLen / 2, center.top], {
+  const line = new fabric.Line([centerLeft - lineLen / 2, centerTop, centerLeft + lineLen / 2, centerTop], {
     stroke: typeof stroke === 'string' ? stroke : '#0284C7',
     strokeWidth: 4,
     strokeLineCap: 'round',
@@ -234,10 +239,10 @@ export const addLineToCanvas = (canvas: fabric.Canvas, stroke: string = '#0284C7
 };
 
 export const addArrowToCanvas = (canvas: fabric.Canvas, stroke: string = '#0284C7') => {
-  const center = canvas.getCenter();
+  const { centerLeft, centerTop } = getDesignMetrics(canvas);
   const path = new fabric.Path('M 0 10 L 140 10 M 120 0 L 140 10 L 120 20', {
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     stroke: typeof stroke === 'string' ? stroke : '#0284C7',
@@ -256,7 +261,7 @@ export const addArrowToCanvas = (canvas: fabric.Canvas, stroke: string = '#0284C
 };
 
 export const addBadgeToCanvas = (canvas: fabric.Canvas, options: { fill?: string } | string = {}) => {
-  const center = canvas.getCenter();
+  const { centerLeft, centerTop } = getDesignMetrics(canvas);
   const fill = typeof options === 'string' ? options : options.fill || '#E11D48';
   // 12-point badge / starburst
   const points = [];
@@ -273,8 +278,8 @@ export const addBadgeToCanvas = (canvas: fabric.Canvas, options: { fill?: string
   }
 
   const badge = new fabric.Polygon(points, {
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     fill,
@@ -289,13 +294,13 @@ export const addBadgeToCanvas = (canvas: fabric.Canvas, options: { fill?: string
 };
 
 export const addHeartToCanvas = (canvas: fabric.Canvas, options: { fill?: string } | string = {}) => {
-  const center = canvas.getCenter();
+  const { centerLeft, centerTop } = getDesignMetrics(canvas);
   const fill = typeof options === 'string' ? options : options.fill || '#EC4899';
   const heart = new fabric.Path(
     'M 272 400 C 272 400 136 260 136 170 C 136 110 180 64 240 64 C 272 64 300 80 320 104 C 340 80 368 64 400 64 C 460 64 504 110 504 170 C 504 260 368 400 368 400 Z',
     {
-      left: center.left,
-      top: center.top,
+      left: centerLeft,
+      top: centerTop,
       originX: 'center',
       originY: 'center',
       fill,
@@ -337,8 +342,7 @@ export const addTextToCanvas = (
     shadow?: string;
   } = {}
 ) => {
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
 
   let textString = 'اكتب نصك هنا';
   let opts: any = {};
@@ -365,8 +369,8 @@ export const addTextToCanvas = (
   const fontSize = opts.fontSize || Math.min(Math.round(cWidth * 0.05), 48);
 
   const textbox = new fabric.Textbox(textString, {
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     fontFamily: opts.fontFamily || 'Cairo',
@@ -382,21 +386,31 @@ export const addTextToCanvas = (
   });
 
   if (opts.shadow) {
-    textbox.set(
-      'shadow',
-      new fabric.Shadow({
-        color: 'rgba(2, 132, 199, 0.4)',
-        blur: 12,
-        offsetX: 0,
-        offsetY: 2
-      })
-    );
+    const shadow = parseCssShadow(opts.shadow);
+    if (shadow) textbox.set('shadow', shadow);
   }
 
   canvas.add(textbox);
   canvas.setActiveObject(textbox);
   canvas.renderAll();
   return textbox;
+};
+
+// Parse preset shadows written as "rgba(...) Xpx Ypx blurpx" into a Fabric shadow.
+// Fabric's .set('shadow', string) is not supported, so presets used to fall back
+// to a fixed blue glow — this keeps each preset's real shadow color/offset.
+const parseCssShadow = (css: string): fabric.Shadow | null => {
+  const color = css.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/)?.[0];
+  const lengths = css.match(/-?\d+(?:\.\d+)?px/g);
+  if (!lengths || lengths.length < 3) return null;
+
+  const [offsetX, offsetY, blur] = lengths.map((n) => parseFloat(n));
+  return new fabric.Shadow({
+    color: color || 'rgba(0, 0, 0, 0.4)',
+    offsetX,
+    offsetY,
+    blur
+  });
 };
 
 // Icon Creator
@@ -409,8 +423,7 @@ export const addIconToCanvas = (
   const svgStr = SVG_ICON_STRINGS[iconName] || getFallbackSvgForIcon(iconName, color);
   if (!svgStr) return;
 
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
   const targetScale = Math.max(0.5, Math.min(cWidth / 500, 2.5));
 
   try {
@@ -422,8 +435,8 @@ export const addIconToCanvas = (
         if (!loadedObject) return;
 
         (loadedObject as any).set({
-          left: center.left,
-          top: center.top,
+          left: centerLeft,
+          top: centerTop,
           originX: 'center',
           originY: 'center',
           scaleX: targetScale,
@@ -477,9 +490,12 @@ export const addImageToCanvas = (
 
   imgElement.onload = () => {
     try {
-      const center = canvas.getCenter();
-      const canvasWidth = canvas.getWidth();
-      const canvasHeight = canvas.getHeight();
+      const {
+        width: canvasWidth,
+        height: canvasHeight,
+        centerLeft,
+        centerTop
+      } = getDesignMetrics(canvas);
 
       const maxWidth = options.maxWidth || canvasWidth * 0.7;
       const maxHeight = options.maxHeight || canvasHeight * 0.7;
@@ -494,8 +510,8 @@ export const addImageToCanvas = (
       if (isNaN(scale) || scale <= 0) scale = 1;
 
       const fabricImage = new fabric.Image(imgElement, {
-        left: center.left,
-        top: center.top,
+        left: centerLeft,
+        top: centerTop,
         originX: 'center',
         originY: 'center',
         scaleX: scale,
@@ -522,10 +538,10 @@ export const addImageToCanvas = (
   imgElement.onerror = (err) => {
     console.warn('Image load error, rendering fallback placeholder:', err);
     try {
-      const center = canvas.getCenter();
+      const { centerLeft, centerTop } = getDesignMetrics(canvas);
       const rect = new fabric.Rect({
-        left: center.left,
-        top: center.top,
+        left: centerLeft,
+        top: centerTop,
         originX: 'center',
         originY: 'center',
         width: 260,
@@ -537,8 +553,8 @@ export const addImageToCanvas = (
         ry: 12
       });
       const label = new fabric.Text('صورة توضيحية', {
-        left: center.left,
-        top: center.top,
+        left: centerLeft,
+        top: centerTop,
         originX: 'center',
         originY: 'center',
         fontSize: 18,
@@ -546,8 +562,8 @@ export const addImageToCanvas = (
         fontFamily: 'Cairo'
       });
       const group = new fabric.Group([rect, label], {
-        left: center.left,
-        top: center.top,
+        left: centerLeft,
+        top: centerTop,
         originX: 'center',
         originY: 'center'
       });
@@ -603,28 +619,27 @@ export const alignObject = (
   const active = canvas.getActiveObject();
   if (!active) return;
 
+  const { width: designWidth, height: designHeight } = getDesignMetrics(canvas);
   const bound = active.getBoundingRect(true, true);
-  const canvasWidth = canvas.getWidth();
-  const canvasHeight = canvas.getHeight();
 
   switch (alignment) {
     case 'left':
       active.set('left', (active.left || 0) - bound.left + 20);
       break;
     case 'center':
-      active.centerH();
+      active.set('left', (active.left || 0) + designWidth / 2 - (bound.left + bound.width / 2));
       break;
     case 'right':
-      active.set('left', (active.left || 0) + (canvasWidth - bound.left - bound.width) - 20);
+      active.set('left', (active.left || 0) + designWidth - (bound.left + bound.width) - 20);
       break;
     case 'top':
       active.set('top', (active.top || 0) - bound.top + 20);
       break;
     case 'middle':
-      active.centerV();
+      active.set('top', (active.top || 0) + designHeight / 2 - (bound.top + bound.height / 2));
       break;
     case 'bottom':
-      active.set('top', (active.top || 0) + (canvasHeight - bound.top - bound.height) - 20);
+      active.set('top', (active.top || 0) + designHeight - (bound.top + bound.height) - 20);
       break;
   }
   active.setCoords();
@@ -937,20 +952,59 @@ export const applyImageEdgeFade = (
   }
 };
 
+// The fabric canvas DOM/backstore is sized to designSize × on-screen zoom, and
+// toDataURL() renders whatever the viewport currently shows. Exporting without
+// compensating would therefore produce designSize × zoom pixels (e.g. a
+// 1080px design exported at 346px when the canvas is fitted to a small screen).
+// These helpers normalize the export so `multiplier` is always relative to the
+// FULL design size, regardless of the current zoom or pan.
+const resolveExportSize = (
+  canvas: fabric.Canvas,
+  designWidth?: number,
+  designHeight?: number
+) => {
+  const zoom = canvas.getZoom() || 1;
+  return {
+    zoom,
+    width: designWidth && designWidth > 0 ? designWidth : Math.round(canvas.getWidth() / zoom),
+    height: designHeight && designHeight > 0 ? designHeight : Math.round(canvas.getHeight() / zoom)
+  };
+};
+
 // Export Canvas as Image
 export const exportCanvasImage = (
   canvas: fabric.Canvas,
   format: 'png' | 'jpeg' | 'webp',
   quality: number = 0.95,
-  multiplier: number = 1
+  multiplier: number = 1,
+  designWidth?: number,
+  designHeight?: number
 ): string => {
   try {
-    return canvas.toDataURL({
-      format: (format as any) === 'jpg' ? 'jpeg' : format,
-      quality,
-      multiplier,
-      enableRetinaScaling: true
-    });
+    const { zoom, width } = resolveExportSize(canvas, designWidth, designHeight);
+    const safeMultiplier = Math.max(0.01, multiplier);
+    // toCanvasElement() scales the viewport by `multiplier`, so dividing by the
+    // on-screen zoom renders objects at 1 design unit = safeMultiplier pixels.
+    const exportScale = designWidth && designWidth > 0
+      ? (width * safeMultiplier) / canvas.getWidth()
+      : safeMultiplier / zoom;
+
+    const vpt = (canvas.viewportTransform as number[]).slice();
+    canvas.viewportTransform[4] = 0;
+    canvas.viewportTransform[5] = 0;
+    canvas.calcViewportBoundaries();
+
+    try {
+      return canvas.toDataURL({
+        format: (format as any) === 'jpg' ? 'jpeg' : format,
+        quality,
+        multiplier: exportScale,
+        enableRetinaScaling: false
+      });
+    } finally {
+      (canvas as any).viewportTransform = vpt;
+      canvas.calcViewportBoundaries();
+    }
   } catch (err) {
     console.error('Error exporting canvas image:', err);
     return '';
@@ -958,13 +1012,34 @@ export const exportCanvasImage = (
 };
 
 // Export Canvas as Clean SVG
-export const exportCanvasSvg = (canvas: fabric.Canvas): string => {
+export const exportCanvasSvg = (
+  canvas: fabric.Canvas,
+  designWidth?: number,
+  designHeight?: number
+): string => {
   try {
-    return canvas.toSVG({
-      suppressPreamble: false,
-      width: canvas.getWidth(),
-      height: canvas.getHeight()
-    });
+    const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
+    // Fabric paints pattern/gradient background rects using canvas.width/height,
+    // which are the zoomed viewport size. Swap in the design size so the
+    // background covers the whole SVG, then restore.
+    const prevWidth = canvas.width;
+    const prevHeight = canvas.height;
+    (canvas as any).width = width;
+    (canvas as any).height = height;
+    try {
+      return canvas.toSVG({
+        suppressPreamble: false,
+        width,
+        height,
+        // Object coordinates live in design space, so the viewBox must cover the
+        // full design rather than the smaller zoomed viewport.
+        viewBox: { x: 0, y: 0, width, height }
+      });
+    } finally {
+      (canvas as any).width = prevWidth;
+      (canvas as any).height = prevHeight;
+      canvas.calcViewportBoundaries();
+    }
   } catch (err) {
     console.error('Error exporting canvas as SVG:', err);
     return '';
@@ -974,17 +1049,15 @@ export const exportCanvasSvg = (canvas: fabric.Canvas): string => {
 // Export Canvas as PDF Document
 export const exportCanvasPdf = (
   canvas: fabric.Canvas,
-  title: string = 'design'
+  title: string = 'design',
+  designWidth?: number,
+  designHeight?: number
 ): void => {
   try {
-    const dataUrl = canvas.toDataURL({
-      format: 'png',
-      multiplier: 2,
-      enableRetinaScaling: true
-    });
-    const width = canvas.getWidth();
-    const height = canvas.getHeight();
-    const orientation = width >= height ? 'landscape' : 'portrait';
+    const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
+    // 2x for print-quality output, independent of the on-screen zoom
+    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2, width, height);
+    if (!dataUrl) return;
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -995,7 +1068,7 @@ export const exportCanvasPdf = (
             <title>${title} - PDF</title>
             <style>
               @page {
-                size: ${orientation};
+                size: ${width}px ${height}px;
                 margin: 0;
               }
               body {
@@ -1005,12 +1078,12 @@ export const exportCanvasPdf = (
                 align-items: center;
                 justify-content: center;
                 background: #ffffff;
-                width: 100vw;
-                height: 100vh;
+                width: ${width}px;
+                height: ${height}px;
               }
               img {
-                max-width: 100%;
-                max-height: 100%;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
               }
             </style>
@@ -1144,8 +1217,7 @@ export const addSvgShapeToCanvas = (
   const cleanPath = (svgPath || '').trim();
   if (!cleanPath || cleanPath.includes('NaN') || cleanPath.includes('undefined')) return;
 
-  const center = canvas.getCenter();
-  const cWidth = canvas.getWidth();
+  const { width: cWidth, centerLeft, centerTop } = getDesignMetrics(canvas);
   const targetScale = Math.max(0.5, Math.min(cWidth / 500, 2.2));
 
   const fillVal = fillColor === 'none' ? 'none' : (fillColor || '#0284C7');
@@ -1159,8 +1231,8 @@ export const addSvgShapeToCanvas = (
       if (!objects || !Array.isArray(objects) || objects.length === 0) {
         try {
           const pathObj = new fabric.Path(cleanPath, {
-            left: center.left,
-            top: center.top,
+            left: centerLeft,
+            top: centerTop,
             originX: 'center',
             originY: 'center',
             fill: fillVal,
@@ -1183,8 +1255,8 @@ export const addSvgShapeToCanvas = (
         if (!loadedObject) return;
 
         (loadedObject as any).set({
-          left: center.left,
-          top: center.top,
+          left: centerLeft,
+          top: centerTop,
           originX: 'center',
           originY: 'center',
           scaleX: targetScale,
@@ -1247,8 +1319,7 @@ export const setCanvasWallpaperBackground = (
       (img) => {
         if (!img) return;
 
-        const canvasW = canvas.width || 800;
-        const canvasH = canvas.height || 600;
+        const { width: canvasW, height: canvasH } = getDesignMetrics(canvas);
         const imgW = img.width || 800;
         const imgH = img.height || 600;
 
@@ -1286,7 +1357,7 @@ export const addMobilePhoneMockupToCanvas = (
 ) => {
   if (!canvas) return;
 
-  const center = canvas.getCenter();
+  const { centerLeft, centerTop } = getDesignMetrics(canvas);
   const phoneWidth = 320;
   const phoneHeight = 640;
   const screenW = 296;
@@ -1294,8 +1365,8 @@ export const addMobilePhoneMockupToCanvas = (
 
   // Outer phone chassis / bezel
   const chassis = new fabric.Rect({
-    left: center.left,
-    top: center.top,
+    left: centerLeft,
+    top: centerTop,
     originX: 'center',
     originY: 'center',
     width: phoneWidth,
@@ -1315,8 +1386,8 @@ export const addMobilePhoneMockupToCanvas = (
 
   // Dynamic island / Camera notch
   const island = new fabric.Rect({
-    left: center.left,
-    top: center.top - (phoneHeight / 2) + 24,
+    left: centerLeft,
+    top: centerTop - (phoneHeight / 2) + 24,
     originX: 'center',
     originY: 'center',
     width: 90,
@@ -1333,8 +1404,8 @@ export const addMobilePhoneMockupToCanvas = (
   imgEl.onload = () => {
     try {
       const screenImg = new fabric.Image(imgEl, {
-        left: center.left,
-        top: center.top,
+        left: centerLeft,
+        top: centerTop,
         originX: 'center',
         originY: 'center',
         cornerColor: '#0284C7',
@@ -1366,8 +1437,8 @@ export const addMobilePhoneMockupToCanvas = (
 
   imgEl.onerror = () => {
     const screenRect = new fabric.Rect({
-      left: center.left,
-      top: center.top,
+      left: centerLeft,
+      top: centerTop,
       originX: 'center',
       originY: 'center',
       width: screenW,
@@ -1377,8 +1448,8 @@ export const addMobilePhoneMockupToCanvas = (
       ry: 38
     });
     const label = new fabric.Text('📱 شاشة الهاتف\nاضغط هنا لاستبدال الصورة', {
-      left: center.left,
-      top: center.top,
+      left: centerLeft,
+      top: centerTop,
       originX: 'center',
       originY: 'center',
       fontSize: 18,

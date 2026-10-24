@@ -13,6 +13,13 @@ export const dcTranslations = {
     newDesign: 'تصميم جديد',
     myProjects: 'مشاريعي',
 
+    // Dashboard header
+    studioBadge: 'مساحة إبداعية',
+    studioTitle: 'استوديو التصميم',
+    studioDesc: 'اضبط أبعادك المخصصة أو ابدأ من مقاس جاهز، وتابع كل مشاريعك من مكان واحد.',
+    statProjects: 'مشروع محفوظ',
+    statPresets: 'مقاس جاهز',
+
     // Custom size section
     customSizeTitle: 'تحديد مقاس مخصص للكانفاس',
     customSizeDesc: 'اضبط الأبعاد بالبكسل مع معاينة شكل اللوحة ونسبة العرض للارتفاع مباشرة',
@@ -46,6 +53,9 @@ export const dcTranslations = {
     bgEmerald: 'أخضر زمردي',
     openWorkspace: 'فتح مساحة العمل مباشرة',
     newDesignDefault: 'تصميم جديد',
+    defaultHeading: 'عنوان رئيسي جذاب',
+    defaultSubheading: 'عنوان فرعي توضيحي',
+    defaultBody: 'هذا النص هو مثال لنص يمكن أن يستبدل في نفس المساحة، لقد تم توليد هذا النص من مولد النص العربي.',
 
     // Presets library
     libraryTitle: 'مكتبة المقاسات المعتمدة والجاهزة',
@@ -79,6 +89,10 @@ export const dcTranslations = {
     copySuffix: '(نسخة)',
     toastDuplicated: 'تم تكرار المشروع بنجاح',
     toastDeleted: 'تم حذف المشروع',
+    sortProjects: 'ترتيب حسب',
+    sortNewest: 'الأحدث أولاً',
+    sortOldest: 'الأقدم أولاً',
+    sortNameAsc: 'الاسم (أ - ي)',
 
     // Editor TopBar
     backHome: 'العودة للشاشة الرئيسية',
@@ -112,6 +126,11 @@ export const dcTranslations = {
     tabMedia: 'مكتبة',
     tabBackground: 'الخلفية',
 
+    // Editor design tabs
+    tabsLabel: 'تبويبات التصاميم',
+    newTab: 'تبويب جديد',
+    closeTab: 'إغلاق التبويب',
+
     // Media merged section
     mediaImages: 'صور',
     mediaIcons: 'أيقونات',
@@ -142,10 +161,13 @@ export const dcTranslations = {
     tplDesc: 'اختر قالبًا وصمم فورًا — يطبّق الخلفية والعناصر كلها مركّبة',
     tplSearch: 'ابحث في القوالب...',
     tplApply: 'تطبيق',
+    tplNew: 'جديد',
     tplObjects: 'عنصر',
     tplNoResults: 'مفيش قوالب مطابقة للبحث',
-    tplHint: 'القالب بيضيف عناصره فوق التصميم الحالي — تقدر تعدّل النصوص والألوان من اللوحة بعد التطبيق.',
+    tplHint: 'تطبيق القالب يستبدل محتوى الكانفس بالكامل — تقدر تعدّل النصوص والألوان والظلال من اللوحة بعد التطبيق.',
     tplOverlayConfirm: 'الكانفس فيه عناصر حاليًا.\nهيتم استبدالها بعناصر القالب الجديد.\n(اعتمد للمتابعة — التراجع متاح بعدها)',
+    tplResizeNote: 'هيتم تغيير مقاس التصميم إلى',
+    tplGpSizes: 'أحجام جوجل بلاي الرسمية',
     tplToastTitle: 'تم تطبيق القالب',
 
     // Quick export
@@ -481,11 +503,13 @@ export const dcTranslations = {
     // ShapesModal
     shTitle: 'مكتبة الأشكال والرموز',
     shSearchPlaceholder: 'ابحث في أكثر من 200 شكل (مثل: نجوم، درع، ختم، سهم، فقاعة)...',
+    shNoResults: 'لا توجد أشكال مطابقة للبحث',
 
     // IconsModal
     icTitle: 'مكتبة الأيقونات والرموز',
     icSearchPlaceholder: 'ابحث في الأيقونات (مثال: Play, Star, Cart, Phone, User, Heart)...',
     icAll: 'الكل',
+    icNoResults: 'لا توجد أيقونات مطابقة للبحث',
 
     // ContextMenu
     ctxCopy: 'نسخ',
@@ -555,6 +579,29 @@ export const dcTranslations = {
     layerImage: 'صورة',
     layerGroup: 'مجموعة أو أيقونة',
     layerPath: 'مسار فيكتور / شكل',
+
+    // Color picker & shared UI
+    colorPaletteQuick: 'باليت الألوان السريع',
+    colorGradientsTitle: 'تدرجات جاهزة',
+    colorGradientHint: 'اضغط على التدرج لتطبيق لونه الأول',
+    colorApply: 'تطبيق',
+    colorInvalid: 'قيمة لون غير صحيحة',
+    colorTransparent: 'شفاف',
+    close: 'إغلاق',
+
+    // App-level toasts
+    appWorkspaceTitle: 'تم فتح مساحة العمل',
+    appWorkspaceMsg: 'خلفية بيضاء جاهزة للتعديل',
+    appDesignReadyTitle: 'تم تجهيز مساحة التصميم',
+    appDesignReadyMsg: 'ابدأ بإضافة العناصر الآن',
+
+    // Image crop
+    ipCropTitle: 'اقتصاص الصورة',
+    ipCropTop: 'من الأعلى',
+    ipCropBottom: 'من الأسفل',
+    ipCropLeft: 'من اليسار',
+    ipCropRight: 'من اليمين',
+    ipCropReset: 'إعادة ضبط الاقتصاص',
   },
   en: {
     // Nav
@@ -567,6 +614,13 @@ export const dcTranslations = {
     // Sidebar
     newDesign: 'New Design',
     myProjects: 'My Projects',
+
+    // Dashboard header
+    studioBadge: 'Creative workspace',
+    studioTitle: 'Design Studio',
+    studioDesc: 'Set your own dimensions or start from a ready size, and manage all your projects in one place.',
+    statProjects: 'Saved projects',
+    statPresets: 'Ready sizes',
 
     // Custom size section
     customSizeTitle: 'Set a Custom Canvas Size',
@@ -601,6 +655,9 @@ export const dcTranslations = {
     bgEmerald: 'Emerald Green',
     openWorkspace: 'Open workspace directly',
     newDesignDefault: 'New Design',
+    defaultHeading: 'Eye-catching headline',
+    defaultSubheading: 'Supporting subtitle',
+    defaultBody: 'This is a sample paragraph. Replace this text with your own content, then style it from the properties panel.',
 
     // Presets library
     libraryTitle: 'Approved Ready Sizes Library',
@@ -634,6 +691,10 @@ export const dcTranslations = {
     copySuffix: '(Copy)',
     toastDuplicated: 'Project duplicated successfully',
     toastDeleted: 'Project deleted',
+    sortProjects: 'Sort by',
+    sortNewest: 'Newest first',
+    sortOldest: 'Oldest first',
+    sortNameAsc: 'Name (A - Z)',
 
     // Editor TopBar
     backHome: 'Back to dashboard',
@@ -667,6 +728,11 @@ export const dcTranslations = {
     tabMedia: 'Media',
     tabBackground: 'Background',
 
+    // Editor design tabs
+    tabsLabel: 'Design tabs',
+    newTab: 'New tab',
+    closeTab: 'Close tab',
+
     // Media merged section
     mediaImages: 'Photos',
     mediaIcons: 'Icons',
@@ -697,10 +763,13 @@ export const dcTranslations = {
     tplDesc: 'Pick a template and design instantly — background & composed objects applied together',
     tplSearch: 'Search templates...',
     tplApply: 'Apply',
+    tplNew: 'NEW',
     tplObjects: 'objects',
     tplNoResults: 'No templates match your search',
-    tplHint: 'Template objects are added on top of your current design — tweak text & colors from the properties panel afterwards.',
+    tplHint: 'Applying a template replaces the current canvas content — tweak text, colors and shadows from the properties panel afterwards.',
     tplOverlayConfirm: 'The canvas already has elements.\nThey will be replaced with the new template objects.\n(Accept to continue — Undo remains available)',
+    tplResizeNote: 'Canvas will resize to',
+    tplGpSizes: 'Official Google Play sizes',
     tplToastTitle: 'Template applied',
 
     // Quick export
@@ -1037,11 +1106,13 @@ export const dcTranslations = {
     // ShapesModal
     shTitle: 'Shapes & Symbols Library',
     shSearchPlaceholder: 'Search 200+ shapes (e.g. stars, shield, seal, arrow, bubble)...',
+    shNoResults: 'No shapes match your search',
 
     // IconsModal
     icTitle: 'Icons & Symbols Library',
     icSearchPlaceholder: 'Search icons (e.g. Play, Star, Cart, Phone, User, Heart)...',
     icAll: 'All',
+    icNoResults: 'No icons match your search',
 
     // ContextMenu
     ctxCopy: 'Copy',
@@ -1111,6 +1182,27 @@ export const dcTranslations = {
     layerImage: 'Image',
     layerGroup: 'Group / Icon',
     layerPath: 'Vector Path / Shape',
+
+    // Color picker & shared UI
+    colorPaletteQuick: 'Quick color palette',
+    colorGradientsTitle: 'Ready gradients',
+    colorGradientHint: 'Click a gradient to apply its first color',
+    colorApply: 'Apply',
+    colorInvalid: 'Invalid color value',
+    colorTransparent: 'Transparent',
+    close: 'Close',
+
+    // App-level toasts
+    appWorkspaceTitle: 'Workspace opened',
+    appWorkspaceMsg: 'White background ready to edit',
+    appDesignReadyTitle: 'Design workspace ready',
+    appDesignReadyMsg: 'Start adding your elements',
+    ipCropTitle: 'Crop image',
+    ipCropTop: 'From top',
+    ipCropBottom: 'From bottom',
+    ipCropLeft: 'From left',
+    ipCropRight: 'From right',
+    ipCropReset: 'Reset crop',
   },
 };
 

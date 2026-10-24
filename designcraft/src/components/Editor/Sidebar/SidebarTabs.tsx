@@ -25,6 +25,8 @@ interface TabItem {
   label: string;
   labelEn: string;
   icon: React.ReactNode;
+  // Visual divider after this tab: separates "insert content" tools from "page" tools
+  dividerAfter?: boolean;
 }
 
 export const SidebarTabs: React.FC<SidebarTabsProps> = ({
@@ -37,12 +39,12 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
 }) => {
   const { t } = useDcLang();
 
-  // Order follows usage flow: start from templates, end by layers
+  // Order follows usage flow: add content first, then control the page itself
   const TABS: TabItem[] = [
     { id: 'templates', label: t.tabTemplates, labelEn: 'Templates', icon: <LayoutTemplate className="w-4 h-4 text-violet-400" /> },
     { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
     { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
-    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" /> },
+    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: true },
     { id: 'background', label: t.tabBackground, labelEn: 'Background', icon: <Palette className="w-4 h-4 text-amber-400" /> },
     { id: 'layers', label: t.tabLayers, labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
   ];
@@ -56,21 +58,23 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onSelectTab(tab.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
-                isActive
-                  ? 'text-sky-400 font-bold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <div className={`p-1 rounded-lg transition ${isActive ? 'bg-sky-500/20 scale-110' : ''}`}>
-                {tab.icon}
-              </div>
-              <span className="text-[9px] tracking-tight truncate max-w-[44px]">{tab.label}</span>
-            </button>
+            <React.Fragment key={tab.id}>
+              <button
+                type="button"
+                onClick={() => onSelectTab(tab.id)}
+                className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
+                  isActive
+                    ? 'text-sky-400 font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className={`p-1 rounded-lg transition ${isActive ? 'bg-sky-500/20 scale-110' : ''}`}>
+                  {tab.icon}
+                </div>
+                <span className="text-[9px] tracking-tight truncate max-w-[44px]">{tab.label}</span>
+              </button>
+              {tab.dividerAfter && <div className="w-px h-8 bg-slate-700/70 mx-0.5 shrink-0" />}
+            </React.Fragment>
           );
         })}
 
@@ -101,25 +105,27 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   return (
     <aside
       id="sidebar-nav-tabs"
-      className="w-14 bg-[#0B132B] border-l border-slate-800 hidden md:flex flex-col items-center py-2 space-y-1 shrink-0 z-20 select-none"
+      className="w-14 bg-[#0B132B] border-r border-slate-800 hidden md:flex flex-col items-center py-2 space-y-1 shrink-0 z-20 select-none"
     >
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onSelectTab(tab.id)}
-            title={`${tab.label} (${tab.labelEn})`}
-            className={`w-11 py-2 rounded-xl flex flex-col items-center justify-center gap-1 transition ${
-              isActive
-                ? 'bg-[#1C2541] text-sky-400 font-bold shadow-sm border border-sky-500/30'
-                : 'text-slate-400 hover:text-white hover:bg-[#1C2541]/40'
-            }`}
-          >
-            <div className={isActive ? 'text-sky-400 scale-105 transition' : ''}>{tab.icon}</div>
-            <span className="text-[9px] tracking-tight truncate max-w-[40px]">{tab.label}</span>
-          </button>
+          <React.Fragment key={tab.id}>
+            <button
+              type="button"
+              onClick={() => onSelectTab(tab.id)}
+              title={`${tab.label} (${tab.labelEn})`}
+              className={`w-11 py-2 rounded-xl flex flex-col items-center justify-center gap-1 transition ${
+                isActive
+                  ? 'bg-[#1C2541] text-sky-400 font-bold shadow-sm border border-sky-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-[#1C2541]/40'
+              }`}
+            >
+              <div className={isActive ? 'text-sky-400 scale-105 transition' : ''}>{tab.icon}</div>
+              <span className="text-[9px] tracking-tight truncate max-w-[40px]">{tab.label}</span>
+            </button>
+            {tab.dividerAfter && <div className="w-8 h-px bg-slate-700/70 my-1" />}
+          </React.Fragment>
         );
       })}
     </aside>

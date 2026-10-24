@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
 import { 
   Copy, 
@@ -50,6 +50,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const { t, lang } = useDcLang();
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: options.x, y: options.y });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -68,6 +69,30 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     };
   }, [options.visible, onClose]);
 
+  useLayoutEffect(() => {
+    if (!options.visible) return;
+    const el = menuRef.current;
+    if (!el) {
+      setPos({ x: options.x, y: options.y });
+      return;
+    }
+    const { width, height } = el.getBoundingClientRect();
+    const pad = 8;
+    setPos({
+      x: Math.max(pad, Math.min(options.x, window.innerWidth - width - pad)),
+      y: Math.max(pad, Math.min(options.y, window.innerHeight - height - pad))
+    });
+  }, [options.visible, options.x, options.y]);
+
+  useEffect(() => {
+    if (!options.visible) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [options.visible, onClose]);
+
   if (!options.visible) return null;
 
   const handleAction = (action: () => void) => {
@@ -80,8 +105,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       ref={menuRef}
       className="fixed z-[9999] w-56 bg-[#0B132B]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       style={{ 
-        top: `${options.y}px`, 
-        left: `${options.x}px`,
+        top: `${pos.y}px`, 
+        left: `${pos.x}px`,
         direction: 'ltr'
       }}
       onContextMenu={(e) => e.preventDefault()}
@@ -172,6 +197,7 @@ interface MenuItemProps {
 const MenuItem: React.FC<MenuItemProps> = ({ icon, label, shortcut, variant = 'default', disabled, onClick }) => {
   return (
     <button
+      type="button"
       disabled={disabled}
       onClick={onClick}
       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${

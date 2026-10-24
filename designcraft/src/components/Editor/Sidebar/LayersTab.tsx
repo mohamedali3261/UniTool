@@ -84,8 +84,18 @@ export const LayersTab: React.FC<LayersTabProps> = ({
             return (
               <div
                 key={layer.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={layer.name}
                 onClick={() => onSelectLayer(layer.id)}
-                className={`group flex items-center justify-between p-2 rounded-xl border transition cursor-pointer ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectLayer(layer.id);
+                  }
+                }}
+                className={`group flex items-center justify-between p-2 rounded-xl border transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                   isSelected
                     ? 'bg-[#1C2541] border-sky-400 shadow-xs text-white'
                     : 'bg-[#0B132B] border-slate-800/80 text-slate-300 hover:border-slate-700'
@@ -103,6 +113,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                   <button
                     type="button"
                     title={layer.visible ? t.layersHide : t.layersShow}
+                    aria-label={layer.visible ? t.layersHide : t.layersShow}
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleVisibility(layer.id);
@@ -117,6 +128,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                   <button
                     type="button"
                     title={layer.locked ? t.layersUnlock : t.layersLock}
+                    aria-label={layer.locked ? t.layersUnlock : t.layersLock}
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleLock(layer.id);
@@ -131,6 +143,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                   <button
                     type="button"
                     title={t.layersUp}
+                    aria-label={t.layersUp}
                     disabled={index === 0}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -144,6 +157,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                   <button
                     type="button"
                     title={t.layersDown}
+                    aria-label={t.layersDown}
                     disabled={index === layers.length - 1}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -157,6 +171,7 @@ export const LayersTab: React.FC<LayersTabProps> = ({
                   <button
                     type="button"
                     title={t.layersDelete}
+                    aria-label={t.layersDelete}
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteLayer(layer.id);

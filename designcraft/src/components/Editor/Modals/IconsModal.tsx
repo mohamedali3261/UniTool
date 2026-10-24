@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ICONS_CATALOG, COLOR_PALETTES } from '../../../data/presets';
 import { Search, SmilePlus, X, Palette, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -16,10 +16,20 @@ export const IconsModal: React.FC<IconsModalProps> = ({
   onClose,
   onSelectIcon
 }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
+  const isAr = lang === 'ar';
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedColor, setSelectedColor] = useState('#38BDF8');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -64,6 +74,8 @@ export const IconsModal: React.FC<IconsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label={t.close}
+            title={t.close}
             className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
@@ -94,6 +106,8 @@ export const IconsModal: React.FC<IconsModalProps> = ({
                     key={c}
                     type="button"
                     onClick={() => setSelectedColor(c)}
+                    title={c}
+                    aria-label={c}
                     className={`w-6 h-6 rounded-lg transition flex items-center justify-center shrink-0 ${
                       selectedColor === c ? 'ring-2 ring-white scale-110 shadow-sm' : 'hover:scale-105'
                     }`}
@@ -109,6 +123,8 @@ export const IconsModal: React.FC<IconsModalProps> = ({
                 type="color"
                 value={selectedColor}
                 onChange={(e) => setSelectedColor(e.target.value)}
+                title={selectedColor}
+                aria-label={selectedColor}
                 className="w-6 h-6 rounded-lg bg-transparent cursor-pointer border-0 shrink-0"
               />
             </div>
@@ -138,13 +154,19 @@ export const IconsModal: React.FC<IconsModalProps> = ({
                     : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                {cat.categoryAr} ({cat.icons.length})
+                {isAr ? cat.categoryAr : cat.category} ({cat.icons.length})
               </button>
             ))}
           </div>
         </div>
 
         {/* Icons Grid */}
+        {filteredIcons.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-500 py-16">
+            <SmilePlus className="w-10 h-10 text-slate-600" />
+            <p className="text-sm font-semibold text-slate-300">{t.icNoResults}</p>
+          </div>
+        ) : (
         <div className="flex-1 overflow-y-auto p-4 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
           {filteredIcons.map((ic, idx) => {
             const IconComponent = (LucideIcons as any)[ic.name] || LucideIcons.Sparkles;
@@ -156,7 +178,8 @@ export const IconsModal: React.FC<IconsModalProps> = ({
                   onSelectIcon(ic.name, selectedColor);
                   onClose();
                 }}
-                title={`${ic.label} (${ic.name})`}
+                title={ic.label}
+                aria-label={ic.label}
                 className="group aspect-square rounded-2xl bg-[#0B132B] hover:bg-[#131d38] border border-slate-800 hover:border-sky-400 transition flex flex-col items-center justify-center p-2 hover:scale-105 active:scale-95 shadow-sm"
               >
                 <div style={{ color: selectedColor }}>
@@ -169,6 +192,7 @@ export const IconsModal: React.FC<IconsModalProps> = ({
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

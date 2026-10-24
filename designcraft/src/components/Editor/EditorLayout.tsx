@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
 import {
@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { TopBar } from './TopBar';
+import { DesignTabs, DesignTabItem } from './DesignTabs';
 import { SidebarTabs } from './Sidebar/SidebarTabs';
 import { TextTab } from './Sidebar/TextTab';
 import { ElementsTab } from './Sidebar/ElementsTab';
@@ -69,19 +70,36 @@ import {
   addMobilePhoneMockupToCanvas
 } from '../../utils/fabricHelpers';
 import { BackgroundPatternItem } from '../../data/patternsCatalog';
-import { DesignTemplate } from '../../data/templatesCatalog';
+import { DesignTemplate, TemplateObjectDef } from '../../data/templates';
 
 interface EditorLayoutProps {
   initialProject: ProjectItem;
   onBackToDashboard: () => void;
   onShowToast: (title: string, message?: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
+  tabs: DesignTabItem[];
+  activeTabId: string;
+  onSelectTab: (id: string) => void;
+  onCloseTab: (id: string) => void;
+  onNewTab: () => void;
+  onProjectUpdated?: (project: ProjectItem) => void;
 }
 
-export const EditorLayout: React.FC<EditorLayoutProps> = ({
+export interface EditorLayoutHandle {
+  // Persists the live canvas synchronously; used before switching/closing tabs.
+  flushSave: () => ProjectItem | undefined;
+}
+
+export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutProps>(function EditorLayout({
   initialProject,
   onBackToDashboard,
-  onShowToast
-}) => {
+  onShowToast,
+  tabs,
+  activeTabId,
+  onSelectTab,
+  onCloseTab,
+  onNewTab,
+  onProjectUpdated
+}, ref) {
   const { t, lang } = useDcLang();
 
   // State
@@ -334,6 +352,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           } else {
             handleUndo();
           }
+        } else if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          handleRedo();
         }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (fabricCanvasRef.current) {
@@ -501,12 +522,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     [recordHistory, updateLayersList]
   );
 
-  // Save Project Action
-  const handleSaveProject = useCallback(() => {
+  // Persist the live canvas. Also used synchronously before tab switches so
+  // unsaved edits survive the remount that happens for the next design.
+  const persistProject = useCallback((): ProjectItem | undefined => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return undefined;
 
-    setIsSaving(true);
     const canvasJson = canvas.toJSON([
       'id',
       'name',
@@ -529,7 +550,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       '_originalSrc'
     ]);
 
-    const thumb = canvas.toDataURL({ format: 'png', quality: 0.3, multiplier: 0.2 });
+    // Render the thumbnail from the full design, not the zoomed viewport,
+    // otherwise saved design cards look pixelated.
+    const thumb = exportCanvasImage(canvas, 'png', 1, 0.3, canvasWidth, canvasHeight);
 
     const updated: ProjectItem = {
       ...initialProject,
@@ -545,12 +568,26 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     };
 
     saveProjectToStorage(updated);
+    onProjectUpdated?.(updated);
+    return updated;
+  }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, onProjectUpdated]);
+
+  // Save Project Action
+  const handleSaveProject = useCallback(() => {
+    if (!fabricCanvasRef.current) return;
+
+    setIsSaving(true);
+    persistProject();
 
     setTimeout(() => {
       setIsSaving(false);
       onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
     }, 400);
-  }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, onShowToast]);
+  }, [persistProject, onShowToast]);
+
+  useImperativeHandle(ref, () => ({
+    flushSave: () => persistProject()
+  }), [persistProject]);
 
   // Open Export Modal
   const handleOpenExport = useCallback(() => {
@@ -561,10 +598,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const handleOpenPreview = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    const url = exportCanvasImage(canvas, 'png', 1, 1);
+    const url = exportCanvasImage(canvas, 'png', 1, 1, canvasWidth, canvasHeight);
     setPreviewUrl(url);
     setIsPreviewModalOpen(true);
-  }, []);
+  }, [canvasWidth, canvasHeight]);
 
   // Resize Canvas Action
   const handleResizeCanvas = useCallback((w: number, h: number) => {
@@ -608,8 +645,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       c2 = color2 || color1OrStops;
     }
 
-    const width = canvas.getWidth() || 1080;
-    const height = canvas.getHeight() || 1080;
+    const width = canvasWidth || 1080;
+    const height = canvasHeight || 1080;
 
     const grad = new fabric.Gradient({
       type: 'linear',
@@ -628,7 +665,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     setBackgroundColor(c1);
     recordHistory();
     onShowToast(t.elGradientTitle, t.elGradientMsg, 'success');
-  }, [onShowToast, recordHistory]);
+  }, [onShowToast, recordHistory, canvasWidth, canvasHeight]);
 
   const handleSetBackgroundPattern = useCallback((patternItem: BackgroundPatternItem) => {
     const canvas = fabricCanvasRef.current;
@@ -733,16 +770,42 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    const cW = canvasWidth || 1080;
-    const cH = canvasHeight || 1080;
-    const scale = Math.min(cW / tpl.baseW, cH / tpl.baseH);
+    let cW = canvasWidth || 1080;
+    let cH = canvasHeight || 1080;
 
     // If the canvas already has objects, ask to REPLACE them with the template
+    const sizeChanged = !!tpl.exactSize && (cW !== tpl.baseW || cH !== tpl.baseH);
     const existing = canvas.getObjects();
     if (existing.length > 0) {
-      const ok = window.confirm(t.tplOverlayConfirm);
+      const message = sizeChanged
+        ? `${t.tplOverlayConfirm}\n\n${t.tplResizeNote} ${tpl.baseW} × ${tpl.baseH} px`
+        : t.tplOverlayConfirm;
+      const ok = window.confirm(message);
       if (!ok) return;
       canvas.remove(...existing);
+    }
+
+    // Google Play asset templates carry their official size and adopt it
+    if (tpl.exactSize) {
+      cW = tpl.baseW;
+      cH = tpl.baseH;
+    }
+    const scale = Math.min(cW / tpl.baseW, cH / tpl.baseH);
+
+    if (sizeChanged) {
+      setCanvasWidth(cW);
+      setCanvasHeight(cH);
+      canvas.setDimensions({ width: cW * zoom, height: cH * zoom });
+      setTimeout(() => {
+        const container = document.getElementById('canvas-area-container');
+        if (!container) return;
+        const fit = Math.min(
+          (container.clientWidth - 40) / cW,
+          (container.clientHeight - 80) / cH,
+          0.9
+        );
+        setZoom(Math.max(0.15, Math.min(+fit.toFixed(2), 1)));
+      }, 60);
     }
 
     // Background: solid or diagonal gradient
@@ -763,39 +826,67 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     setBackgroundColor(tpl.bg);
 
     // Compose objects
+    const makeFill = (o: TemplateObjectDef, w: number, h: number) => {
+      if (!o.fill2) return o.fill || '#0284C7';
+      return new fabric.Gradient({
+        type: 'linear',
+        gradientUnits: 'pixels',
+        coords: { x1: 0, y1: 0, x2: w, y2: h },
+        colorStops: [
+          { offset: 0, color: o.fill || '#0284C7' },
+          { offset: 1, color: o.fill2 }
+        ]
+      }) as any;
+    };
+    const makeShadow = (o: TemplateObjectDef) => {
+      if (!o.shadow) return undefined;
+      return new fabric.Shadow({
+        color: o.shadow.color,
+        blur: (o.shadow.blur ?? 0.02) * tpl.baseW * scale,
+        offsetX: (o.shadow.offsetX ?? 0) * tpl.baseW * scale,
+        offsetY: (o.shadow.offsetY ?? 0) * tpl.baseW * scale
+      });
+    };
+
     tpl.objects.forEach((o) => {
       const left = o.x * cW;
       const top = o.y * cH;
 
-
       if (o.type === 'circle') {
+        const radius = Math.max(4, (o.size ?? 0.1) * tpl.baseW * scale / 2);
         const circle = new fabric.Circle({
           left,
           top,
           originX: 'center',
           originY: 'center',
-          radius: Math.max(4, (o.size ?? 0.1) * tpl.baseW * scale / 2),
-          fill: o.fill || '#0284C7',
-          opacity: o.opacity ?? 1
+          radius,
+          fill: makeFill(o, radius * 2, radius * 2),
+          opacity: o.opacity ?? 1,
+          shadow: makeShadow(o)
         });
         canvas.add(circle);
       } else if (o.type === 'rect') {
+        const rectW = Math.max(4, (o.w ?? 0.3) * cW);
+        const rectH = Math.max(3, (o.h ?? 0.05) * cH);
         const rect = new fabric.Rect({
           left,
           top,
           originX: 'center',
           originY: 'center',
-          width: Math.max(4, (o.w ?? 0.3) * cW),
-          height: Math.max(3, (o.h ?? 0.05) * cH),
-          fill: o.fill || '#0284C7',
-          rx: (o.rx ?? 0) * cW / 2,
-          ry: (o.rx ?? 0) * cW / 2,
+          width: rectW,
+          height: rectH,
+          fill: makeFill(o, rectW, rectH),
+          rx: (o.rx ?? 0) * cW,
+          ry: (o.rx ?? 0) * cW,
           opacity: o.opacity ?? 1,
-          angle: o.rotation ?? 0
+          angle: o.rotation ?? 0,
+          shadow: makeShadow(o)
         });
         canvas.add(rect);
       } else {
         const fontSize = Math.max(10, (o.size ?? 0.06) * tpl.baseW * scale);
+        const textWidth = Math.min(cW * 0.92, fontSize * 14);
+        const boxWidth = o.w ? Math.min(cW * 0.96, o.w * cW) : textWidth;
         const textbox = new fabric.Textbox(o.text || ' ', {
           left,
           top,
@@ -804,13 +895,14 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           fontFamily: o.fontFamily || 'Cairo',
           fontSize,
           fontWeight: o.fontWeight ?? 700,
-          fill: o.fill || '#FFFFFF',
+          fill: makeFill(o, boxWidth, fontSize * 1.35),
           textAlign: 'center',
-          lineHeight: 1.25,
-          width: Math.min(cW * 0.92, fontSize * 14),
+          lineHeight: 1.3,
+          width: boxWidth,
           styles: {},
           angle: o.rotation ?? 0,
-          splitByGrapheme: false
+          splitByGrapheme: false,
+          shadow: makeShadow(o)
         });
         canvas.add(textbox);
       }
@@ -819,21 +911,21 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     canvas.renderAll();
     updateLayersList();
     recordHistory();
-    onShowToast(t.tplToastTitle, lang === 'ar' ? tpl.nameAr : tpl.nameEn, 'success');
+    onShowToast(t.tplToastTitle, `${lang === 'ar' ? tpl.nameAr : tpl.nameEn} · ${cW} × ${cH}`, 'success');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
     // scroll canvas into view on mobile
     setTimeout(() => {
       document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 60);
-  }, [onShowToast, recordHistory, lang, canvasWidth, canvasHeight]);
+  }, [onShowToast, recordHistory, lang, canvasWidth, canvasHeight, zoom]);
 
   // ---- Quick PNG download straight from the top bar ----
-  // Multiplier compensates for the active zoom so we always export at design size × 2
+  // Always exports at 2× the full design size, regardless of the current zoom.
   const handleQuickExportPng = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     handleSaveProject();
-    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2 / (zoom || 1));
+    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2, canvasWidth, canvasHeight);
     if (!dataUrl) {
       onShowToast(t.quickExportErrorTitle, t.quickExportErrorMsg, 'error');
       return;
@@ -845,7 +937,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     link.click();
     document.body.removeChild(link);
     onShowToast(t.quickExportTitle, `${t.quickExportMsg} PNG · 2×`, 'success');
-  }, [onShowToast, projectTitle, zoom]);
+  }, [onShowToast, projectTitle, canvasWidth, canvasHeight]);
 
   // Sidebar Tab Select
   const handleSelectSidebarTab = (tab: SidebarTabType) => {
@@ -886,7 +978,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             }}
             onAddHeading={() => {
               if (fabricCanvasRef.current) {
-                addTextToCanvas(fabricCanvasRef.current, 'عنوان رئيسي جذاب', { fontSize: 44, fontWeight: 'bold' });
+                addTextToCanvas(fabricCanvasRef.current, t.defaultHeading, { fontSize: 44, fontWeight: 'bold' });
                 updateLayersList();
                 recordHistory();
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -894,7 +986,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             }}
             onAddSubheading={() => {
               if (fabricCanvasRef.current) {
-                addTextToCanvas(fabricCanvasRef.current, 'عنوان فرعي توضيحي', { fontSize: 28, fontWeight: '600' });
+                addTextToCanvas(fabricCanvasRef.current, t.defaultSubheading, { fontSize: 28, fontWeight: '600' });
                 updateLayersList();
                 recordHistory();
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -902,7 +994,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             }}
             onAddBodyText={() => {
               if (fabricCanvasRef.current) {
-                addTextToCanvas(fabricCanvasRef.current, 'هذا النص هو مثال لنص يمكن أن يستبدل في نفس المساحة، لقد تم توليد هذا النص من مولد النص العربى.', { fontSize: 18 });
+                addTextToCanvas(fabricCanvasRef.current, t.defaultBody, { fontSize: 18 });
                 updateLayersList();
                 recordHistory();
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -1225,7 +1317,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   );
 
   return (
-    <div id="editor-layout" className="h-screen w-screen bg-[#070D1E] flex flex-col overflow-hidden select-none font-sans">
+    <div
+      id="editor-layout"
+      dir="ltr"
+      className="h-screen w-screen bg-[#070D1E] flex flex-col overflow-hidden select-none font-sans"
+    >
       {/* 1. Top Bar */}
       <TopBar
         title={projectTitle}
@@ -1257,7 +1353,17 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
       />
 
-      {/* 2. Workspace Body: Rail + Drawer + Canvas Area + Properties Panel */}
+      {/* 2. Open Design Tabs */}
+      <DesignTabs
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelectTab={onSelectTab}
+        onCloseTab={onCloseTab}
+        onNewTab={onNewTab}
+        onBackToDashboard={onBackToDashboard}
+      />
+
+      {/* 3. Workspace Body: Rail + Drawer + Canvas Area + Properties Panel */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Leftmost Sidebar Icon Rail (Desktop only) */}
         <SidebarTabs
@@ -1268,7 +1374,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
         {/* Desktop Sidebar Expanded Drawer Panel */}
         {isSidebarOpen && (
-          <div className="hidden md:flex flex-col w-80 bg-[#1C2541] border-l border-slate-700/60 shrink-0 h-full overflow-hidden shadow-xl">
+          <div className="hidden md:flex flex-col w-80 bg-[#1C2541] border-r border-slate-700/60 shrink-0 h-full overflow-hidden shadow-xl">
             <div className="px-4 py-3 bg-[#0B132B] border-b border-slate-700/80 flex items-center justify-between">
               <span className="text-xs font-bold text-white">
                 {getTabTitle(activeSidebarTab)}
@@ -1276,9 +1382,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
+                aria-label={t.close}
+                title={t.close}
                 className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-3">
@@ -1412,6 +1520,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
+                aria-label={t.close}
+                title={t.close}
                 className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
               >
                 <X className="w-4 h-4" />
@@ -1452,15 +1562,22 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         onClose={() => setIsExportModalOpen(false)}
         onExport={(format, quality, multiplier) => {
           if (!fabricCanvasRef.current) return '';
-          return exportCanvasImage(fabricCanvasRef.current, format, quality, multiplier);
+          return exportCanvasImage(
+            fabricCanvasRef.current,
+            format,
+            quality,
+            multiplier,
+            canvasWidth,
+            canvasHeight
+          );
         }}
         onExportSvg={() => {
           if (!fabricCanvasRef.current) return '';
-          return exportCanvasSvg(fabricCanvasRef.current);
+          return exportCanvasSvg(fabricCanvasRef.current, canvasWidth, canvasHeight);
         }}
         onExportPdf={async (filename) => {
           if (!fabricCanvasRef.current) return;
-          await exportCanvasPdf(fabricCanvasRef.current, filename);
+          await exportCanvasPdf(fabricCanvasRef.current, filename, canvasWidth, canvasHeight);
         }}
         defaultTitle={projectTitle}
         canvasWidth={canvasWidth}
@@ -1546,4 +1663,4 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       />
     </div>
   );
-};
+});

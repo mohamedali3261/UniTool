@@ -21,7 +21,8 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
   onChangeCanvasColor,
   onChangeCanvasGradient
 }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('#F59E0B'); // Default Golden
@@ -140,7 +141,7 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
                 : 'bg-[#0B132B] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            {cat.label}
+            {isAr ? cat.label : cat.labelEn}
           </button>
         ))}
       </div>
@@ -154,6 +155,8 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
               <button
                 key={item.id}
                 type="button"
+                title={isAr ? item.nameAr : item.name}
+                aria-label={isAr ? item.nameAr : item.name}
                 onClick={() => handleOrnamentClick(item)}
                 className={`group relative aspect-square rounded-2xl bg-[#0B132B] border p-2.5 flex flex-col items-center justify-between transition hover:-translate-y-0.5 overflow-hidden shadow-sm ${
                   isJustAdded
@@ -179,7 +182,7 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
                 {/* Name Label */}
                 <div className="w-full text-center mt-1">
                   <span className="text-[10px] font-medium text-slate-300 group-hover:text-amber-300 truncate block">
-                    {item.nameAr}
+                    {isAr ? item.nameAr : item.name}
                   </span>
                 </div>
 
@@ -227,6 +230,8 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
               <button
                 key={c}
                 type="button"
+                title={c}
+                aria-label={c}
                 onClick={() => onChangeCanvasColor(c)}
                 className={`w-5 h-5 rounded-md border transition shrink-0 ${
                   canvasBackgroundColor?.toLowerCase() === c.toLowerCase()
@@ -240,7 +245,8 @@ export const OrnamentsTab: React.FC<OrnamentsTabProps> = ({
               <button
                 key={g.name}
                 type="button"
-                title={g.nameAr}
+                title={isAr ? g.nameAr : g.name}
+                aria-label={isAr ? g.nameAr : g.name}
                 onClick={() => onChangeCanvasGradient(g.stops[0], g.stops[1])}
                 className="w-5 h-5 rounded-md border border-slate-700 transition shrink-0 hover:scale-110"
                 style={{ background: g.gradient }}

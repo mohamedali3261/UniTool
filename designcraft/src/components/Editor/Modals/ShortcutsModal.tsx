@@ -39,7 +39,10 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             <h2 className="text-sm font-bold text-white">{t.scTitle}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t.close}
+            title={t.close}
             className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
           >
             <X className="w-4 h-4" />

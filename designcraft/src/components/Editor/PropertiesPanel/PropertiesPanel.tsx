@@ -86,7 +86,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   return (
     <aside
       id="editor-properties-panel"
-      className="w-full md:w-56 lg:w-60 bg-[#1C2541] md:border-r border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
+      className="w-full md:w-56 lg:w-60 bg-[#1C2541] md:border-l border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
     >
       {/* Panel Header */}
       <div className="h-10 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
@@ -111,6 +111,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onClick={onDeselect}
               className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition"
               title={t.propsDeselect}
+              aria-label={t.propsDeselect}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -121,6 +122,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onClick={onClosePanel}
               className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition"
               title={t.propsCollapse}
+              aria-label={t.propsCollapse}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>

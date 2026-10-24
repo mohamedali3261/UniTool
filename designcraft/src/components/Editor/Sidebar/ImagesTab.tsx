@@ -22,13 +22,14 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
 }) => {
   const { t } = useDcLang();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const addFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     Array.from(files).forEach((file: File) => {
+      if (!file.type.startsWith('image/')) return;
       const reader = new FileReader();
       reader.onload = (event) => {
         const url = event.target?.result as string;
@@ -39,7 +40,10 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
       };
       reader.readAsDataURL(file);
     });
+  };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(e.target.files);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -92,8 +96,31 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
 
       {/* 3. Upload Box */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={t.imagesUpload}
         onClick={() => fileInputRef.current?.click()}
-        className="p-3.5 rounded-2xl border-2 border-dashed border-sky-500/30 hover:border-sky-400 bg-[#0B132B] hover:bg-[#151e36] cursor-pointer transition text-center space-y-1.5 group shadow-sm"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          addFiles(e.dataTransfer.files);
+        }}
+        className={`p-3.5 rounded-2xl border-2 border-dashed cursor-pointer transition text-center space-y-1.5 group shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+          isDragging
+            ? 'border-sky-400 bg-sky-500/10 scale-[1.02]'
+            : 'border-sky-500/30 hover:border-sky-400 bg-[#0B132B] hover:bg-[#151e36]'
+        }`}
       >
         <input
           ref={fileInputRef}
@@ -120,6 +147,7 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
           <div className="flex items-center justify-between text-xs font-bold text-slate-300">
             <span>{t.imagesUploaded} ({uploadedImages.length})</span>
             <button
+              type="button"
               onClick={() => setUploadedImages([])}
               className="text-[10px] text-rose-400 hover:underline flex items-center gap-1"
             >
@@ -130,10 +158,18 @@ export const ImagesTab: React.FC<ImagesTabProps> = ({
             {uploadedImages.map((imgUrl, i) => (
               <div
                 key={i}
+                role="button"
+                tabIndex={0}
                 onClick={() => onAddImage(imgUrl)}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 border border-slate-700 hover:border-sky-400 cursor-pointer transition shadow-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onAddImage(imgUrl);
+                  }
+                }}
+                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 border border-slate-700 hover:border-sky-400 cursor-pointer transition shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
               >
-                <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                <img src={imgUrl} alt={t.imagesUploaded} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                   <span className="text-[10px] font-bold text-white bg-sky-600 px-2 py-1 rounded-md">
                     {t.imagesAddMore}

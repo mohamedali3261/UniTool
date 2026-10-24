@@ -22,7 +22,8 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
   onSetBackgroundColor,
   onSetBackgroundGradient
 }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
   return (
     <div className="space-y-5 select-none">
       <div className="space-y-1">
@@ -82,6 +83,7 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
           label={t.cpCustomColor}
           color={backgroundColor}
           onChange={onSetBackgroundColor}
+          onApplyGradient={onSetBackgroundGradient}
           allowTransparent={true}
         />
 
@@ -93,6 +95,8 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
               <button
                 key={c}
                 type="button"
+                title={c}
+                aria-label={c}
                 onClick={() => onSetBackgroundColor(c)}
                 className={`w-5 h-5 rounded-md transition border hover:scale-110 ${
                   backgroundColor?.toLowerCase() === c.toLowerCase()
@@ -117,11 +121,12 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
                 key={g.name}
                 type="button"
                 onClick={() => onSetBackgroundGradient(g.stops)}
-                className="h-8 rounded-xl border border-white/10 hover:scale-105 transition shadow-xs flex items-center justify-center text-[9px] font-bold text-white drop-shadow-md"
+                className="h-8 px-1 rounded-xl border border-white/10 hover:scale-105 transition shadow-xs flex items-center justify-center text-[9px] font-bold text-white drop-shadow-md"
                 style={{ background: g.gradient }}
-                title={g.nameAr}
+                title={isAr ? g.nameAr : g.name}
+                aria-label={isAr ? g.nameAr : g.name}
               >
-                {g.nameAr}
+                <span className="truncate">{isAr ? g.nameAr : g.name}</span>
               </button>
             ))}
           </div>
@@ -151,7 +156,9 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
                 className="w-10 h-10"
               />
               <div className="flex-1 min-w-0">
-                <div className="font-bold truncate text-[11px]">{preset.titleAr}</div>
+                <div className="font-bold truncate text-[11px]">
+                  {isAr ? preset.titleAr : preset.title}
+                </div>
                 <div className="text-[10px] text-sky-400 font-mono mt-0.5">{preset.width} × {preset.height} px</div>
               </div>
             </button>
