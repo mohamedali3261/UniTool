@@ -1,3 +1,4 @@
+import { StudioSelect } from "../../components/StudioSelect";
 import {
   RotateCw,
   FlipHorizontal2,
@@ -61,15 +62,23 @@ export function ClipTools({
       </div>
       <label className="field-label">
         ملاءمة الكادر
-        <select
+        <StudioSelect
+          label="ملاءمة الكادر"
           value={clip.fit || "contain"}
-          onChange={(e) =>
-            onClip({ fit: e.target.value as "contain" | "cover" })
-          }
-        >
-          <option value="contain">احتواء — عرض المحتوى كاملًا</option>
-          <option value="cover">ملء — قص الأطراف الزائدة</option>
-        </select>
+          onValueChange={(fit) => onClip({ fit: fit as "contain" | "cover" })}
+          options={[
+            {
+              value: "contain",
+              label: "احتواء",
+              description: "عرض المحتوى كاملًا دون قص",
+            },
+            {
+              value: "cover",
+              label: "ملء الكادر",
+              description: "قص الأطراف الزائدة لملء الشاشة",
+            },
+          ]}
+        />
       </label>
       <label className="slider-label">
         تكبير الصورة<span>{Math.round((clip.zoom ?? 1) * 100)}%</span>

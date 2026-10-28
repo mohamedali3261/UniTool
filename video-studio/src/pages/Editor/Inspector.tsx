@@ -1,3 +1,4 @@
+import { StudioSelect } from "../../components/StudioSelect";
 import { memo, useState } from "react";
 import { ClipTools } from "./ClipTools";
 import { ChevronLeft, ChevronRight, RotateCcw, Settings2 } from "lucide-react";
@@ -38,16 +39,34 @@ function InspectorView({
       </div>
       <label className="field-label">
         مقاس الفيديو
-        <select
+        <StudioSelect
+          label="مقاس الفيديو"
           value={project.ratio}
-          onChange={(e) => onProject({ ratio: e.target.value })}
-        >
-          <option value="16:9">16:9 — يوتيوب</option>
-          <option value="9:16">9:16 — ريلز وستوري</option>
-          <option value="1:1">1:1 — مربع</option>
-          <option value="4:5">4:5 — بورتريه</option>
-        </select>
+          onValueChange={(ratio) => onProject({ ratio })}
+          options={[
+            {
+              value: "16:9",
+              label: "16:9 — يوتيوب",
+              description: "أفقي • فيديوهات وشاشات واسعة",
+            },
+            {
+              value: "9:16",
+              label: "9:16 — ريلز وستوري",
+              description: "رأسي • تيك توك وشورتس",
+            },
+            { value: "1:1", label: "1:1 — مربع" },
+            { value: "4:5", label: "4:5 — بورتريه" },
+          ]}
+        />
       </label>
+      {a?.source && (
+        <div className="asset-source-credit">
+          <small>مصدر اللقطة · Pexels</small>
+          <a href={a.source.pageUrl} target="_blank" rel="noopener noreferrer">
+            {a.source.author} ↗
+          </a>
+        </div>
+      )}
       {project.audioId && (
         <label className="slider-label">
           صوت الموسيقى <span>{Math.round(project.audioVolume * 100)}%</span>
@@ -166,16 +185,15 @@ function InspectorView({
           </div>
           <label className="field-label">
             سرعة المقطع
-            <select
+            <StudioSelect
+              label="سرعة المقطع"
               value={clip.speed}
-              onChange={(e) => onClip({ speed: +e.target.value })}
-            >
-              {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4].map((s) => (
-                <option key={s} value={s}>
-                  {s}x {s === 1 ? "— عادي" : ""}
-                </option>
-              ))}
-            </select>
+              onValueChange={(speed) => onClip({ speed: +speed })}
+              options={[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4].map((s) => ({
+                value: s,
+                label: `${s}x ${s === 1 ? "— عادي" : ""}`,
+              }))}
+            />
           </label>
           {a?.type === "video" && (
             <label className="slider-label">

@@ -1,3 +1,4 @@
+import { StudioSelect } from "../../components/StudioSelect";
 import { useStudioSettings } from "../../settings/StudioSettings";
 import { useRef, useState, useEffect } from "react";
 import { Download, Check, ShieldCheck, X } from "lucide-react";
@@ -83,56 +84,66 @@ export function ExportDialog({
           <>
             <label className="field-label">
               صيغة الفيديو
-              <select
-                aria-label="صيغة التصدير"
+              <StudioSelect
+                label="صيغة التصدير"
                 disabled={busy}
                 value={format}
-                onChange={(e) => setFormat(e.target.value as "mp4" | "webm")}
-              >
-                <option value="mp4">MP4 — الأنسب للنشر والمشاركة</option>
-                <option value="webm">WebM — تصدير مباشر</option>
-              </select>
+                onValueChange={(v) => setFormat(v as "mp4" | "webm")}
+                options={[
+                  {
+                    value: "mp4",
+                    label: "MP4",
+                    description: "الأنسب للنشر والمشاركة",
+                  },
+                  {
+                    value: "webm",
+                    label: "WebM",
+                    description: "تصدير مباشر للويب",
+                  },
+                ]}
+              />
             </label>
             <label className="field-label">
               دقة التصدير
-              <select
+              <StudioSelect
+                label="دقة التصدير"
                 disabled={busy}
                 value={height}
-                onChange={(e) => setHeight(+e.target.value)}
-              >
-                <option value={480}>480p — خفيف وسريع</option>
-                <option value={720}>720p — جودة ممتازة</option>
-                <option value={1080}>1080p — Full HD</option>
-              </select>
+                onValueChange={(v) => setHeight(+v)}
+                options={[
+                  { value: 480, label: "480p — خفيف وسريع" },
+                  { value: 720, label: "720p — جودة ممتازة" },
+                  { value: 1080, label: "1080p — Full HD" },
+                ]}
+              />
             </label>
             <div className="two-fields export-settings">
               <label>
                 الإطارات / ثانية
-                <select
-                  aria-label="الإطارات في الثانية"
+                <StudioSelect
+                  label="الإطارات في الثانية"
                   disabled={busy}
                   value={fps}
-                  onChange={(e) => setFps(+e.target.value as 24 | 30 | 60)}
-                >
-                  {[24, 30, 60].map((n) => (
-                    <option key={n} value={n}>
-                      {n} FPS
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(v) => setFps(+v as 24 | 30 | 60)}
+                  options={[24, 30, 60].map((n) => ({
+                    value: n,
+                    label: `${n} FPS`,
+                  }))}
+                />
               </label>
               <label>
                 جودة الترميز
-                <select
-                  aria-label="جودة الترميز"
+                <StudioSelect
+                  label="جودة الترميز"
                   disabled={busy}
                   value={bitrate}
-                  onChange={(e) => setBitrate(+e.target.value)}
-                >
-                  <option value={2}>اقتصادي · 2 Mbps</option>
-                  <option value={4}>متوازن · 4 Mbps</option>
-                  <option value={8}>عالي · 8 Mbps</option>
-                </select>
+                  onValueChange={(v) => setBitrate(+v)}
+                  options={[
+                    { value: 2, label: "اقتصادي · 2 Mbps" },
+                    { value: 4, label: "متوازن · 4 Mbps" },
+                    { value: 8, label: "عالي · 8 Mbps" },
+                  ]}
+                />
               </label>
             </div>
             <div className="export-info">

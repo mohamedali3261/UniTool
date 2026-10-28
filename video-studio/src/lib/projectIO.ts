@@ -1,3 +1,4 @@
+import { isPexelsPageUrl } from "../stock/mediaSource";
 import { effectById } from "../effects/registry";
 import { Asset, Project } from "../types";
 import { download } from "./media";
@@ -51,7 +52,16 @@ export async function loadProject(
       !["image", "video", "audio"].includes(a.type) ||
       typeof a.url !== "string" ||
       !a.url.startsWith(`data:${a.type}/`) ||
-      !num(a.duration, 0.01)
+      !num(a.duration, 0.01) ||
+      (a.source !== undefined &&
+        (!a.source ||
+          a.source.provider !== "pexels" ||
+          !Number.isSafeInteger(a.source.id) ||
+          a.source.id < 1 ||
+          !isPexelsPageUrl(a.source.pageUrl) ||
+          !isPexelsPageUrl(a.source.authorUrl) ||
+          typeof a.source.author !== "string" ||
+          !["hd", "fullhd"].includes(a.source.quality)))
     )
       throw new Error("وسائط المشروع غير صالحة");
   }

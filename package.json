@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test:video-studio": "tsx --test video-studio/tests/*.test.ts"
+    "test:video-studio": "tsx --test video-studio/tests/*.test.ts",
+    "test:video-studio:browser": "playwright test --config playwright.video-studio.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",
@@ -21,6 +22,7 @@
     "@ffmpeg/util": "^0.12.2",
     "@google/genai": "^2.4.0",
     "@pdf-lib/fontkit": "^1.1.1",
+    "@radix-ui/react-select": "^2.4.1",
     "@tailwindcss/vite": "^4.1.14",
     "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-react": "^5.0.4",
@@ -49,6 +51,7 @@
     "wavesurfer.js": "^7.12.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/jszip": "^3.4.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.17",
