@@ -1,3 +1,5 @@
+import { motionAt, textAt } from "../animation/evaluate";
+import { sceneAt } from "../composition/scene";
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
 import { clipOpacity } from "./timeline";
 import { Asset, Clip, Project, clipDuration, filterCss, uid } from "../types";
@@ -86,19 +88,28 @@ export function locate(
   const c = p.clips.at(-1);
   return c ? { clip: c, local: Math.max(c.start, c.end - 0.03) } : null;
 }
-export function drawFrame(
+function drawSingleFrame(
   ctx: CanvasRenderingContext2D,
   source: CanvasImageSource | null,
   p: Project,
   time: number,
   clip?: Clip,
+  elapsedOverride?: number,
+  clear = true,
+  alpha = 1,
 ) {
   const { width: w, height: h } = ctx.canvas;
-  ctx.fillStyle = "#080a0e";
-  ctx.fillRect(0, 0, w, h);
+  if (clear) {
+    ctx.fillStyle = "#080a0e";
+    ctx.fillRect(0, 0, w, h);
+  }
   const located = clip ? locate(p, time) : null;
   const elapsed =
-    clip && located ? (located.local - clip.start) / clip.speed : 0;
+    elapsedOverride ??
+    (clip && located ? (located.local - clip.start) / clip.speed : 0);
+  const motion = clip
+    ? motionAt(clip, elapsed)
+    : { x: 0, y: 0, scale: 1, opacity: 1 };
   const e = effectFrame(
     clip?.effect,
     w,
@@ -124,8 +135,15 @@ export function drawFrame(
       ctx.save();
       ctx.filter = clip ? filterCss(clip) : "none";
 
-      ctx.globalAlpha = clip && located ? clipOpacity(clip, located.local) : 1;
-      ctx.translate(w / 2 + (e.camera.x || 0), h / 2 + (e.camera.y || 0));
+      ctx.globalAlpha =
+        alpha *
+        motion.opacity *
+        (clip ? clipOpacity(clip, clip.start + elapsed * clip.speed) : 1);
+      ctx.translate(
+        w / 2 + (e.camera.x || 0) + (motion.x * w) / 100,
+        h / 2 + (e.camera.y || 0) + (motion.y * h) / 100,
+      );
+      ctx.scale(motion.scale, motion.scale);
       ctx.scale(e.camera.zoom ?? 1, e.camera.zoom ?? 1);
       ctx.rotate(e.camera.rotate || 0);
       ctx.rotate(rotation);
@@ -142,29 +160,124 @@ export function drawFrame(
   }
   if (e.definition?.overlay) {
     ctx.save();
-    ctx.globalAlpha = clip && located ? clipOpacity(clip, located.local) : 1;
+    ctx.globalAlpha =
+      alpha *
+      motion.opacity *
+      (clip ? clipOpacity(clip, clip.start + elapsed * clip.speed) : 1);
     drawEffectOverlay(ctx, e);
     ctx.restore();
   }
   for (const t of p.texts.filter((t) => time >= t.start && time < t.end)) {
+    const animation = textAt(t, time);
     ctx.save();
+    ctx.globalAlpha = animation.opacity;
+    ctx.translate((w * t.x) / 100, (h * (t.y + animation.y)) / 100);
+    ctx.scale(animation.scale, animation.scale);
     ctx.font = `700 ${(t.size * w) / 960}px Arial, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = t.color;
     ctx.shadowColor = "#000a";
     ctx.shadowBlur = 8;
-    const lines = t.text.split("\n");
+    const lines = animation.text.split("\n");
     lines.forEach((line, i) =>
-      ctx.fillText(
-        line,
-        (w * t.x) / 100,
-        (h * t.y) / 100 + ((i * t.size * w) / 960) * 1.2,
-        w * 0.94,
-      ),
+      ctx.fillText(line, 0, ((i * t.size * w) / 960) * 1.2, w * 0.94),
     );
     ctx.restore();
   }
+}
+/** One compositor for preview, snapshots and both export formats. */
+const scratch = new WeakMap<CanvasRenderingContext2D, HTMLCanvasElement>();
+export function drawFrame(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource | null,
+  p: Project,
+  time: number,
+  clip?: Clip,
+  sources?: Map<string, CanvasImageSource>,
+) {
+  if (!sources) {
+    drawSingleFrame(ctx, source, p, time, clip);
+    return;
+  }
+  const { entries, flash } = sceneAt(p, time);
+  const w = ctx.canvas.width,
+    h = ctx.canvas.height;
+  ctx.fillStyle = "#080a0e";
+  ctx.fillRect(0, 0, w, h);
+  const withoutText = { ...p, texts: [] };
+  let flashed = false;
+  const paintFlash = () => {
+    if (!flash) return;
+    ctx.save();
+    ctx.globalAlpha = flash;
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  };
+  const baseCount = entries.filter((entry) => !entry.overlay).length;
+  for (const entry of entries) {
+    if (entry.overlay && !flashed) {
+      paintFlash();
+      flashed = true;
+    }
+    const media = sources.get(entry.id);
+    if (!media) continue;
+    if (entry.overlay) {
+      const l = entry.overlay;
+      ctx.save();
+      ctx.translate((w * l.x) / 100, (h * l.y) / 100);
+      ctx.scale(l.width / 100, l.width / 100);
+      ctx.translate(-w / 2, -h / 2);
+      drawSingleFrame(
+        ctx,
+        media,
+        withoutText,
+        time,
+        entry.clip,
+        entry.elapsed,
+        false,
+        entry.alpha,
+      );
+      ctx.restore();
+    } else {
+      if (baseCount === 1) {
+        drawSingleFrame(
+          ctx,
+          media,
+          withoutText,
+          time,
+          entry.clip,
+          entry.elapsed,
+        );
+        continue;
+      }
+      // Composite a complete scene, including letterboxing, rather than fading to black.
+      let surface = scratch.get(ctx);
+      if (!surface) {
+        surface = document.createElement("canvas");
+        scratch.set(ctx, surface);
+      }
+      if (surface.width !== w) surface.width = w;
+      if (surface.height !== h) surface.height = h;
+      drawSingleFrame(
+        surface.getContext("2d")!,
+        media,
+        withoutText,
+        time,
+        entry.clip,
+        entry.elapsed,
+      );
+      ctx.save();
+      ctx.globalAlpha = entry.alpha;
+      ctx.translate(w / 2 + entry.shift * w, h / 2);
+      ctx.scale(entry.scale, entry.scale);
+      ctx.drawImage(surface, -w / 2, -h / 2);
+      ctx.restore();
+    }
+  }
+  if (!flashed) paintFlash();
+  drawSingleFrame(ctx, null, p, time, undefined, 0, false);
 }
 /** Portable filenames avoid browsers dropping the extension on non-Latin names. */
 export function portableFilename(name: string) {

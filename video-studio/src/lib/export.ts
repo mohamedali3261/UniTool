@@ -1,3 +1,4 @@
+import { sceneAt, layerClip } from "../composition/scene";
 import { musicTime, clipOpacity } from "./timeline";
 import { Asset, Project, durationOf } from "../types";
 import { locate, drawFrame } from "./media";
@@ -127,18 +128,13 @@ export async function exportVideo(
   // Keep the recording surface paintable. Detached canvases can stop producing
   // frames under GPU-backed compositing even when drawImage succeeds.
   canvas.style.cssText =
-    "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;z-index:-1";
+    "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:2147483647";
   document.body.appendChild(canvas);
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = "#080a0e";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  let stream = canvas.captureStream(0);
-  let canvasTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
-  if (typeof canvasTrack.requestFrame !== "function") {
-    stream.getTracks().forEach((t) => t.stop());
-    stream = canvas.captureStream(fps);
-    canvasTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
-  }
+  let stream: MediaStream | undefined;
+  let canvasTrack: CanvasCaptureMediaStreamTrack | undefined;
   const audioCtx = new AudioContext();
   const dest = audioCtx.createMediaStreamDestination();
   // A zero-valued clock keeps image-only recordings timed correctly even if
@@ -153,9 +149,9 @@ export async function exportVideo(
   let recorder: MediaRecorder | undefined;
   try {
     await audioCtx.resume();
-    for (const a of assets.filter((a) =>
-      p.clips.some((c) => c.assetId === a.id),
-    )) {
+    for (const clip of [...p.clips, ...(p.overlays || []).map(layerClip)]) {
+      const a = assets.find((asset) => asset.id === clip.assetId);
+      if (!a) throw new Error("وسيط مفقود في المشروع");
       const el =
         a.type === "image" ? new Image() : document.createElement("video");
       if (el instanceof HTMLVideoElement) {
@@ -168,7 +164,7 @@ export async function exportVideo(
         gains.set(el, gain);
       }
       await loadSource(el, a.url, signal);
-      sources.set(a.id, el);
+      sources.set(clip.id, el);
     }
     const audio = assets.find((a) => a.id === p.audioId);
     let music: HTMLAudioElement | undefined;
@@ -181,15 +177,18 @@ export async function exportVideo(
       music.loop = false;
       await loadSource(music, audio.url, signal);
     }
-    dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
     const first = locate(p, 0);
     if (first) {
-      const source = sources.get(first.clip.assetId)!;
+      const source = sources.get(first.clip.id)!;
       if (source instanceof HTMLVideoElement && first.local > 0) {
         await seekSource(source, first.local, signal);
       }
-      drawFrame(ctx, source, p, 0, first.clip);
-      canvasTrack.requestFrame?.();
+      for (const entry of sceneAt(p, 0).entries) {
+        const media = sources.get(entry.id);
+        if (media instanceof HTMLVideoElement)
+          await seekSource(media, entry.local, signal);
+      }
+      drawFrame(ctx, source, p, 0, first.clip, sources);
       // Allow the recording surface to paint before starting the recording clock.
       await new Promise<void>((resolve) => {
         const timer = setTimeout(resolve, 200);
@@ -200,6 +199,10 @@ export async function exportVideo(
       });
       signal.throwIfAborted();
     }
+    // Timed capture also works when manual requestFrame is throttled by a compositor.
+    stream = canvas.captureStream(fps);
+    canvasTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+    dest.stream.getAudioTracks().forEach((t) => stream!.addTrack(t));
     recorder = new MediaRecorder(stream, {
       mimeType: mime,
       videoBitsPerSecond: bitrateMbps * 1000000,
@@ -226,7 +229,7 @@ export async function exportVideo(
     recorder.start(250);
 
     const duration = durationOf(p);
-    let previous = "";
+    let previous = new Set<string>();
     const start = performance.now();
     await new Promise<void>((resolve, reject) => {
       const tick = async () => {
@@ -242,27 +245,32 @@ export async function exportVideo(
               if (music.paused) await music.play();
             }
           }
-          const found = locate(p, time);
-          if (found) {
-            const source = sources.get(found.clip.assetId)!;
+          const scene = sceneAt(p, time);
+          const active = new Set(scene.entries.map((entry) => entry.id));
+          for (const [id, source] of sources)
+            if (source instanceof HTMLVideoElement && !active.has(id))
+              source.pause();
+          for (const entry of scene.entries) {
+            const source = sources.get(entry.id);
             if (source instanceof HTMLVideoElement) {
-              if (previous !== found.clip.id) {
-                elements.filter((e) => e !== music).forEach((e) => e.pause());
-                await seekSource(source, found.local, signal);
-                source.playbackRate = found.clip.speed;
-
-                await source.play();
-                previous = found.clip.id;
-              }
+              if (
+                !previous.has(entry.id) ||
+                (!entry.playing &&
+                  Math.abs(source.currentTime - entry.local) > 0.02)
+              )
+                await seekSource(source, entry.local, signal);
+              source.playbackRate = entry.clip.speed;
               gains.get(source)!.gain.value =
-                found.clip.volume * clipOpacity(found.clip, found.local);
-            } else {
-              elements.filter((e) => e !== music).forEach((e) => e.pause());
-              previous = found.clip.id;
+                entry.clip.volume *
+                entry.audioAlpha *
+                clipOpacity(entry.clip, entry.local);
+              if (entry.playing && source.paused) await source.play();
+              if (!entry.playing) source.pause();
             }
-            drawFrame(ctx, source, p, time, found.clip);
-            canvasTrack.requestFrame?.();
           }
+          previous = active;
+          drawFrame(ctx, null, p, time, undefined, sources);
+          canvasTrack.requestFrame?.();
           recordProgress(Math.min(100, Math.round((time / duration) * 100)));
           if (time >= duration) resolve();
           else setTimeout(tick, 1000 / fps);
@@ -277,7 +285,7 @@ export async function exportVideo(
     signal.throwIfAborted();
     // Stop realtime resources before the (potentially memory-intensive) encode.
     elements.forEach((e) => e.pause());
-    stream.getTracks().forEach((t) => t.stop());
+    stream?.getTracks().forEach((t) => t.stop());
     if (transcode) {
       onStage("تحميل محرك MP4 المحلي ثم ترميز H.264 / AAC…");
       const { convertToMp4 } = await import("./mp4");
@@ -300,7 +308,7 @@ export async function exportVideo(
       e.removeAttribute("src");
       e.load();
     });
-    stream.getTracks().forEach((t) => t.stop());
+    stream?.getTracks().forEach((t) => t.stop());
     canvas.remove();
     silentClock.stop();
     await audioCtx.close();

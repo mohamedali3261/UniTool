@@ -1,3 +1,4 @@
+import { TextMotionControls } from "../../animation/TextMotionControls";
 import { lazy, memo, Suspense, useState } from "react";
 const PexelsLibrary = lazy(() => import("../../stock/PexelsLibrary"));
 import { EffectsCatalog } from "../../effects/components/EffectsCatalog";
@@ -243,6 +244,10 @@ function LibraryView({
                     <Trash2 size={14} />
                   </button>
                 </div>
+                <TextMotionControls
+                  layer={t}
+                  onChange={(patch) => updateText(t.id, patch)}
+                />
                 <textarea
                   value={t.text}
                   onChange={(e) => updateText(t.id, { text: e.target.value })}

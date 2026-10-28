@@ -1,3 +1,10 @@
+import { durationOf } from "./types";
+import { useAutosave } from "./persistence/useAutosave";
+import { RecentProjects } from "./persistence/RecentProjects";
+import { restoreDraft } from "./persistence/database";
+import { TemplateGallery } from "./templates/TemplateGallery";
+import { buildTemplate } from "./templates";
+import { assetIsUsed } from "./types";
 import type { Tab } from "./pages/Editor/Library";
 import { useRef, useState, useEffect } from "react";
 import { Home } from "./pages/Home";
@@ -14,9 +21,24 @@ export default function App() {
   }, [page]);
   const [startTab, setStartTab] = useState<Tab>("media");
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [draftId, setDraftId] = useState<string>(uid);
+  const autosave = useAutosave(draftId, state.project, assets);
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const importTarget = useRef<{ layer: boolean; at: number }>({
+    layer: false,
+    at: 0,
+  });
+  const chooseMedia = (layer = false, at = 0) => {
+    importTarget.current = { layer, at };
+    if (input.current) {
+      input.current.accept = layer
+        ? "video/*,image/*"
+        : "video/*,image/*,audio/*";
+      input.current.click();
+    }
+  };
   const open = useRef<HTMLInputElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
@@ -36,6 +58,7 @@ export default function App() {
   async function importFiles(files: FileList | null) {
     if (!files) return;
     setBusy(true);
+    const target = { ...importTarget.current };
     try {
       const added: Asset[] = [];
       for (const file of Array.from(files)) {
@@ -46,31 +69,57 @@ export default function App() {
         }
       }
       setAssets((a) => [...a, ...added]);
-      state.update((p) => ({
-        ...p,
-        clips: [
-          ...p.clips,
-          ...added
+      if (target.layer) {
+        state.update((p) => {
+          const overlays = [...(p.overlays || [])];
+          const at = Math.max(0, Math.min(target.at, durationOf(p) - 0.1));
+          if (!p.clips.length) return p;
+          for (const a of added
             .filter((a) => a.type !== "audio")
-            .map((a) => ({
+            .slice(0, 6 - overlays.length))
+            overlays.push({
               id: uid(),
               assetId: a.id,
+              at,
               start: 0,
-              end: a.duration,
-              filter: "original",
-              brightness: 1,
-              contrast: 1,
-              saturation: 1,
-              volume: 1,
-              speed: 1,
-            })),
-        ],
-        audioId: added.find((a) => a.type === "audio")?.id || p.audioId,
-      }));
+              end: Math.min(a.duration, Math.max(0.1, durationOf(p) - at)),
+              x: 75,
+              y: 28,
+              width: 35,
+              opacity: 1,
+              rotation: 0,
+              volume: 0,
+            });
+          return { ...p, overlays };
+        });
+        notify("تم استيراد الملف للطبقات الإضافية — عدّل مكانه من الخصائص");
+      } else
+        state.update((p) => ({
+          ...p,
+          clips: [
+            ...p.clips,
+            ...added
+              .filter((a) => a.type !== "audio")
+              .map((a) => ({
+                id: uid(),
+                assetId: a.id,
+                start: 0,
+                end: a.duration,
+                filter: "original",
+                brightness: 1,
+                contrast: 1,
+                saturation: 1,
+                volume: 1,
+                speed: 1,
+              })),
+          ],
+          audioId: added.find((a) => a.type === "audio")?.id || p.audioId,
+        }));
       if (added.length) setPage("editor");
     } finally {
       setBusy(false);
       if (input.current) input.current.value = "";
+      importTarget.current = { layer: false, at: 0 };
     }
   }
   return (
@@ -93,7 +142,9 @@ export default function App() {
             const f = e.target.files?.[0];
             if (!f) return;
             const d = await loadProject(f);
-            state.update(d.project);
+            await autosave.flush();
+            setDraftId(uid());
+            state.replace(d.project);
             setAssets((a) =>
               Array.from(
                 new Map(
@@ -111,6 +162,68 @@ export default function App() {
       />
       {page === "home" ? (
         <Home
+          workspace={
+            <>
+              <TemplateGallery
+                busy={busy}
+                onUse={async (template) => {
+                  if (
+                    state.project.clips.length &&
+                    !window.confirm(
+                      "بدء القالب كمشروع جديد؟ مشروعك الحالي سيظل محفوظًا تلقائيًا إن كان التخزين متاحًا.",
+                    )
+                  )
+                    return;
+                  setBusy(true);
+                  try {
+                    await autosave.flush();
+                    const built = await buildTemplate(template);
+                    setDraftId(uid());
+                    state.replace(built.project);
+                    setAssets((previous) => [...previous, ...built.assets]);
+                    setStartTab("text");
+                    setPage("editor");
+                    notify(
+                      "القالب جاهز — عدّل النصوص واستبدل الخلفيات من خصائص المقطع",
+                    );
+                  } catch (error) {
+                    notify((error as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+              <RecentProjects
+                revision={autosave.revision}
+                onRestore={async (id) => {
+                  setBusy(true);
+                  try {
+                    await autosave.flush();
+                    const restored = await restoreDraft(id);
+                    setDraftId(id);
+                    state.replace(restored.project);
+                    setAssets((previous) =>
+                      Array.from(
+                        new Map(
+                          [...previous, ...restored.assets].map((a) => [
+                            a.id,
+                            a,
+                          ]),
+                        ).values(),
+                      ),
+                    );
+                    setStartTab("media");
+                    setPage("editor");
+                    notify("تم استرجاع المشروع من هذا الجهاز");
+                  } catch (error) {
+                    notify((error as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            </>
+          }
           hasProject={!!state.project.clips.length}
           project={state.project}
           onResume={() => setPage("editor")}
@@ -118,12 +231,14 @@ export default function App() {
             setStartTab("effects");
             setPage("editor");
           }}
-          onNew={(ratio) => {
+          onNew={async (ratio) => {
+            await autosave.flush();
+            setDraftId(uid());
             setStartTab("media");
-            state.update({ ...blankProject(), ratio: ratio || "16:9" });
+            state.replace({ ...blankProject(), ratio: ratio || "16:9" });
             setPage("editor");
           }}
-          onImport={() => input.current?.click()}
+          onImport={() => chooseMedia()}
           onOpen={() => open.current?.click()}
         />
       ) : (
@@ -131,8 +246,13 @@ export default function App() {
           {...state}
           initialTab={startTab}
           assets={assets}
-          onHome={() => setPage("home")}
-          onImport={() => input.current?.click()}
+          onImportLayer={(at) => chooseMedia(true, at)}
+          autosaveStatus={autosave.status}
+          onHome={() => {
+            void autosave.flush();
+            setPage("home");
+          }}
+          onImport={() => chooseMedia()}
           onOpen={() => open.current?.click()}
           onStockAsset={(asset) => {
             setAssets((previous) =>
@@ -166,11 +286,7 @@ export default function App() {
             try {
               await saveProject(
                 state.project,
-                assets.filter(
-                  (a) =>
-                    state.project.clips.some((c) => c.assetId === a.id) ||
-                    a.id === state.project.audioId,
-                ),
+                assets.filter((a) => assetIsUsed(state.project, a.id)),
               );
               notify("تم تنزيل المشروع بملفاته — افتحه لاحقًا للمتابعة");
             } catch {
@@ -183,7 +299,7 @@ export default function App() {
       {busy && (
         <div className="busy-overlay">
           <div className="spinner" />
-          جاري قراءة الوسائط…
+          جاري تجهيز المشروع والوسائط…
         </div>
       )}
       {toast && (

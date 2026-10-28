@@ -14,6 +14,18 @@ export type Asset = {
     quality: "hd" | "fullhd";
   };
 };
+export type TransitionKind = "none" | "crossfade" | "slide" | "zoom" | "light";
+export type MotionPreset =
+  "none" | "push-in" | "pull-out" | "pan-left" | "pan-right";
+export type TextAnimation = "none" | "fade" | "slide" | "pop" | "typewriter";
+export type MotionKeyframe = {
+  id: string;
+  t: number;
+  x: number;
+  y: number;
+  scale: number;
+  opacity: number;
+};
 export type Clip = {
   id: string;
   assetId: string;
@@ -35,6 +47,22 @@ export type Clip = {
   effect?: string;
   effectIntensity?: number;
   effectSpeed?: number;
+  transition?: { kind: TransitionKind; duration: number };
+  motion?: MotionPreset;
+  keyframes?: MotionKeyframe[];
+};
+export type OverlayLayer = {
+  id: string;
+  assetId: string;
+  at: number;
+  start: number;
+  end: number;
+  x: number;
+  y: number;
+  width: number;
+  opacity: number;
+  rotation: number;
+  volume: number;
 };
 export type TextLayer = {
   id: string;
@@ -45,12 +73,16 @@ export type TextLayer = {
   y: number;
   size: number;
   color: string;
+  animationIn?: TextAnimation;
+  animationOut?: Exclude<TextAnimation, "typewriter">;
+  animationDuration?: number;
 };
 export type Project = {
   name: string;
   ratio: string;
   clips: Clip[];
   texts: TextLayer[];
+  overlays?: OverlayLayer[];
   audioId: string | null;
   audioVolume: number;
   audioStart?: number;
@@ -82,4 +114,26 @@ export function filterCss(c: Clip) {
   if (!preset && c.brightness === 1 && c.contrast === 1 && c.saturation === 1)
     return "none";
   return `${preset} brightness(${c.brightness}) contrast(${c.contrast}) saturate(${c.saturation})`;
+}
+
+export function assetIsUsed(p: Project, id: string) {
+  return (
+    p.clips.some((c) => c.assetId === id) ||
+    p.overlays?.some((l) => l.assetId === id) ||
+    p.audioId === id
+  );
+}
+export function newClip(asset: Asset): Clip {
+  return {
+    id: uid(),
+    assetId: asset.id,
+    start: 0,
+    end: asset.duration,
+    filter: "original",
+    brightness: 1,
+    contrast: 1,
+    saturation: 1,
+    volume: 1,
+    speed: 1,
+  };
 }
