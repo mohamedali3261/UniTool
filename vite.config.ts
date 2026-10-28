@@ -24,10 +24,13 @@ export default defineConfig(() => {
           audioreader: path.resolve(__dirname, 'the-audio-reader.html'),
           unitoolSvg: path.resolve(__dirname, 'unitool-svg.html'),
           logoStudio: path.resolve(__dirname, 'logo-studio.html'),
+          videoStudio: path.resolve(__dirname, 'video-studio.html'),
         },
       },
     },
     server: {
+      host: '0.0.0.0',
+      allowedHosts: ['.e2b.app'],
       headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',

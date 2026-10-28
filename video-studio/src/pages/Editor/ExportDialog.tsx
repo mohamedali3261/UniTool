@@ -1,0 +1,199 @@
+import { useStudioSettings } from "../../settings/StudioSettings";
+import { useRef, useState, useEffect } from "react";
+import { Download, Check, ShieldCheck, X } from "lucide-react";
+import { Asset, Project, durationOf, timeLabel } from "../../types";
+import { download } from "../../lib/media";
+import { exportVideo } from "../../lib/export";
+export function ExportDialog({
+  project,
+  assets,
+  onClose,
+}: {
+  project: Project;
+  assets: Asset[];
+  onClose: () => void;
+}) {
+  const { preferences } = useStudioSettings();
+  const lightweight = preferences.quality === "light";
+  const [format, setFormat] = useState<"mp4" | "webm">("mp4");
+  const [fps, setFps] = useState<24 | 30 | 60>(30);
+  const [bitrate, setBitrate] = useState(lightweight ? 2 : 4);
+  const [stage, setStage] = useState("");
+  const [height, setHeight] = useState(lightweight ? 480 : 720);
+  const [progress, setProgress] = useState(-1);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  const [result, setResult] = useState<Blob | null>(null);
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
+  const busy = progress >= 0 && !done;
+  async function run() {
+    setError("");
+    setProgress(0);
+    abort.current = new AbortController();
+    try {
+      const blob = await exportVideo(
+        project,
+        assets,
+        height,
+        setProgress,
+        abort.current.signal,
+        { format, fps, bitrateMbps: bitrate, onStage: setStage },
+      );
+      setResult(blob);
+      setDone(true);
+      download(blob, `${project.name}.${format}`);
+    } catch (e) {
+      setError(
+        abort.current?.signal.aborted
+          ? "تم إلغاء التصدير"
+          : (e as Error).message,
+      );
+      setProgress(-1);
+    }
+  }
+  return (
+    <div className="modal-backdrop">
+      <section
+        className="export-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-title"
+      >
+        <div className="field-heading">
+          <span className="eyebrow">جاهز للعالم؟</span>
+          <button
+            aria-label="إغلاق"
+            onClick={() => {
+              abort.current?.abort();
+              onClose();
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="export-icon">{done ? <Check /> : <Download />}</div>
+        <h2 id="export-title">
+          {done ? "فيديوك بقى جاهز!" : "آخر خطوة… وشارك حكايتك."}
+        </h2>
+        <p className="muted">
+          {project.name} • {timeLabel(durationOf(project))} • {project.ratio}
+        </p>
+        {!done && (
+          <>
+            <label className="field-label">
+              صيغة الفيديو
+              <select
+                aria-label="صيغة التصدير"
+                disabled={busy}
+                value={format}
+                onChange={(e) => setFormat(e.target.value as "mp4" | "webm")}
+              >
+                <option value="mp4">MP4 — الأنسب للنشر والمشاركة</option>
+                <option value="webm">WebM — تصدير مباشر</option>
+              </select>
+            </label>
+            <label className="field-label">
+              دقة التصدير
+              <select
+                disabled={busy}
+                value={height}
+                onChange={(e) => setHeight(+e.target.value)}
+              >
+                <option value={480}>480p — خفيف وسريع</option>
+                <option value={720}>720p — جودة ممتازة</option>
+                <option value={1080}>1080p — Full HD</option>
+              </select>
+            </label>
+            <div className="two-fields export-settings">
+              <label>
+                الإطارات / ثانية
+                <select
+                  aria-label="الإطارات في الثانية"
+                  disabled={busy}
+                  value={fps}
+                  onChange={(e) => setFps(+e.target.value as 24 | 30 | 60)}
+                >
+                  {[24, 30, 60].map((n) => (
+                    <option key={n} value={n}>
+                      {n} FPS
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                جودة الترميز
+                <select
+                  aria-label="جودة الترميز"
+                  disabled={busy}
+                  value={bitrate}
+                  onChange={(e) => setBitrate(+e.target.value)}
+                >
+                  <option value={2}>اقتصادي · 2 Mbps</option>
+                  <option value={4}>متوازن · 4 Mbps</option>
+                  <option value={8}>عالي · 8 Mbps</option>
+                </select>
+              </label>
+            </div>
+            <div className="export-info">
+              <b>
+                {format.toUpperCase()} · {fps} إطار/ثانية
+              </b>
+              <p>
+                يشمل المقاطع والنصوص والفلاتر والصوت. الدقة المحددة هي ارتفاع
+                الفيديو. التصدير بيتم في الوقت الحقيقي — سيب الصفحة مفتوحة لحد
+                ما يخلص.
+              </p>
+              {format === "mp4" && (
+                <p>
+                  لو المتصفح لا يدعم MP4 مباشرة، بنحوّل الفيديو محليًا إلى H.264
+                  + AAC. المحرك (~32 MB) يُحمّل من نفس الموقع عند الحاجة؛
+                  التحويل يحتاج وقت وذاكرة إضافية.
+                </p>
+              )}
+            </div>
+          </>
+        )}
+        {busy && (
+          <div className="progress-section">
+            <div>
+              <span>{stage || "بنجهّز فيديوك…"}</span>
+              <b>{progress}%</b>
+            </div>
+            <progress max={100} value={progress} />
+            <button
+              className="danger-link"
+              onClick={() => abort.current?.abort()}
+            >
+              إلغاء التصدير
+            </button>
+          </div>
+        )}
+        {error && (
+          <p className="error-message" role="alert">
+            {error}
+          </p>
+        )}
+        {done ? (
+          <button
+            className="primary full-width"
+            onClick={() =>
+              result && download(result, `${project.name}.${format}`)
+            }
+          >
+            <Download size={18} /> تنزيل مرة أخرى
+          </button>
+        ) : (
+          !busy && (
+            <button className="primary full-width" onClick={() => void run()}>
+              <Download size={18} /> تصدير الفيديو
+            </button>
+          )
+        )}
+        <span className="export-private">
+          <ShieldCheck size={15} /> على جهازك بالكامل. بدون علامة مائية.
+        </span>
+      </section>
+    </div>
+  );
+}
