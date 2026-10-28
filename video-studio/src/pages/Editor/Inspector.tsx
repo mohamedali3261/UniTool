@@ -1,3 +1,5 @@
+import { CreativeTools } from "../../animation/CreativeTools";
+import { LayerEditor } from "../../composition/LayerEditor";
 import { StudioSelect } from "../../components/StudioSelect";
 import { memo, useState } from "react";
 import { ClipTools } from "./ClipTools";
@@ -10,6 +12,9 @@ function InspectorView({
   onClip,
   onProject,
   onMove,
+  getTime,
+  onImportLayer,
+  onPreview,
 }: {
   project: Project;
   clip?: Clip;
@@ -17,6 +22,9 @@ function InspectorView({
   onClip: (p: Partial<Clip>) => void;
   onProject: (p: Partial<Project>) => void;
   onMove: (d: number) => void;
+  onImportLayer: () => void;
+  getTime: () => number;
+  onPreview: (time: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const a = assets.find((a) => a.id === clip?.assetId);
@@ -244,6 +252,14 @@ function InspectorView({
               />
             </label>
           ))}
+          <CreativeTools
+            clip={clip}
+            project={project}
+            assets={assets}
+            onClip={onClip}
+            getTime={getTime}
+            onPreview={onPreview}
+          />
           <ClipTools clip={clip} onClip={onClip} />
           <div className="inspector-divider" />
           <div className="field-heading">
@@ -270,6 +286,14 @@ function InspectorView({
           </p>
         </div>
       )}
+      <LayerEditor
+        project={project}
+        assets={assets}
+        onProject={onProject}
+        getTime={getTime}
+        onImportLayer={onImportLayer}
+        onSeek={onPreview}
+      />
       <div className="inspector-note">✦ كل تعديل بيظهر فورًا في المعاينة.</div>
     </aside>
   );

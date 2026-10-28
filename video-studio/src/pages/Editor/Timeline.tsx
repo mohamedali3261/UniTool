@@ -411,6 +411,11 @@ export function Timeline({
           <span>
             <Music2 size={16} /> الصوت
           </span>
+          {(p.overlays || []).map((l, i) => (
+            <span key={l.id} style={{ height: 44 }}>
+              طبقة {i + 1}
+            </span>
+          ))}
         </div>
         <div
           className="timeline-scroll"
@@ -423,7 +428,10 @@ export function Timeline({
           <div
             className="tracks"
             ref={track}
-            style={{ width, minHeight: 145 + textHeight }}
+            style={{
+              width,
+              minHeight: 145 + textHeight + (p.overlays?.length || 0) * 44,
+            }}
             onPointerMove={move}
             onPointerUp={(e) => finish(e)}
             onPointerCancel={(e) => finish(e, true)}
@@ -505,6 +513,14 @@ export function Timeline({
                       <img src={a.url} alt="" draggable={false} />
                     ) : (
                       <Film size={21} />
+                    )}
+                    {c.transition && c.transition.kind !== "none" && (
+                      <span
+                        className="transition-marker"
+                        title={`${c.transition.kind} ${c.transition.duration}s`}
+                      >
+                        ◇
+                      </span>
                     )}
                     <span className="clip-caption">{a?.name}</span>
                     <small>
@@ -661,6 +677,32 @@ export function Timeline({
                 </button>
               )}
             </div>
+            {(p.overlays || []).map((layer, i) => (
+              <div className="overlay-timeline-track" key={layer.id}>
+                <button
+                  aria-label={`عرض الطبقة ${i + 1}`}
+                  title="تعديل الموضع والمدة من طبقات إضافية في الخصائص"
+                  style={{
+                    left: layer.at * zoom,
+                    width: Math.max(44, (layer.end - layer.start) * zoom),
+                  }}
+                  onClick={() => {
+                    setTime(layer.at);
+                    document
+                      .getElementById("studio-layers")
+                      ?.setAttribute("open", "");
+                    document
+                      .getElementById("studio-inspector")
+                      ?.querySelector<HTMLButtonElement>(
+                        'button[aria-expanded="false"]',
+                      )
+                      ?.click();
+                  }}
+                >
+                  {i + 1} · {assets.find((a) => a.id === layer.assetId)?.name}
+                </button>
+              </div>
+            ))}
             <div
               className="playhead"
               style={{ left: time * zoom }}

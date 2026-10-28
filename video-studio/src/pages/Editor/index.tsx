@@ -1,3 +1,4 @@
+import { splitKeyframes } from "../../animation/evaluate";
 import { PerformanceMenu } from "../../settings/PerformanceMenu";
 import { useEvent } from "../../hooks/useEvent";
 import { effectById } from "../../effects/registry";
@@ -30,6 +31,7 @@ import { Library, Tab, tabs } from "./Library";
 import { Inspector } from "./Inspector";
 import { ExportDialog } from "./ExportDialog";
 type Props = {
+  autosaveStatus: string;
   initialTab?: Tab;
   project: Project;
   update: (p: Project | ((p: Project) => Project)) => void;
@@ -39,6 +41,7 @@ type Props = {
   canRedo: boolean;
   assets: Asset[];
   onHome: () => void;
+  onImportLayer: (at: number) => void;
   onImport: () => void;
   onStockAsset: (asset: Asset) => string;
   onOpen: () => void;
@@ -47,6 +50,7 @@ type Props = {
 };
 export function Editor({
   project,
+  autosaveStatus,
   initialTab = "media",
   update,
   undo,
@@ -56,6 +60,7 @@ export function Editor({
   assets,
   onHome,
   onImport,
+  onImportLayer,
   onStockAsset,
   onOpen,
   onSave,
@@ -74,6 +79,15 @@ export function Editor({
   const canvas = useRef<HTMLCanvasElement>(null);
   const clip = project.clips.find((c) => c.id === selected);
   const duration = durationOf(project);
+  const getTime = useEvent(() => time);
+  const importLayerAtCursor = useEvent(() => {
+    setPlaying(false);
+    onImportLayer(time);
+  });
+  const previewCreative = useEvent((at: number) => {
+    setTime(at);
+    setPlaying(true);
+  });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (!project.clips.some((c) => c.id === selected))
@@ -122,13 +136,24 @@ export function Editor({
       notify("حرّك المؤشر لمنتصف المقطع لتقسيمه");
       return;
     }
+    const frames = splitKeyframes(
+      found.clip,
+      (found.local - found.clip.start) / found.clip.speed,
+    );
     update((p) => ({
       ...p,
       clips: p.clips.flatMap((c) =>
         c.id === found.clip.id
           ? [
-              { ...c, end: found.local, fadeOut: 0 },
-              { ...c, id: uid(), start: found.local, fadeIn: 0 },
+              { ...c, end: found.local, fadeOut: 0, keyframes: frames.head },
+              {
+                ...c,
+                id: uid(),
+                start: found.local,
+                fadeIn: 0,
+                keyframes: frames.tail,
+                transition: undefined,
+              },
             ]
           : [c],
       ),
@@ -338,7 +363,10 @@ export function Editor({
         <div className="editor-actions">
           <PerformanceMenu />
           <span className="local-badge">
-            <i /> تحرير محلي
+            <i />{" "}
+            <span role="status" title={autosaveStatus}>
+              {autosaveStatus}
+            </span>
           </span>
           <IconButton
             icon={FolderOpen}
@@ -474,6 +502,9 @@ export function Editor({
           project={project}
           clip={clip}
           assets={assets}
+          getTime={getTime}
+          onImportLayer={importLayerAtCursor}
+          onPreview={previewCreative}
           onClip={updateClip}
           onProject={(patch) => update((p) => ({ ...p, ...patch }))}
           onMove={(d) => {
@@ -523,7 +554,7 @@ export function Editor({
       />
       <footer className="editor-footer">
         <span>
-          <i /> ملفاتك على جهازك فقط
+          <i /> <span role="status">{autosaveStatus}</span>
         </span>
         <span>
           Space تشغيل / إيقاف <span>•</span> S تقسيم <span>•</span> Ctrl + Z

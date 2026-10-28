@@ -39,6 +39,7 @@ export function useProject() {
   return {
     project: state.project,
     update,
+    replace: (project: Project) => setState({ project, past: [], future: [] }),
     undo,
     redo,
     canUndo: !!state.past.length,

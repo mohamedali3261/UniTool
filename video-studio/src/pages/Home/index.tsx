@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { EffectsShowcase } from "./EffectsShowcase";
 import { FeatureGrid } from "./FeatureGrid";
 import { FormatGallery } from "./FormatGallery";
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { Project, durationOf, timeLabel } from "../../types";
 export function Home({
+  workspace,
   hasProject,
   project,
   onResume,
@@ -29,6 +31,7 @@ export function Home({
   onOpen,
   onEffects,
 }: {
+  workspace?: ReactNode;
   hasProject: boolean;
   project: Project;
   onResume: () => void;
@@ -53,9 +56,18 @@ export function Home({
           <MonitorPlay size={19} />
           الاستوديو
         </button>
-        <button onClick={hasProject ? onResume : onOpen}>
+        <button
+          onClick={() =>
+            document.getElementById("studio-recent")?.scrollIntoView({
+              behavior: window.matchMedia("(prefers-reduced-motion:reduce)")
+                .matches
+                ? "auto"
+                : "smooth",
+            })
+          }
+        >
           <FolderOpen size={19} />
-          مشاريعي<small>{hasProject ? "01" : "00"}</small>
+          مشاريعي<small>محلية</small>
         </button>
         <button
           onClick={() =>
@@ -115,6 +127,7 @@ export function Home({
             <ArrowUpLeft />
           </button>
         </section>
+        {workspace}
         <FormatGallery onNew={onNew} />
         <FeatureGrid onNew={onNew} />
         {hasProject && (

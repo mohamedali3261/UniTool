@@ -1,6 +1,9 @@
+import { PreviewMedia } from "../../composition/PreviewMedia";
+import { sceneAt } from "../../composition/scene";
+
 import { useStudioSettings } from "../../settings/StudioSettings";
-import { musicTime, clipOpacity } from "../../lib/timeline";
-import { useEffect, useRef, useCallback } from "react";
+import { musicTime } from "../../lib/timeline";
+import { useEffect, useRef, useState } from "react";
 import {
   Maximize,
   Pause,
@@ -10,7 +13,7 @@ import {
   Clapperboard,
 } from "lucide-react";
 import { Asset, Project, durationOf, timeLabel } from "../../types";
-import { drawFrame, locate } from "../../lib/media";
+import { drawFrame } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
 export function Preview({
   project,
@@ -29,45 +32,37 @@ export function Preview({
   setPlaying: (p: boolean) => void;
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }) {
-  const video = useRef<HTMLVideoElement>(null);
   const audio = useRef<HTMLAudioElement>(null);
-  const image = useRef<HTMLImageElement>(null);
-  if (!image.current) image.current = new Image();
   const { previewWidth } = useStudioSettings();
-  const current = locate(project, time);
-  const asset = assets.find((a) => a.id === current?.clip.assetId);
   const music = assets.find((a) => a.id === project.audioId);
-  const latest = useRef({ project, time, current });
-  latest.current = { project, time, current };
-  const paint = useCallback(() => {
-    const { project, time, current } = latest.current;
-    const ctx = canvasRef.current?.getContext("2d");
-    if (ctx)
-      drawFrame(
-        ctx,
-        asset?.type === "video" ? video.current : asset ? image.current : null,
-        project,
-        time,
-        current?.clip,
-      );
-  }, [asset?.id, asset?.url, asset?.type, canvasRef]);
-  // Paused preview is event-driven: no perpetual RAF or hidden background draw loop.
+  const latest = useRef({ project, time });
+  latest.current = { project, time };
+  const runtime = useRef<PreviewMedia>(null);
+  const [mediaError, setMediaError] = useState("");
   useEffect(() => {
-    const frame = requestAnimationFrame(paint);
-    return () => cancelAnimationFrame(frame);
-  }, [paint, project, time, previewWidth]);
+    runtime.current = new PreviewMedia();
+    return () => runtime.current?.dispose();
+  }, []);
   useEffect(() => {
-    const v = video.current;
-    const img = image.current;
-    v?.addEventListener("loadeddata", paint);
-    v?.addEventListener("seeked", paint);
-    img?.addEventListener("load", paint);
+    let cancelled = false;
+    const engine = runtime.current;
+    void engine
+      ?.sync(sceneAt(project, time).entries, assets, playing)
+      .then((sources) => {
+        if (cancelled || !sources) return;
+        const ctx = canvasRef.current?.getContext("2d");
+        if (ctx) {
+          drawFrame(ctx, null, project, time, undefined, sources);
+          setMediaError("");
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setMediaError(error.message);
+      });
     return () => {
-      v?.removeEventListener("loadeddata", paint);
-      v?.removeEventListener("seeked", paint);
-      img?.removeEventListener("load", paint);
+      cancelled = true;
     };
-  }, [paint]);
+  }, [project, assets, time, playing, previewWidth, canvasRef]);
   useEffect(() => {
     const pause = () => {
       if (document.hidden) setPlaying(false);
@@ -75,19 +70,6 @@ export function Preview({
     document.addEventListener("visibilitychange", pause);
     return () => document.removeEventListener("visibilitychange", pause);
   }, [setPlaying]);
-  useEffect(() => {
-    if (asset?.type === "image") image.current.src = asset.url;
-  }, [asset]);
-  useEffect(() => {
-    const v = video.current;
-    if (!v || asset?.type !== "video" || !current) return;
-    if (Math.abs(v.currentTime - current.local) > (playing ? 0.25 : 0.005))
-      v.currentTime = current.local;
-    v.playbackRate = current.clip.speed;
-    v.volume = current.clip.volume * clipOpacity(current.clip, current.local);
-    if (playing) void v.play().catch(() => setPlaying(false));
-    else v.pause();
-  }, [time, playing, asset?.id, current?.clip.speed, current?.clip.volume]);
   useEffect(() => {
     const a = audio.current;
     if (!a) return;
@@ -157,15 +139,13 @@ export function Preview({
             display: project.clips.length ? "block" : "none",
           }}
         />
-        <video
-          ref={video}
-          src={asset?.type === "video" ? asset.url : undefined}
-          playsInline
-          preload="auto"
-          hidden
-        />
         <audio ref={audio} src={music?.url} hidden />
       </div>
+      {mediaError && (
+        <p role="status" className="composition-error">
+          {mediaError}
+        </p>
+      )}
       <div className="player-controls">
         <span className="timecode" dir="ltr">
           {timeLabel(time)} <em>/ {timeLabel(durationOf(project))}</em>
