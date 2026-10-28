@@ -5,6 +5,14 @@ export type Asset = {
   type: "video" | "image" | "audio";
   url: string;
   duration: number;
+  source?: {
+    provider: "pexels";
+    id: number;
+    pageUrl: string;
+    author: string;
+    authorUrl: string;
+    quality: "hd" | "fullhd";
+  };
 };
 export type Clip = {
   id: string;

@@ -1,3 +1,4 @@
+import { StudioSelect } from "../components/StudioSelect";
 import { useEffect, useRef } from "react";
 import { Gauge, ChevronDown, ShieldCheck } from "lucide-react";
 import { useStudioSettings, type Quality } from "./StudioSettings";
@@ -6,11 +7,19 @@ export function PerformanceMenu() {
   const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const close = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node))
+      if (
+        !ref.current?.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest("[data-studio-select-content]")
+      )
         ref.current?.removeAttribute("open");
     };
     const escape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") ref.current?.removeAttribute("open");
+      if (
+        e.key === "Escape" &&
+        !e.defaultPrevented &&
+        !document.querySelector("[data-studio-select-content]")
+      )
+        ref.current?.removeAttribute("open");
     };
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", escape);
@@ -33,17 +42,30 @@ export function PerformanceMenu() {
         </div>
         <label className="field-label">
           جودة المعاينة
-          <select
-            aria-label="جودة المعاينة"
+          <StudioSelect
+            label="جودة المعاينة"
             value={preferences.quality}
-            onChange={(e) =>
-              setPreferences({ quality: e.target.value as Quality })
+            onValueChange={(quality) =>
+              setPreferences({ quality: quality as Quality })
             }
-          >
-            <option value="auto">تلقائي — مناسب للجهاز</option>
-            <option value="light">خفيف — معاينة 480 بكسل</option>
-            <option value="high">عالي — معاينة 1280 بكسل</option>
-          </select>
+            options={[
+              {
+                value: "auto",
+                label: "تلقائي",
+                description: "أفضل توازن يناسب جهازك",
+              },
+              {
+                value: "light",
+                label: "خفيف — 480 بكسل",
+                description: "أقل استهلاكًا للذاكرة والبطارية",
+              },
+              {
+                value: "high",
+                label: "عالي — 1280 بكسل",
+                description: "تفاصيل أكثر أثناء المعاينة",
+              },
+            ]}
+          />
         </label>
         <label className="preference-check">
           <input

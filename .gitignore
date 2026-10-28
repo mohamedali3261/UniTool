@@ -7,3 +7,7 @@ coverage/
 .env*
 !.env.example
 
+
+# Browser QA artifacts
+/test-results/
+/playwright-report/

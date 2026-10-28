@@ -1,7 +1,12 @@
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
 import { clipOpacity } from "./timeline";
 import { Asset, Clip, Project, clipDuration, filterCss, uid } from "../types";
-export async function readAsset(file: File): Promise<Asset> {
+/** Optional cancellation also releases the temporary metadata decoder. */
+export async function readAsset(
+  file: File,
+  signal?: AbortSignal,
+): Promise<Asset> {
+  signal?.throwIfAborted();
   const type = file.type.startsWith("video/")
     ? "video"
     : file.type.startsWith("audio/")
@@ -14,29 +19,50 @@ export async function readAsset(file: File): Promise<Asset> {
   try {
     const duration = await new Promise<number>((resolve, reject) => {
       const el = type === "image" ? new Image() : document.createElement(type);
+      let settled = false;
+      const cleanup = () => {
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", abort);
+        el.onerror = null;
+        if (el instanceof HTMLImageElement) el.onload = null;
+        else {
+          el.onloadedmetadata = null;
+          el.pause();
+          el.removeAttribute("src");
+          el.load();
+        }
+      };
+      const finish = (duration?: number, error?: unknown) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (error) reject(error);
+        else resolve(duration!);
+      };
+      const abort = () =>
+        finish(
+          undefined,
+          signal?.reason || new DOMException("Aborted", "AbortError"),
+        );
       const timer = setTimeout(
-        () => reject(new Error("تعذّر قراءة الملف")),
+        () => finish(undefined, new Error("تعذّر قراءة الملف")),
         15000,
       );
-      const done = (d: number) => {
-        clearTimeout(timer);
-        resolve(d);
-      };
-      el.onerror = () => {
-        clearTimeout(timer);
-        reject(new Error("صيغة الملف غير مدعومة في المتصفح"));
-      };
-      if (el instanceof HTMLImageElement) {
-        el.onload = () => done(5);
-      } else {
+      signal?.addEventListener("abort", abort, { once: true });
+      el.onerror = () =>
+        finish(undefined, new Error("صيغة الملف غير مدعومة في المتصفح"));
+      if (el instanceof HTMLImageElement) el.onload = () => finish(5);
+      else {
         el.preload = "metadata";
         el.onloadedmetadata = () =>
-          Number.isFinite(el.duration)
-            ? done(el.duration)
-            : reject(new Error("مدة الملف غير صالحة"));
+          Number.isFinite(el.duration) && el.duration > 0
+            ? finish(el.duration)
+            : finish(undefined, new Error("مدة الملف غير صالحة"));
       }
       el.src = url;
+      if (signal?.aborted) abort();
     });
+    signal?.throwIfAborted();
     return { id: uid(), name: file.name, type, url, duration };
   } catch (e) {
     URL.revokeObjectURL(url);

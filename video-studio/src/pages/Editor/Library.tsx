@@ -1,4 +1,5 @@
-import { memo } from "react";
+import { lazy, memo, Suspense, useState } from "react";
+const PexelsLibrary = lazy(() => import("../../stock/PexelsLibrary"));
 import { EffectsCatalog } from "../../effects/components/EffectsCatalog";
 import {
   Sparkles,
@@ -33,6 +34,7 @@ function LibraryView({
   project,
   onImport,
   onAdd,
+  onStockAsset,
   onText,
   onFilter,
   onAudio,
@@ -49,6 +51,7 @@ function LibraryView({
   project: Project;
   onImport: () => void;
   onAdd: (a: Asset) => void;
+  onStockAsset: (asset: Asset) => void;
   onText: (s: string) => void;
   onFilter: (s: string) => void;
   onAudio: (id: string) => void;
@@ -56,9 +59,10 @@ function LibraryView({
   removeText: (id: string) => void;
   onRemoveAudio: () => void;
 }) {
+  const [source, setSource] = useState<"local" | "pexels">("local");
   return (
     <aside
-      className={`library-panel ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
+      className={`library-panel ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
       id="studio-library"
     >
       <div className="panel-heading">
@@ -69,7 +73,44 @@ function LibraryView({
             : "لمستك تصنع الفرق"}
         </span>
       </div>
-      {(tab === "media" || tab === "audio") && (
+      {tab === "media" && (
+        <div
+          className="studio-segmented media-sources"
+          role="group"
+          aria-label="مصدر الوسائط"
+        >
+          <button
+            aria-pressed={source === "local"}
+            onClick={() => setSource("local")}
+          >
+            <Upload size={15} />
+            ملفاتي
+          </button>
+          <button
+            aria-pressed={source === "pexels"}
+            onClick={() => setSource("pexels")}
+          >
+            <Film size={15} />
+            مكتبة Pexels
+          </button>
+        </div>
+      )}
+      {tab === "media" && source === "pexels" && (
+        <Suspense
+          fallback={
+            <p className="panel-tip" role="status">
+              جاري فتح مكتبة Pexels…
+            </p>
+          }
+        >
+          <PexelsLibrary
+            assets={assets}
+            onImported={onStockAsset}
+            suspended={suspendPreviews}
+          />
+        </Suspense>
+      )}
+      {(tab === "audio" || (tab === "media" && source === "local")) && (
         <>
           <button className="upload-zone" onClick={onImport}>
             <div>
@@ -106,6 +147,11 @@ function LibraryView({
                     </i>
                   </div>
                   <p title={a.name}>{a.name}</p>
+                  {a.source && (
+                    <small className="asset-credit">
+                      Pexels · {a.source.author}
+                    </small>
+                  )}
                 </button>
               ))}
           </div>

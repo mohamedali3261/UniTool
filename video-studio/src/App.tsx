@@ -134,6 +134,34 @@ export default function App() {
           onHome={() => setPage("home")}
           onImport={() => input.current?.click()}
           onOpen={() => open.current?.click()}
+          onStockAsset={(asset) => {
+            setAssets((previous) =>
+              previous.some((a) => a.id === asset.id)
+                ? previous
+                : [...previous, asset],
+            );
+            const id = uid();
+            state.update((p) => ({
+              ...p,
+              clips: [
+                ...p.clips,
+                {
+                  id,
+                  assetId: asset.id,
+                  start: 0,
+                  end: asset.duration,
+                  filter: "original",
+                  brightness: 1,
+                  contrast: 1,
+                  saturation: 1,
+                  volume: 1,
+                  speed: 1,
+                },
+              ],
+            }));
+            notify("تمت إضافة لقطة Pexels للخط الزمني");
+            return id;
+          }}
           onSave={async () => {
             try {
               await saveProject(

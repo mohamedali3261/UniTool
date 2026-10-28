@@ -40,6 +40,7 @@ type Props = {
   assets: Asset[];
   onHome: () => void;
   onImport: () => void;
+  onStockAsset: (asset: Asset) => string;
   onOpen: () => void;
   onSave: () => Promise<void>;
   notify: (s: string) => void;
@@ -55,10 +56,16 @@ export function Editor({
   assets,
   onHome,
   onImport,
+  onStockAsset,
   onOpen,
   onSave,
   notify,
 }: Props) {
+  const onStockAdd = useEvent((asset: Asset) => {
+    setPlaying(false);
+    setTime(durationOf(project));
+    select(onStockAsset(asset));
+  });
   const [tab, setTab] = useState<Tab>(initialTab);
   const [selected, select] = useState<string | null>(null);
   const [time, setTime] = useState(0);
@@ -198,9 +205,15 @@ export function Editor({
       if (
         exporting ||
         e.defaultPrevented ||
-        (e.target as HTMLElement).matches(
-          "input,textarea,select,[contenteditable=true]",
+        (e.target as HTMLElement).closest(
+          "input,textarea,select,[contenteditable=true],[role=combobox],[data-studio-select-content],dialog[open],[role=dialog]",
         )
+      )
+        return;
+      // Let focused buttons/links activate with Space/Enter instead of toggling playback.
+      if (
+        (e.code === "Space" || e.key === "Enter") &&
+        (e.target as HTMLElement).closest("button,a,summary,[role=button]")
       )
         return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -325,7 +338,7 @@ export function Editor({
         <div className="editor-actions">
           <PerformanceMenu />
           <span className="local-badge">
-            <i /> محلي وآمن
+            <i /> تحرير محلي
           </span>
           <IconButton
             icon={FolderOpen}
@@ -405,6 +418,7 @@ export function Editor({
           project={project}
           onImport={onImport}
           onAdd={onLibraryAdd}
+          onStockAsset={onStockAdd}
           onText={onLibraryText}
           onFilter={onLibraryFilter}
           onEffect={onLibraryEffect}
