@@ -71,7 +71,7 @@ function LibraryView({
   const [source, setSource] = useState<"local" | "pexels">("local");
   return (
     <aside
-      className={`library-panel ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
+      className={`library-panel ${tab === "text" ? "is-text" : ""} ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
       id="studio-library"
     >
       <div className="panel-heading">

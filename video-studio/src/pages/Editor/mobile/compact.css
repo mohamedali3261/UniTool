@@ -1,0 +1,1095 @@
+/* Reference-driven compact mobile editing surface. UniTool controls/data remain unchanged. */
+.mobile-project-menu,
+.mobile-edit-tab,
+.mobile-player-history,
+.timeline-options-toggle {
+  display: none;
+}
+@media (max-width: 650px),
+  (max-width: 900px) and (pointer: coarse),
+  (max-height: 500px) and (pointer: coarse) {
+  .editor-shell {
+    --mint: #e6eded;
+    --line: #2a2a2a;
+    background: #111;
+    grid-template-rows: 48px minmax(150px, 52%) 32px minmax(0, 1fr) calc(
+        56px + env(safe-area-inset-bottom)
+      );
+  }
+  .editor-shell > .editor-header {
+    height: 48px;
+    min-height: 0;
+    flex-wrap: nowrap;
+    padding: 0 6px;
+    gap: 4px;
+    background: #121212;
+    border: 0;
+  }
+  .editor-shell .editor-brand {
+    flex: 1 1 0;
+    flex-basis: auto;
+    width: auto;
+    height: 48px;
+    min-width: 0;
+    gap: 0;
+  }
+  .editor-shell .editor-brand .brand-icon,
+  .editor-shell .editor-brand > b,
+  .editor-shell .editor-brand .header-divider {
+    display: none;
+  }
+  .editor-shell .editor-brand input {
+    width: 100%;
+    max-width: 140px;
+    min-width: 0;
+    min-height: 36px;
+    font-size: 11px;
+    padding: 0 3px;
+  }
+  .editor-shell .editor-brand input:focus {
+    font-size: 16px;
+  }
+  .editor-shell .editor-brand > .icon-button {
+    width: 38px;
+    min-width: 38px;
+    height: 44px;
+  }
+  .editor-shell .editor-actions {
+    width: auto;
+    flex: 0 0 auto;
+    height: 48px;
+    gap: 2px;
+  }
+  .editor-shell .editor-actions > .performance-menu,
+  .editor-shell .editor-actions > .icon-button,
+  .editor-shell .editor-actions > .local-badge {
+    display: none;
+  }
+  .editor-shell .editor-actions .primary {
+    flex: none;
+    min-width: 68px;
+    min-height: 34px;
+    height: 34px;
+    max-height: 34px;
+    padding: 6px 9px;
+    font-size: 10px;
+    border-radius: 6px;
+    background: #25c9ce;
+    color: #061719;
+  }
+  .editor-shell .editor-actions .primary > svg,
+  .editor-shell .editor-actions .primary > span {
+    display: none;
+  }
+  .editor-shell .editor-actions .save-button {
+    min-width: 36px;
+    width: 36px;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+  .editor-shell .editor-actions .save-button svg {
+    width: 15px;
+    height: 15px;
+  }
+  .editor-shell .mobile-project-menu {
+    position: relative;
+    display: block;
+  }
+  .mobile-project-menu > summary {
+    width: 36px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    list-style: none;
+    cursor: pointer;
+  }
+  .mobile-project-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .mobile-project-popover {
+    position: fixed;
+    top: 48px;
+    left: 8px;
+    max-height: calc(var(--studio-viewport, 100dvh) - 60px);
+    overflow-y: auto;
+    z-index: 80;
+    width: min(250px, calc(100vw - 16px));
+    padding: 8px;
+    background: #242424;
+    border: 1px solid #454545;
+    border-radius: 9px;
+    box-shadow: 0 8px 30px #0008;
+  }
+  .mobile-project-popover > button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    width: 100%;
+    padding: 7px;
+    font-size: 11px;
+  }
+  .mobile-project-popover .performance-menu {
+    display: block;
+  }
+  .mobile-project-popover .performance-menu > summary {
+    width: 100%;
+    justify-content: flex-start;
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .mobile-project-popover .performance-menu > summary > span {
+    display: inline;
+  }
+  .mobile-project-popover .performance-popover {
+    position: static;
+    width: 100%;
+    max-height: 50dvh;
+    margin-top: 6px;
+    padding: 8px;
+    background: #191919;
+    border: 0;
+    box-shadow: none;
+  }
+  .mobile-project-popover > p {
+    font-size: 9px;
+    line-height: 1.6;
+    color: #a3aaa5;
+    padding: 6px;
+  }
+  .editor-shell .center-workspace {
+    background: #101010;
+    border: 0;
+  }
+  .editor-shell .center-workspace > .workspace-tools {
+    display: none;
+  }
+  .editor-shell .center-workspace .preview-area {
+    position: relative;
+    padding: 0 5px;
+  }
+  .editor-shell .preview-area .canvas-stage {
+    padding: 1px 0;
+    background: #101010;
+    border-radius: 0;
+  }
+  .editor-shell .canvas-stage canvas {
+    box-shadow: none;
+  }
+  .editor-shell .preview-toolbar-host {
+    position: absolute;
+    top: 3px;
+    right: 7px;
+    left: 7px;
+    z-index: 6;
+    min-height: 0;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .editor-shell .preview-edit-toolbar {
+    justify-content: flex-start;
+    min-height: 36px;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+    gap: 3px;
+  }
+  .editor-shell .preview-edit-toolbar > button,
+  .editor-shell .preview-edit-toolbar > .studio-select {
+    pointer-events: auto;
+    min-height: 34px;
+    height: 34px;
+    max-height: 34px;
+    font-size: 9px;
+    border-radius: 5px;
+  }
+  .editor-shell .preview-edit-toolbar > .preview-more-toggle {
+    min-width: 34px !important;
+    width: 34px;
+    padding: 0;
+    flex-shrink: 0;
+    border-color: #ffffff18;
+    background: #151515bd;
+  }
+  .preview-more-toggle > span {
+    display: none;
+  }
+  .editor-shell
+    .preview-edit-toolbar:not(.is-expanded)
+    > :not(.preview-more-toggle) {
+    display: none !important;
+  }
+  .editor-shell .preview-edit-toolbar.is-expanded {
+    background: #1c1c1cef;
+    border: 1px solid #5556;
+    border-radius: 6px;
+    padding: 3px;
+    min-height: 40px;
+  }
+  .editor-shell .preview-edit-toolbar.is-expanded > button {
+    display: inline-flex;
+    min-width: 34px;
+    padding: 5px 8px;
+  }
+  .editor-shell .preview-edit-toolbar.is-expanded > .studio-select {
+    display: flex;
+    flex: none;
+    width: 128px;
+    min-width: 110px;
+    padding: 5px 8px;
+  }
+  .editor-shell .preview-area .player-controls {
+    position: relative;
+    display: block;
+    height: 40px;
+    min-height: 40px;
+    background: #101010;
+  }
+  .editor-shell .player-controls > .mobile-player-history {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    transform: none;
+    gap: 0;
+    height: 40px;
+  }
+  .editor-shell .player-controls .mobile-player-history .icon-button {
+    min-width: 36px;
+    width: 36px;
+    min-height: 40px;
+    height: 40px;
+  }
+  .editor-shell .player-controls .mobile-player-history svg {
+    width: 16px;
+    height: 16px;
+  }
+  .editor-shell .player-controls > div:not(.mobile-player-history) {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    height: 40px;
+    display: flex;
+    align-items: center;
+  }
+  .editor-shell
+    .player-controls
+    > div:not(.mobile-player-history)
+    > .icon-button {
+    display: none;
+  }
+  .editor-shell .preview-area .play-button {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 0;
+  }
+  .editor-shell .player-controls > .icon-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    min-width: 36px;
+    width: 36px;
+    min-height: 40px;
+    height: 40px;
+  }
+  .editor-shell .player-controls .timecode {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .editor-shell > .mobile-panel-bar {
+    height: 32px;
+    min-height: 0;
+    padding: 0 5px;
+    gap: 3px;
+    background: #181818;
+    border-top: 1px solid #292929;
+    border-bottom: 1px solid #292929;
+  }
+  .editor-shell .mobile-panel-bar > button {
+    min-height: 30px;
+    height: 30px;
+    font-size: 9px;
+    gap: 4px;
+    border-bottom-width: 1px;
+    color: #a6aaa8;
+  }
+  .editor-shell .mobile-panel-bar > button svg {
+    width: 12px;
+    height: 12px;
+  }
+  .editor-shell .mobile-panel-bar > button[aria-pressed="true"] {
+    background: transparent;
+    color: white;
+    border-color: #dedede;
+  }
+  .editor-shell .mobile-panel-bar > button:last-child {
+    flex-basis: 32px;
+  }
+  .editor-shell .library-panel,
+  .editor-shell .library-panel.is-catalog,
+  .editor-shell .library-panel.is-stock,
+  .editor-shell .inspector {
+    padding: 9px 10px;
+    background: #1b1b1b;
+    font-size: 10px;
+  }
+  .editor-shell .library-panel > .panel-heading,
+  .editor-shell .inspector > .panel-heading {
+    min-height: 22px;
+    margin: 0 0 8px;
+  }
+  .editor-shell .panel-heading h3 {
+    font-size: 10px;
+  }
+  .editor-shell .panel-heading > span {
+    font-size: 8px;
+  }
+  .editor-shell .panel-description,
+  .editor-shell .panel-tip,
+  .editor-shell .tool-help,
+  .editor-shell .panel-description p {
+    font-size: 9px;
+    line-height: 1.6;
+    margin: 5px 0;
+  }
+  .editor-shell .inspector .field-label,
+  .editor-shell .inspector .slider-label,
+  .editor-shell .library-panel .field-label {
+    font-size: 10px;
+    margin: 8px 0;
+    line-height: 1.5;
+  }
+  .editor-shell .inspector .field-heading {
+    margin: 8px 0;
+    font-size: 10px;
+  }
+  .editor-shell .inspector .field-heading b,
+  .editor-shell .inspector label,
+  .editor-shell .inspector .two-fields label {
+    font-size: 10px;
+  }
+  .editor-shell .inspector .inspector-divider {
+    margin: 10px 0;
+  }
+  .editor-shell .two-fields {
+    gap: 8px;
+  }
+  .editor-shell .studio-select {
+    min-height: 32px;
+    height: 32px;
+    padding: 5px 8px;
+    font-size: 10px;
+    border-radius: 6px;
+    background: #252525;
+    border-color: #3a3a3a;
+  }
+  .editor-shell .library-panel input:not([type="range"]):not([type="color"]),
+  .editor-shell .inspector input:not([type="range"]):not([type="color"]) {
+    min-height: 32px;
+    padding: 5px 7px;
+    font-size: 12px;
+    border-radius: 5px;
+    background: #262626;
+    border-color: #3a3a3a;
+  }
+  .editor-shell .library-panel input:focus:not([type="range"]),
+  .editor-shell .inspector input:focus:not([type="range"]),
+  .editor-shell textarea:focus {
+    font-size: 16px;
+  }
+  .editor-shell .inspector .transform-buttons {
+    gap: 5px;
+    margin-top: 7px;
+  }
+  .editor-shell .inspector .transform-buttons button,
+  .editor-shell .inspector .layer-actions button,
+  .editor-shell .inspector .secondary,
+  .editor-shell .library-panel > .primary {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  .editor-shell .inspector .transform-buttons svg {
+    width: 14px;
+    height: 14px;
+  }
+  .editor-shell .inspector .creative-tools,
+  .editor-shell .inspector .layer-editor {
+    margin-top: 9px;
+    padding-top: 7px;
+  }
+  .editor-shell .inspector summary {
+    min-height: 30px;
+    padding: 7px 0;
+    font-size: 10px;
+  }
+  .editor-shell .inspector .layer-properties {
+    padding: 7px;
+    margin: 7px 0;
+  }
+  .editor-shell .inspector-mobile-toggle {
+    min-height: 30px;
+    min-width: 48px;
+    font-size: 9px;
+  }
+  .editor-shell .simple-text-panel {
+    gap: 7px;
+  }
+  .editor-shell .simple-text-panel > .primary {
+    min-height: 32px;
+    padding: 6px 9px;
+    font-size: 11px;
+    border-radius: 6px;
+    background: #e5e5e5;
+    color: #151515;
+  }
+  .editor-shell .mobile-text-picker {
+    gap: 5px;
+  }
+  .editor-shell .mobile-text-picker > button:not(.studio-select) {
+    flex-basis: 34px;
+    min-height: 32px;
+    border-radius: 5px;
+    border-color: #444;
+  }
+  .editor-shell .mobile-text-picker svg {
+    width: 13px;
+    height: 13px;
+  }
+  .editor-shell .text-active-editor {
+    padding: 8px;
+    border-radius: 7px;
+    background: #202020;
+    border-color: #353535;
+  }
+  .editor-shell .text-active-heading {
+    min-height: 24px;
+    font-size: 10px;
+  }
+  .editor-shell .text-active-heading button {
+    min-height: 28px;
+    font-size: 9px;
+    padding: 4px;
+  }
+  .editor-shell .text-active-editor > textarea {
+    min-height: 62px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 4px 0 7px;
+    padding: 7px;
+  }
+  .editor-shell .text-active-editor > textarea:focus {
+    font-size: 16px;
+  }
+  .editor-shell .text-active-editor .full-width {
+    min-height: 32px;
+    padding: 5px;
+    font-size: 10px;
+  }
+  .editor-shell .text-active-editor fieldset {
+    margin: 10px 0;
+  }
+  .editor-shell .text-active-editor legend {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+  .editor-shell .text-active-editor .field-label {
+    margin: 7px 0;
+    font-size: 10px;
+  }
+  .editor-shell .text-swatches {
+    gap: 5px;
+  }
+  .editor-shell .text-swatches > button {
+    min-width: 28px;
+    min-height: 28px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+  }
+  .editor-shell .text-swatches input {
+    width: 30px;
+    height: 30px;
+  }
+  .editor-shell .text-style-buttons {
+    gap: 4px;
+    margin: 7px 0;
+  }
+  .editor-shell .text-style-buttons > button {
+    min-height: 30px;
+    font-size: 9px;
+  }
+  .editor-shell .text-advanced summary {
+    min-height: 32px;
+    padding: 8px 0;
+    font-size: 9px;
+  }
+  .editor-shell .text-quick-presets button {
+    min-height: 30px;
+    font-size: 9px;
+    padding: 5px;
+  }
+  .editor-shell .danger-link {
+    min-height: 30px;
+    padding: 5px;
+    font-size: 10px;
+  }
+  .editor-shell .upload-zone {
+    min-height: 62px;
+    padding: 8px;
+    gap: 3px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-radius: 7px;
+  }
+  .editor-shell .upload-zone > div {
+    padding: 4px;
+    margin: 0;
+  }
+  .editor-shell .upload-zone b {
+    font-size: 10px;
+  }
+  .editor-shell .upload-zone span {
+    font-size: 8px;
+  }
+  .editor-shell .upload-zone small {
+    display: none;
+  }
+  .editor-shell .library-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px 7px;
+    margin-top: 10px;
+  }
+  .editor-shell .asset-thumb {
+    height: 62px;
+    border-radius: 4px;
+  }
+  .editor-shell .asset-card p {
+    font-size: 8px;
+    min-height: 0;
+    margin-top: 4px;
+  }
+  .editor-shell .asset-credit {
+    font-size: 7px;
+  }
+  .editor-shell .media-source-tabs {
+    margin: 0 0 8px;
+    gap: 5px;
+  }
+  .editor-shell .media-source-tabs > button {
+    min-height: 32px;
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+  .editor-shell .media-source-tabs svg {
+    width: 12px;
+    height: 12px;
+  }
+  .editor-shell .catalog-sticky {
+    top: -9px;
+    background: #1b1b1b;
+  }
+  .editor-shell .effects-intro {
+    display: none;
+  }
+  .editor-shell .effects-intro h3 {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .editor-shell .effects-intro p {
+    font-size: 9px;
+    line-height: 1.6;
+    margin: 3px 0;
+  }
+  .editor-shell .effect-search input {
+    min-height: 32px;
+    font-size: 12px;
+  }
+  .editor-shell .effect-search {
+    min-height: 34px;
+    height: 34px;
+    padding: 0 7px;
+    border-radius: 5px;
+  }
+  .editor-shell .effect-search input {
+    height: 32px;
+  }
+  .editor-shell .effect-search button {
+    width: 30px;
+    height: 32px;
+  }
+  .editor-shell .catalog-sticky {
+    padding: 0 0 2px;
+  }
+  .editor-shell .effect-categories {
+    padding: 4px 0;
+    gap: 4px;
+  }
+  .editor-shell .effect-categories button {
+    min-height: 26px;
+    padding: 3px 8px;
+    font-size: 9px;
+    border-radius: 4px;
+  }
+  .editor-shell .effect-categories button small {
+    font-size: 7px;
+  }
+  .editor-shell .effect-current {
+    min-height: 26px;
+    padding: 1px 6px;
+    margin: 3px 0;
+    font-size: 9px;
+  }
+  .editor-shell .effect-current button {
+    min-width: 28px;
+    min-height: 26px;
+    height: 26px;
+  }
+  .editor-shell .effect-results-count {
+    font-size: 8px;
+    margin: 5px 0;
+  }
+  .editor-shell .effect-adjustments {
+    padding: 2px 7px 7px;
+    margin-bottom: 7px;
+  }
+  .editor-shell .effect-adjustments label {
+    min-height: 42px;
+    margin-top: 7px;
+    font-size: 10px;
+  }
+  .editor-shell .effect-adjustments input {
+    margin: 12px 0 6px;
+  }
+  .editor-shell .catalog-footnote {
+    font-size: 8px;
+    margin-top: 8px;
+  }
+  .editor-shell .media-sources {
+    margin: 0 0 8px;
+  }
+  .editor-shell .studio-segmented > button {
+    min-height: 30px;
+    font-size: 9px;
+    padding: 5px 8px;
+  }
+  .editor-shell .stock-library {
+    gap: 7px;
+    font-size: 10px;
+  }
+  .editor-shell .stock-intro b {
+    font-size: 11px;
+  }
+  .editor-shell .stock-intro p {
+    font-size: 9px;
+  }
+  .editor-shell .stock-search {
+    min-height: 34px;
+    padding: 0 5px;
+  }
+  .editor-shell .stock-search input {
+    height: 32px;
+  }
+  .editor-shell .stock-search button {
+    min-height: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+  .editor-shell .stock-filters {
+    gap: 6px;
+  }
+  .editor-shell .stock-filters .field-label {
+    font-size: 9px;
+  }
+  .editor-shell .stock-suggestions button {
+    min-height: 28px;
+    font-size: 9px;
+    padding: 4px 7px;
+  }
+  .editor-shell .stock-results-heading {
+    font-size: 9px;
+  }
+  .editor-shell .stock-grid {
+    gap: 7px;
+  }
+  .editor-shell .stock-card-footer {
+    padding: 3px 5px;
+    gap: 3px;
+  }
+  .editor-shell .stock-card-footer > span {
+    font-size: 8px;
+  }
+  .editor-shell .stock-card-footer > button {
+    min-height: 30px;
+    height: 30px;
+    width: 30px;
+    min-width: 30px;
+  }
+
+  .editor-shell .effect-tabs button,
+  .editor-shell .category-pills button {
+    min-height: 30px;
+    font-size: 9px;
+    padding: 5px 8px;
+  }
+  .editor-shell .live-effects-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .editor-shell .effect-picture {
+    height: 68px;
+    aspect-ratio: auto;
+  }
+  .editor-shell .effect-category-tag {
+    font-size: 6px;
+    padding: 2px 4px;
+  }
+  .editor-shell .effect-favorite {
+    width: 26px;
+    height: 26px;
+    min-height: 26px;
+    min-width: 26px;
+  }
+  .editor-shell .effect-preview-button {
+    min-height: 26px;
+    padding: 3px 6px;
+    font-size: 7px;
+  }
+  .editor-shell .effect-card-info {
+    min-height: 32px;
+    padding: 5px 4px;
+    font-size: 9px;
+  }
+  .editor-shell .effect-card-info b {
+    font-size: 9px;
+  }
+  .editor-shell .effect-card-info small {
+    font-size: 7px;
+  }
+  .editor-shell .stickers-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .editor-shell .stickers-grid > button {
+    font-size: 23px;
+    height: 40px;
+    min-height: 40px;
+  }
+  .editor-shell .tool-rail {
+    height: 100%;
+    padding: 2px 4px max(2px, env(safe-area-inset-bottom));
+    gap: 1px;
+    background: #171717;
+    border-color: #272727;
+  }
+  .editor-shell .tool-rail > .mobile-edit-tab {
+    display: flex;
+  }
+  .editor-shell .tool-rail > button {
+    flex: 1 0 48px;
+    min-width: 48px;
+    min-height: 48px;
+    height: 48px;
+    gap: 3px;
+    font-size: 8px;
+    border-radius: 0;
+    color: #a8aaa9;
+  }
+  .editor-shell .tool-rail > button svg {
+    width: 19px;
+    height: 19px;
+  }
+  .editor-shell .tool-rail > button.active {
+    background: transparent;
+    box-shadow: none;
+    color: #fff;
+  }
+  .editor-shell .timeline-pro {
+    background: #1c1c1c;
+  }
+  .editor-shell .timeline-pro .timeline-toolbar {
+    min-height: 38px;
+    height: 38px;
+    padding: 0 4px;
+    gap: 3px;
+    overflow: visible;
+    flex-shrink: 0;
+    background: #1a1a1a;
+  }
+  .editor-shell .timeline-toolbar > .timeline-options-toggle {
+    display: flex;
+    flex: 0 0 34px;
+    min-width: 34px;
+    min-height: 36px;
+    padding: 0;
+  }
+  .editor-shell .timeline-toolbar > div:first-of-type {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .editor-shell .timeline-toolbar > div:last-of-type {
+    display: none;
+  }
+  .editor-shell .timeline-toolbar button {
+    min-height: 36px;
+    height: 36px;
+    min-width: 34px;
+    padding: 5px 7px;
+    font-size: 8px;
+    border-radius: 4px;
+  }
+  .editor-shell .timeline-toolbar button svg {
+    width: 15px;
+    height: 15px;
+  }
+  .editor-shell .timeline-toolbar button[aria-pressed="true"] {
+    background: #ffffff12;
+    border-color: #666;
+    color: #eee;
+  }
+  .editor-shell .timeline-pro .timeline-meta {
+    display: none;
+  }
+  .editor-shell .timeline-pro.show-options .timeline-toolbar {
+    height: auto;
+    min-height: 76px;
+    flex-wrap: wrap;
+  }
+  .editor-shell
+    .timeline-pro.show-options
+    .timeline-toolbar
+    > div:last-of-type {
+    display: flex;
+    flex: 1 0 100%;
+    min-width: 0;
+    overflow-x: auto;
+    height: 36px;
+    justify-content: flex-end;
+  }
+  .editor-shell .timeline-pro.show-options .timeline-meta {
+    display: flex;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 5px;
+  }
+  .editor-shell .timeline-meta input {
+    min-height: 24px;
+    height: 24px;
+    font-size: 10px;
+    padding: 2px 5px;
+    width: 64px;
+  }
+  .editor-shell .timeline-meta .icon-button {
+    min-height: 26px;
+    width: 28px;
+  }
+  .editor-shell .timeline-meta label {
+    font-size: 8px;
+  }
+  .editor-shell .timeline-pro .track-labels {
+    width: 46px;
+    background: #1c1c1c;
+    border-color: #303030;
+  }
+  .editor-shell .track-settings-toggle {
+    height: 100%;
+    min-height: 24px;
+    padding: 1px 2px;
+    font-size: 7px;
+  }
+  .editor-shell .ruler > span {
+    top: 3px;
+    font-size: 7px;
+  }
+  .editor-shell .ruler > span:after {
+    bottom: -4px;
+  }
+  .editor-shell .timeline-marker {
+    top: 14px;
+    height: 16px;
+    padding: 0;
+    font-size: 7px;
+  }
+  .editor-shell .timeline-marker svg {
+    width: 9px;
+    height: 9px;
+  }
+  .editor-shell .timeline-marker small {
+    font-size: 7px;
+    max-width: 66px;
+  }
+  .editor-shell .timeline-pro .timeline-clip {
+    border-radius: 3px;
+    padding: 3px 6px;
+    background: #303030;
+    border-color: #5558;
+  }
+  .editor-shell .timeline-thumbnails {
+    opacity: 0.88;
+  }
+  .editor-shell .timeline-clip.selected {
+    border-color: #f7f7f7;
+    box-shadow: none;
+  }
+  .editor-shell .timeline-pro .timeline-clip .clip-caption {
+    font-size: 7px;
+    padding: 0 2px;
+  }
+  .editor-shell .timeline-pro .timeline-clip > small {
+    font-size: 7px;
+    bottom: 13px;
+    padding: 0 2px;
+  }
+  .editor-shell .clip-keyframes {
+    height: 12px;
+    background: #13131388;
+  }
+  .editor-shell .clip-keyframes:empty {
+    height: 5px;
+    background: transparent;
+  }
+  .editor-shell .timeline-keyframe {
+    font-size: 9px;
+    height: 18px;
+    top: -3px;
+    width: 24px;
+  }
+  .editor-shell .timeline-text {
+    height: 20px;
+    min-height: 20px;
+    border-radius: 3px;
+    font-size: 8px;
+    gap: 4px;
+  }
+  .editor-shell .timeline-text svg {
+    width: 10px;
+    height: 10px;
+  }
+  .editor-shell .timeline-text > span {
+    font-size: 8px;
+  }
+  .editor-shell .timeline-pro .audio-wave {
+    top: 4px;
+    border-radius: 3px;
+  }
+  .editor-shell .audio-track-name {
+    font-size: 8px;
+  }
+  .editor-shell .audio-track-name svg {
+    width: 10px;
+    height: 10px;
+  }
+  .editor-shell .timeline-pro .overlay-timeline-track > button {
+    font-size: 8px;
+    border-radius: 3px;
+    padding: 3px 8px;
+  }
+  .editor-shell .empty-track {
+    height: 28px;
+    min-height: 24px;
+    font-size: 9px;
+    gap: 4px;
+  }
+  .editor-shell .track-add {
+    min-width: 28px;
+    width: 28px;
+    height: 30px;
+    margin-left: 5px;
+  }
+  .editor-shell .timeline-detail-bar {
+    min-height: 34px;
+    height: 34px;
+    font-size: 9px;
+    gap: 5px;
+    padding: 2px 6px;
+  }
+  .editor-shell .timeline-detail-bar input,
+  .editor-shell .timeline-detail-bar button {
+    min-height: 28px;
+    font-size: 10px;
+    padding: 4px 6px;
+  }
+  .editor-shell .playhead:before {
+    background: #eee;
+  }
+  .editor-shell.is-preview-focused {
+    grid-template-rows: 48px minmax(0, 1fr) 32px 0px calc(
+        56px + env(safe-area-inset-bottom)
+      );
+  }
+  .studio-keyboard-open .editor-shell {
+    grid-template-rows: 44px minmax(90px, 34%) 32px minmax(0, 1fr) 0px;
+  }
+  .studio-keyboard-open .editor-shell > .editor-header {
+    height: 44px;
+  }
+  .studio-keyboard-open .editor-shell .editor-brand input {
+    font-size: 16px;
+  }
+  .studio-mobile-editing .toast {
+    max-width: 340px;
+    font-size: 9px;
+    padding: 7px 10px;
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    border-radius: 7px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  .editor-shell,
+  .editor-shell.is-preview-focused {
+    grid-template-rows: 44px minmax(0, 1fr) calc(
+        52px + env(safe-area-inset-bottom)
+      );
+  }
+  .editor-shell > .editor-header {
+    height: 44px;
+  }
+  .editor-shell .editor-brand input {
+    max-width: 240px;
+  }
+  .mobile-project-popover {
+    top: 44px;
+  }
+  .editor-shell .library-panel,
+  .editor-shell .library-panel.is-catalog,
+  .editor-shell .library-panel.is-stock,
+  .editor-shell .inspector {
+    padding-top: 42px;
+  }
+  .editor-shell > .mobile-panel-bar {
+    height: 32px;
+  }
+  .editor-shell > .timeline {
+    margin-top: 32px;
+    height: calc(100% - 32px) !important;
+  }
+  .editor-shell .tool-rail > button {
+    min-height: 44px;
+    height: 44px;
+  }
+  .editor-shell.is-preview-focused > .mobile-panel-bar {
+    height: 32px;
+    width: 32px;
+  }
+  .editor-shell.is-preview-focused .mobile-panel-bar > button:last-child {
+    min-height: 30px;
+    flex-basis: 30px;
+  }
+}

@@ -18,6 +18,7 @@ import { Asset, Project, durationOf, timeLabel } from "../../types";
 import { drawFrame } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
 export function Preview({
+  mobileHistory,
   project,
   assets,
   time,
@@ -31,6 +32,7 @@ export function Preview({
   onTextPanel,
   inlineRequest,
 }: {
+  mobileHistory?: React.ReactNode;
   project: Project;
   assets: Asset[];
   time: number;
@@ -199,6 +201,7 @@ export function Preview({
         </p>
       )}
       <div className="player-controls">
+        {mobileHistory}
         <span className="timecode" dir="ltr">
           {timeLabel(time)} <em>/ {timeLabel(durationOf(project))}</em>
         </span>

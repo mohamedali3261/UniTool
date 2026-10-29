@@ -260,6 +260,9 @@ test("real touch drag works on mobile without horizontal overflow", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page
+    .getByRole("button", { name: "أدوات العنصر الإضافية", exact: true })
+    .click();
   await page.getByRole("button", { name: "تعديل", exact: true }).click();
   expect(
     await page

@@ -1,3 +1,7 @@
+import { MobileToolPage } from "./mobile/MobileToolPage";
+import { MobileProjectMenu } from "./mobile/MobileProjectMenu";
+import { useMobileEditor, type MobilePanel } from "./mobile/useMobileEditor";
+import { MobilePanelBar } from "./mobile/MobilePanelBar";
 import { freezeClipFrame } from "./timeline/mediaFrames";
 import { insertFrozen, locked } from "./timeline/editing";
 import { clipStart } from "../../lib/timeline";
@@ -18,6 +22,7 @@ import {
   ImageDown,
   Keyboard,
   Plus,
+  Scissors,
 } from "lucide-react";
 import {
   Asset,
@@ -86,6 +91,19 @@ export function Editor({
     nonce: number;
   }>();
   const [tab, setTab] = useState<Tab>(initialTab);
+  const isMobile = useMobileEditor();
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(
+    !project.clips.length || initialTab === "effects" ? "library" : "timeline",
+  );
+  const [previewFocused, setPreviewFocused] = useState(false);
+  const openPanel = (panel: MobilePanel) => {
+    setMobilePanel(panel);
+    setPreviewFocused(false);
+  };
+  const openTool = (next: Tab) => {
+    setTab(next);
+    openPanel("library");
+  };
   const [selected, select] = useState<string | null>(null);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -249,7 +267,7 @@ export function Editor({
       notify("أضف مقطع فيديو أو صورة الأول");
       return;
     }
-    setTab("text");
+    openTool("text");
     const start = Math.min(time, Math.max(0, duration - 0.1));
     const textId = uid();
     setVisualSelection({ kind: "text", id: textId });
@@ -427,7 +445,10 @@ export function Editor({
     if (s?.kind === "clip") select(s.id);
   });
   return (
-    <div className="editor-shell">
+    <div
+      className={`editor-shell ${previewFocused ? "is-preview-focused" : ""} ${isMobile && mobilePanel !== "timeline" && !previewFocused ? "is-tool-page" : ""}`}
+      data-mobile-panel={mobilePanel}
+    >
       <header className="editor-header">
         <div className="editor-brand">
           <IconButton
@@ -452,7 +473,17 @@ export function Editor({
           />
         </div>
         <div className="editor-actions">
-          <PerformanceMenu />
+          {isMobile && (
+            <MobileProjectMenu
+              onOpen={() => {
+                setPlaying(false);
+                onOpen();
+              }}
+              onImport={onImport}
+              status={autosaveStatus}
+            />
+          )}
+          {!isMobile && <PerformanceMenu />}
           <span className="local-badge">
             <i />{" "}
             <span role="status" title={autosaveStatus}>
@@ -488,28 +519,30 @@ export function Editor({
         </div>
       </header>
       <div className="editor-workspace">
-        <nav className="tool-rail">
+        <nav className="tool-rail" aria-label="أقسام التحرير">
+          <button
+            className={`mobile-edit-tab ${mobilePanel === "inspector" && !previewFocused ? "active" : ""}`}
+            aria-label="تعديل المقاطع"
+            aria-pressed={mobilePanel === "inspector" && !previewFocused}
+            onClick={() => openPanel("inspector")}
+          >
+            <Scissors size={20} />
+            <span>تعديل</span>
+          </button>
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => {
-                setTab(t.id);
-                if (
-                  window.matchMedia(
-                    "(max-width:650px), (max-width:900px) and (pointer:coarse), (max-height:500px) and (pointer:coarse)",
-                  ).matches
-                )
-                  document.getElementById("studio-library")?.scrollIntoView({
-                    behavior: window.matchMedia(
-                      "(prefers-reduced-motion:reduce)",
-                    ).matches
-                      ? "auto"
-                      : "smooth",
-                    block: "start",
-                  });
-              }}
-              aria-pressed={tab === t.id}
-              className={tab === t.id ? "active" : ""}
+              onClick={() => openTool(t.id)}
+              aria-pressed={
+                tab === t.id &&
+                (!isMobile || (mobilePanel === "library" && !previewFocused))
+              }
+              className={
+                tab === t.id &&
+                (!isMobile || (mobilePanel === "library" && !previewFocused))
+                  ? "active"
+                  : ""
+              }
             >
               <t.icon size={22} />
               <span>{t.label}</span>
@@ -538,7 +571,11 @@ export function Editor({
           onInlineText={inlineText}
           tab={tab}
           clip={clip}
-          suspendPreviews={playing || exporting}
+          suspendPreviews={
+            playing ||
+            exporting ||
+            (isMobile && (mobilePanel !== "library" || previewFocused))
+          }
           assets={assets}
           project={project}
           onImport={onImport}
@@ -586,6 +623,22 @@ export function Editor({
             />
           </div>
           <Preview
+            mobileHistory={
+              <div className="mobile-player-history">
+                <IconButton
+                  icon={Undo2}
+                  label="تراجع"
+                  disabled={!canUndo}
+                  onClick={undo}
+                />
+                <IconButton
+                  icon={Redo2}
+                  label="إعادة"
+                  disabled={!canRedo}
+                  onClick={redo}
+                />
+              </div>
+            }
             project={project}
             assets={assets}
             time={time}
@@ -596,11 +649,15 @@ export function Editor({
             selection={visualSelection}
             onSelect={selectVisual}
             onChange={update}
-            onTextPanel={() => setTab("text")}
+            onTextPanel={() => openTool("text")}
             inlineRequest={inlineRequest}
           />
         </div>
         <Inspector
+          mobileExpanded={
+            isMobile && mobilePanel === "inspector" && !previewFocused
+          }
+          onMobileClose={() => openPanel("timeline")}
           project={project}
           clip={clip}
           assets={assets}
@@ -622,7 +679,27 @@ export function Editor({
           }}
         />
       </div>
+      <MobilePanelBar
+        panel={mobilePanel}
+        onPanel={openPanel}
+        toolName={tabs.find((t) => t.id === tab)?.label || "الأدوات"}
+        focused={previewFocused}
+        onFocus={() => setPreviewFocused((v) => !v)}
+      />
+      {isMobile && mobilePanel !== "timeline" && !previewFocused && (
+        <MobileToolPage
+          panel={mobilePanel}
+          tab={tab}
+          onTool={(value) =>
+            value === "adjust" ? openPanel("inspector") : openTool(value)
+          }
+          onBack={() => openPanel("timeline")}
+          onFocus={() => setPreviewFocused(true)}
+        />
+      )}
       <Timeline
+        compact={isMobile}
+        onInspectOverlay={() => openPanel("inspector")}
         onFreeze={freezeAtCursor}
         onSelectItem={(s) => {
           setPlaying(false);
@@ -651,8 +728,8 @@ export function Editor({
         onSplit={split}
         onDelete={remove}
         onDuplicate={duplicate}
-        onText={() => setTab("text")}
-        onAudio={() => setTab("audio")}
+        onText={() => openTool("text")}
+        onAudio={() => openTool("audio")}
         onChange={(p) => {
           setPlaying(false);
           update(p);

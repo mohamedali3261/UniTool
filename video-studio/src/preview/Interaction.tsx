@@ -1,5 +1,6 @@
 import {
   Move,
+  MoreHorizontal,
   Eye,
   EyeOff,
   Minus,
@@ -86,6 +87,7 @@ export function Interaction(props: Props) {
     null,
   );
   const field = useRef<HTMLTextAreaElement>(null);
+  const [moreTools, setMoreTools] = useState(false);
   const ctx = canvas?.getContext("2d");
   const boxes = ctx ? boxesAt(props.displayProject, time, ctx, dimensions) : [];
   const box = boxes.find(
@@ -330,7 +332,7 @@ export function Interaction(props: Props) {
         createPortal(
           <>
             <div
-              className="preview-edit-toolbar"
+              className={`preview-edit-toolbar ${moreTools ? "is-expanded" : ""}`}
               aria-label="أدوات التعديل داخل المعاينة"
             >
               <button
@@ -361,6 +363,15 @@ export function Interaction(props: Props) {
                   })),
                 ]}
               />
+              <button
+                className="preview-more-toggle"
+                aria-label="أدوات العنصر الإضافية"
+                aria-expanded={moreTools}
+                onClick={() => setMoreTools((v) => !v)}
+              >
+                <MoreHorizontal size={16} />
+                <span>{moreTools ? "أقل" : "الأدوات ⋯"}</span>
+              </button>
               <button
                 title="تصغير"
                 aria-label="تصغير العنصر"

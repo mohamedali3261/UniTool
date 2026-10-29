@@ -325,6 +325,7 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
     type: "touchEnd",
     touchPoints: [],
   });
+  await tool(page, "خيارات التايم لاين").click();
   expect(
     Number(
       await page
@@ -332,6 +333,11 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
         .inputValue(),
     ),
   ).toBeGreaterThan(90);
+  await tool(page, "خيارات التايم لاين").click();
+  // Pinch anchors the viewport under the fingers; expose the whole clip before holding its body (not a trim handle).
+  await page.locator(".timeline-scroll").evaluate((el) => {
+    el.scrollLeft = 0;
+  });
   const clip = (await page.locator(".timeline-clip").first().boundingBox())!;
   await client.send("Input.dispatchTouchEvent", {
     type: "touchStart",
@@ -349,6 +355,7 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
     .getByRole("dialog", { name: "إجراءات الخط الزمني", exact: true })
     .getByRole("button", { name: "إغلاق", exact: true })
     .click();
+  await tool(page, "خيارات التايم لاين").click();
   await tool(page, "وضع القص الدقيق").click();
   expect(
     await page

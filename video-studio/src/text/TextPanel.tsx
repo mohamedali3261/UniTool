@@ -46,6 +46,31 @@ export function TextPanel({
       >
         + إضافة نص
       </button>
+      {active && (
+        <div className="mobile-text-picker">
+          <StudioSelect
+            label="اختيار النص للتعديل"
+            value={active.id}
+            onValueChange={onSelect}
+            options={project.texts.map((t, i) => ({
+              value: t.id,
+              label: `${i + 1} · ${t.text || "نص فارغ"}`,
+            }))}
+          />
+          <button
+            aria-label={raw?.hidden ? "إظهار النص المحدد" : "إخفاء النص المحدد"}
+            onClick={() => onChange(active.id, { hidden: !raw?.hidden })}
+          >
+            {raw?.hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+          <button
+            aria-label={raw?.locked ? "فتح قفل النص المحدد" : "قفل النص المحدد"}
+            onClick={() => onChange(active.id, { locked: !raw?.locked })}
+          >
+            {raw?.locked ? <Lock size={16} /> : <Unlock size={16} />}
+          </button>
+        </div>
+      )}
       <p className="text-panel-intro">
         اختار النص، اكتب كلامك، واسحبه في المعاينة. إعدادات أكتر موجودة تحت لو
         احتجتها.

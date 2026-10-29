@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import {
   Plus,
+  MoreHorizontal,
   Scissors,
   Trash2,
   Copy,
@@ -83,6 +84,7 @@ type Drag = {
   pointer: number;
 };
 type Props = {
+  compact?: boolean;
   project: Project;
   assets: Asset[];
   time: number;
@@ -100,8 +102,10 @@ type Props = {
   onChange: (p: Project) => void;
   onSelectItem?: (s: Item) => void;
   onFreeze?: (id: string) => void;
+  onInspectOverlay?: () => void;
 };
 export function Timeline({
+  compact = false,
   project,
   assets,
   time,
@@ -115,7 +119,9 @@ export function Timeline({
   onChange,
   onSelectItem,
   onFreeze,
+  onInspectOverlay,
 }: Props) {
+  const [mobileOptions, setMobileOptions] = useState(false);
   const [zoom, setZoom] = useState(55),
     [snap, setSnap] = useState(true),
     [ripple, setRipple] = useState(true),
@@ -176,11 +182,24 @@ export function Timeline({
     selectedMarker = p.markers?.find((m) => m.id === marker),
     keyClip = kf ? p.clips.find((c) => c.id === kf.clipId) : undefined,
     keyframe = keyClip?.keyframes?.find((f) => f.id === kf?.id);
+  const rulerHeight = compact ? 30 : 48,
+    laneHeight = compact ? 24 : 34;
   const rowHeight = (id: string, normal: number) =>
-    p.tracks?.[id]?.collapsed ? 32 : p.tracks?.[id]?.height || normal;
-  const videoHeight = rowHeight("video", 88),
-    textHeight = rowHeight("text", Math.max(44, lanes.count * 34 + 8)),
-    audioHeight = rowHeight("audio", 54);
+    p.tracks?.[id]?.collapsed
+      ? compact
+        ? 24
+        : 32
+      : p.tracks?.[id]?.height
+        ? compact
+          ? clamp(p.tracks[id].height! * 0.7, 32, 98)
+          : p.tracks[id].height!
+        : normal;
+  const videoHeight = rowHeight("video", compact ? 60 : 88),
+    textHeight = rowHeight(
+      "text",
+      Math.max(compact ? 28 : 44, lanes.count * laneHeight + (compact ? 4 : 8)),
+    ),
+    audioHeight = rowHeight("audio", compact ? 34 : 54);
   const clearLong = () => {
     if (long.current) clearTimeout(long.current);
     long.current = null;
@@ -685,7 +704,7 @@ export function Timeline({
   };
   return (
     <section
-      className="timeline timeline-enhanced timeline-pro"
+      className={`timeline timeline-enhanced timeline-pro ${compact ? "is-compact" : ""} ${mobileOptions ? "show-options" : ""}`}
       style={{ height }}
       onKeyDown={(e) => {
         if (
@@ -742,6 +761,14 @@ export function Timeline({
         <i />
       </div>
       <div className="timeline-toolbar">
+        <button
+          className="timeline-options-toggle"
+          aria-label="خيارات التايم لاين"
+          aria-expanded={mobileOptions}
+          onClick={() => setMobileOptions((v) => !v)}
+        >
+          <MoreHorizontal size={18} />
+        </button>
         <div>
           <IconButton
             icon={Scissors}
@@ -1038,7 +1065,7 @@ export function Timeline({
       )}
       <div className="timeline-body" dir="ltr">
         <div className="track-labels" ref={labels}>
-          <span style={{ height: 48 }} />
+          <span style={{ height: rulerHeight }} />
           {[
             ["video", "الفيديو", videoHeight, true],
             ["text", "النصوص", textHeight, false],
@@ -1046,7 +1073,7 @@ export function Timeline({
             ...(p.overlays || []).map((l, i) => [
               l.id,
               `طبقة ${i + 1}`,
-              rowHeight(l.id, 50),
+              rowHeight(l.id, compact ? 32 : 50),
               true,
             ]),
           ].map(([id, name, h, audio]) => (
@@ -1075,11 +1102,14 @@ export function Timeline({
             style={{
               width,
               minHeight:
-                48 +
+                rulerHeight +
                 videoHeight +
                 textHeight +
                 audioHeight +
-                (p.overlays || []).reduce((n, l) => n + rowHeight(l.id, 50), 0),
+                (p.overlays || []).reduce(
+                  (n, l) => n + rowHeight(l.id, compact ? 32 : 50),
+                  0,
+                ),
             }}
             onPointerMove={(e) => {
               if (e.pointerId === drag.current?.pointer) moveAt(e.clientX);
@@ -1113,7 +1143,7 @@ export function Timeline({
             <div
               className="ruler"
               style={{
-                height: 48,
+                height: rulerHeight,
                 backgroundImage: precise
                   ? "linear-gradient(to right,#b7f56822 1px,transparent 1px)"
                   : undefined,
@@ -1318,7 +1348,9 @@ export function Timeline({
                     style={{
                       left: t.start * zoom,
                       width: Math.max(8, (t.end - t.start) * zoom),
-                      top: 5 + (lanes.lanes.get(t.id) || 0) * 34,
+                      top:
+                        (compact ? 3 : 5) +
+                        (lanes.lanes.get(t.id) || 0) * laneHeight,
                     }}
                     onDoubleClick={onText}
                     onPointerDown={(e) => start(e, "text", s)}
@@ -1393,7 +1425,7 @@ export function Timeline({
                 <div
                   className={`overlay-timeline-track ${p.tracks?.[l.id]?.hidden ? "track-hidden" : ""}`}
                   key={l.id}
-                  style={{ height: rowHeight(l.id, 50) }}
+                  style={{ height: rowHeight(l.id, compact ? 32 : 50) }}
                 >
                   <button
                     {...attributes(s)}
@@ -1403,10 +1435,14 @@ export function Timeline({
                     style={{
                       left: l.at * zoom,
                       width: Math.max(8, (l.end - l.start) * zoom),
-                      height: Math.max(24, rowHeight(l.id, 50) - 10),
+                      height: Math.max(
+                        24,
+                        rowHeight(l.id, compact ? 32 : 50) - 10,
+                      ),
                     }}
                     onPointerDown={(e) => start(e, "overlay", s)}
                     onDoubleClick={() => {
+                      onInspectOverlay?.();
                       setTime(l.at);
                       document
                         .getElementById("studio-layers")
