@@ -149,7 +149,10 @@ export async function exportVideo(
   let recorder: MediaRecorder | undefined;
   try {
     await audioCtx.resume();
-    for (const clip of [...p.clips, ...(p.overlays || []).map(layerClip)]) {
+    for (const clip of [
+      ...p.clips.filter((c) => !c.gap),
+      ...(p.overlays || []).map(layerClip),
+    ]) {
       const a = assets.find((asset) => asset.id === clip.assetId);
       if (!a) throw new Error("وسيط مفقود في المشروع");
       const el =
@@ -175,6 +178,7 @@ export async function exportVideo(
       gain.gain.value = p.audioVolume;
       audioCtx.createMediaElementSource(music).connect(gain).connect(dest);
       music.loop = false;
+      music.playbackRate = p.audioSpeed || 1;
       await loadSource(music, audio.url, signal);
     }
     const first = locate(p, 0);

@@ -32,7 +32,10 @@ export function layerClip(layer: OverlayLayer): Clip {
   };
 }
 export function transitionDuration(previous: Clip, next: Clip) {
-  return !next.transition || next.transition.kind === "none"
+  return previous.gap ||
+    next.gap ||
+    !next.transition ||
+    next.transition.kind === "none"
     ? 0
     : Math.min(
         next.transition.duration,
@@ -53,7 +56,10 @@ export function sceneAt(
     end += clipDuration(c);
   });
   const make = (index: number): SceneEntry => {
-    const clip = project.clips[index];
+    const original = project.clips[index];
+    const clip = project.tracks?.video?.muted
+      ? { ...original, volume: 0 }
+      : original;
     const elapsed = Math.max(
       0,
       Math.min(clipDuration(clip) - 0.001, time - starts[index]),
@@ -112,8 +118,19 @@ export function sceneAt(
     if (i < 0) i = time < 0 ? 0 : project.clips.length - 1;
     entries = [make(i)];
   }
-  for (const layer of project.overlays || []) {
-    if (time < layer.at || time >= layer.at + layer.end - layer.start) continue;
+  entries = entries.filter(
+    (e) => !e.clip.gap && !e.clip.hidden && !project.tracks?.video?.hidden,
+  );
+  for (const original of project.overlays || []) {
+    const flags = project.tracks?.[original.id];
+    const layer = flags?.muted ? { ...original, volume: 0 } : original;
+    if (
+      layer.hidden ||
+      flags?.hidden ||
+      time < layer.at ||
+      time >= layer.at + layer.end - layer.start
+    )
+      continue;
     const clip = layerClip(layer);
     const elapsed = time - layer.at;
     entries.push({

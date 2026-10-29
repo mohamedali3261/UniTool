@@ -77,10 +77,15 @@ export function validateProjectData(
   if (!unique(d.assets)) throw new Error("وسائط المشروع مكررة");
   if (
     p.audioId !== null &&
-    !d.assets.some((a: Asset) => a.id === p.audioId && a.type === "audio")
+    !d.assets.some(
+      (a: Asset) =>
+        a.id === p.audioId && (a.type === "audio" || a.type === "video"),
+    )
   )
     throw new Error("مسار الصوت غير صالح");
   if (
+    (p.audioEnd !== undefined && !num(p.audioEnd, 0.01, 3600)) ||
+    (p.audioSpeed !== undefined && !num(p.audioSpeed, 0.25, 4)) ||
     (p.audioStart !== undefined && !num(p.audioStart)) ||
     (p.audioOffset !== undefined && !num(p.audioOffset)) ||
     (p.audioLoop !== undefined && typeof p.audioLoop !== "boolean")
@@ -98,7 +103,14 @@ export function validateProjectData(
           num(f.x, -100, 100) &&
           num(f.y, -100, 100) &&
           num(f.scale, 0.25, 3) &&
-          num(f.opacity, 0, 1),
+          num(f.opacity, 0, 1) &&
+          (f.easeFrom === undefined || num(f.easeFrom, 0, 1)) &&
+          (f.easeTo === undefined || num(f.easeTo, 0, 1)) &&
+          (f.easeTo ?? 1) > (f.easeFrom ?? 0) &&
+          (f.easing === undefined ||
+            ["linear", "ease-in", "ease-out", "ease-in-out"].includes(
+              f.easing,
+            )),
       ) &&
       unique(frames));
   if (
@@ -106,6 +118,54 @@ export function validateProjectData(
     (!Array.isArray(p.overlays) || p.overlays.length > 6)
   )
     throw new Error("طبقات المشروع غير صالحة");
+  if (
+    p.markers !== undefined &&
+    (!Array.isArray(p.markers) ||
+      p.markers.length > 500 ||
+      !unique(p.markers) ||
+      p.markers.some(
+        (m: any) =>
+          !m ||
+          !id(m.id) ||
+          !num(m.time, 0, 3600) ||
+          typeof m.label !== "string" ||
+          m.label.length > 100 ||
+          !/^#[0-9a-f]{6}$/i.test(m.color),
+      ))
+  )
+    throw new Error("علامات التوقيت غير صالحة");
+  if (
+    p.tracks !== undefined &&
+    (!p.tracks ||
+      typeof p.tracks !== "object" ||
+      Array.isArray(p.tracks) ||
+      Object.keys(p.tracks).length > 9 ||
+      Object.entries(p.tracks).some(
+        ([key, v]: [string, any]) =>
+          ![
+            "video",
+            "text",
+            "audio",
+            ...(p.overlays || []).map((l: any) => l.id),
+          ].includes(key) ||
+          !v ||
+          typeof v !== "object" ||
+          Array.isArray(v) ||
+          (v.name !== undefined &&
+            (typeof v.name !== "string" || v.name.length > 80)) ||
+          (v.height !== undefined && !num(v.height, 32, 140)) ||
+          ["locked", "hidden", "muted", "collapsed"].some(
+            (k) => v[k] !== undefined && typeof v[k] !== "boolean",
+          ),
+      ))
+  )
+    throw new Error("إعدادات المسارات غير صالحة");
+  for (const item of [...p.clips, ...p.texts, ...(p.overlays || [])])
+    if (
+      item.groupId !== undefined &&
+      (!id(item.groupId) || item.groupId.length > 100)
+    )
+      throw new Error("مجموعة غير صالحة");
   for (const c of p.clips) {
     const asset = d.assets.find(
       (a: Asset) => a.id === c?.assetId && a.type !== "audio",
@@ -117,13 +177,18 @@ export function validateProjectData(
           c.motion,
         )) ||
       !validFrames(c.keyframes) ||
+      (c.gap !== undefined && typeof c.gap !== "boolean") ||
+      (c.hidden !== undefined && typeof c.hidden !== "boolean") ||
       (c.transition !== undefined &&
         (!c.transition ||
           !["none", "crossfade", "slide", "zoom", "light"].includes(
             c.transition.kind,
           ) ||
           !num(c.transition.duration, 0.1, 3))) ||
-      (c.rotation !== undefined && ![0, 90, 180, 270].includes(c.rotation)) ||
+      (c.rotation !== undefined && !num(c.rotation, 0, 360)) ||
+      (c.x !== undefined && !num(c.x, -100, 100)) ||
+      (c.y !== undefined && !num(c.y, -100, 100)) ||
+      (c.locked !== undefined && typeof c.locked !== "boolean") ||
       (c.zoom !== undefined && !num(c.zoom, 0.25, 3)) ||
       (c.flipX !== undefined && typeof c.flipX !== "boolean") ||
       (c.flipY !== undefined && typeof c.flipY !== "boolean") ||
@@ -140,7 +205,7 @@ export function validateProjectData(
       !num(c.start) ||
       !num(c.end, 0.01) ||
       c.end <= c.start ||
-      (asset.type === "video" && c.end > asset.duration + 0.01) ||
+      (asset.type === "video" && !c.gap && c.end > asset.duration + 0.01) ||
       !num(c.speed, 0.25, 4) ||
       !num(c.brightness, 0, 2) ||
       !num(c.contrast, 0, 2) ||
@@ -168,7 +233,9 @@ export function validateProjectData(
       !num(layer.width, 10, 150) ||
       !num(layer.opacity, 0, 1) ||
       !num(layer.volume, 0, 1) ||
-      ![0, 90, 180, 270].includes(layer.rotation)
+      !num(layer.rotation, 0, 360) ||
+      (layer.locked !== undefined && typeof layer.locked !== "boolean") ||
+      (layer.hidden !== undefined && typeof layer.hidden !== "boolean")
     )
       throw new Error("طبقة صورة أو فيديو غير صالحة");
   }
@@ -194,7 +261,14 @@ export function validateProjectData(
       t.end <= t.start ||
       !num(t.x, 0, 100) ||
       !num(t.y, 0, 100) ||
-      !num(t.size, 12, 180)
+      !num(t.size, 12, 180) ||
+      (t.rotation !== undefined && !num(t.rotation, 0, 360)) ||
+      (t.opacity !== undefined && !num(t.opacity, 0, 1)) ||
+      (t.font !== undefined && !["sans", "serif", "mono"].includes(t.font)) ||
+      (t.background !== undefined && !/^#[0-9a-f]{6}$/i.test(t.background)) ||
+      ["bold", "outline", "hidden", "locked"].some(
+        (key) => t[key] !== undefined && typeof t[key] !== "boolean",
+      )
     )
       throw new Error("نصوص المشروع غير صالحة");
   }

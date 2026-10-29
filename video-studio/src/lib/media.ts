@@ -1,3 +1,4 @@
+import { textLayout } from "../text/layout";
 import { motionAt, textAt } from "../animation/evaluate";
 import { sceneAt } from "../composition/scene";
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
@@ -125,9 +126,10 @@ function drawSingleFrame(
     const sh = s.videoHeight || s.naturalHeight;
     if (sw && sh) {
       const rotation = ((clip?.rotation || 0) * Math.PI) / 180;
-      const sideways = (clip?.rotation || 0) % 180 !== 0;
-      const boundsW = sideways ? sh : sw,
-        boundsH = sideways ? sw : sh;
+      const boundsW =
+          Math.abs(sw * Math.cos(rotation)) + Math.abs(sh * Math.sin(rotation)),
+        boundsH =
+          Math.abs(sw * Math.sin(rotation)) + Math.abs(sh * Math.cos(rotation));
       const scale =
         (clip?.fit === "cover"
           ? Math.max(w / boundsW, h / boundsH)
@@ -140,8 +142,8 @@ function drawSingleFrame(
         motion.opacity *
         (clip ? clipOpacity(clip, clip.start + elapsed * clip.speed) : 1);
       ctx.translate(
-        w / 2 + (e.camera.x || 0) + (motion.x * w) / 100,
-        h / 2 + (e.camera.y || 0) + (motion.y * h) / 100,
+        w / 2 + (e.camera.x || 0) + ((motion.x + (clip?.x || 0)) * w) / 100,
+        h / 2 + (e.camera.y || 0) + ((motion.y + (clip?.y || 0)) * h) / 100,
       );
       ctx.scale(motion.scale, motion.scale);
       ctx.scale(e.camera.zoom ?? 1, e.camera.zoom ?? 1);
@@ -167,22 +169,46 @@ function drawSingleFrame(
     drawEffectOverlay(ctx, e);
     ctx.restore();
   }
-  for (const t of p.texts.filter((t) => time >= t.start && time < t.end)) {
+  for (const t of p.texts.filter(
+    (t) =>
+      !t.hidden && !p.tracks?.text?.hidden && time >= t.start && time < t.end,
+  )) {
     const animation = textAt(t, time);
     ctx.save();
-    ctx.globalAlpha = animation.opacity;
+    ctx.globalAlpha = animation.opacity * (t.opacity ?? 1);
     ctx.translate((w * t.x) / 100, (h * (t.y + animation.y)) / 100);
+    ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
     ctx.scale(animation.scale, animation.scale);
-    ctx.font = `700 ${(t.size * w) / 960}px Arial, sans-serif`;
+    const layout = textLayout(ctx, t, w);
+    ctx.font = layout.font;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = t.color;
     ctx.shadowColor = "#000a";
     ctx.shadowBlur = 8;
+    if (t.background) {
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = t.background;
+      ctx.fillRect(
+        -layout.width / 2 - layout.size * 0.25,
+        -layout.size * 0.65,
+        layout.width + layout.size * 0.5,
+        layout.height + layout.size * 0.3,
+      );
+      ctx.restore();
+    }
     const lines = animation.text.split("\n");
-    lines.forEach((line, i) =>
-      ctx.fillText(line, 0, ((i * t.size * w) / 960) * 1.2, w * 0.94),
-    );
+    lines.forEach((line, i) => {
+      const y = i * layout.size * 1.2;
+      if (t.outline) {
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = Math.max(1, layout.size * 0.07);
+        ctx.lineJoin = "round";
+        ctx.strokeText(line, 0, y, w * 0.94);
+      }
+      ctx.fillText(line, 0, y, w * 0.94);
+    });
     ctx.restore();
   }
 }

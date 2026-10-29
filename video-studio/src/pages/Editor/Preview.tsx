@@ -1,3 +1,5 @@
+import { Interaction } from "../../preview/Interaction";
+import type { Dimensions, Selection } from "../../preview/model";
 import { PreviewMedia } from "../../composition/PreviewMedia";
 import { sceneAt } from "../../composition/scene";
 
@@ -23,6 +25,11 @@ export function Preview({
   playing,
   setPlaying,
   canvasRef,
+  selection,
+  onSelect,
+  onChange,
+  onTextPanel,
+  inlineRequest,
 }: {
   project: Project;
   assets: Asset[];
@@ -30,9 +37,18 @@ export function Preview({
   setTime: (t: number) => void;
   playing: boolean;
   setPlaying: (p: boolean) => void;
+  selection: Selection | null;
+  onSelect: (s: Selection | null) => void;
+  onChange: (p: Project) => void;
+  onTextPanel: () => void;
+  inlineRequest?: { id: string; nonce: number };
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }) {
   const audio = useRef<HTMLAudioElement>(null);
+  const [draft, setDraft] = useState<Project | null>(null);
+  const displayProject = draft || project;
+  const [dimensions, setDimensions] = useState<Dimensions>(new Map());
+  const [toolbarHost, setToolbarHost] = useState<HTMLDivElement | null>(null);
   const { previewWidth } = useStudioSettings();
   const music = assets.find((a) => a.id === project.audioId);
   const latest = useRef({ project, time });
@@ -47,12 +63,25 @@ export function Preview({
     let cancelled = false;
     const engine = runtime.current;
     void engine
-      ?.sync(sceneAt(project, time).entries, assets, playing)
+      ?.sync(sceneAt(displayProject, time).entries, assets, playing)
       .then((sources) => {
         if (cancelled || !sources) return;
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) {
-          drawFrame(ctx, null, project, time, undefined, sources);
+          drawFrame(ctx, null, displayProject, time, undefined, sources);
+          const next: Dimensions = new Map();
+          sources.forEach((source, id) => {
+            const s = source as HTMLImageElement & HTMLVideoElement;
+            next.set(id, {
+              width: s.naturalWidth || s.videoWidth,
+              height: s.naturalHeight || s.videoHeight,
+            });
+          });
+          setDimensions((previous) =>
+            JSON.stringify([...previous]) === JSON.stringify([...next])
+              ? previous
+              : next,
+          );
           setMediaError("");
         }
       })
@@ -62,7 +91,7 @@ export function Preview({
     return () => {
       cancelled = true;
     };
-  }, [project, assets, time, playing, previewWidth, canvasRef]);
+  }, [displayProject, assets, time, playing, previewWidth, canvasRef]);
   useEffect(() => {
     const pause = () => {
       if (document.hidden) setPlaying(false);
@@ -74,6 +103,7 @@ export function Preview({
     const a = audio.current;
     if (!a) return;
     a.volume = project.audioVolume;
+    a.playbackRate = project.audioSpeed || 1;
     const local = musicTime(project, music?.duration || 0, time);
     if (local === null) {
       a.pause();
@@ -90,6 +120,9 @@ export function Preview({
     project.audioStart,
     project.audioOffset,
     project.audioLoop,
+    project.audioEnd,
+    project.audioSpeed,
+    project.tracks,
   ]);
   useEffect(() => {
     if (!playing) return;
@@ -122,6 +155,7 @@ export function Preview({
           {project.ratio} <i /> جودة المعاينة
         </span>
       </div>
+      <div ref={setToolbarHost} className="preview-toolbar-host" />
       <div className="canvas-stage">
         {!project.clips.length && (
           <div className="empty-preview">
@@ -139,6 +173,24 @@ export function Preview({
             display: project.clips.length ? "block" : "none",
           }}
         />
+        {!!project.clips.length && (
+          <Interaction
+            project={project}
+            displayProject={displayProject}
+            time={time}
+            playing={playing}
+            canvas={canvasRef.current}
+            dimensions={dimensions}
+            selection={selection}
+            onSelect={onSelect}
+            onChange={onChange}
+            onDraft={setDraft}
+            onPause={() => setPlaying(false)}
+            onTextPanel={onTextPanel}
+            inlineRequest={inlineRequest}
+            toolbarHost={toolbarHost}
+          />
+        )}
         <audio ref={audio} src={music?.url} hidden />
       </div>
       {mediaError && (
@@ -180,7 +232,9 @@ export function Preview({
           icon={Maximize}
           label="ملء الشاشة"
           onClick={() =>
-            void canvasRef.current?.requestFullscreen().catch(() => {})
+            void canvasRef.current?.parentElement
+              ?.requestFullscreen()
+              .catch(() => {})
           }
         />
       </div>

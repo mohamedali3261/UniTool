@@ -9,8 +9,24 @@ export function useProject() {
   }));
   function update(fn: Project | ((p: Project) => Project)) {
     setState((s) => {
-      const project = typeof fn === "function" ? fn(s.project) : fn;
+      let project = typeof fn === "function" ? fn(s.project) : fn;
       if (project === s.project) return s;
+      // Layer deletion can come from any inspector, preview or timeline. Drop stale row metadata centrally.
+      if (project.tracks) {
+        const valid = new Set([
+          "video",
+          "text",
+          "audio",
+          ...(project.overlays || []).map((l) => l.id),
+        ]);
+        if (Object.keys(project.tracks).some((key) => !valid.has(key)))
+          project = {
+            ...project,
+            tracks: Object.fromEntries(
+              Object.entries(project.tracks).filter(([key]) => valid.has(key)),
+            ),
+          };
+      }
       return { project, past: [...s.past.slice(-49), s.project], future: [] };
     });
   }
