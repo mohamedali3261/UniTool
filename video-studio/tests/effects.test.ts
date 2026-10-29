@@ -45,10 +45,11 @@ function mock() {
   ) as unknown as CanvasRenderingContext2D;
   return { ctx, calls };
 }
-test("34 unique effects, five isolated categories; all legacy preset IDs retained", () => {
-  assert.equal(effects.length, 34);
+test("62 effects and 62 filters across eight categories; all legacy preset IDs retained", () => {
+  assert.equal(effects.length, 124);
+  assert.equal(effects.filter((e) => e.kind === "effect").length, 62);
   assert.equal(effectById.size, effects.length);
-  assert.equal(categories.length, 5);
+  assert.equal(categories.length, 8);
   for (const id of [
     "original",
     "cinema",
@@ -62,7 +63,9 @@ test("34 unique effects, five isolated categories; all legacy preset IDs retaine
     assert.equal(effectById.get(id)?.kind, "filter");
   for (const c of categories)
     assert.ok(effects.some((e) => e.category === c.id));
-  assert.equal(filters.length, 17);
+  assert.equal(filters.length, 62);
+  assert.equal(new Set(effects.map((e) => e.name)).size, effects.length);
+  assert.equal(new Set(filters.map((e) => e.css)).size, filters.length);
 });
 test("camera transforms are bounded, deterministic, and zero intensity is identity", () => {
   for (const e of effects) {
@@ -166,4 +169,22 @@ test("effect settings roundtrip, and invalid IDs/ranges are rejected", async () 
     { filter: "push-in" },
   ])
     await assert.rejects(loadProject(file(bad)));
+});
+
+test("every overlay has a distinct deterministic drawing recipe, with bounded work", () => {
+  const recipes = new Set<string>();
+  for (const e of effects.filter((e) => e.kind === "effect")) {
+    const { ctx, calls } = mock();
+    drawEffectOverlay(ctx, effectFrame(e.id, 640, 360, 1.8, 0.36));
+    assert.ok(calls.length < 1600, e.id + " draw budget");
+    const recipe = JSON.stringify([
+      effectFrame(e.id, 640, 360, 1.8, 0.36).camera,
+      calls,
+    ]);
+    assert.ok(
+      !recipes.has(recipe),
+      e.id + " duplicates another drawing recipe",
+    );
+    recipes.add(recipe);
+  }
 });

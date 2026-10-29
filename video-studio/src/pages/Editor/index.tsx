@@ -1,3 +1,4 @@
+import type { TextPresetStyle } from "../../text/presets/types";
 import { MobileToolPage } from "./mobile/MobileToolPage";
 import { MobileProjectMenu } from "./mobile/MobileProjectMenu";
 import { useMobileEditor, type MobilePanel } from "./mobile/useMobileEditor";
@@ -262,7 +263,7 @@ export function Editor({
       ),
     }));
   }
-  function addText(text: string) {
+  function addText(text: string, style?: TextPresetStyle) {
     if (!duration) {
       notify("أضف مقطع فيديو أو صورة الأول");
       return;
@@ -285,6 +286,7 @@ export function Editor({
           y: 75,
           size: 52,
           color: "#ffffff",
+          ...style,
         },
       ],
     }));
