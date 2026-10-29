@@ -1,3 +1,9 @@
+import { cinematicFilters } from "./cinematic/filters";
+import { colorFilters } from "./color/filters";
+import { retroFilters } from "./retro/filters";
+import { natureEffects } from "./nature/effects";
+import { geometryEffects } from "./geometry/effects";
+import { opticsEffects } from "./optics/effects";
 import { cinematicEffects } from "./cinematic/effects";
 import { colorEffects } from "./color/effects";
 import { motionEffects } from "./motion/effects";
@@ -9,6 +15,12 @@ export const effects = [
   ...motionEffects,
   ...lightEffects,
   ...retroEffects,
+  ...cinematicFilters,
+  ...colorFilters,
+  ...retroFilters,
+  ...natureEffects,
+  ...geometryEffects,
+  ...opticsEffects,
 ];
 export const effectById = new Map(effects.map((e) => [e.id, e]));
 export const categories = [
@@ -17,6 +29,9 @@ export const categories = [
   { id: "motion", name: "حركة", en: "MOTION", color: "#aaceff" },
   { id: "light", name: "إضاءة", en: "LIGHT", color: "#f7cf91" },
   { id: "retro", name: "ريترو", en: "RETRO", color: "#e7a6b6" },
+  { id: "nature", name: "طبيعة وجسيمات", en: "NATURE", color: "#80dfb6" },
+  { id: "geometry", name: "هندسي", en: "GEOMETRY", color: "#8fbaff" },
+  { id: "optics", name: "عدسات وملمس", en: "OPTICS", color: "#ffc18f" },
 ] as const;
 export const filterPresets = effects
   .filter((e) => e.kind === "filter")

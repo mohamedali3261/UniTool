@@ -110,6 +110,8 @@ export const LiveEffectCard = memo(function LiveEffectCard({
   return (
     <m.article
       ref={root}
+      data-effect-id={effect.id}
+      title={`${effect.name} — ${effect.description}`}
       className={`live-effect-card ${selected ? "is-selected" : ""} ${active && canAnimate ? "is-playing" : ""}`}
       style={{ "--effect-accent": category.color } as React.CSSProperties}
       initial={{ opacity: 0, y: 8 }}

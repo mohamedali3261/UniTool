@@ -1,3 +1,4 @@
+import type { TextPresetStyle } from "../../text/presets/types";
 import { TextPanel } from "../../text/TextPanel";
 import { lazy, memo, Suspense, useState } from "react";
 const PexelsLibrary = lazy(() => import("../../stock/PexelsLibrary"));
@@ -61,7 +62,7 @@ function LibraryView({
   onImport: () => void;
   onAdd: (a: Asset) => void;
   onStockAsset: (asset: Asset) => void;
-  onText: (s: string) => void;
+  onText: (s: string, style?: TextPresetStyle) => void;
   onFilter: (s: string) => void;
   onAudio: (id: string) => void;
   updateText: (id: string, patch: Partial<TextLayer>) => void;
@@ -223,6 +224,7 @@ function LibraryView({
       {tab === "text" && (
         <TextPanel
           project={project}
+          suspended={suspendPreviews}
           selectedId={selectedTextId}
           onSelect={onSelectText}
           onAdd={onText}

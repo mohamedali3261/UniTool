@@ -1,5 +1,12 @@
 export type EffectCategory =
-  "cinematic" | "color" | "motion" | "light" | "retro";
+  | "cinematic"
+  | "color"
+  | "motion"
+  | "light"
+  | "retro"
+  | "nature"
+  | "geometry"
+  | "optics";
 export type Frame = {
   w: number;
   h: number;
