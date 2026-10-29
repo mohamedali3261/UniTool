@@ -137,7 +137,7 @@ test("new transform, fade and audio controls roundtrip while old projects remain
 });
 test("reject invalid optional transforms, fades and audio settings", async () => {
   for (const extra of [
-    { rotation: 13 },
+    { rotation: -1 },
     { zoom: 0 },
     { flipX: "yes" },
     { fit: "stretch" },

@@ -352,7 +352,7 @@ for (const [width, height] of [
     ).toBe(true);
     await page.locator(".template-card").nth(2).click();
     await page
-      .getByRole("button", { name: "فتح أو طي خصائص المشروع", exact: true })
+      .getByRole("button", { name: "لوحة الخصائص", exact: true })
       .click();
     await page.locator("#studio-layers > summary").click();
     await page

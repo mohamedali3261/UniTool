@@ -114,6 +114,14 @@ export default function App() {
               })),
           ],
           audioId: added.find((a) => a.type === "audio")?.id || p.audioId,
+          ...(added.some((a) => a.type === "audio")
+            ? {
+                audioEnd: undefined,
+                audioSpeed: undefined,
+                audioStart: 0,
+                audioOffset: 0,
+              }
+            : {}),
         }));
       if (added.length) setPage("editor");
     } finally {
@@ -254,6 +262,9 @@ export default function App() {
           }}
           onImport={() => chooseMedia()}
           onOpen={() => open.current?.click()}
+          onRegisterAsset={(asset) =>
+            setAssets((previous) => [...previous, asset])
+          }
           onStockAsset={(asset) => {
             setAssets((previous) =>
               previous.some((a) => a.id === asset.id)

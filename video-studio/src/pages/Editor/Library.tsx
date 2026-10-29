@@ -1,4 +1,4 @@
-import { TextMotionControls } from "../../animation/TextMotionControls";
+import { TextPanel } from "../../text/TextPanel";
 import { lazy, memo, Suspense, useState } from "react";
 const PexelsLibrary = lazy(() => import("../../stock/PexelsLibrary"));
 import { EffectsCatalog } from "../../effects/components/EffectsCatalog";
@@ -26,6 +26,10 @@ export const tabs: { id: Tab; label: string; icon: typeof Film }[] = [
   { id: "stickers", label: "ملصقات", icon: Smile },
 ];
 function LibraryView({
+  selectedTextId,
+  onSelectText,
+  onDuplicateText,
+  onInlineText,
   tab,
   clip,
   suspendPreviews,
@@ -43,6 +47,10 @@ function LibraryView({
   removeText,
   onRemoveAudio,
 }: {
+  selectedTextId: string | null;
+  onSelectText: (id: string) => void;
+  onDuplicateText: (id: string) => void;
+  onInlineText: (id: string) => void;
   tab: Tab;
   clip?: Clip;
   suspendPreviews: boolean;
@@ -63,7 +71,7 @@ function LibraryView({
   const [source, setSource] = useState<"local" | "pexels">("local");
   return (
     <aside
-      className={`library-panel ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
+      className={`library-panel ${tab === "text" ? "is-text" : ""} ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
       id="studio-library"
     >
       <div className="panel-heading">
@@ -213,130 +221,16 @@ function LibraryView({
         </>
       )}
       {tab === "text" && (
-        <>
-          <button
-            className="primary full-width"
-            onClick={() => onText("اكتب حكايتك هنا")}
-          >
-            <Plus size={18} /> إضافة نص
-          </button>
-          <div className="text-presets">
-            {[
-              "عنوان يستاهل يتشاف",
-              "لحظات ما تتنسيش ✨",
-              "تابعني للمزيد ↗",
-            ].map((s) => (
-              <button key={s} onClick={() => onText(s)}>
-                {s}
-                <Plus size={15} />
-              </button>
-            ))}
-          </div>
-          <div className="text-layers">
-            {project.texts.map((t) => (
-              <div className="text-layer" key={t.id}>
-                <div className="field-heading">
-                  <b>طبقة نص</b>
-                  <button
-                    aria-label="حذف النص"
-                    onClick={() => removeText(t.id)}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-                <TextMotionControls
-                  layer={t}
-                  onChange={(patch) => updateText(t.id, patch)}
-                />
-                <textarea
-                  value={t.text}
-                  onChange={(e) => updateText(t.id, { text: e.target.value })}
-                  aria-label="محتوى النص"
-                />
-                <div className="two-fields">
-                  <label>
-                    اللون
-                    <input
-                      type="color"
-                      value={t.color}
-                      onChange={(e) =>
-                        updateText(t.id, { color: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label>
-                    الحجم
-                    <input
-                      type="number"
-                      min="12"
-                      max="180"
-                      value={t.size}
-                      onChange={(e) =>
-                        updateText(t.id, {
-                          size: Math.max(12, Math.min(180, +e.target.value)),
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="two-fields">
-                  <label>
-                    يبدأ (ث)
-                    <input
-                      type="number"
-                      min="0"
-                      step=".1"
-                      max={t.end - 0.1}
-                      value={t.start}
-                      onChange={(e) =>
-                        updateText(t.id, {
-                          start: Math.max(
-                            0,
-                            Math.min(t.end - 0.1, +e.target.value),
-                          ),
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    ينتهي (ث)
-                    <input
-                      type="number"
-                      min={t.start + 0.1}
-                      step=".1"
-                      value={t.end}
-                      onChange={(e) =>
-                        updateText(t.id, {
-                          end: Math.max(t.start + 0.1, +e.target.value),
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-                <label className="slider-label">
-                  موضع أفقي
-                  <input
-                    type="range"
-                    min="5"
-                    max="95"
-                    value={t.x}
-                    onChange={(e) => updateText(t.id, { x: +e.target.value })}
-                  />
-                </label>
-                <label className="slider-label">
-                  موضع رأسي
-                  <input
-                    type="range"
-                    min="5"
-                    max="95"
-                    value={t.y}
-                    onChange={(e) => updateText(t.id, { y: +e.target.value })}
-                  />
-                </label>
-              </div>
-            ))}
-          </div>
-        </>
+        <TextPanel
+          project={project}
+          selectedId={selectedTextId}
+          onSelect={onSelectText}
+          onAdd={onText}
+          onChange={updateText}
+          onRemove={removeText}
+          onDuplicate={onDuplicateText}
+          onInline={onInlineText}
+        />
       )}
     </aside>
   );

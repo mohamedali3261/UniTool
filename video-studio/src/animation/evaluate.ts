@@ -1,5 +1,12 @@
 import type { Clip, TextLayer } from "../types";
 export const unit = (n: number) => Math.max(0, Math.min(1, n));
+export function ease(t: number, kind?: string) {
+  if (kind === "ease-in") return t * t;
+  if (kind === "ease-out") return 1 - (1 - t) * (1 - t);
+  if (kind === "ease-in-out")
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  return t;
+}
 export function motionAt(clip: Clip, elapsed: number) {
   const p = unit(elapsed / ((clip.end - clip.start) / clip.speed));
   let x = 0,
@@ -28,7 +35,17 @@ export function motionAt(clip: Clip, elapsed: number) {
     const right = ordered.findIndex((f) => f.t >= elapsed);
     const a = right < 0 ? ordered.at(-1)! : ordered[Math.max(0, right - 1)],
       b = right < 0 ? a : ordered[right];
-    const t = a === b ? 0 : unit((elapsed - a.t) / Math.max(0.0001, b.t - a.t));
+    const raw =
+      a === b ? 0 : unit((elapsed - a.t) / Math.max(0.0001, b.t - a.t));
+    const from = b.easeFrom ?? 0,
+      to = b.easeTo ?? 1;
+    const start = ease(from, b.easing),
+      end = ease(to, b.easing);
+    const t =
+      a === b
+        ? 0
+        : (ease(from + raw * (to - from), b.easing) - start) /
+          Math.max(0.0000001, end - start);
     x += a.x + (b.x - a.x) * t;
     y += a.y + (b.y - a.y) * t;
     scale *= a.scale + (b.scale - a.scale) * t;
@@ -76,9 +93,30 @@ export function splitKeyframes(clip: Clip, at: number) {
     after = ordered.filter((f) => f.t > at);
   const point = (t: number) => ({ id: crypto.randomUUID(), t, ...value });
   const head = before.length ? [...before] : [point(0)];
-  if (before.length && after.length && before.at(-1)!.t < at)
-    head.push(point(at));
+  if (before.length && after.length && before.at(-1)!.t < at) {
+    const a = before.at(-1)!,
+      b = after[0],
+      from = b.easeFrom ?? 0,
+      to = b.easeTo ?? 1;
+    const split = from + ((to - from) * (at - a.t)) / (b.t - a.t);
+    head.push({
+      ...point(at),
+      easing: b.easing,
+      easeFrom: from,
+      easeTo: split,
+    });
+  }
   const tail = after.map((f) => ({ ...f, t: f.t - at }));
+  if (before.length && after.length && before.at(-1)!.t < at) {
+    const a = before.at(-1)!,
+      b = after[0];
+    tail[0] = {
+      ...tail[0],
+      easeFrom:
+        (b.easeFrom ?? 0) +
+        (((b.easeTo ?? 1) - (b.easeFrom ?? 0)) * (at - a.t)) / (b.t - a.t),
+    };
+  }
   if (before.length || !tail.length) tail.unshift(point(0));
   return { head, tail };
 }

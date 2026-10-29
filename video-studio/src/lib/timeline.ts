@@ -82,13 +82,15 @@ export function musicTime(
   sourceDuration: number,
   time: number,
 ): number | null {
-  const relative = time - (p.audioStart || 0);
+  if (p.tracks?.audio?.muted || p.tracks?.audio?.hidden) return null;
+  const relative = (time - (p.audioStart || 0)) * (p.audioSpeed || 1);
   const offset = clamp(
     p.audioOffset || 0,
     0,
     Math.max(0, sourceDuration - 0.01),
   );
-  const available = sourceDuration - offset;
+  const available =
+    Math.min(sourceDuration, p.audioEnd ?? sourceDuration) - offset;
   if (
     relative < 0 ||
     available <= 0 ||

@@ -24,6 +24,8 @@ export function ClipTools({
           title="إعادة ضبط التحويل"
           onClick={() =>
             onClip({
+              x: 0,
+              y: 0,
               rotation: 0,
               flipX: false,
               flipY: false,
@@ -43,7 +45,7 @@ export function ClipTools({
           }
         >
           <RotateCw size={17} />
-          <span>{clip.rotation || 0}°</span>
+          <span>{Math.round((clip.rotation || 0) * 10) / 10}°</span>
         </button>
         <button
           aria-label="عكس أفقي"

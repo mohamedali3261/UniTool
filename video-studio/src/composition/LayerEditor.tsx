@@ -197,10 +197,12 @@ export function LayerEditor({
               label={`تدوير الطبقة ${i + 1}`}
               value={l.rotation}
               onValueChange={(rotation) => edit(l.id, { rotation: +rotation })}
-              options={[0, 90, 180, 270].map((v) => ({
-                value: v,
-                label: `${v}°`,
-              }))}
+              options={[...new Set([0, 90, 180, 270, l.rotation])]
+                .sort((a, b) => a - b)
+                .map((v) => ({
+                  value: v,
+                  label: `${Math.round(v * 10) / 10}°`,
+                }))}
             />
             <div className="layer-actions">
               <button

@@ -6,6 +6,8 @@ import { ClipTools } from "./ClipTools";
 import { ChevronLeft, ChevronRight, RotateCcw, Settings2 } from "lucide-react";
 import { Asset, Clip, Project, clipDuration } from "../../types";
 function InspectorView({
+  mobileExpanded = false,
+  onMobileClose,
   project,
   clip,
   assets,
@@ -16,6 +18,8 @@ function InspectorView({
   onImportLayer,
   onPreview,
 }: {
+  mobileExpanded?: boolean;
+  onMobileClose?: () => void;
   project: Project;
   clip?: Clip;
   assets: Asset[];
@@ -27,10 +31,11 @@ function InspectorView({
   onPreview: (time: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const isExpanded = expanded || mobileExpanded;
   const a = assets.find((a) => a.id === clip?.assetId);
   return (
     <aside
-      className={`inspector ${expanded ? "is-expanded" : ""}`}
+      className={`inspector ${isExpanded ? "is-expanded" : ""}`}
       id="studio-inspector"
     >
       <div className="panel-heading">
@@ -38,11 +43,13 @@ function InspectorView({
         <button
           className="inspector-mobile-toggle"
           aria-label="فتح أو طي خصائص المشروع"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={isExpanded}
+          onClick={() =>
+            mobileExpanded ? onMobileClose?.() : setExpanded((v) => !v)
+          }
         >
           <Settings2 size={17} />
-          <span>{expanded ? "طيّ" : "تعديل"}</span>
+          <span>{isExpanded ? "طيّ" : "تعديل"}</span>
         </button>
       </div>
       <label className="field-label">
@@ -302,5 +309,8 @@ function InspectorView({
 export const Inspector = memo(
   InspectorView,
   (a, b) =>
-    a.project === b.project && a.clip === b.clip && a.assets === b.assets,
+    a.project === b.project &&
+    a.clip === b.clip &&
+    a.assets === b.assets &&
+    a.mobileExpanded === b.mobileExpanded,
 );

@@ -19,6 +19,9 @@ export type MotionPreset =
   "none" | "push-in" | "pull-out" | "pan-left" | "pan-right";
 export type TextAnimation = "none" | "fade" | "slide" | "pop" | "typewriter";
 export type MotionKeyframe = {
+  easeFrom?: number;
+  easeTo?: number;
+  easing?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
   id: string;
   t: number;
   x: number;
@@ -27,6 +30,9 @@ export type MotionKeyframe = {
   opacity: number;
 };
 export type Clip = {
+  gap?: boolean;
+  hidden?: boolean;
+  groupId?: string;
   id: string;
   assetId: string;
   start: number;
@@ -38,6 +44,9 @@ export type Clip = {
   volume: number;
   speed: number;
   rotation?: number;
+  x?: number;
+  y?: number;
+  locked?: boolean;
   flipX?: boolean;
   flipY?: boolean;
   zoom?: number;
@@ -52,6 +61,9 @@ export type Clip = {
   keyframes?: MotionKeyframe[];
 };
 export type OverlayLayer = {
+  groupId?: string;
+  locked?: boolean;
+  hidden?: boolean;
   id: string;
   assetId: string;
   at: number;
@@ -65,6 +77,15 @@ export type OverlayLayer = {
   volume: number;
 };
 export type TextLayer = {
+  groupId?: string;
+  rotation?: number;
+  opacity?: number;
+  font?: "sans" | "serif" | "mono";
+  bold?: boolean;
+  background?: string;
+  outline?: boolean;
+  locked?: boolean;
+  hidden?: boolean;
   id: string;
   text: string;
   start: number;
@@ -77,7 +98,25 @@ export type TextLayer = {
   animationOut?: Exclude<TextAnimation, "typewriter">;
   animationDuration?: number;
 };
+export type TrackSettings = {
+  name?: string;
+  locked?: boolean;
+  hidden?: boolean;
+  muted?: boolean;
+  collapsed?: boolean;
+  height?: number;
+};
+export type TimelineMarker = {
+  id: string;
+  time: number;
+  label: string;
+  color: string;
+};
 export type Project = {
+  markers?: TimelineMarker[];
+  tracks?: Record<string, TrackSettings>;
+  audioEnd?: number;
+  audioSpeed?: number;
   name: string;
   ratio: string;
   clips: Clip[];

@@ -199,7 +199,7 @@ test("unsafe animation, transition, keyframe and layer fields are rejected", () 
     { width: 0 },
     { end: -1 },
     { opacity: 2 },
-    { rotation: 17 },
+    { rotation: 361 },
     { volume: 2 },
     { x: NaN },
   ])
