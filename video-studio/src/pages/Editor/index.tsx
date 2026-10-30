@@ -1,3 +1,4 @@
+import { PanelDivider } from "./desktop/PanelDivider";
 import type { TextPresetStyle } from "../../text/presets/types";
 import { MobileToolPage } from "./mobile/MobileToolPage";
 import { MobileProjectMenu } from "./mobile/MobileProjectMenu";
@@ -610,6 +611,8 @@ export function Editor({
           updateText={updateText}
           removeText={removeText}
         />
+        <PanelDivider side="library" />
+        <PanelDivider side="inspector" />
         <div className="center-workspace">
           <div className="workspace-tools">
             <div>
