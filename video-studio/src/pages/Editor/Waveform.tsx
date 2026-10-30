@@ -1,3 +1,4 @@
+import { localMediaSize, mediaBlob } from "../../media/files";
 import { useEffect, useState, useRef } from "react";
 const cache = new Map<string, Promise<number[]>>();
 let decodeQueue: Promise<unknown> = Promise.resolve();
@@ -8,13 +9,19 @@ async function peaks(url: string) {
     .then(async () => {
       const ctx = new AudioContext();
       try {
-        const response = await fetch(url);
         const limit = 64 * 1024 * 1024;
+        if ((localMediaSize(url) || 0) > limit)
+          throw new Error("الموجة غير متاحة لهذا الحجم");
+        const response = await fetch(url);
         if (Number(response.headers.get("Content-Length")) > limit) {
           await response.body?.cancel();
           throw new Error("الموجة غير متاحة لهذا الحجم");
         }
-        const blob = await response.blob();
+        const blob =
+          localMediaSize(url) !== undefined
+            ? await mediaBlob(url)
+            : await response.blob();
+        if (localMediaSize(url) !== undefined) await response.body?.cancel();
         if (blob.size > limit) throw new Error("الموجة غير متاحة لهذا الحجم");
         const data = await blob.arrayBuffer();
         const audio = await ctx.decodeAudioData(data);

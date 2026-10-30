@@ -1,3 +1,5 @@
+import { motions } from "./motions";
+import { MotionGallery } from "./motions/MotionGallery";
 import type { Asset, Clip, Project, MotionKeyframe } from "../types";
 import { clipDuration, uid } from "../types";
 import { StudioSelect } from "../components/StudioSelect";
@@ -111,13 +113,23 @@ export function CreativeTools({
             }
             options={[
               { value: "none", label: "ثابت" },
-              { value: "push-in", label: "اقتراب بطيء" },
-              { value: "pull-out", label: "ابتعاد بطيء" },
-              { value: "pan-left", label: "تحريك لليسار" },
-              { value: "pan-right", label: "تحريك لليمين" },
+              ...motions.map((m) => ({ value: m.id, label: m.name })),
             ]}
           />
         </label>
+        <details>
+          <summary>استعراض كروت الحركات ({motions.length})</summary>
+          <MotionGallery
+            value={clip.motion || "none"}
+            onChange={(motion) => onClip({ motion })}
+          />
+        </details>
+        <button
+          className="secondary"
+          onClick={() => onPreview(clipStart(project, clip.id))}
+        >
+          ▶ تشغيل الحركة في المعاينة
+        </button>
         <button
           className="secondary"
           disabled={frames.length >= 20}

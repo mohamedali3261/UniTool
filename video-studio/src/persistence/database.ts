@@ -1,3 +1,4 @@
+import { mediaBlob, localMediaURL, releaseMediaURL } from "../media/files";
 import { assetIsUsed, type Asset, type Project } from "../types";
 import { validateProjectData } from "../lib/projectIO";
 export type SavedProject = {
@@ -72,7 +73,7 @@ export async function saveDraft(id: string, project: Project, assets: Asset[]) {
     if (existing?.revision === asset.url) continue;
     if (!/^(blob:|data:(image|video|audio)\/)/.test(asset.url))
       throw new Error("المشروع يحتوي رابط وسائط غير محلي");
-    const file = await (await fetch(asset.url)).blob();
+    const file = await mediaBlob(asset.url);
     const { url, ...metadata } = asset;
     stored.push({ ...metadata, key: `${id}:${asset.id}`, file, revision: url });
   }
@@ -122,7 +123,7 @@ export async function restoreDraft(
     throw new Error("بعض وسائط المشروع مفقودة؛ افتح النسخة الاحتياطية JSON");
   const restored = media.map(({ file, revision, key, ...metadata }) => ({
     ...metadata,
-    url: URL.createObjectURL(file),
+    url: localMediaURL(file),
   }));
   try {
     return validateProjectData(
@@ -130,7 +131,7 @@ export async function restoreDraft(
       true,
     );
   } catch (error) {
-    restored.forEach((a) => URL.revokeObjectURL(a.url));
+    restored.forEach((a) => releaseMediaURL(a.url));
     throw error;
   }
 }

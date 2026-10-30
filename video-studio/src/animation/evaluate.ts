@@ -1,3 +1,4 @@
+import { motionById } from "./motions";
 import type { Clip, TextLayer } from "../types";
 export const unit = (n: number) => Math.max(0, Math.min(1, n));
 export function ease(t: number, kind?: string) {
@@ -13,21 +14,12 @@ export function motionAt(clip: Clip, elapsed: number) {
     y = 0,
     scale = 1,
     opacity = 1;
-  switch (clip.motion) {
-    case "push-in":
-      scale = 1 + p * 0.18;
-      break;
-    case "pull-out":
-      scale = 1.18 - p * 0.18;
-      break;
-    case "pan-left":
-      scale = 1.15;
-      x = (0.5 - p) * 10;
-      break;
-    case "pan-right":
-      scale = 1.15;
-      x = (p - 0.5) * 10;
-      break;
+  const preset = motionById.get(clip.motion || "none")?.sample(p);
+  if (preset) {
+    x = preset.x;
+    y = preset.y;
+    scale = preset.scale;
+    opacity = preset.opacity;
   }
   const frames = clip.keyframes;
   if (frames?.length) {
@@ -49,7 +41,7 @@ export function motionAt(clip: Clip, elapsed: number) {
     x += a.x + (b.x - a.x) * t;
     y += a.y + (b.y - a.y) * t;
     scale *= a.scale + (b.scale - a.scale) * t;
-    opacity = a.opacity + (b.opacity - a.opacity) * t;
+    opacity *= a.opacity + (b.opacity - a.opacity) * t;
   }
   return { x, y, scale, opacity };
 }

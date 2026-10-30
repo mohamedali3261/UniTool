@@ -1,5 +1,8 @@
 import { filterPresets } from "./effects/registry";
 export type Asset = {
+  size?: number;
+  width?: number;
+  height?: number;
   id: string;
   name: string;
   type: "video" | "image" | "audio";
@@ -15,8 +18,7 @@ export type Asset = {
   };
 };
 export type TransitionKind = "none" | "crossfade" | "slide" | "zoom" | "light";
-export type MotionPreset =
-  "none" | "push-in" | "pull-out" | "pan-left" | "pan-right";
+export type MotionPreset = string;
 export type TextAnimation = "none" | "fade" | "slide" | "pop" | "typewriter";
 export type MotionKeyframe = {
   easeFrom?: number;

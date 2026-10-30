@@ -1,6 +1,6 @@
 import { sceneAt, layerClip } from "../composition/scene";
 import { musicTime, clipOpacity } from "./timeline";
-import { Asset, Project, durationOf } from "../types";
+import { Asset, Project, durationOf, clipDuration } from "../types";
 import { locate, drawFrame } from "./media";
 function loadSource(
   el: HTMLMediaElement | HTMLImageElement,
@@ -180,6 +180,18 @@ export async function exportVideo(
       music.loop = false;
       music.playbackRate = p.audioSpeed || 1;
       await loadSource(music, audio.url, signal);
+    }
+    // Prime the first multi-source blend before starting the realtime clock.
+    // Software/GPU backends can spend seconds on their first cross-canvas copy;
+    // doing that during recording would skip the transition's frames and audio.
+    let boundary = 0;
+    for (const [index, clip] of p.clips.entries()) {
+      if (index && clip.transition?.kind && clip.transition.kind !== "none") {
+        drawFrame(ctx, null, p, boundary, undefined, sources);
+        ctx.getImageData(0, 0, 1, 1);
+        break;
+      }
+      boundary += clipDuration(clip);
     }
     const first = locate(p, 0);
     if (first) {

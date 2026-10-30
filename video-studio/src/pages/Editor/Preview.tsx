@@ -51,7 +51,16 @@ export function Preview({
   const displayProject = draft || project;
   const [dimensions, setDimensions] = useState<Dimensions>(new Map());
   const [toolbarHost, setToolbarHost] = useState<HTMLDivElement | null>(null);
-  const { previewWidth } = useStudioSettings();
+  const { previewWidth: configuredWidth, preferences } = useStudioSettings();
+  const heavy = assets.some(
+    (a) =>
+      (a.size || 0) > 256 * 1024 * 1024 ||
+      (a.width || 0) * (a.height || 0) > 3840 * 2160,
+  );
+  const previewWidth =
+    heavy && preferences.quality === "auto"
+      ? Math.min(configuredWidth, 480)
+      : configuredWidth;
   const music = assets.find((a) => a.id === project.audioId);
   const latest = useRef({ project, time });
   latest.current = { project, time };

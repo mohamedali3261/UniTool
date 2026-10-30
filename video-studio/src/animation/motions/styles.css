@@ -1,0 +1,76 @@
+.motion-gallery {
+  margin: 8px 0;
+}
+.motion-gallery > input {
+  width: 100%;
+}
+.motion-categories {
+  display: flex;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 6px 0;
+}
+.motion-categories button {
+  white-space: nowrap;
+  padding: 5px 7px;
+  font-size: 10px;
+  border: 1px solid #ffffff20;
+  border-radius: 12px;
+}
+.motion-categories button[aria-pressed="true"] {
+  color: #b7f568;
+  border-color: #b7f568;
+}
+.motion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.motion-card {
+  min-width: 0;
+  border: 1px solid #ffffff20;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #101519;
+}
+.motion-card.selected {
+  border-color: #b7f568;
+}
+.motion-card .motion-picture {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  aspect-ratio: 1.5;
+  overflow: hidden;
+  background: #080a0e;
+}
+.motion-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.motion-picture > svg {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: #b7f568;
+}
+.motion-card > div {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 3px;
+  padding: 3px 5px;
+}
+.motion-card > div > span {
+  flex: 1;
+  font-size: 9px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.motion-card > div > button {
+  min-width: 28px;
+  min-height: 28px;
+}
