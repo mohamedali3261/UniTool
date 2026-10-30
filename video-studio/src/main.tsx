@@ -8,6 +8,7 @@ import "./text/catalog.css";
 import "./pages/Editor/mobile/mobile.css";
 import "./pages/Editor/mobile/compact.css";
 import "./pages/Editor/mobile/tool-pages.css";
+import "./pages/Editor/desktop/desktop.css";
 createRoot(document.getElementById("root")!).render(
   <StudioSettings>
     <App />
