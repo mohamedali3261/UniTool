@@ -1,46 +1,55 @@
+import { classifyMedia, localMediaURL, releaseMediaURL } from "../media/files";
 import { textLayout } from "../text/layout";
 import { motionAt, textAt } from "../animation/evaluate";
 import { sceneAt } from "../composition/scene";
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
 import { clipOpacity } from "./timeline";
 import { Asset, Clip, Project, clipDuration, filterCss, uid } from "../types";
-/** Optional cancellation also releases the temporary metadata decoder. */
+/** The metadata probe is cancellable and never decodes the whole file into memory. */
 export async function readAsset(
   file: File,
   signal?: AbortSignal,
 ): Promise<Asset> {
   signal?.throwIfAborted();
-  const type = file.type.startsWith("video/")
-    ? "video"
-    : file.type.startsWith("audio/")
-      ? "audio"
-      : file.type.startsWith("image/")
-        ? "image"
-        : null;
-  if (!type) throw new Error("اختر ملف فيديو أو صورة أو صوت مدعوم.");
-  const url = URL.createObjectURL(file);
+  const { type, mime } = await classifyMedia(file);
+  signal?.throwIfAborted();
+  const url = localMediaURL(
+    file.type === mime ? file : file.slice(0, file.size, mime),
+  );
   try {
-    const duration = await new Promise<number>((resolve, reject) => {
+    const metadata = await new Promise<{
+      duration: number;
+      width?: number;
+      height?: number;
+    }>((resolve, reject) => {
       const el = type === "image" ? new Image() : document.createElement(type);
-      let settled = false;
-      const cleanup = () => {
+      let settled = false,
+        recovering = false;
+      const clean = () => {
         clearTimeout(timer);
         signal?.removeEventListener("abort", abort);
         el.onerror = null;
-        if (el instanceof HTMLImageElement) el.onload = null;
-        else {
+        if (el instanceof HTMLImageElement) {
+          el.onload = null;
+          el.src = "";
+        } else {
           el.onloadedmetadata = null;
+          el.onloadeddata = null;
+          el.ondurationchange = null;
+          el.onseeked = null;
           el.pause();
           el.removeAttribute("src");
           el.load();
         }
       };
-      const finish = (duration?: number, error?: unknown) => {
+      const finish = (
+        value?: { duration: number; width?: number; height?: number },
+        error?: unknown,
+      ) => {
         if (settled) return;
         settled = true;
-        cleanup();
-        if (error) reject(error);
-        else resolve(duration!);
+        clean();
+        error ? reject(error) : resolve(value!);
       };
       const abort = () =>
         finish(
@@ -48,28 +57,75 @@ export async function readAsset(
           signal?.reason || new DOMException("Aborted", "AbortError"),
         );
       const timer = setTimeout(
-        () => finish(undefined, new Error("تعذّر قراءة الملف")),
-        15000,
+        () =>
+          finish(
+            undefined,
+            new Error(
+              `${file.name}: انتهت مهلة قراءة الملف؛ قد يكون تالفًا أو ترميزه غير مدعوم. جرّب MP4/H.264 أو WebM/VP9.`,
+            ),
+          ),
+        file.size > 256 * 1024 * 1024 ? 60000 : 30000,
       );
       signal?.addEventListener("abort", abort, { once: true });
       el.onerror = () =>
-        finish(undefined, new Error("صيغة الملف غير مدعومة في المتصفح"));
-      if (el instanceof HTMLImageElement) el.onload = () => finish(5);
+        finish(
+          undefined,
+          new Error(
+            `${file.name}: المتصفح لا يستطيع فك ترميز هذا الملف. الامتداد وحده لا يكفي؛ حوّله إلى MP4/H.264 مع صوت AAC أو WebM/VP9.`,
+          ),
+        );
+      if (el instanceof HTMLImageElement)
+        el.onload = () =>
+          finish({
+            duration: 5,
+            width: el.naturalWidth,
+            height: el.naturalHeight,
+          });
       else {
-        el.preload = "metadata";
-        el.onloadedmetadata = () =>
-          Number.isFinite(el.duration) && el.duration > 0
-            ? finish(el.duration)
-            : finish(undefined, new Error("مدة الملف غير صالحة"));
+        el.preload = type === "video" ? "auto" : "metadata";
+        el.muted = true;
+        const ready = () => {
+          if (!Number.isFinite(el.duration) || el.duration <= 0) return;
+          if (
+            type === "video" &&
+            (el.readyState < 2 || !(el as HTMLVideoElement).videoWidth)
+          )
+            return;
+          finish({
+            duration: el.duration,
+            ...(type === "video"
+              ? {
+                  width: (el as HTMLVideoElement).videoWidth,
+                  height: (el as HTMLVideoElement).videoHeight,
+                }
+              : {}),
+          });
+        };
+        el.onloadedmetadata = () => {
+          if (el.duration === Infinity && !recovering) {
+            recovering = true;
+            el.currentTime = 1e10;
+          } else ready();
+        };
+        el.ondurationchange = ready;
+        el.onloadeddata = ready;
+        el.onseeked = ready;
       }
       el.src = url;
       if (signal?.aborted) abort();
     });
     signal?.throwIfAborted();
-    return { id: uid(), name: file.name, type, url, duration };
-  } catch (e) {
-    URL.revokeObjectURL(url);
-    throw e;
+    return {
+      id: uid(),
+      name: file.name,
+      type,
+      url,
+      size: file.size,
+      ...metadata,
+    };
+  } catch (error) {
+    releaseMediaURL(url);
+    throw error;
   }
 }
 export function locate(
@@ -287,7 +343,9 @@ export function drawFrame(
       if (surface.width !== w) surface.width = w;
       if (surface.height !== h) surface.height = h;
       drawSingleFrame(
-        surface.getContext("2d")!,
+        // This surface is copied into another canvas every frame. CPU backing
+        // avoids expensive GPU readbacks at the first blended transition.
+        surface.getContext("2d", { willReadFrequently: true })!,
         media,
         withoutText,
         time,

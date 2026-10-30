@@ -47,11 +47,13 @@ export async function videoFrames(
       v.src = url;
     });
     const c = document.createElement("canvas");
-    c.width = Math.min(maxWidth, v.videoWidth);
-    c.height = Math.max(
+    const scale = Math.min(
       1,
-      Math.round((c.width * v.videoHeight) / v.videoWidth),
+      maxWidth / v.videoWidth,
+      maxWidth / v.videoHeight,
     );
+    c.width = Math.max(1, Math.round(v.videoWidth * scale));
+    c.height = Math.max(1, Math.round(v.videoHeight * scale));
     const ctx = c.getContext("2d")!;
     const images: string[] = [];
     for (const time of times) {

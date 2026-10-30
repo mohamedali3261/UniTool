@@ -1,3 +1,4 @@
+import { rulerTicks } from "./timeline/ruler";
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import {
@@ -122,6 +123,7 @@ export function Timeline({
   onInspectOverlay,
 }: Props) {
   const [mobileOptions, setMobileOptions] = useState(false);
+  const [rulerBucket, setRulerBucket] = useState(0);
   const [zoom, setZoom] = useState(55),
     [snap, setSnap] = useState(true),
     [ripple, setRipple] = useState(true),
@@ -231,6 +233,15 @@ export function Timeline({
       anchor.current = null;
     }
   }, [zoom]);
+  useLayoutEffect(() => {
+    const el = scroll.current,
+      clip = project.clips.find((c) => c.id === selected);
+    if (!el?.clientWidth || !clip || drag.current) return;
+    const left = clipStart(project, clip.id) * zoom,
+      right = left + clipDuration(clip) * zoom;
+    if (right < el.scrollLeft || left > el.scrollLeft + el.clientWidth - 30)
+      el.scrollLeft = Math.max(0, left - 32);
+  }, [selected, project.clips.length]);
   function zoomAt(next: number, clientX?: number) {
     cancel();
     const el = scroll.current;
@@ -1091,6 +1102,8 @@ export function Timeline({
           className="timeline-scroll"
           ref={scroll}
           onScroll={(e) => {
+            const bucket = Math.floor(e.currentTarget.scrollLeft / 600);
+            if (bucket !== rulerBucket) setRulerBucket(bucket);
             if (labels.current)
               labels.current.scrollTop = e.currentTarget.scrollTop;
           }}
@@ -1152,23 +1165,12 @@ export function Timeline({
               onPointerDown={(e) => start(e, "scrub")}
               onDoubleClick={addMarker}
             >
-              {Array.from(
-                {
-                  length: Math.min(
-                    2000,
-                    Math.ceil(
-                      width / zoom / (zoom < 25 ? 5 : zoom < 55 ? 2 : 1),
-                    ) + 1,
-                  ),
-                },
-                (_, i) => {
-                  const t = i * (zoom < 25 ? 5 : zoom < 55 ? 2 : 1);
-                  return (
-                    <span key={i} style={{ left: t * zoom }}>
-                      {timeLabel(t)}
-                    </span>
-                  );
-                },
+              {rulerTicks(width, zoom, rulerBucket, window.innerWidth).map(
+                (t) => (
+                  <span key={t} style={{ left: t * zoom }}>
+                    {timeLabel(t)}
+                  </span>
+                ),
               )}
               {p.markers?.map((m) => (
                 <button

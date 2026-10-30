@@ -1,3 +1,4 @@
+import { mediaAccept, releaseMediaURL } from "./media/files";
 import { durationOf } from "./types";
 import { useAutosave } from "./persistence/useAutosave";
 import { RecentProjects } from "./persistence/RecentProjects";
@@ -10,7 +11,7 @@ import { useRef, useState, useEffect } from "react";
 import { Home } from "./pages/Home";
 import { Editor } from "./pages/Editor";
 import { useProject } from "./hooks/useProject";
-import { Asset, blankProject, uid } from "./types";
+import { Asset, blankProject, uid, newClip } from "./types";
 import { readAsset } from "./lib/media";
 import { loadProject, saveProject } from "./lib/projectIO";
 export default function App() {
@@ -25,6 +26,32 @@ export default function App() {
   const autosave = useAutosave(draftId, state.project, assets);
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
+  const [importStatus, setImportStatus] = useState<{
+    current: number;
+    total: number;
+    name: string;
+  } | null>(null);
+  const [importIssues, setImportIssues] = useState<string[]>([]);
+  const [importNotice, setImportNotice] = useState<{
+    revision: number;
+    clipId?: string;
+    layer: boolean;
+  }>({ revision: 0, layer: false });
+  const importController = useRef<AbortController | null>(null);
+  const activeAssets = useRef<Asset[]>([]);
+  useEffect(() => {
+    const urls = new Set(assets.map((a) => a.url));
+    for (const a of activeAssets.current)
+      if (!urls.has(a.url)) releaseMediaURL(a.url);
+    activeAssets.current = assets;
+  }, [assets]);
+  useEffect(
+    () => () => {
+      importController.current?.abort();
+      for (const a of activeAssets.current) releaseMediaURL(a.url);
+    },
+    [],
+  );
   const input = useRef<HTMLInputElement>(null);
   const importTarget = useRef<{ layer: boolean; at: number }>({
     layer: false,
@@ -34,8 +61,8 @@ export default function App() {
     importTarget.current = { layer, at };
     if (input.current) {
       input.current.accept = layer
-        ? "video/*,image/*"
-        : "video/*,image/*,audio/*";
+        ? "video/*,image/*,.mkv,.mov,.avi,.mts,.m2ts,.ts,.m4v,.webm"
+        : mediaAccept;
       input.current.click();
     }
   };
@@ -56,18 +83,42 @@ export default function App() {
     timer.current = setTimeout(() => setToast(""), 5000);
   };
   async function importFiles(files: FileList | null) {
-    if (!files) return;
+    if (!files?.length || importController.current) return;
+    const controller = new AbortController();
+    importController.current = controller;
+    setImportIssues([]);
     setBusy(true);
     const target = { ...importTarget.current };
     try {
       const added: Asset[] = [];
-      for (const file of Array.from(files)) {
+      const issues: string[] = [];
+      for (const [index, file] of Array.from(files).entries()) {
+        if (controller.signal.aborted) break;
+        setImportStatus({
+          current: index + 1,
+          total: files.length,
+          name: file.name,
+        });
         try {
-          added.push(await readAsset(file));
+          added.push(await readAsset(file, controller.signal));
         } catch (e) {
-          notify((e as Error).message);
+          if (controller.signal.aborted) break;
+          issues.push((e as Error).message);
         }
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
+      setImportIssues(issues);
+      if (!added.length) {
+        notify(
+          controller.signal.aborted
+            ? "تم إلغاء الاستيراد"
+            : "لم تتم إضافة ملفات؛ راجع تفاصيل الخطأ",
+        );
+        return;
+      }
+      const importedClips = added
+        .filter((a) => a.type !== "audio")
+        .map(newClip);
       setAssets((a) => [...a, ...added]);
       if (target.layer) {
         state.update((p) => {
@@ -96,23 +147,7 @@ export default function App() {
       } else
         state.update((p) => ({
           ...p,
-          clips: [
-            ...p.clips,
-            ...added
-              .filter((a) => a.type !== "audio")
-              .map((a) => ({
-                id: uid(),
-                assetId: a.id,
-                start: 0,
-                end: a.duration,
-                filter: "original",
-                brightness: 1,
-                contrast: 1,
-                saturation: 1,
-                volume: 1,
-                speed: 1,
-              })),
-          ],
+          clips: [...p.clips, ...importedClips],
           audioId: added.find((a) => a.type === "audio")?.id || p.audioId,
           ...(added.some((a) => a.type === "audio")
             ? {
@@ -123,9 +158,22 @@ export default function App() {
               }
             : {}),
         }));
-      if (added.length) setPage("editor");
+      if (added.length) {
+        setPage("editor");
+        setImportNotice((previous) => ({
+          revision: previous.revision + 1,
+          clipId: importedClips[0]?.id,
+          layer: target.layer,
+        }));
+        if (!target.layer)
+          notify(
+            `${controller.signal.aborted ? "توقف الاستيراد — " : ""}تمت إضافة ${added.length} ملف إلى التايم لاين${issues.length ? `، وتعذّرت قراءة ${issues.length} ملف` : ""}`,
+          );
+      }
     } finally {
       setBusy(false);
+      setImportStatus(null);
+      importController.current = null;
       if (input.current) input.current.value = "";
       importTarget.current = { layer: false, at: 0 };
     }
@@ -136,7 +184,7 @@ export default function App() {
         hidden
         ref={input}
         type="file"
-        accept="video/*,image/*,audio/*"
+        accept={mediaAccept}
         multiple
         onChange={(e) => void importFiles(e.target.files)}
       />
@@ -152,14 +200,9 @@ export default function App() {
             const d = await loadProject(f);
             await autosave.flush();
             setDraftId(uid());
+            setImportNotice({ revision: 0, layer: false });
             state.replace(d.project);
-            setAssets((a) =>
-              Array.from(
-                new Map(
-                  [...a, ...d.assets].map((asset) => [asset.id, asset]),
-                ).values(),
-              ),
-            );
+            setAssets(d.assets);
             setPage("editor");
             notify("تم فتح المشروع بكل ملفاته");
           } catch (err) {
@@ -187,8 +230,9 @@ export default function App() {
                     await autosave.flush();
                     const built = await buildTemplate(template);
                     setDraftId(uid());
+                    setImportNotice({ revision: 0, layer: false });
                     state.replace(built.project);
-                    setAssets((previous) => [...previous, ...built.assets]);
+                    setAssets(built.assets);
                     setStartTab("text");
                     setPage("editor");
                     notify(
@@ -209,17 +253,9 @@ export default function App() {
                     await autosave.flush();
                     const restored = await restoreDraft(id);
                     setDraftId(id);
+                    setImportNotice({ revision: 0, layer: false });
                     state.replace(restored.project);
-                    setAssets((previous) =>
-                      Array.from(
-                        new Map(
-                          [...previous, ...restored.assets].map((a) => [
-                            a.id,
-                            a,
-                          ]),
-                        ).values(),
-                      ),
-                    );
+                    setAssets(restored.assets);
                     setStartTab("media");
                     setPage("editor");
                     notify("تم استرجاع المشروع من هذا الجهاز");
@@ -242,8 +278,10 @@ export default function App() {
           onNew={async (ratio) => {
             await autosave.flush();
             setDraftId(uid());
+            setImportNotice({ revision: 0, layer: false });
             setStartTab("media");
             state.replace({ ...blankProject(), ratio: ratio || "16:9" });
+            setAssets([]);
             setPage("editor");
           }}
           onImport={() => chooseMedia()}
@@ -253,6 +291,7 @@ export default function App() {
         <Editor
           {...state}
           initialTab={startTab}
+          importNotice={importNotice}
           assets={assets}
           onImportLayer={(at) => chooseMedia(true, at)}
           autosaveStatus={autosave.status}
@@ -300,8 +339,12 @@ export default function App() {
                 assets.filter((a) => assetIsUsed(state.project, a.id)),
               );
               notify("تم تنزيل المشروع بملفاته — افتحه لاحقًا للمتابعة");
-            } catch {
-              notify("تعذّر حفظ المشروع، قد تكون الملفات كبيرة جدًا");
+            } catch (error) {
+              notify(
+                (error as Error).name === "AbortError"
+                  ? "تم إلغاء حفظ المشروع"
+                  : (error as Error).message || "تعذّر حفظ المشروع",
+              );
             }
           }}
           notify={notify}
@@ -310,8 +353,42 @@ export default function App() {
       {busy && (
         <div className="busy-overlay">
           <div className="spinner" />
-          جاري تجهيز المشروع والوسائط…
+          {importStatus ? (
+            <>
+              <span role="status">
+                قراءة {importStatus.current} من {importStatus.total}:{" "}
+                {importStatus.name}
+              </span>
+              <small>
+                الفيديو الكبير يُقرأ كرابط محلي بدون تحويله إلى Base64
+              </small>
+              <button
+                className="secondary"
+                onClick={() => importController.current?.abort()}
+              >
+                إلغاء استيراد الوسائط
+              </button>
+            </>
+          ) : (
+            "جاري تجهيز المشروع والوسائط…"
+          )}
         </div>
+      )}
+      {!!importIssues.length && (
+        <aside className="import-issues" role="alert">
+          <button
+            aria-label="إغلاق أخطاء الاستيراد"
+            onClick={() => setImportIssues([])}
+          >
+            ×
+          </button>
+          <b>ملفات لم تُضف ({importIssues.length})</b>
+          <ul>
+            {importIssues.map((issue, i) => (
+              <li key={i}>{issue}</li>
+            ))}
+          </ul>
+        </aside>
       )}
       {toast && (
         <div className="toast" role="status">

@@ -1,0 +1,33 @@
+.busy-overlay small {
+  max-width: 85vw;
+  font-size: 11px;
+  color: #aaa;
+}
+.busy-overlay [role="status"] {
+  max-width: 85vw;
+  overflow-wrap: anywhere;
+}
+.import-issues {
+  position: fixed;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+  background: #301e24;
+  border: 1px solid #bf7676;
+  color: #ffded8;
+  padding: 12px;
+  border-radius: 8px;
+  width: min(540px, calc(100vw - 24px));
+  max-height: 35dvh;
+  overflow: auto;
+  font-size: 12px;
+}
+.import-issues > button {
+  float: left;
+  padding: 4px 10px;
+}
+.import-issues ul {
+  padding-inline-start: 20px;
+  line-height: 1.8;
+}

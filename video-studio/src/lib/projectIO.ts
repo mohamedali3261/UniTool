@@ -1,20 +1,34 @@
+import {
+  estimatedMediaBytes,
+  portableMemoryLimit,
+  saveLargeProject,
+} from "../media/portable";
+import { mediaBlob } from "../media/files";
+import { motionById } from "../animation/motions";
 import { isPexelsPageUrl } from "../stock/mediaSource";
 import { effectById } from "../effects/registry";
 import { Asset, Project } from "../types";
 import { download } from "./media";
 export async function saveProject(project: Project, assets: Asset[]) {
-  const bundled = await Promise.all(
-    assets.map(async (a) => {
-      const blob = await (await fetch(a.url)).blob();
-      const url = await new Promise<string>((r, j) => {
-        const reader = new FileReader();
-        reader.onload = () => r(reader.result as string);
-        reader.onerror = j;
-        reader.readAsDataURL(blob);
-      });
-      return { ...a, url };
-    }),
-  );
+  if (estimatedMediaBytes(assets) > portableMemoryLimit)
+    return saveLargeProject(project, assets);
+  const bundled: Asset[] = [];
+  let total = 0;
+  for (const asset of assets) {
+    const blob = await mediaBlob(asset.url);
+    total += blob.size;
+    if (total > portableMemoryLimit)
+      throw new Error(
+        "المشروع كبير جدًا للتجميع في الذاكرة؛ افتحه في Chrome/Edge يدعم حفظ الملفات مباشرة أو قلّل الوسائط.",
+      );
+    const url = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    bundled.push({ ...asset, url });
+  }
   download(
     new Blob([JSON.stringify({ version: 1, project, assets: bundled })], {
       type: "application/json",
@@ -173,9 +187,8 @@ export function validateProjectData(
     if (
       !c ||
       (c.motion !== undefined &&
-        !["none", "push-in", "pull-out", "pan-left", "pan-right"].includes(
-          c.motion,
-        )) ||
+        c.motion !== "none" &&
+        !motionById.has(c.motion)) ||
       !validFrames(c.keyframes) ||
       (c.gap !== undefined && typeof c.gap !== "boolean") ||
       (c.hidden !== undefined && typeof c.hidden !== "boolean") ||

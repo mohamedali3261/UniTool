@@ -42,6 +42,7 @@ import { Library, Tab, tabs } from "./Library";
 import { Inspector } from "./Inspector";
 import { ExportDialog } from "./ExportDialog";
 type Props = {
+  importNotice?: { revision: number; clipId?: string; layer: boolean };
   autosaveStatus: string;
   initialTab?: Tab;
   project: Project;
@@ -62,6 +63,7 @@ type Props = {
 };
 export function Editor({
   project,
+  importNotice,
   autosaveStatus,
   initialTab = "media",
   update,
@@ -156,6 +158,16 @@ export function Editor({
   });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
+    if (!importNotice?.revision) return;
+    setPlaying(false);
+    openPanel(importNotice.layer ? "inspector" : "timeline");
+    if (!importNotice.layer && importNotice.clipId) {
+      select(importNotice.clipId);
+      setVisualSelection({ kind: "clip", id: importNotice.clipId });
+      setTime(clipStart(project, importNotice.clipId));
+    }
+  }, [importNotice?.revision]);
+  useEffect(() => {
     if (!project.clips.some((c) => c.id === selected))
       select(project.clips[0]?.id ?? null);
   }, [selected, project.clips]);
@@ -173,12 +185,18 @@ export function Editor({
     }));
   };
   function addAsset(a: Asset) {
+    const id = uid();
+    setPlaying(false);
+    setTime(duration);
+    select(id);
+    setVisualSelection({ kind: "clip", id });
+    openPanel("timeline");
     update((p) => ({
       ...p,
       clips: [
         ...p.clips,
         {
-          id: uid(),
+          id,
           assetId: a.id,
           start: 0,
           end: a.duration,

@@ -20,7 +20,7 @@ export function ThumbnailStrip({
     if (!ref.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) setVisible(true);
+        setVisible(entries.some((e) => e.isIntersecting));
       },
       { rootMargin: "160px" },
     );
@@ -44,13 +44,16 @@ export function ThumbnailStrip({
       .then(async () => {
         if (abort.signal.aborted) return;
         try {
+          const large =
+            (asset.size || 0) > 256 * 1024 * 1024 || asset.duration > 1800;
           const data = await videoFrames(
             asset.url,
             Array.from(
-              { length: 5 },
+              { length: large ? 1 : 5 },
               (_, i) => start + ((end - start) * i) / 5,
             ),
             abort.signal,
+            large ? 160 : 320,
           );
           if (abort.signal.aborted) return;
           cache.set(key, data);
