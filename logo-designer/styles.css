@@ -1268,9 +1268,10 @@ kbd {
   color: #6b7970;
   pointer-events: none;
 }
-.ld-symbol-grid svg {
-  width: 32px;
-  height: 32px;
+.ld-symbol-grid .ld-element-add > svg {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
 }
 .ld-search {
   display: flex;
@@ -1337,4 +1338,136 @@ kbd {
 }
 .ld-dark .ld-kit {
   background: linear-gradient(130deg, #314a37, #3c3b30);
+}
+/* تحسينات تصفّح المكتبة والترتيب الجماعي. */
+.ld-collection-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 14px 0;
+}
+.ld-collection-tabs button {
+  flex: 1;
+  font-size: 9px;
+  padding: 6px 3px;
+}
+.ld-library-item {
+  position: relative;
+  min-width: 0;
+}
+.ld-symbol-grid .ld-element-add {
+  width: 100%;
+  height: 100%;
+  padding-top: 18px;
+}
+.ld-symbol-grid .ld-favorite-toggle {
+  position: absolute;
+  inset-inline-end: 1px;
+  top: 1px;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 3px;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+.ld-symbol-grid .ld-favorite-toggle[aria-pressed="true"] {
+  color: #9a7324;
+  background: transparent;
+}
+.ld-library-item .ld-element-add > span {
+  width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ld-selection-tools {
+  padding: 12px;
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 18px;
+}
+.ld-selection-tools h3 {
+  margin: 0;
+}
+.ld-selection-tools p {
+  font-size: 10px;
+}
+.ld-selection-tools > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.ld-selection-tools button {
+  font-size: 9px;
+  padding: 6px 3px;
+}
+.ld-results {
+  font-size: 10px !important;
+}
+
+.ld-library .ld-symbol-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ld-symbol-grid .ld-element-add {
+  min-height: 104px;
+  aspect-ratio: auto;
+  padding: 22px 4px 9px;
+  gap: 7px;
+}
+.ld-combinations h3 {
+  font-size: 17px;
+  line-height: 1.8;
+}
+.ld-composition-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ld-composition-grid > button {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 5px;
+  background: var(--subtle);
+  min-width: 0;
+}
+.ld-composition-grid > button > svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  background: #f8faf5;
+  border-radius: 6px;
+}
+.ld-composition-grid strong {
+  font-size: 10px;
+  font-weight: 500;
+}
+.ld-composition-grid small {
+  font-size: 8px;
+}
+.ld-group-parts {
+  padding: 12px;
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 18px;
+}
+.ld-group-parts h3 {
+  margin: 0;
+}
+.ld-group-parts p {
+  font-size: 10px;
+}
+.ld-part-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ld-part-list button {
+  font-size: 10px;
+  justify-content: flex-start;
+  text-align: start;
+  overflow-wrap: anywhere;
 }

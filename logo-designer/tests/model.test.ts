@@ -12,13 +12,13 @@ import { templates, templateProject } from "../templates";
 import { removeBackground, traceRuns } from "../image-tools";
 import { generatePalette } from "../Colors";
 import { reducer } from "../state";
-test("36 templates have editable, valid independent nodes", () => {
-  assert.equal(templates.length, 36);
+test("60 templates have editable, valid independent nodes", () => {
+  assert.equal(templates.length, 60);
   for (const t of templates)
     for (const lang of ["ar", "en"] as const) {
       const p = validateProject(templateProject(t, lang));
       assert.ok(p.nodes.some((n) => n.kind === "text"));
-      assert.ok(p.nodes.some((n) => n.kind === "icon"));
+      assert.ok(p.nodes.some((n) => n.kind === "icon" || n.kind === "vector"));
       assert.equal(new Set(p.nodes.map((n) => n.id)).size, p.nodes.length);
     }
 });
@@ -83,4 +83,99 @@ test("seed palette always returns five usable colors", () => {
     assert.equal(colors.length, 5);
     colors.forEach((c) => assert.match(c, /^#[a-f0-9]{6}$/));
   }
+});
+
+test("new original marks and symbols have unique IDs and safe portable paths", async () => {
+  const { vectorMarks, vectorNode } = await import("../vector-library");
+  const { symbols } = await import("../catalog");
+  assert.equal(vectorMarks.length, 28);
+  assert.equal(new Set(symbols.map((s) => s.id)).size, symbols.length);
+  assert.equal(new Set(vectorMarks.map((s) => s.id)).size, vectorMarks.length);
+  for (const m of vectorMarks) {
+    const p = blank();
+    p.nodes = [node(vectorNode(m))];
+    assert.doesNotThrow(() => validateProject(p));
+  }
+});
+test("extended templates use six distinct compositions with valid symbol references", async () => {
+  const { symbolMap } = await import("../catalog");
+  const fresh = templates.filter((t) => t.id.startsWith("collection-"));
+  assert.equal(fresh.length, 24);
+  assert.equal(new Set(fresh.map((t) => t.layout)).size, 6);
+  for (const t of fresh) {
+    assert.ok(symbolMap.has(t.icon));
+    assert.ok(templateProject(t, "en").nodes.length >= 6);
+  }
+});
+test("selection alignment, distribution and order preserve locked nodes and input project", async () => {
+  const { arrangeSelection } = await import("../selection-tools");
+  const p = blank();
+  p.nodes = [
+    node({ x: 100, y: 120, w: 40, h: 40 }),
+    node({ x: 280, y: 220, w: 60, h: 60 }),
+    node({ x: 500, y: 320, w: 80, h: 80 }),
+    node({ x: 777, locked: true }),
+  ];
+  const ids = p.nodes.map((n) => n.id);
+  const aligned = arrangeSelection(p, ids, "left");
+  assert.equal(aligned.nodes[0].x - 20, aligned.nodes[2].x - 40);
+  assert.equal(aligned.nodes[3].x, 777);
+  assert.equal(p.nodes[1].x, 280);
+  const spaced = arrangeSelection(p, ids, "space-x");
+  const gaps = [
+    spaced.nodes[1].x - 30 - (spaced.nodes[0].x + 20),
+    spaced.nodes[2].x - 40 - (spaced.nodes[1].x + 30),
+  ];
+  assert.equal(gaps[0], gaps[1]);
+  const reordered = arrangeSelection(p, [ids[0], ids[1]], "front");
+  assert.deepEqual(
+    reordered.nodes.slice(-2).map((n) => n.id),
+    ids.slice(0, 2),
+  );
+  assert.equal(arrangeSelection(p, [ids[0]], "left"), p);
+});
+test("Arabic search ignores diacritics and alef variants", async () => {
+  const { matchesSearch } = await import("../search");
+  assert.ok(matchesSearch("افق", "أُفُق"));
+  assert.ok(matchesSearch("صحة", "صحة وعناية"));
+  assert.ok(!matchesSearch("طيران", "قهوة"));
+});
+
+test("12 compositions contain independent safe layers and registered icons", async () => {
+  const { compositions, compositionNodes } = await import("../compositions");
+  const { symbolMap } = await import("../catalog");
+  assert.equal(compositions.length, 12);
+  for (const c of compositions) {
+    const nodes = compositionNodes(c, { x: 400, y: 300, size: 220 });
+    assert.ok(nodes.length >= 3);
+    assert.equal(new Set(nodes.map((n) => n.id)).size, nodes.length);
+    assert.equal(new Set(nodes.map((n) => n.group)).size, 1);
+    const p = blank();
+    p.nodes = nodes;
+    assert.doesNotThrow(() => validateProject(p));
+    for (const n of nodes)
+      if (n.kind === "icon") assert.ok(symbolMap.has(n.asset), n.asset);
+  }
+});
+test("composition instances have fresh groups, scalable positions and editable initial/colors", async () => {
+  const { compositions, compositionNodes } = await import("../compositions");
+  const c = compositions.find((c) => c.id === "shield-initial")!;
+  const first = compositionNodes(c, {
+      x: 400,
+      y: 300,
+      size: 200,
+      primary: "#112233",
+      accent: "#aabbcc",
+      initial: "ن",
+    }),
+    second = compositionNodes(c, { x: 100, y: 100, size: 100, grouped: false });
+  assert.ok(first.every((n) => n.group === first[0].group));
+  assert.ok(second.every((n) => !n.group));
+  assert.notEqual(first[0].id, second[0].id);
+  assert.equal(first[0].w, second[0].w * 2);
+  assert.equal(first.find((n) => n.kind === "text")!.text, "ن");
+  assert.ok(first.some((n) => n.fill === "#112233"));
+  assert.ok(first.some((n) => n.fill === "#aabbcc"));
+  const again = compositionNodes(c, { x: 400, y: 300, size: 200 });
+  assert.notEqual(first[0].group, again[0].group);
 });

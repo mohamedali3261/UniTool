@@ -1,3 +1,4 @@
+import { extraSymbols } from "./extra-symbols";
 import {
   Flame,
   Leaf,
@@ -259,18 +260,26 @@ const groups: [string, [string, string, LucideIcon][]][] = [
     ],
   ],
 ];
-export const symbols: SymbolEntry[] = groups.flatMap(([category, items]) =>
-  items.map(([id, ar, icon]) => ({
-    id,
-    ar,
-    en: id.replace(/([a-z])([A-Z])/g, "$1 $2"),
-    category,
-    icon,
-  })),
-);
+export const symbols: SymbolEntry[] = [
+  ...extraSymbols,
+  ...groups.flatMap(([category, items]) =>
+    items.map(([id, ar, icon]) => ({
+      id,
+      ar,
+      en: id.replace(/([a-z])([A-Z])/g, "$1 $2"),
+      category,
+      icon,
+    })),
+  ),
+];
 export const symbolMap = new Map(symbols.map((s) => [s.id, s]));
 export const categories = [
   ["all", "الكل", "All"],
+  ["health", "صحة وعناية", "Health"],
+  ["education", "تعليم", "Education"],
+  ["travel", "سفر ونقل", "Travel"],
+  ["creative", "إبداع وألعاب", "Creative"],
+  ["finance", "مال وأعمال", "Finance"],
   ["geometry", "هندسي", "Geometry"],
   ["ornaments", "زخارف", "Ornaments"],
   ["frames", "إطارات وشارات", "Frames & badges"],
