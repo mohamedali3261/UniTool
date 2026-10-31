@@ -12,7 +12,8 @@ test("every studio and live site entry has a real link, and every tool has a dee
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "مساحة واحدة",
   );
-  await expect(page.locator(".studio-card")).toHaveCount(5);
+  await expect(page.locator(".studio-card")).toHaveCount(4);
+  await expect(page.locator('a[href="/logo-studio.html"]')).toHaveCount(0);
   for (const p of sitePages.filter((p) => p.href !== "/index.html")) {
     await expect(
       page.locator(`.home-footer a[href="${p.href}"]`),
@@ -109,7 +110,7 @@ for (const width of [320, 390, 768, 1440])
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
-    for (const id of ["design", "video", "svg", "reader", "logo"]) {
+    for (const id of ["design", "video", "svg", "reader"]) {
       const card = page.locator(`#${id}`);
       await card.scrollIntoViewIfNeeded();
       const b = (await card.boundingBox())!;

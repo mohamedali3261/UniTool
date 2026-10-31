@@ -6,6 +6,6 @@ export const sitePages = [
   { href: "/designcraft.html", ar: "مصمم الجرافيك", en: "Design Craft" },
   { href: "/the-audio-reader.html", ar: "القارئ الصوتي", en: "Audio Reader" },
   { href: "/unitool-svg.html", ar: "UniTool SVG", en: "UniTool SVG" },
+  { href: "/logo-designer/", ar: "مصمم الشعارات", en: "Logo Designer" },
   { href: "/video-studio.html", ar: "استوديو الفيديو", en: "Video Studio" },
-  { href: "/logo-studio.html", ar: "مصمم الشعارات", en: "Logo Studio" },
 ];

@@ -24,7 +24,6 @@ import {
   VideoArt,
   SvgArt,
   ReaderArt,
-  LogoArt,
   ToolsArt,
 } from "./components/Artwork";
 import { ToolDirectory } from "./components/ToolDirectory";
@@ -364,10 +363,8 @@ export default function HomePage() {
                     <VideoArt />
                   ) : s.id === "svg" ? (
                     <SvgArt />
-                  ) : s.id === "reader" ? (
-                    <ReaderArt lang={lang} />
                   ) : (
-                    <LogoArt />
+                    <ReaderArt lang={lang} />
                   )}
                 </div>
                 <div className="studio-card-copy">
