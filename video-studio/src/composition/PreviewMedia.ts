@@ -15,7 +15,12 @@ export class PreviewMedia {
   >();
   private disposed = false;
   private generation = 0;
-  async sync(entries: SceneEntry[], assets: Asset[], playing: boolean) {
+  async sync(
+    entries: SceneEntry[],
+    assets: Asset[],
+    playing: boolean,
+    onAudioError?: (error: unknown) => void,
+  ) {
     const generation = ++this.generation;
     const active = new Set(entries.map((e) => e.id));
     for (const [id, slot] of this.slots)
@@ -102,13 +107,19 @@ export class PreviewMedia {
                 clipOpacity(entry.clip, entry.local),
             ),
           );
-          if (playing && entry.playing) void el.play().catch(() => {});
+          if (playing && entry.playing)
+            void el.play().catch((error) => onAudioError?.(error));
           else el.pause();
         }
         output.set(entry.id, el);
       }),
     );
     return this.disposed || generation !== this.generation ? null : output;
+  }
+  playbackElements(): HTMLVideoElement[] {
+    return [...this.slots.values()]
+      .map((s) => s.el)
+      .filter((el): el is HTMLVideoElement => el instanceof HTMLVideoElement);
   }
   private release(slot: {
     el: HTMLVideoElement | HTMLImageElement;

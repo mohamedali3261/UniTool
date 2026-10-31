@@ -273,7 +273,8 @@ export function Interaction(props: Props) {
         Math.hypot(p.x - g.box.cx, p.y - g.box.cy) / g.distance,
       );
     if (
-      Math.hypot(p.x - g.x, p.y - g.y) < (2 * w) / Math.max(1, rect.width) &&
+      Math.hypot(p.x - g.x, p.y - g.y) <
+        ((e.pointerType === "touch" ? 8 : 4) * w) / Math.max(1, rect.width) &&
       !g.moved
     )
       return;
@@ -341,6 +342,7 @@ export function Interaction(props: Props) {
                   onPause();
                   cancel();
                   setEditing(!editing);
+                  onSelect(null);
                 }}
               >
                 <Move size={14} />
@@ -505,7 +507,9 @@ export function Interaction(props: Props) {
               {playing
                 ? "أوقف التشغيل للتعديل المباشر"
                 : editing
-                  ? "اسحب العنصر • المقابض للحجم والتدوير • ضغطتين على النص لتعديله • Esc للإلغاء"
+                  ? box
+                    ? "اسحب العنصر المحدد • المقابض للحجم والتدوير • Esc لإلغاء التحديد"
+                    : "اضغط على عنصر داخل المعاينة لتحديده • التايم لاين للتوقيت والقص"
                   : "وضع مشاهدة: تقدر تمرّر الصفحة فوق المعاينة بحرية"}
             </p>
           </>,
