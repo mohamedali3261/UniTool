@@ -23,3 +23,7 @@ npm run build
 npm run test:home
 ```
 The browser suite uses Playwright Chromium. For a custom installation, set `STUDIO_CHROMIUM_PATH`; for an already-running production preview set `HOME_QA_URL`. QA artifacts belong in `.cache`, `test-results` or other ignored directories, not in the homepage source.
+
+## Workspace hero and restored brand
+
+The navbar/footer use the original `/UniTool_logo.png` asset. `components/HeroWorkspace.tsx` and `hero.css` implement the new full-width tool launcher: all 31 canonical tools, the five studios, the Elements library, category browsing, direct search (Ctrl/Cmd+K), quick picks and four device-local recent tools. It doesn't import any editor implementation. The existing `/` shortcut still focuses the complete tool directory further down the page. Recents record only tools opened from this launcher and can be cleared there.

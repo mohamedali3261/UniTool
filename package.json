@@ -18,7 +18,8 @@
     "build:cloudflare-reel": "tsx video-studio/scripts/build-cloudflare-reel.ts",
     "render:unitool": "node video-studio/promos/unitool/render.mjs",
     "test:unitool-promo": "tsx --test video-studio/promos/unitool/film.test.ts",
-    "test:home": "playwright test --config playwright.home.config.ts"
+    "test:home": "playwright test --config playwright.home.config.ts",
+    "test:elements": "tsx --test src/pages/Elements/tests/*.test.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

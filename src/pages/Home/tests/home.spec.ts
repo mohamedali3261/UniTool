@@ -62,7 +62,7 @@ test("quick picks cover each category; search and filters reveal tools, studios 
     .getByRole("button", { name: "عرض كل الأقسام", exact: true })
     .click();
   await expect(search).toHaveValue("");
-  await page.getByRole("button", { name: "أدوات الصوت", exact: true }).click();
+  await page.locator(".tool-directory").getByRole("button", { name: "أدوات الصوت", exact: true }).click();
   await expect(page.locator(".directory-tool")).toHaveCount(
     toolCategories.find((c) => c.id === "audio")!.tools.length,
   );

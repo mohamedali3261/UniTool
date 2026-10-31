@@ -1,3 +1,4 @@
+import { novaTextLayers } from "./text";
 import {
   blankProject,
   newClip,
@@ -52,37 +53,7 @@ export async function buildNova(): Promise<{
         effectIntensity: 0.25,
       });
       const at = i * 4;
-      project.texts.push(
-        {
-          id: uid(),
-          text: scene.text,
-          start: at + 0.22,
-          end: at + 3.8,
-          x: 50,
-          y: 43,
-          size: 68,
-          color: "#ffffff",
-          bold: true,
-          font: "sans",
-          outline: true,
-          animationIn: i === 4 ? "typewriter" : i % 2 ? "pop" : "slide",
-          animationOut: "fade",
-          animationDuration: i === 4 ? 0.8 : 0.45,
-        },
-        {
-          id: uid(),
-          text: scene.caption,
-          start: at + 0.65,
-          end: at + 3.8,
-          x: 50,
-          y: 61,
-          size: 29,
-          color: nova.colors[1],
-          animationIn: "fade",
-          animationOut: "fade",
-          animationDuration: 0.5,
-        },
-      );
+      project.texts.push(...novaTextLayers(i, at));
     }
     for (const [mode, name] of [
       ["mix", "NOVA • الموسيقى + أصوات الانتقال"],

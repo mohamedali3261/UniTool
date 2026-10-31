@@ -19,6 +19,7 @@ export default defineConfig(() => {
       rollupOptions: {
         input: {
           landing: path.resolve(__dirname, 'index.html'),
+          elements: path.resolve(__dirname, 'elements.html'),
           main: path.resolve(__dirname, 'app.html'),
           designcraft: path.resolve(__dirname, 'designcraft.html'),
           audioreader: path.resolve(__dirname, 'the-audio-reader.html'),

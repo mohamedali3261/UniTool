@@ -1,3 +1,4 @@
+import { interfaceTextLayers, interfaceIdentityLayers } from "./text";
 import {
   blankProject,
   newClip,
@@ -49,63 +50,10 @@ export async function buildInterfaceFlow(): Promise<{
         label: scene.text,
         color: interfaceFlow.colors[1],
       });
-      project.texts.push(
-        {
-          id: uid(),
-          text: scene.text,
-          start: at + 0.15,
-          end: at + scene.seconds - 0.15,
-          x: 50,
-          y: 18,
-          size: i === 1 ? 60 : 66,
-          color: "#edf9f2",
-          font: i < 6 ? "mono" : "sans",
-          bold: true,
-          animationIn: "slide",
-          animationOut: "fade",
-          animationDuration: 0.45,
-        },
-        {
-          id: uid(),
-          text: scene.caption,
-          start: at + 0.6,
-          end: at + scene.seconds - 0.15,
-          x: 50,
-          y: i === 0 ? 29 : 26,
-          size: i === 0 ? 51 : 34,
-          color: interfaceFlow.colors[1],
-          animationIn: "fade",
-          animationOut: "fade",
-          animationDuration: 0.5,
-        },
-      );
+      project.texts.push(...interfaceTextLayers(i, at));
       at += scene.seconds;
     }
-    project.texts.push(
-      {
-        id: uid(),
-        text: "@yourname",
-        start: 0,
-        end: 70,
-        x: 50,
-        y: 95,
-        size: 24,
-        color: "#8eafa1",
-        font: "mono",
-      },
-      {
-        id: uid(),
-        text: "كلود",
-        start: 64,
-        end: 69.6,
-        x: 50,
-        y: 59.4,
-        size: 38,
-        color: "#e7f9f0",
-        animationIn: "typewriter",
-        animationDuration: 1.8,
-      },
-    );
+    project.texts.push(...interfaceIdentityLayers());
     await new Promise<void>((r) => setTimeout(r, 0));
     const music = await readAsset(
       new File(

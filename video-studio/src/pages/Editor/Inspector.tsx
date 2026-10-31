@@ -1,3 +1,4 @@
+import { SVGEditor } from "../../elements/SVGEditor";
 import { interfaceScenes } from "../../templates/interface-flow/scenes";
 import { CreativeTools } from "../../animation/CreativeTools";
 import { LayerEditor } from "../../composition/LayerEditor";
@@ -18,7 +19,9 @@ function InspectorView({
   getTime,
   onImportLayer,
   onPreview,
+  onRegisterAsset,
 }: {
+  onRegisterAsset: (a: Asset) => void;
   mobileExpanded?: boolean;
   onMobileClose?: () => void;
   project: Project;
@@ -331,6 +334,12 @@ function InspectorView({
           </p>
         </div>
       )}
+      <SVGEditor
+        project={project}
+        assets={assets}
+        onProject={onProject}
+        onRegisterAsset={onRegisterAsset}
+      />
       <LayerEditor
         project={project}
         assets={assets}
