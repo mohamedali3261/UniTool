@@ -14,7 +14,10 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "test:video-studio": "tsx --test video-studio/tests/*.test.ts",
-    "test:video-studio:browser": "playwright test --config playwright.video-studio.config.ts"
+    "test:video-studio:browser": "playwright test --config playwright.video-studio.config.ts",
+    "build:cloudflare-reel": "tsx video-studio/scripts/build-cloudflare-reel.ts",
+    "render:unitool": "node video-studio/promos/unitool/render.mjs",
+    "test:unitool-promo": "tsx --test video-studio/promos/unitool/film.test.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

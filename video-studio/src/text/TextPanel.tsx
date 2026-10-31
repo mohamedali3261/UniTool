@@ -1,3 +1,5 @@
+import { VectorPathEditor } from "./VectorPathEditor";
+import { LayerMotionEditor } from "../animation/LayerMotionEditor";
 import "./elements.css";
 import { useEffect, useState } from "react";
 import { TextPresetCatalog } from "./TextPresetCatalog";
@@ -197,6 +199,11 @@ export function TextPanel({
                   onChange={(e) => edit({ name: e.target.value })}
                 />
               </label>
+              <VectorPathEditor
+                key={active.id}
+                layer={active}
+                onChange={edit}
+              />
               {active.box && (
                 <>
                   <label className="field-label">
@@ -208,6 +215,36 @@ export function TextPanel({
                       onChange={(e) => edit({ background: e.target.value })}
                     />
                   </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!!active.box.gradient}
+                      onChange={(e) =>
+                        edit({
+                          box: {
+                            ...active.box!,
+                            gradient: e.target.checked ? "#302014" : undefined,
+                          },
+                        })
+                      }
+                    />{" "}
+                    تدرج لوني
+                  </label>
+                  {active.box.gradient && (
+                    <label>
+                      نهاية التدرج
+                      <input
+                        aria-label="لون نهاية التدرج"
+                        type="color"
+                        value={active.box.gradient}
+                        onChange={(e) =>
+                          edit({
+                            box: { ...active.box!, gradient: e.target.value },
+                          })
+                        }
+                      />
+                    </label>
+                  )}
                   <div className="field-row">
                     {(
                       ["width", "height", "radius", "borderWidth"] as const
@@ -404,6 +441,7 @@ export function TextPanel({
                   />
                 </label>
                 <TextMotionControls layer={active} onChange={edit} />
+                <LayerMotionEditor layer={active} onChange={edit} />
               </fieldset>
             </details>
             <button

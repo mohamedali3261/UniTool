@@ -1,3 +1,4 @@
+import { CloudflareFeatured } from "./cloudflare-checklist/Featured";
 import "./editable/styles.css";
 import { InterfaceFeatured } from "./interface-flow/Featured";
 import { NovaShowcase } from "./nova/Showcase";
@@ -31,6 +32,7 @@ export function TemplateGallery({
           ↓ ملف PAPER قابل للتعديل
         </a>
       </div>
+      <CloudflareFeatured busy={busy} onUse={onUse} />
       <InterfaceFeatured busy={busy} onUse={onUse} />
       <NovaShowcase onUse={onUse} busy={busy} />
       <div className="template-cards">
