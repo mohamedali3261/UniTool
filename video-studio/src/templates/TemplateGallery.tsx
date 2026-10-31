@@ -1,3 +1,4 @@
+import { InterfaceFeatured } from "./interface-flow/Featured";
 import { NovaShowcase } from "./nova/Showcase";
 import "./nova/styles.css";
 import { templates } from "./index";
@@ -21,6 +22,7 @@ export function TemplateGallery({
         خلفيات تصميمية محلية ونصوص وانتقالات قابلة للتعديل. استبدل الخلفيات من
         خصائص المقطع بملفاتك أو لقطات Pexels.
       </p>
+      <InterfaceFeatured busy={busy} onUse={onUse} />
       <NovaShowcase onUse={onUse} busy={busy} />
       <div className="template-cards">
         {templates.map((t, i) => (

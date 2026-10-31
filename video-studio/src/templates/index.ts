@@ -1,3 +1,5 @@
+import { interfaceFlow } from "./interface-flow";
+import { buildInterfaceFlow } from "./interface-flow/build";
 import { nova } from "./nova";
 import { buildNova } from "./nova/build";
 import { reel } from "./reel";
@@ -7,10 +9,11 @@ import { slideshow } from "./slideshow";
 import { uid, blankProject, newClip, type Project, type Asset } from "../types";
 import { readAsset } from "../lib/media";
 import type { StudioTemplate } from "./types";
-export const templates = [reel, product, quote, slideshow, nova];
+export const templates = [reel, product, quote, slideshow, nova, interfaceFlow];
 export async function buildTemplate(
   template: StudioTemplate,
 ): Promise<{ project: Project; assets: Asset[] }> {
+  if (template.id === "interface-flow") return buildInterfaceFlow();
   if (template.id === "nova") return buildNova();
   const project: Project = {
     ...blankProject(),
