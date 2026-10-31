@@ -1,9 +1,11 @@
+import { TimelineSearch, type TimelineEntry } from "./timeline/TimelineSearch";
+import { TimelineToolbar } from "./timeline/TimelineToolbar";
+import { visibleInTimeline, clipLayout } from "./timeline/viewport";
 import { rulerTicks } from "./timeline/ruler";
 import { useRef, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import {
   Plus,
-  MoreHorizontal,
   Scissors,
   Trash2,
   Copy,
@@ -83,6 +85,8 @@ type Drag = {
   p: Project;
   items: Item[];
   pointer: number;
+  points: number[];
+  before?: string | null;
 };
 type Props = {
   playing?: boolean;
@@ -127,11 +131,19 @@ export function Timeline({
   onInspectOverlay,
 }: Props) {
   const [mobileOptions, setMobileOptions] = useState(false);
-  const [rulerBucket, setRulerBucket] = useState(0);
+  const [dense, setDense] = useState(true);
+  const [follow, setFollow] = useState(true);
+  const [viewport, setViewport] = useState({
+    left: 0,
+    top: 0,
+    width: 800,
+    height: 250,
+  });
+  const rulerBucket = Math.floor(viewport.left / 600);
   const [zoom, setZoom] = useState(55),
     [snap, setSnap] = useState(true),
     [ripple, setRipple] = useState(true),
-    [height, setHeight] = useState(300),
+    [height, setHeight] = useState(220),
     [multiple, setMultiple] = useState(false),
     [precise, setPrecise] = useState(false);
   const [items, setItems] = useState<Item[]>([]),
@@ -150,13 +162,23 @@ export function Timeline({
     if (!playing || !clockRef) return;
     let raf: number;
     const paint = () => {
-      if (head.current)
-        head.current.style.transform = `translateX(${clockRef.current * zoom}px)`;
+      const x = clockRef.current * zoom,
+        el = scroll.current;
+      if (head.current) head.current.style.transform = `translateX(${x}px)`;
+      // Page rather than continuously scroll; never fight a drag or a pinch.
+      if (
+        follow &&
+        el &&
+        !drag.current &&
+        !pinchRef.current &&
+        (x > el.scrollLeft + el.clientWidth - 40 || x < el.scrollLeft)
+      )
+        el.scrollLeft = Math.max(0, x - el.clientWidth * 0.2);
       raf = requestAnimationFrame(paint);
     };
     paint();
     return () => cancelAnimationFrame(raf);
-  }, [playing, clockRef, zoom]);
+  }, [playing, clockRef, zoom, follow]);
   const track = useRef<HTMLDivElement>(null),
     scroll = useRef<HTMLDivElement>(null),
     labels = useRef<HTMLDivElement>(null),
@@ -165,6 +187,8 @@ export function Timeline({
     long = useRef<ReturnType<typeof setTimeout> | null>(null),
     lastX = useRef(0),
     anchor = useRef<{ time: number; offset: number } | null>(null);
+  const pendingMove = useRef(false);
+  const viewportFrame = useRef(0);
   const pinchRef = useRef<{
     distance: number;
     zoom: number;
@@ -175,6 +199,25 @@ export function Timeline({
     duration = durationOf(p),
     width = Math.max(560, (duration + 2) * zoom),
     lanes = useMemo(() => textLanes(p.texts), [p.texts]);
+  const layout = useMemo(() => clipLayout(p.clips), [p.clips]);
+  const assetMap = useMemo(
+    () => new Map(assets.map((a) => [a.id, a])),
+    [assets],
+  );
+  const visibleClips =
+    p.clips.length > 60
+      ? layout.filter(({ start, clip }) =>
+          visibleInTimeline(
+            start,
+            clipDuration(clip),
+            0,
+            0,
+            viewport,
+            zoom,
+            false,
+          ),
+        )
+      : layout;
   const active = items.filter((s) => selectedObject(project, s));
   const fallback: Item[] = active.length
     ? active
@@ -200,25 +243,113 @@ export function Timeline({
     selectedMarker = p.markers?.find((m) => m.id === marker),
     keyClip = kf ? p.clips.find((c) => c.id === kf.clipId) : undefined,
     keyframe = keyClip?.keyframes?.find((f) => f.id === kf?.id);
-  const rulerHeight = compact ? 30 : 48,
-    laneHeight = compact ? 24 : 34;
+  const small = dense;
+  const rulerHeight = small ? 30 : 48,
+    laneHeight = small ? 24 : 34;
   const rowHeight = (id: string, normal: number) =>
     p.tracks?.[id]?.collapsed
-      ? compact
+      ? small
         ? 24
         : 32
       : p.tracks?.[id]?.height
-        ? compact
+        ? small
           ? clamp(p.tracks[id].height! * 0.7, 32, 98)
           : p.tracks[id].height!
         : normal;
-  const videoHeight = rowHeight("video", compact ? 60 : 88),
+  const videoHeight = rowHeight("video", small ? 58 : 88),
     textHeight = rowHeight(
       "text",
-      Math.max(compact ? 28 : 44, lanes.count * laneHeight + (compact ? 4 : 8)),
+      Math.max(small ? 28 : 44, lanes.count * laneHeight + (small ? 4 : 8)),
     ),
-    audioHeight = rowHeight("audio", compact ? 34 : 54),
-    sfxHeight = rowHeight("sfx", compact ? 34 : 48);
+    audioHeight = rowHeight("audio", small ? 34 : 54),
+    sfxHeight = rowHeight("sfx", small ? 34 : 48);
+  const searchEntries = useMemo<TimelineEntry[]>(
+    () => [
+      ...layout.map(({ clip, start }) => ({
+        kind: "clip" as const,
+        id: clip.id,
+        label: clip.gap ? "فراغ" : assetMap.get(clip.assetId)?.name || "مقطع",
+        time: start,
+        top: rulerHeight,
+      })),
+      ...(music
+        ? [
+            {
+              kind: "audio" as const,
+              id: music.id,
+              label: `♫ ${music.name}`,
+              time: audioStart,
+              top: rulerHeight + videoHeight + textHeight,
+            },
+          ]
+        : []),
+      ...(p.sounds || []).map((c) => ({
+        kind: "sound" as const,
+        id: c.id,
+        label: `♫ ${assetMap.get(c.assetId)?.name || "مؤثر صوتي"}`,
+        time: c.at,
+        top: rulerHeight + videoHeight + textHeight + audioHeight,
+      })),
+      ...p.texts.map((t) => ({
+        kind: "text" as const,
+        id: t.id,
+        label: t.name || t.text,
+        time: t.start,
+        top:
+          rulerHeight + videoHeight + (lanes.lanes.get(t.id) || 0) * laneHeight,
+      })),
+      ...(p.overlays || []).map((l, i) => ({
+        kind: "overlay" as const,
+        id: l.id,
+        label: `طبقة ${i + 1} · ${assetMap.get(l.assetId)?.name || "وسائط"}`,
+        time: l.at,
+        top:
+          rulerHeight +
+          videoHeight +
+          textHeight +
+          audioHeight +
+          (p.sounds?.length ? sfxHeight : 0) +
+          (p.overlays || [])
+            .slice(0, i)
+            .reduce((n, l) => n + rowHeight(l.id, small ? 32 : 50), 0),
+      })),
+    ],
+    [
+      layout,
+      p.texts,
+      p.overlays,
+      p.tracks,
+      p.sounds,
+      music,
+      audioStart,
+      assetMap,
+      lanes,
+      rulerHeight,
+      videoHeight,
+      textHeight,
+      audioHeight,
+      sfxHeight,
+      laneHeight,
+      small,
+    ],
+  );
+  function reveal(entry: TimelineEntry) {
+    cancel();
+    setMobileOptions(false);
+    if (entry.kind === "audio" || entry.kind === "sound") setItems([]);
+    else {
+      setItems([{ kind: entry.kind, id: entry.id }]);
+      if (entry.kind === "clip") select(entry.id);
+      else onSelectItem?.({ kind: entry.kind, id: entry.id });
+    }
+    setTime(entry.time);
+    if (scroll.current) {
+      scroll.current.scrollLeft = Math.max(0, entry.time * zoom - 40);
+      scroll.current.scrollTop = Math.max(0, entry.top - rulerHeight);
+    }
+    track.current?.focus({ preventScroll: true });
+    measureViewport();
+  }
   const previousCueCount = useRef(p.sounds?.length || 0);
   useLayoutEffect(() => {
     const count = p.sounds?.length || 0,
@@ -248,6 +379,7 @@ export function Timeline({
   };
   function cancel() {
     clearLong();
+    pendingMove.current = false;
     const d = drag.current;
     drag.current = null;
     setDragging(false);
@@ -263,9 +395,52 @@ export function Timeline({
   useEffect(
     () => () => {
       clearLong();
+      cancelAnimationFrame(viewportFrame.current);
     },
     [],
   );
+  function measureViewport() {
+    if (viewportFrame.current) return;
+    viewportFrame.current = requestAnimationFrame(() => {
+      viewportFrame.current = 0;
+      const el = scroll.current;
+      if (!el) return;
+      const next = {
+        left: Math.floor(el.scrollLeft / 600) * 600,
+        top: Math.floor(el.scrollTop / 100) * 100,
+        width: el.clientWidth,
+        height: el.clientHeight,
+      };
+      setViewport((old) =>
+        Object.keys(next).every(
+          (k) => old[k as keyof typeof old] === next[k as keyof typeof next],
+        )
+          ? old
+          : next,
+      );
+    });
+  }
+  useLayoutEffect(() => {
+    const el = scroll.current;
+    if (!el) return;
+    const observer = new ResizeObserver(measureViewport);
+    observer.observe(el);
+    measureViewport();
+    return () => observer.disconnect();
+  }, []);
+  function fitProject() {
+    cancel();
+    anchor.current = { time: 0, offset: 0 };
+    setZoom(
+      clamp(
+        ((scroll.current?.clientWidth || 700) - 45) / Math.max(duration, 0.5),
+        0.01,
+        720,
+      ),
+    );
+    // Also reset when the fitted scale happens to be unchanged.
+    if (scroll.current) scroll.current.scrollLeft = 0;
+  }
   useLayoutEffect(() => {
     if (anchor.current && scroll.current) {
       scroll.current.scrollLeft =
@@ -292,7 +467,7 @@ export function Timeline({
           : clientX - el.getBoundingClientRect().left;
       anchor.current = { time: (el.scrollLeft + offset) / zoom, offset };
     }
-    setZoom(clamp(next, 5, 720));
+    setZoom(clamp(next, 0.01, 720));
   }
   useEffect(() => {
     const el = scroll.current;
@@ -333,7 +508,7 @@ export function Timeline({
         setZoom(
           clamp(
             (pinch.current.zoom * distance(e)) / pinch.current.distance,
-            5,
+            0.01,
             720,
           ),
         );
@@ -402,6 +577,7 @@ export function Timeline({
       p: project,
       items: chosen,
       pointer: e.pointerId,
+      points: [...allPoints(project), time],
     };
     drag.current = d;
     setDragging(true);
@@ -426,7 +602,7 @@ export function Timeline({
     const raw = (clientX - track.current.getBoundingClientRect().left) / zoom;
     const dx =
       (clientX - d.x + (scroll.current?.scrollLeft || 0) - d.scroll) / zoom;
-    const points = [...allPoints(d.p), time];
+    const points = d.points;
     const snapTo = (n: number, exclude: number[] = []) => {
       const value = snap
         ? snapTime(
@@ -470,7 +646,10 @@ export function Timeline({
         }
         pos += clipDuration(c);
       }
-      show(reorderItems(d.p, d.items, before));
+      if (before !== d.before) {
+        d.before = before;
+        show(reorderItems(d.p, d.items, before));
+      }
     } else if (d.mode === "text") {
       const t = d.p.texts.find((t) => t.id === d.id)!;
       if (d.edge === "move")
@@ -579,8 +758,12 @@ export function Timeline({
         if (amount) {
           const before = el.scrollLeft;
           el.scrollLeft += amount;
-          if (el.scrollLeft !== before) moveAt(x);
+          if (el.scrollLeft !== before) pendingMove.current = true;
         }
+      }
+      if (pendingMove.current && d) {
+        pendingMove.current = false;
+        moveAt(lastX.current);
       }
       frame = requestAnimationFrame(tick);
     };
@@ -590,6 +773,10 @@ export function Timeline({
   function finish(e: ReactPointerEvent, cancelled = false) {
     const d = drag.current;
     if (!d || d.pointer !== e.pointerId) return;
+    if (!cancelled && pendingMove.current) {
+      pendingMove.current = false;
+      moveAt(lastX.current);
+    }
     const next = draftRef.current;
     cancel();
     if (!cancelled && next && next !== project) onChange(next);
@@ -755,7 +942,8 @@ export function Timeline({
   };
   return (
     <section
-      className={`timeline timeline-enhanced timeline-pro ${compact ? "is-compact" : ""} ${mobileOptions ? "show-options" : ""}`}
+      aria-label="الخط الزمني للمشروع"
+      className={`timeline timeline-enhanced timeline-pro ${compact ? "is-compact" : ""} ${dense ? "is-dense" : ""}`}
       style={{ height }}
       onKeyDown={(e) => {
         if (
@@ -764,6 +952,15 @@ export function Timeline({
           )
         )
           return;
+        if (
+          e.key.toLowerCase() === "f" &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey
+        ) {
+          e.preventDefault();
+          fitProject();
+        }
         if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
@@ -797,7 +994,7 @@ export function Timeline({
           el.setPointerCapture(e.pointerId);
           const move = (ev: PointerEvent) =>
             setHeight(
-              clamp(h + y - ev.clientY, 210, Math.min(540, innerHeight * 0.65)),
+              clamp(h + y - ev.clientY, 190, Math.min(540, innerHeight * 0.65)),
             );
           const up = () => {
             el.removeEventListener("pointermove", move);
@@ -811,195 +1008,249 @@ export function Timeline({
       >
         <i />
       </div>
-      <div className="timeline-toolbar">
-        <button
-          className="timeline-options-toggle"
-          aria-label="خيارات التايم لاين"
-          aria-expanded={mobileOptions}
-          onClick={() => setMobileOptions((v) => !v)}
-        >
-          <MoreHorizontal size={18} />
-        </button>
-        <div>
-          <IconButton
-            icon={Scissors}
-            label="تقسيم عند المؤشر"
-            onClick={onSplit}
-          />
-          <IconButton
-            icon={PanelLeftClose}
-            label="حذف ما قبل المؤشر من المقطع"
-            onClick={() => trimCursor("start")}
-          />
-          <IconButton
-            icon={PanelRightClose}
-            label="حذف ما بعد المؤشر من المقطع"
-            onClick={() => trimCursor("end")}
-          />
-          <IconButton
-            icon={Copy}
-            label="نسخ المقطع"
-            disabled={
-              !fallback.length || fallback.every((s) => locked(project, s))
-            }
-            onClick={() => copy()}
-          />
-          <IconButton
-            icon={Trash2}
-            label="حذف المقطع"
-            disabled={
-              !fallback.length || fallback.every((s) => locked(project, s))
-            }
-            onClick={() => erase()}
-          />
-          <IconButton
-            icon={selectedClip?.volume === 0 ? VolumeX : Volume2}
-            label="كتم / استعادة صوت المقطع"
-            disabled={
-              !selectedClip ||
-              !!selectedClip.locked ||
-              !!project.tracks?.video?.locked
-            }
-            onClick={() =>
-              selectedClip &&
-              onChange(
-                patchObject(
-                  project,
-                  { kind: "clip", id: selectedClip.id },
-                  { volume: selectedClip.volume ? 0 : 1 },
-                ),
-              )
-            }
-          />
-          <button
-            aria-label="الجذب المغناطيسي"
-            aria-pressed={snap}
-            onClick={() => setSnap(!snap)}
-          >
-            <Magnet size={16} /> جذب
-          </button>
-          <button
-            aria-label="القص المتتابع Ripple"
-            aria-pressed={ripple}
-            onClick={() => setRipple(!ripple)}
-          >
-            Ripple {ripple ? "✓" : "—"}
-          </button>
-          <button
-            aria-label="تحديد متعدد"
-            aria-pressed={multiple}
-            onClick={() => setMultiple(!multiple)}
-          >
-            <MousePointer2 size={15} /> تحديد {active.length || ""}
-          </button>
-          <IconButton
-            icon={Link}
-            label="تجميع وربط التحديد"
-            disabled={
-              active.length < 2 || active.some((s) => locked(project, s))
-            }
-            onClick={() => onChange(groupItems(project, active))}
-          />
-          <IconButton
-            icon={Unlink}
-            label="فك ارتباط التحديد"
-            disabled={!active.length}
-            onClick={() =>
-              onChange(groupItems(project, expand(project, active), true))
-            }
-          />
-          <button
-            onClick={() => onChange(closeGaps(project))}
-            disabled={!project.clips.some((c) => c.gap)}
-          >
-            حذف الفراغات
-          </button>
-          <IconButton
-            icon={Flag}
-            label="إضافة علامة عند المؤشر"
-            onClick={addMarker}
-          />
-          <button
-            disabled={!selectedClip}
-            onClick={() =>
-              selectedClip &&
-              addKeyframe(
-                selectedClip.id,
-                time - clipStart(project, selectedClip.id),
-              )
-            }
-          >
-            ◇ Keyframe
-          </button>
-        </div>
-        <div>
-          <IconButton
-            icon={ScanLine}
-            label="ملاءمة المشروع للعرض"
-            onClick={() => {
-              cancel();
-              setZoom(
-                clamp(
-                  ((scroll.current?.clientWidth || 700) - 45) /
-                    Math.max(duration, 0.5),
-                  5,
-                  720,
-                ),
-              );
-            }}
-          />
-          <IconButton
-            icon={Focus}
-            label="تكبير عند المؤشر"
-            onClick={() => {
-              anchor.current = {
-                time,
-                offset: (scroll.current?.clientWidth || 700) / 2,
-              };
-              setZoom(240);
-            }}
-          />
-          <button
-            aria-label="وضع القص الدقيق"
-            aria-pressed={precise}
-            onClick={() => {
-              setPrecise(!precise);
-              if (!precise) {
+      <TimelineToolbar
+        open={mobileOptions}
+        onToggle={setMobileOptions}
+        search={<TimelineSearch entries={searchEntries} onReveal={reveal} />}
+        primary={
+          <>
+            <IconButton
+              icon={Scissors}
+              label="تقسيم عند المؤشر"
+              onClick={onSplit}
+            />
+            <IconButton
+              icon={Copy}
+              label="نسخ المقطع"
+              disabled={
+                !fallback.length || fallback.every((s) => locked(project, s))
+              }
+              onClick={() => copy()}
+            />
+            <IconButton
+              icon={Trash2}
+              label="حذف المقطع"
+              disabled={
+                !fallback.length || fallback.every((s) => locked(project, s))
+              }
+              onClick={() => erase()}
+            />
+            <button
+              aria-label="الجذب المغناطيسي"
+              aria-pressed={snap}
+              onClick={() => setSnap(!snap)}
+            >
+              <Magnet size={16} /> جذب
+            </button>
+            <IconButton
+              icon={ScanLine}
+              label="ملاءمة المشروع للعرض"
+              onClick={fitProject}
+            />
+          </>
+        }
+        zoom={
+          <>
+            <IconButton
+              icon={ZoomOut}
+              label="تصغير الخط الزمني"
+              onClick={() => zoomAt(zoom / 1.3)}
+            />
+            <input
+              aria-label="تكبير الخط الزمني"
+              type="range"
+              min="0.01"
+              step="0.01"
+              max="720"
+              value={zoom}
+              onChange={(e) => zoomAt(+e.target.value)}
+            />
+            <IconButton
+              icon={ZoomIn}
+              label="تكبير الخط الزمني"
+              onClick={() => zoomAt(zoom * 1.3)}
+            />
+          </>
+        }
+        editing={
+          <>
+            <IconButton
+              icon={PanelLeftClose}
+              label="حذف ما قبل المؤشر من المقطع"
+              onClick={() => trimCursor("start")}
+            />
+            <IconButton
+              icon={PanelRightClose}
+              label="حذف ما بعد المؤشر من المقطع"
+              onClick={() => trimCursor("end")}
+            />
+            <IconButton
+              icon={selectedClip?.volume === 0 ? VolumeX : Volume2}
+              label="كتم / استعادة صوت المقطع"
+              disabled={
+                !selectedClip ||
+                !!selectedClip.locked ||
+                !!project.tracks?.video?.locked
+              }
+              onClick={() =>
+                selectedClip &&
+                onChange(
+                  patchObject(
+                    project,
+                    { kind: "clip", id: selectedClip.id },
+                    { volume: selectedClip.volume ? 0 : 1 },
+                  ),
+                )
+              }
+            />
+            <button
+              aria-label="القص المتتابع Ripple"
+              aria-pressed={ripple}
+              onClick={() => setRipple(!ripple)}
+            >
+              Ripple {ripple ? "✓" : "—"}
+            </button>
+            <button
+              aria-label="تحديد متعدد"
+              aria-pressed={multiple}
+              onClick={() => setMultiple(!multiple)}
+            >
+              <MousePointer2 size={15} /> تحديد {active.length || ""}
+            </button>
+            <IconButton
+              icon={Link}
+              label="تجميع وربط التحديد"
+              disabled={
+                active.length < 2 || active.some((s) => locked(project, s))
+              }
+              onClick={() => onChange(groupItems(project, active))}
+            />
+            <IconButton
+              icon={Unlink}
+              label="فك ارتباط التحديد"
+              disabled={!active.length}
+              onClick={() =>
+                onChange(groupItems(project, expand(project, active), true))
+              }
+            />
+            <button
+              onClick={() => onChange(closeGaps(project))}
+              disabled={!project.clips.some((c) => c.gap)}
+            >
+              حذف الفراغات
+            </button>
+            <IconButton
+              icon={Flag}
+              label="إضافة علامة عند المؤشر"
+              onClick={addMarker}
+            />
+            <button
+              disabled={!selectedClip}
+              onClick={() =>
+                selectedClip &&
+                addKeyframe(
+                  selectedClip.id,
+                  time - clipStart(project, selectedClip.id),
+                )
+              }
+            >
+              ◇ Keyframe
+            </button>
+          </>
+        }
+        view={
+          <>
+            <IconButton
+              icon={Focus}
+              label="تكبير عند المؤشر"
+              onClick={() => {
                 anchor.current = {
                   time,
                   offset: (scroll.current?.clientWidth || 700) / 2,
                 };
-                setZoom(720);
-              }
-            }}
-          >
-            قص دقيق
-          </button>
-          <IconButton
-            icon={ZoomOut}
-            label="تصغير الخط الزمني"
-            onClick={() => zoomAt(zoom / 1.3)}
-          />
-          <input
-            aria-label="تكبير الخط الزمني"
-            type="range"
-            min="5"
-            max="720"
-            value={zoom}
-            onChange={(e) => zoomAt(+e.target.value)}
-          />
-          <IconButton
-            icon={ZoomIn}
-            label="تكبير الخط الزمني"
-            onClick={() => zoomAt(zoom * 1.3)}
-          />
-        </div>
-      </div>
+                setZoom(240);
+              }}
+            />
+            <button
+              aria-label="وضع القص الدقيق"
+              aria-pressed={precise}
+              onClick={() => {
+                setPrecise(!precise);
+                if (!precise) {
+                  anchor.current = {
+                    time,
+                    offset: (scroll.current?.clientWidth || 700) / 2,
+                  };
+                  setZoom(720);
+                }
+              }}
+            >
+              قص دقيق
+            </button>
+            <input
+              className="timeline-mobile-zoom"
+              aria-label="تكبير الخط الزمني"
+              type="range"
+              min="0.01"
+              step="0.01"
+              max="720"
+              value={zoom}
+              onChange={(e) => zoomAt(+e.target.value)}
+            />
+            <button
+              aria-label="عرض مضغوط للمسارات"
+              aria-pressed={dense}
+              onClick={() => setDense((v) => !v)}
+            >
+              مسارات مضغوطة
+            </button>
+            <button
+              aria-label="متابعة مؤشر التشغيل"
+              aria-pressed={follow}
+              onClick={() => setFollow((v) => !v)}
+            >
+              متابعة المؤشر
+            </button>
+            <button
+              onClick={() => {
+                setTime(0);
+                if (scroll.current) scroll.current.scrollLeft = 0;
+              }}
+            >
+              بداية المشروع
+            </button>
+            <button
+              onClick={() => {
+                setTime(duration);
+                if (scroll.current)
+                  scroll.current.scrollLeft =
+                    duration * zoom - scroll.current.clientWidth + 50;
+              }}
+            >
+              نهاية المشروع
+            </button>
+            <IconButton
+              className="icon-button timeline-mobile-zoom"
+              icon={ZoomOut}
+              label="تصغير الخط الزمني"
+              onClick={() => zoomAt(zoom / 1.3)}
+            />
+            <IconButton
+              className="icon-button timeline-mobile-zoom"
+              icon={ZoomIn}
+              label="تكبير الخط الزمني"
+              onClick={() => zoomAt(zoom * 1.3)}
+            />
+          </>
+        }
+      />
       <div className="timeline-meta">
         <span>
           {precise
             ? `فريم ${Math.round(time * 30)} · شبكة 30 FPS`
-            : "اسحب الحواف للقص • Shift أو وضع التحديد لاختيار مجموعة • ضغطة مطولة للإجراءات"}
+            : active.length
+              ? `${active.length} عنصر محدد · Delete للحذف · Ctrl+D للنسخ`
+              : "اسحب الحواف للقص · Shift لتحديد مجموعة"}
         </span>
         <div dir="ltr">
           <IconButton
@@ -1125,7 +1376,7 @@ export function Timeline({
             ...(p.overlays || []).map((l, i) => [
               l.id,
               `طبقة ${i + 1}`,
-              rowHeight(l.id, compact ? 32 : 50),
+              rowHeight(l.id, small ? 32 : 50),
               true,
             ]),
           ].map(([id, name, h, audio]) => (
@@ -1143,14 +1394,15 @@ export function Timeline({
           className="timeline-scroll"
           ref={scroll}
           onScroll={(e) => {
-            const bucket = Math.floor(e.currentTarget.scrollLeft / 600);
-            if (bucket !== rulerBucket) setRulerBucket(bucket);
+            measureViewport();
             if (labels.current)
               labels.current.scrollTop = e.currentTarget.scrollTop;
           }}
         >
           <div
             className="tracks"
+            role="group"
+            aria-label="مسارات المشروع — F لملاءمة العرض"
             ref={track}
             tabIndex={0}
             style={{
@@ -1162,12 +1414,16 @@ export function Timeline({
                 audioHeight +
                 (p.sounds?.length ? sfxHeight : 0) +
                 (p.overlays || []).reduce(
-                  (n, l) => n + rowHeight(l.id, compact ? 32 : 50),
+                  (n, l) => n + rowHeight(l.id, small ? 32 : 50),
                   0,
                 ),
             }}
             onPointerMove={(e) => {
-              if (e.pointerId === drag.current?.pointer) moveAt(e.clientX);
+              if (e.pointerId === drag.current?.pointer) {
+                lastX.current = e.clientX;
+                pendingMove.current = true;
+                if (Math.abs(e.clientX - drag.current.x) > 4) clearLong();
+              }
             }}
             onPointerUp={(e) => finish(e)}
             onPointerCancel={(e) => finish(e, true)}
@@ -1207,13 +1463,11 @@ export function Timeline({
               onPointerDown={(e) => start(e, "scrub")}
               onDoubleClick={addMarker}
             >
-              {rulerTicks(width, zoom, rulerBucket, window.innerWidth).map(
-                (t) => (
-                  <span key={t} style={{ left: t * zoom }}>
-                    {timeLabel(t)}
-                  </span>
-                ),
-              )}
+              {rulerTicks(width, zoom, rulerBucket, viewport.width).map((t) => (
+                <span key={t} style={{ left: t * zoom }}>
+                  {timeLabel(t)}
+                </span>
+              ))}
               {p.markers?.map((m) => (
                 <button
                   key={m.id}
@@ -1236,8 +1490,8 @@ export function Timeline({
               className={`video-track ${p.tracks?.video?.hidden ? "track-hidden" : ""}`}
               style={{ height: videoHeight }}
             >
-              {p.clips.map((c) => {
-                const a = assets.find((a) => a.id === c.assetId),
+              {visibleClips.map(({ clip: c, start: clipAt }) => {
+                const a = assetMap.get(c.assetId),
                   s: Item = { kind: "clip", id: c.id };
                 return (
                   <div
@@ -1246,8 +1500,9 @@ export function Timeline({
                     tabIndex={0}
                     aria-label={`مقطع ${c.gap ? "فراغ" : a?.name}`}
                     {...attributes(s)}
-                    className={`timeline-clip ${isSelected(s) || (!active.length && selected === c.id) ? "selected" : ""} ${c.gap ? "timeline-gap" : ""} ${locked(p, s) ? "item-locked" : ""}`}
+                    className={`timeline-clip ${isSelected(s) || (!active.length && selected === c.id) ? "selected" : ""} ${c.gap ? "timeline-gap" : ""} ${c.locked || p.tracks?.video?.locked ? "item-locked" : ""}`}
                     style={{
+                      left: clipAt * zoom,
                       width: Math.max(5, clipDuration(c) * zoom),
                       height: Math.max(24, videoHeight - 12),
                     }}
@@ -1366,6 +1621,13 @@ export function Timeline({
               })}
               <button
                 className="track-add"
+                style={{
+                  left:
+                    (layout.length
+                      ? layout[layout.length - 1].start +
+                        clipDuration(layout[layout.length - 1].clip)
+                      : 0) * zoom,
+                }}
                 onClick={onImport}
                 aria-label="إضافة مقطع"
               >
@@ -1379,47 +1641,62 @@ export function Timeline({
                 overflow: p.tracks?.text?.collapsed ? "hidden" : undefined,
               }}
             >
-              {p.texts.map((t) => {
-                const s: Item = { kind: "text", id: t.id };
-                return (
-                  <div
-                    key={t.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`توقيت النص ${t.name || t.text}`}
-                    {...attributes(s)}
-                    className={`timeline-text ${isSelected(s) ? "selected" : ""} ${locked(p, s) ? "item-locked" : ""}`}
-                    style={{
-                      left: t.start * zoom,
-                      width: Math.max(8, (t.end - t.start) * zoom),
-                      top:
-                        (compact ? 3 : 5) +
+              {p.texts
+                .filter(
+                  (t) =>
+                    p.texts.length <= 80 ||
+                    visibleInTimeline(
+                      t.start,
+                      t.end - t.start,
+                      rulerHeight +
+                        videoHeight +
                         (lanes.lanes.get(t.id) || 0) * laneHeight,
-                    }}
-                    onDoubleClick={onText}
-                    onPointerDown={(e) => start(e, "text", s)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") onText();
-                    }}
-                  >
-                    <span
-                      className="trim-handle start"
-                      title="بداية النص"
-                      onPointerDown={(e) => start(e, "text", s, "start")}
-                    />
-                    <Type size={13} />
-                    <span>
-                      {t.name || t.text}
-                      {t.groupId ? " ⛓" : ""}
-                    </span>
-                    <span
-                      className="trim-handle end"
-                      title="نهاية النص"
-                      onPointerDown={(e) => start(e, "text", s, "end")}
-                    />
-                  </div>
-                );
-              })}
+                      laneHeight,
+                      viewport,
+                      zoom,
+                    ),
+                )
+                .map((t) => {
+                  const s: Item = { kind: "text", id: t.id };
+                  return (
+                    <div
+                      key={t.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`توقيت النص ${t.name || t.text}`}
+                      {...attributes(s)}
+                      className={`timeline-text ${isSelected(s) ? "selected" : ""} ${t.locked || p.tracks?.text?.locked ? "item-locked" : ""}`}
+                      style={{
+                        left: t.start * zoom,
+                        width: Math.max(8, (t.end - t.start) * zoom),
+                        top:
+                          (small ? 3 : 5) +
+                          (lanes.lanes.get(t.id) || 0) * laneHeight,
+                      }}
+                      onDoubleClick={onText}
+                      onPointerDown={(e) => start(e, "text", s)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") onText();
+                      }}
+                    >
+                      <span
+                        className="trim-handle start"
+                        title="بداية النص"
+                        onPointerDown={(e) => start(e, "text", s, "start")}
+                      />
+                      <Type size={13} />
+                      <span>
+                        {t.name || t.text}
+                        {t.groupId ? " ⛓" : ""}
+                      </span>
+                      <span
+                        className="trim-handle end"
+                        title="نهاية النص"
+                        onPointerDown={(e) => start(e, "text", s, "end")}
+                      />
+                    </div>
+                  );
+                })}
               {!p.texts.length && (
                 <button className="empty-track" onClick={onText}>
                   <Plus size={14} /> إضافة نص أو ملصق
@@ -1490,7 +1767,7 @@ export function Timeline({
                 <div
                   className={`overlay-timeline-track ${p.tracks?.[l.id]?.hidden ? "track-hidden" : ""}`}
                   key={l.id}
-                  style={{ height: rowHeight(l.id, compact ? 32 : 50) }}
+                  style={{ height: rowHeight(l.id, small ? 32 : 50) }}
                 >
                   <button
                     {...attributes(s)}
@@ -1502,7 +1779,7 @@ export function Timeline({
                       width: Math.max(8, (l.end - l.start) * zoom),
                       height: Math.max(
                         24,
-                        rowHeight(l.id, compact ? 32 : 50) - 10,
+                        rowHeight(l.id, small ? 32 : 50) - 10,
                       ),
                     }}
                     onPointerDown={(e) => start(e, "overlay", s)}

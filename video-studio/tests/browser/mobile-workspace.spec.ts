@@ -55,7 +55,7 @@ for (const [width, height] of [
     );
     expect(
       (await page.locator(".timeline-toolbar").boundingBox())!.height,
-    ).toBe(38);
+    ).toBe(44); // One compact row, with larger touch targets.
     expect((await page.locator(".ruler").boundingBox())!.height).toBe(30);
     expect(
       (await page.locator(".timeline-clip").first().boundingBox())!.height,
@@ -165,6 +165,7 @@ test("mobile keyboard viewport, orientation changes and leaving editor clean up 
   });
   const page = await context.newPage();
   await page.goto(`${base}/video-studio.html`);
+  const templateCount = await page.locator(".template-card").count();
   await page.locator(".template-card").first().click();
   await toolPage(page, "النصوص");
   const input = page.getByRole("textbox", { name: "محتوى النص", exact: true });
@@ -201,7 +202,7 @@ test("mobile keyboard viewport, orientation changes and leaving editor clean up 
   await page
     .getByRole("button", { name: "العودة للاستوديو", exact: true })
     .click();
-  await expect(page.locator(".template-card")).toHaveCount(6);
+  await expect(page.locator(".template-card")).toHaveCount(templateCount);
   await expect(page.locator("body")).not.toHaveClass(/studio-mobile-editing/);
   expect(
     await page.evaluate(() =>
