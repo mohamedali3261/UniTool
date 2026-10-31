@@ -1,3 +1,5 @@
+import { HeroWorkspace } from "./components/HeroWorkspace";
+import "./hero.css";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpLeft,
@@ -18,7 +20,6 @@ import { sitePages } from "../../config/sitePages";
 import { totalToolCount } from "../ToolsHome/data";
 import { copy, studios, type Language } from "./data";
 import {
-  HeroArt,
   DesignArt,
   VideoArt,
   SvgArt,
@@ -91,14 +92,12 @@ export default function HomePage() {
         )
       ) {
         e.preventDefault();
-        document
-          .getElementById("tools")
-          ?.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-              .matches
-              ? "auto"
-              : "smooth",
-          });
+        document.getElementById("tools")?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "auto"
+            : "smooth",
+        });
         searchRef.current?.focus({ preventScroll: true });
       }
     };
@@ -106,13 +105,11 @@ export default function HomePage() {
     return () => document.removeEventListener("keydown", key);
   }, []);
   const goSearch = () => {
-    document
-      .getElementById("tools")
-      ?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-      });
+    document.getElementById("tools")?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
     searchRef.current?.focus({ preventScroll: true });
   };
   return (
@@ -123,16 +120,20 @@ export default function HomePage() {
       <header className="home-header">
         <div className="home-container header-inner">
           <a className="home-brand" href="/index.html" aria-label="UniTool">
-            <span className="brand-mark">
-              u<span />
-            </span>
-            <span>
-              UniTool<small>YOUR DIGITAL WORKSPACE</small>
-            </span>
+            <img
+              src="/UniTool_logo.png"
+              alt="UniTool"
+              width="128"
+              height="32"
+              className="restored-brand-logo"
+            />
           </a>
           <nav className="desktop-home-nav" aria-label={t.menu}>
             <a href="#tools">{t.navTools}</a>
             <a href="#studios">{t.navStudios}</a>
+            <a href="/elements.html">
+              {lang === "ar" ? "العناصر" : "Elements"}
+            </a>
             <a href="#how">{t.navHow}</a>
           </nav>
           <div className="header-actions">
@@ -190,7 +191,10 @@ export default function HomePage() {
         )}
       </header>
       <main id="main">
-        <section className="home-hero home-container" id="top">
+        <section
+          className="home-hero home-container hero-workspace-layout"
+          id="top"
+        >
           <div className="hero-copy">
             <span className="hero-eyebrow">
               <i />
@@ -221,6 +225,10 @@ export default function HomePage() {
                 {t.find}
                 <Command size={17} />
               </button>
+              <a className="hero-elements-link" href="/elements.html">
+                {lang === "ar" ? "اكتشف مكتبة العناصر" : "Discover elements"}
+                <Layers3 size={15} />
+              </a>
             </div>
             <span className="browser-note">
               <span /> {t.browser}
@@ -243,7 +251,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <HeroArt lang={lang} />
+          <HeroWorkspace lang={lang} />
           <a href="#tools" className="hero-scroll">
             <ArrowDown size={15} />
             {t.scroll}
@@ -427,13 +435,14 @@ export default function HomePage() {
       </main>
       <footer className="home-footer home-container">
         <div className="footer-top">
-          <a className="home-brand" href="#top">
-            <span className="brand-mark">
-              u<span />
-            </span>
-            <span>
-              UniTool<small>{t.footer}</small>
-            </span>
+          <a className="home-brand" href="#top" aria-label="UniTool">
+            <img
+              src="/UniTool_logo.png"
+              alt="UniTool"
+              width="128"
+              height="32"
+              className="restored-brand-logo"
+            />
           </a>
           <nav
             aria-label={lang === "ar" ? "كل صفحات الموقع" : "All site pages"}

@@ -116,7 +116,7 @@ export const copy = {
     skip: "انتقل للمحتوى",
     eyebrow: "أفكار أكتر. تابات أقل.",
     heroA: "مساحة واحدة.",
-    heroB: "لكل أفكارك.",
+    heroB: "تجمع كل شغلك.",
     intro:
       "من ملف محتاج تعديل، لفكرة مستنية تتنفّذ. أدواتك واستوديوهاتك الإبداعية، كلها قريبة منك.",
     explore: "اكتشف كل الأقسام",
@@ -178,7 +178,7 @@ export const copy = {
     skip: "Skip to content",
     eyebrow: "More ideas. Fewer tabs.",
     heroA: "One workspace.",
-    heroB: "Every possibility.",
+    heroB: "Every tool. Every idea.",
     intro:
       "From a file that needs a quick fix to an idea waiting to happen. Your everyday tools and creative studios, together.",
     explore: "Explore the workspace",

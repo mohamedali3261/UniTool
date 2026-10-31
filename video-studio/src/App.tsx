@@ -1,3 +1,4 @@
+import "./elements/elements.css";
 import { mediaAccept, releaseMediaURL } from "./media/files";
 import { durationOf } from "./types";
 import { useAutosave } from "./persistence/useAutosave";
@@ -180,6 +181,13 @@ export default function App() {
   }
   return (
     <>
+      {page === "home" &&
+        new URLSearchParams(location.search).has("element") && (
+          <div className="element-handoff" role="status">
+            عنصرك جاهز للإضافة. افتح مشروع محفوظ، أو ابدأ مشروع جديد؛ هنضيفه
+            للتايم لاين من غير استبدال المحتوى.
+          </div>
+        )}
       <input
         hidden
         ref={input}

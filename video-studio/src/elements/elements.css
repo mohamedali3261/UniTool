@@ -1,0 +1,133 @@
+.studio-elements {
+  padding: 0 12px 20px;
+  min-width: 0;
+}
+.studio-elements > p {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #a8b5b1;
+}
+.studio-elements label {
+  display: block;
+  font-size: 11px;
+  color: #b8c8c0;
+  margin: 10px 0;
+}
+.studio-elements input,
+.studio-elements select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  margin-top: 6px;
+  background: #141a21;
+  color: #e4ece8;
+  border: 1px solid #46574f;
+  border-radius: 6px;
+  padding: 7px;
+  font: inherit;
+}
+.studio-elements-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.studio-elements > small {
+  display: block;
+  color: #a3b8ab;
+  font-size: 10px;
+  margin: 14px 0;
+}
+.studio-elements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.studio-elements-grid article {
+  border: 1px solid #3c4945;
+  border-radius: 7px;
+  background: #1c2428;
+  overflow: hidden;
+  min-width: 0;
+}
+.studio-elements-grid article > div {
+  background: repeating-conic-gradient(#1d2925 0% 25%, #26342e 0% 50%) 0/16px
+    16px;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+.studio-elements-grid canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+.studio-elements-grid small {
+  display: block;
+  padding: 7px 8px 0;
+  color: #a9bab2;
+  font-size: 8px;
+}
+.studio-elements-grid strong {
+  display: block;
+  padding: 6px 8px;
+  font-size: 11px;
+  min-height: 45px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.studio-elements-grid button {
+  display: block;
+  width: calc(100% - 12px);
+  margin: 6px;
+  min-height: 36px;
+  background: #72dfb31b;
+  border: 1px solid #75cfa85c;
+  color: #abefd1;
+  border-radius: 5px;
+  font-size: 10px;
+}
+.studio-elements-grid button:disabled {
+  opacity: 0.4;
+}
+.studio-svg-editor textarea {
+  width: 100%;
+  height: 190px;
+  resize: vertical;
+  background: #10171a;
+  color: #c3e6d0;
+  border: 1px solid #526157;
+  border-radius: 5px;
+  font: 10px/1.8 monospace;
+  padding: 8px;
+}
+.studio-svg-editor p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #b6c7bd;
+}
+.element-handoff {
+  margin: 16px;
+  padding: 16px;
+  background: #182b25;
+  border: 1px solid #6dbc9555;
+  border-radius: 8px;
+  color: #c0e6d2;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.studio-svg-editor select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 38px;
+  background: #17201e;
+  color: #d0e6d8;
+  border: 1px solid #526157;
+  border-radius: 5px;
+}
+.studio-elements :focus-visible,
+.studio-svg-editor :focus-visible {
+  outline: 2px solid #9ce1bd;
+  outline-offset: 2px;
+}

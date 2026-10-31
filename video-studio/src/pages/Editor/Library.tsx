@@ -1,3 +1,5 @@
+import type { LibraryElement } from "../../../../src/pages/Elements/types";
+
 import { SoundCatalog } from "../../sound/SoundCatalog";
 import type { SoundPreset } from "../../sound/presets";
 import type { TextPresetStyle } from "../../text/presets/types";
@@ -18,8 +20,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { Asset, Project, TextLayer, Clip } from "../../types";
+const ElementsPanel = lazy(() => import("../../elements/ElementsPanel"));
 export type Tab =
-  "media" | "audio" | "text" | "filters" | "effects" | "stickers";
+  | "media"
+  | "audio"
+  | "text"
+  | "filters"
+  | "effects"
+  | "stickers";
 export const tabs: { id: Tab; label: string; icon: typeof Film }[] = [
   { id: "media", label: "وسائط", icon: Film },
   { id: "audio", label: "الصوت", icon: Music2 },
@@ -51,7 +59,13 @@ function LibraryView({
   onRemoveAudio,
   onSoundAdd,
   onSoundProject,
+  onElementAdd,
 }: {
+  onElementAdd: (
+    item: LibraryElement,
+    color?: string,
+    seconds?: number,
+  ) => void;
   selectedTextId: string | null;
   onSelectText: (id: string) => void;
   onDuplicateText: (id: string) => void;
@@ -75,7 +89,9 @@ function LibraryView({
   onSoundAdd: (p: SoundPreset) => Promise<void>;
   onSoundProject: (patch: Partial<Project>) => void;
 }) {
-  const [source, setSource] = useState<"local" | "pexels">("local");
+  const [source, setSource] = useState<"local" | "pexels" | "elements">(
+    "local",
+  );
   const FileSection = tab === "audio" ? "details" : "div";
   return (
     <aside
@@ -110,7 +126,19 @@ function LibraryView({
             <Film size={15} />
             مكتبة Pexels
           </button>
+          <button
+            aria-pressed={source === "elements"}
+            onClick={() => setSource("elements")}
+          >
+            <Layers size={15} />
+            العناصر
+          </button>
         </div>
+      )}
+      {tab === "media" && source === "elements" && (
+        <Suspense fallback={<p role="status">تحميل العناصر…</p>}>
+          <ElementsPanel onAdd={onElementAdd} suspended={suspendPreviews} />
+        </Suspense>
       )}
       {tab === "media" && source === "pexels" && (
         <Suspense

@@ -1,3 +1,5 @@
+import { insertElement } from "../../elements/insert";
+import type { LibraryElement } from "../../../../src/pages/Elements/types";
 import { readAsset } from "../../lib/media";
 import { synthSound } from "../../sound/synth";
 import type { SoundPreset } from "../../sound/presets";
@@ -412,6 +414,68 @@ export function Editor({
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [project, selected, time, canUndo, canRedo, exporting]);
+  useEffect(() => {
+    if (visualSelection?.kind === "overlay")
+      document.getElementById("studio-layers")?.setAttribute("open", "");
+  }, [visualSelection]);
+  const onElementAdd = useEvent(
+    (item: LibraryElement, color?: string, seconds = 5) => {
+      try {
+        const result = insertElement(project, item, getTime(), color, seconds);
+        playback.current?.pause();
+        setPlaying(false);
+        result.assets.forEach(onRegisterAsset);
+        update(result.project);
+        setTime(result.at);
+        if (result.selection.kind === "clip") {
+          select(result.selection.id);
+          setVisualSelection(null);
+          openPanel("inspector");
+        } else {
+          setVisualSelection(result.selection);
+          if (result.selection.kind === "text") {
+            setTab("text");
+            openPanel("library");
+          } else openPanel("inspector");
+        }
+        notify(
+          item.kind === "scene"
+            ? "تمت إضافة المشهد في نهاية التايم لاين؛ عدّل المشهد واللون من الخصائص"
+            : "تمت إضافة العنصر؛ عدّل النص والشكل من النصوص، والصورة من الخصائص أو مباشرة في المعاينة",
+        );
+      } catch (e) {
+        notify((e as Error).message);
+      }
+    },
+  );
+  useEffect(() => {
+    const params = new URLSearchParams(location.search),
+      id = params.get("element");
+    if (!id) return;
+    let alive = true;
+    void import("../../../../src/pages/Elements/registry")
+      .then((m) => {
+        if (!alive) return;
+        const item = m.loadElements().find((i) => i.id === id);
+        const color = params.get("color") || undefined;
+        if (item)
+          onElementAdd(
+            item,
+            color && /^#[0-9a-f]{6}$/i.test(color) ? color : undefined,
+          );
+        else notify("العنصر المطلوب غير موجود؛ اختاره من مكتبة العناصر");
+        const url = new URL(location.href);
+        url.searchParams.delete("element");
+        url.searchParams.delete("color");
+        history.replaceState(null, "", url);
+      })
+      .catch(() => {
+        if (alive) notify("تعذّر تحميل العنصر؛ جرّب مكتبة العناصر من الوسائط");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   const onLibraryAdd = useEvent(addAsset);
   const onLibraryText = useEvent(addText);
   const onLibraryFilter = useEvent((filter: string) => {
@@ -648,6 +712,7 @@ export function Editor({
           assets={assets}
           project={project}
           onImport={onImport}
+          onElementAdd={onElementAdd}
           onAdd={onLibraryAdd}
           onStockAsset={onStockAdd}
           onText={onLibraryText}
@@ -729,6 +794,7 @@ export function Editor({
           />
         </div>
         <Inspector
+          onRegisterAsset={onRegisterAsset}
           mobileExpanded={
             isMobile && mobilePanel === "inspector" && !previewFocused
           }

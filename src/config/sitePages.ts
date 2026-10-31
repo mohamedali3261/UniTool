@@ -2,6 +2,7 @@
 export const sitePages = [
   { href: "/index.html", ar: "الرئيسية", en: "Home" },
   { href: "/app.html", ar: "الأدوات", en: "Tools" },
+  { href: "/elements.html", ar: "العناصر", en: "Elements" },
   { href: "/designcraft.html", ar: "مصمم الجرافيك", en: "Design Craft" },
   { href: "/the-audio-reader.html", ar: "القارئ الصوتي", en: "Audio Reader" },
   { href: "/unitool-svg.html", ar: "UniTool SVG", en: "UniTool SVG" },
