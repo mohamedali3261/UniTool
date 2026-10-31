@@ -66,6 +66,7 @@ export type Clip = {
   keyframes?: MotionKeyframe[];
 };
 export type OverlayLayer = {
+  foreground?: boolean;
   groupId?: string;
   locked?: boolean;
   hidden?: boolean;
@@ -81,7 +82,26 @@ export type OverlayLayer = {
   rotation: number;
   volume: number;
 };
+export type LayerFrame = {
+  at: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  opacity: number;
+  blur: number;
+  easing?: "linear" | "smooth" | "spring";
+};
 export type TextLayer = {
+  frames?: LayerFrame[];
+  counter?: {
+    from: number;
+    to: number;
+    duration: number;
+    decimals: number;
+    suffix: string;
+  };
   name?: string;
   /** Editable vector geometry in 960px reference units (same as font size). */
   box?: {
@@ -90,6 +110,8 @@ export type TextLayer = {
     radius?: number;
     borderWidth?: number;
     borderColor?: string;
+    gradient?: string;
+    points?: { x: number; y: number }[];
   };
   groupId?: string;
   rotation?: number;

@@ -1,3 +1,5 @@
+import { cloudflareChecklist } from "./cloudflare-checklist";
+import { cloudflareProject } from "./cloudflare-checklist/project";
 import { orbitLaunch, buildOrbitLaunch } from "./orbit-launch";
 import { paperStories, buildPaperStories } from "./paper-stories";
 import { interfaceFlow } from "./interface-flow";
@@ -20,10 +22,12 @@ export const templates = [
   interfaceFlow,
   orbitLaunch,
   paperStories,
+  cloudflareChecklist,
 ];
 export async function buildTemplate(
   template: StudioTemplate,
 ): Promise<{ project: Project; assets: Asset[] }> {
+  if (template.id === "cloudflare-checklist") return cloudflareProject();
   if (template.id === "orbit-launch") return buildOrbitLaunch();
   if (template.id === "paper-stories") return buildPaperStories();
   if (template.id === "interface-flow") return buildInterfaceFlow();

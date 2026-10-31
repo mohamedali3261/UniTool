@@ -1,3 +1,4 @@
+import { layerFrameAt } from "../animation/layerFrames";
 import { sceneAt } from "../composition/scene";
 import { motionAt, textAt } from "../animation/evaluate";
 import { effectFrame } from "../effects/renderer";
@@ -195,21 +196,30 @@ export function boxesAt(
     if (time < t.start || time >= t.end) continue;
     const a = textAt(t, time),
       layout = textLayout(ctx, t, w);
-    const r = ((t.rotation || 0) * Math.PI) / 180;
+    const f = layerFrameAt(t, time);
+    const r = (((t.rotation || 0) + f.rotation) * Math.PI) / 180;
     boxes.push({
       kind: "text",
       id: t.id,
-      cx: (w * t.x) / 100 - Math.sin(r) * layout.offsetY * a.scale,
-      cy: (h * (t.y + a.y)) / 100 + Math.cos(r) * layout.offsetY * a.scale,
-      width: layout.width * a.scale,
-      height: layout.height * a.scale,
-      angle: t.rotation || 0,
+      cx:
+        (w * (t.x + f.x)) / 100 -
+        Math.sin(r) * layout.offsetY * a.scale * f.scaleY,
+      cy:
+        (h * (t.y + a.y + f.y)) / 100 +
+        Math.cos(r) * layout.offsetY * a.scale * f.scaleY,
+      width: layout.width * a.scale * f.scaleX,
+      height: layout.height * a.scale * f.scaleY,
+      angle: (t.rotation || 0) + f.rotation,
       locked: !!(t.locked || p.tracks?.text?.locked),
       hidden: !!(t.hidden || p.tracks?.text?.hidden),
       label: t.name || t.text.slice(0, 40) || "نص فارغ",
     });
   }
-  return boxes;
+  return boxes.sort(
+    (a, b) =>
+      Number(!!p.overlays?.find((l) => l.id === a.id)?.foreground) -
+      Number(!!p.overlays?.find((l) => l.id === b.id)?.foreground),
+  );
 }
 export function hitBox(box: Box, x: number, y: number, padding = 0) {
   const r = (-box.angle * Math.PI) / 180,

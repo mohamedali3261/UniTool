@@ -11,3 +11,9 @@ coverage/
 # Browser QA artifacts
 /test-results/
 /playwright-report/
+
+# Code-authored promo renders (regenerate with npm run render:unitool)
+/video-studio/promos/unitool/output/
+
+# Local render tooling and intermediate audio
+/.cache/

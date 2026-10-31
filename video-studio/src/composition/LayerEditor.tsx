@@ -43,7 +43,7 @@ export function LayerEditor({
       </summary>
       <p>
         صور ولوجو وفيديو داخل فيديو. آخر طبقة في القائمة تظهر فوق الباقي. النصوص
-        فوق كل الطبقات.
+        فوق الطبقات العادية؛ فعّل «فوق النصوص» للصورة الشخصية.
       </p>
       <button
         className="secondary"
@@ -110,10 +110,21 @@ export function LayerEditor({
                 edit(l.id, {
                   assetId,
                   start: 0,
-                  end: Math.min(l.end - l.start, next.duration),
+                  end:
+                    next.type === "image"
+                      ? l.end - l.start
+                      : Math.min(l.end - l.start, next.duration),
                 });
               }}
             />
+            <label>
+              <input
+                type="checkbox"
+                checked={!!l.foreground}
+                onChange={(e) => edit(l.id, { foreground: e.target.checked })}
+              />{" "}
+              فوق النصوص والخلفيات التصميمية
+            </label>
             <div className="two-fields">
               {(
                 [

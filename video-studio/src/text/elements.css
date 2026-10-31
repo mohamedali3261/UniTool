@@ -39,3 +39,29 @@
     font-size: 11px;
   }
 }
+.text-active-editor .element-properties .field-label {
+  margin: 0;
+}
+.element-properties input[type="checkbox"] {
+  width: auto;
+}
+.layer-motion-editor {
+  margin-top: 12px;
+}
+.layer-motion-editor > details {
+  padding: 8px;
+  border: 1px solid #35404a;
+  border-radius: 8px;
+}
+.layer-motion-editor select {
+  color: inherit;
+  background: #20242b;
+  border: 1px solid #343942;
+  border-radius: 8px;
+  padding: 7px;
+}
+.layer-motion-editor p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #a4b1c1;
+}

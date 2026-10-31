@@ -1,3 +1,5 @@
+import { validPoints } from "../text/vectorPath";
+import { validLayerAnimation } from "../animation/layerFrames";
 import { isInterfaceScene } from "../templates/interface-flow/scenes";
 import {
   estimatedMediaBytes,
@@ -274,6 +276,8 @@ export function validateProjectData(
       !num(layer.volume, 0, 1) ||
       !num(layer.rotation, 0, 360) ||
       (layer.locked !== undefined && typeof layer.locked !== "boolean") ||
+      (layer.foreground !== undefined &&
+        typeof layer.foreground !== "boolean") ||
       (layer.hidden !== undefined && typeof layer.hidden !== "boolean")
     )
       throw new Error("طبقة صورة أو فيديو غير صالحة");
@@ -291,12 +295,16 @@ export function validateProjectData(
         !["none", "fade", "slide", "pop"].includes(t.animationOut)) ||
       (t.animationDuration !== undefined &&
         !num(t.animationDuration, 0.1, 3)) ||
+      !validLayerAnimation(t) ||
       (t.name !== undefined &&
         (typeof t.name !== "string" || t.name.length > 160)) ||
       (t.box !== undefined &&
         (!t.box ||
           !num(t.box.width, 1, 4000) ||
           !num(t.box.height, 1, 4000) ||
+          (t.box.points !== undefined && !validPoints(t.box.points)) ||
+          (t.box.gradient !== undefined &&
+            !/^#[0-9a-f]{6}$/i.test(t.box.gradient)) ||
           (t.box.radius !== undefined && !num(t.box.radius, 0, 2000)) ||
           (t.box.borderWidth !== undefined &&
             !num(t.box.borderWidth, 0, 100)) ||
