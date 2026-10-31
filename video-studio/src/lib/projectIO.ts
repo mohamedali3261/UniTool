@@ -276,6 +276,9 @@ export function validateProjectData(
       !num(layer.volume, 0, 1) ||
       !num(layer.rotation, 0, 360) ||
       (layer.locked !== undefined && typeof layer.locked !== "boolean") ||
+      (layer.fit !== undefined && !["contain", "cover"].includes(layer.fit)) ||
+      (layer.backgroundLayer !== undefined &&
+        typeof layer.backgroundLayer !== "boolean") ||
       (layer.foreground !== undefined &&
         typeof layer.foreground !== "boolean") ||
       (layer.hidden !== undefined && typeof layer.hidden !== "boolean")
@@ -324,7 +327,7 @@ export function validateProjectData(
       (t.opacity !== undefined && !num(t.opacity, 0, 1)) ||
       (t.font !== undefined && !["sans", "serif", "mono"].includes(t.font)) ||
       (t.background !== undefined && !/^#[0-9a-f]{6}$/i.test(t.background)) ||
-      ["bold", "outline", "hidden", "locked"].some(
+      ["bold", "outline", "hidden", "locked", "backgroundLayer"].some(
         (key) => t[key] !== undefined && typeof t[key] !== "boolean",
       )
     )

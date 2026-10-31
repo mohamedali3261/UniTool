@@ -6,6 +6,7 @@ import { ElementCard } from "./components/ElementCard";
 import { ElementInspector } from "./components/ElementInspector";
 import { readFavorites, saveFavorites } from "./lib/preferences";
 export default function ElementsPage() {
+  const [live, setLive] = useState(true);
   const [items, setItems] = useState<LibraryElement[]>([]),
     [categories, setCategories] = useState<Category[]>([]),
     [error, setError] = useState(""),
@@ -152,11 +153,11 @@ export default function ElementsPage() {
             <span>أفكارك الكبيرة.</span>
           </h1>
           <p>
-            مش مجرد صور للعرض. دي طبقات وخلفيات ومشاهد من قوالب الاستوديو نفسها؛
-            اعرف مصدرها، جرّبها، وخدها معاك لمشروعك.
+            مش مجرد صور للعرض. دي طبقات وخلفيات ومشاهد من قوالب الاستوديو ومكتبة
+            UniTool الجاهزة؛ اعرف مصدرها، جرّبها، وخدها معاك لمشروعك.
           </p>
           <div className="elements-hero-notes">
-            <span>مصادر القوالب الأصلية</span>
+            <span>قوالب أصلية + تكوينات جاهزة</span>
             <span>مفضلة محفوظة على جهازك</span>
             <span>PNG · SVG · JSON</span>
           </div>
@@ -193,6 +194,13 @@ export default function ElementsPage() {
             ))}
           </div>
           <div className="element-filter-bar">
+            <button
+              className="element-favorites-filter"
+              aria-pressed={live}
+              onClick={() => setLive(!live)}
+            >
+              {live ? "إيقاف المعاينات الحية" : "تشغيل المعاينات الحية"}
+            </button>
             <label className="element-search">
               <Search size={19} />
               <input
@@ -266,6 +274,7 @@ export default function ElementsPage() {
           <div className="elements-grid">
             {filtered.slice(0, limit).map((item) => (
               <ElementCard
+                live={live}
                 key={item.id}
                 item={item}
                 favorite={favorites.includes(item.id)}

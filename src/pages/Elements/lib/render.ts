@@ -2,9 +2,12 @@ import { drawTextLayers } from "../../../../video-studio/src/text/render";
 import { textLayout } from "../../../../video-studio/src/text/layout";
 import { drawInterfaceScene } from "../../../../video-studio/src/templates/interface-flow/render";
 import type { LibraryElement } from "../types";
+let measureContext: CanvasRenderingContext2D;
 export function fittedLayer(item: LibraryElement, color?: string) {
   const layer = structuredClone(item.layer!);
-  const ctx = document.createElement("canvas").getContext("2d")!;
+  const ctx = (measureContext ||= document
+    .createElement("canvas")
+    .getContext("2d")!);
   const layout = textLayout(ctx, layer, 960);
   const scale = Math.min(
     760 / Math.max(1, layout.width),
@@ -39,6 +42,12 @@ export function renderElement(
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
+  if (item.kind === "group")
+    drawTextLayers(
+      ctx,
+      item.layers!.map((l) => (color && l.text ? { ...l, color } : l)),
+      time,
+    );
   if (item.kind === "layer") {
     drawTextLayers(ctx, [fittedLayer(item, color)], time);
   }

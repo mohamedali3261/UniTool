@@ -6,7 +6,7 @@ const library = async (page: import("@playwright/test").Page) => {
   await page.goto(`${base}/elements.html`);
   await expect(page.locator(".element-card")).toHaveCount(24);
 };
-test("restored logo and workspace expose all canonical tools, studios, elements and recent tools", async ({
+test("motion hero cycles through every real tool and studio and respects pause", async ({
   page,
 }) => {
   await page.goto(base);
@@ -14,32 +14,27 @@ test("restored logo and workspace expose all canonical tools, studios, elements 
     "src",
     "/UniTool_logo.png",
   );
-  const hero = page.locator(".hero-workspace");
-  await expect(hero.locator(".hero-space-grid>a")).toHaveCount(6);
-  await hero
-    .getByRole("button", { name: `كل الأدوات ${totalToolCount}`, exact: true })
-    .click();
-  await expect(hero.locator(".hero-tool-result")).toHaveCount(totalToolCount);
+  const hero = page.locator(".hero-motion"),
+    chapters = hero.locator(".film-chapters button");
+  const count = await chapters.count();
+  expect(count).toBeGreaterThan(5);
+  const links = new Set<string>();
+  for (let i = 0; i < count; i++) {
+    await chapters.nth(i).click();
+    for (const href of await hero
+      .locator(".film-tool")
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute("href")!)))
+      links.add(href);
+  }
   for (const tool of toolCategories.flatMap((c) => c.tools))
-    await expect(hero.locator(`a[href="/app.html#${tool.id}"]`)).toHaveCount(1);
+    expect(links.has(`/app.html#${tool.id}`)).toBeTruthy();
+  expect(links.has("/elements.html")).toBeTruthy();
+  await page.getByRole("button", { name: "إيقاف الحركة", exact: true }).click();
+  await expect(hero).toHaveClass(/is-still/);
   await page.keyboard.press("Control+k");
-  const search = hero.getByRole("searchbox");
-  await expect(search).toBeFocused();
-  await search.fill("ضغط الصوت");
-  await expect(hero.locator(".hero-tool-result")).toHaveCount(1);
-  await hero.locator(".hero-tool-result").click();
-  await expect(page).toHaveURL(/app.html#compress$/);
-  await page.goto(base);
-  await expect(page.locator(".hero-recent a")).toHaveText("ضغط الصوت");
-  await hero
-    .getByRole("button", { name: "كل المساحات ✳", exact: true })
-    .click();
-  await search.fill("العناصر");
-  await expect(hero.locator(".hero-space-grid>a")).toHaveCount(1);
-  await expect(hero.locator(".hero-space-grid>a")).toHaveAttribute(
-    "href",
-    "/elements.html",
-  );
+  await expect(
+    page.getByRole("searchbox", { name: "ابحث عن أداة أو استوديو" }),
+  ).toBeFocused();
 });
 test("library search, source/category filters, pagination, empty state and saved favorites", async ({
   page,
@@ -79,6 +74,10 @@ test("inspector color/source, PNG/project downloads, actual editor import and Es
   page,
 }) => {
   await library(page);
+  await page
+    .locator(".element-category-grid")
+    .getByRole("button", { name: /نصوص وعناوين/ })
+    .click();
   const opener = page.locator(".element-inspect").first();
   await opener.click();
   const dialog = page.getByRole("dialog");
@@ -103,13 +102,11 @@ test("inspector color/source, PNG/project downloads, actual editor import and Es
   await expect(dialog).toHaveCount(0);
   await expect(opener).toBeFocused();
   await page.goto(`${base}/video-studio.html`);
-  await page
-    .locator('input[accept=".json"]')
-    .setInputFiles({
-      name: "element.unitool.json",
-      mimeType: "application/json",
-      buffer: json,
-    });
+  await page.locator('input[accept=".json"]').setInputFiles({
+    name: "element.unitool.json",
+    mimeType: "application/json",
+    buffer: json,
+  });
   await expect(page.locator(".editor-shell")).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "اسم المشروع", exact: true }),
@@ -193,3 +190,36 @@ for (const width of [320, 390, 768, 1440])
     expect(errors).toEqual([]);
     await context.close();
   });
+test("motion hero advances automatically, but reduced motion disables autoplay", async ({
+  page,
+}) => {
+  await page.goto(base);
+  const scene = page.locator(".film-scene");
+  const initial = await scene.getAttribute("data-scene");
+  await expect(scene).not.toHaveAttribute("data-scene", initial!, {
+    timeout: 7000,
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".hero-motion")).toHaveClass(/is-still/);
+});
+test("fifty new live motions really repaint and can be paused", async ({
+  page,
+}) => {
+  await library(page);
+  await page
+    .getByRole("combobox", { name: "قالب المصدر" })
+    .selectOption("unitool-motion");
+  await expect(page.locator(".element-results-heading")).toContainText(
+    "50 عنصر",
+  );
+  const canvas = page.locator(".element-card canvas").first();
+  await canvas.scrollIntoViewIfNeeded();
+  await expect(canvas).toHaveAttribute("data-live", "true");
+  await expect
+    .poll(() => canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()))
+    .not.toBe(await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()));
+  await page
+    .getByRole("button", { name: "إيقاف المعاينات الحية", exact: true })
+    .click();
+  await expect(canvas).toHaveAttribute("data-live", "false");
+});

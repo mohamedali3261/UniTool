@@ -24,6 +24,7 @@ export function layerClip(layer: OverlayLayer): Clip {
     end: layer.end,
     speed: 1,
     volume: layer.volume,
+    fit: layer.fit,
     filter: "original",
     brightness: 1,
     contrast: 1,

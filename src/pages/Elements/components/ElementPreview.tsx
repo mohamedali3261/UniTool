@@ -7,12 +7,14 @@ export function ElementPreview({
   color,
   canvasRef,
   onReady,
+  live = false,
 }: {
   item: LibraryElement;
   time?: number;
   color?: string;
   canvasRef?: RefObject<HTMLCanvasElement>;
   onReady?: () => void;
+  live?: boolean;
 }) {
   const local = useRef<HTMLCanvasElement>(null),
     ref = canvasRef || local;
@@ -22,13 +24,8 @@ export function ElementPreview({
     const canvas = ref.current;
     if (!canvas) return;
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "100px" },
+      (entries) => setVisible(entries.some((e) => e.isIntersecting)),
+      { rootMargin: "0px" },
     );
     observer.observe(canvas);
     return () => observer.disconnect();
@@ -49,23 +46,41 @@ export function ElementPreview({
   }, [item, visible]);
   useEffect(() => {
     if (!visible || !ref.current || (item.svg && !image)) return;
-    let alive = true;
-    void document.fonts.ready.then(() => {
+    let alive = true,
+      raf = 0,
+      last = 0;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    let start = performance.now();
+    const paint = (at: number) => {
       if (alive && ref.current) {
-        renderElement(ref.current, item, time, color, image);
+        renderElement(ref.current, item, at, color, image);
         onReady?.();
       }
+    };
+    const tick = (now: number) => {
+      if (now - last > 1000 / 20 && !document.hidden) {
+        paint(reduced.matches ? time : ((now - start) / 1000) % 7.8);
+        last = now;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    void document.fonts.ready.then(() => {
+      if (!alive) return;
+      paint(time);
+      if (live && !reduced.matches) raf = requestAnimationFrame(tick);
     });
     return () => {
       alive = false;
+      cancelAnimationFrame(raf);
     };
-  }, [item, time, color, image, visible, onReady]);
+  }, [item, time, color, image, visible, onReady, live]);
   return (
     <canvas
       ref={ref}
-      width={960}
-      height={540}
+      width={canvasRef ? 960 : 480}
+      height={canvasRef ? 540 : 270}
       className="element-preview"
+      data-live={live && visible ? "true" : "false"}
       role="img"
       aria-label={`معاينة ${item.name}`}
     />

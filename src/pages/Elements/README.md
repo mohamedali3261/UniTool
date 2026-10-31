@@ -1,6 +1,6 @@
 # العناصر / Elements
 
-Standalone Arabic RTL page at `/elements.html`. The library reads the **actual nine video-studio template sources**, rather than maintaining a second set of example graphics. Currently 372 deduplicated entries in six categories; counts are derived, never hardcoded in the UI.
+Standalone Arabic RTL page at `/elements.html`. The library reads the **actual nine video-studio template sources plus original UniTool ready-to-use designs**, rather than maintaining a second set of example graphics. Currently 482 entries in seven categories; counts are derived, never hardcoded in the UI.
 
 ## Maintenance map
 
@@ -42,3 +42,9 @@ The browser suite is in `../Home/tests/elements.spec.ts` to share the existing P
 ## Add to an existing timeline
 
 Inside the editor, open **وسائط → العناصر**, choose a duration and press **إضافة للتايم لاين**. This is a non-destructive, undoable insertion. The standalone inspector also has a handoff link: choose a project in the opened studio tab before insertion. Text/shapes stay editable layers; SVG supports overlay controls and source editing; procedural scenes append as native clips with scene/accent controls. See `video-studio/src/elements/README.md` for implementation details.
+
+## Ready-to-use expansion
+
+`sources/ready/` contains 20 vector shape designs, 20 typography styles, 20 animated multi-layer compositions and 50 motion elements. Each kit inserts as a group of independently editable layers in one undo step. The fifty new trajectories also live in the editor Motion Gallery (106 total including the previous 56). Live element previews use visibility-gated 20fps Canvas drawing, stop offscreen/when hidden, respect reduced motion and have an explicit pause control.
+
+Background insertion records a persistent background-plane flag and fills the frame. The shared preview/snapshot/export compositor draws base clips, legacy background layers, SVG backgrounds, normal overlays, ordinary text/shapes, and finally foreground overlays. Hit testing uses the same order. An image layer can be corrected manually with **خلفية تحت العناصر** in layer properties.

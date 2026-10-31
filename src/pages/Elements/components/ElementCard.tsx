@@ -2,11 +2,13 @@ import { Heart, ArrowUpLeft } from "lucide-react";
 import type { LibraryElement } from "../types";
 import { ElementPreview } from "./ElementPreview";
 export function ElementCard({
+  live = true,
   item,
   favorite,
   onFavorite,
   onOpen,
 }: {
+  live?: boolean;
   item: LibraryElement;
   favorite: boolean;
   onFavorite: () => void;
@@ -19,13 +21,15 @@ export function ElementCard({
         onClick={onOpen}
         aria-label={`فتح ${item.name}`}
       >
-        <ElementPreview item={item} />
+        <ElementPreview live={live && item.animated} item={item} />
         <span>
-          {item.kind === "layer"
-            ? "طبقة قابلة للتعديل"
-            : item.kind === "svg"
-              ? "SVG متجهي"
-              : "مشهد بالكود"}
+          {item.kind === "group"
+            ? "تكوين جاهز قابل للتعديل"
+            : item.kind === "layer"
+              ? "طبقة قابلة للتعديل"
+              : item.kind === "svg"
+                ? "SVG متجهي"
+                : "مشهد بالكود"}
         </span>
       </button>
       <div className="element-card-info">

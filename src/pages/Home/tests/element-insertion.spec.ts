@@ -133,6 +133,10 @@ test("standalone library links to non-destructive project choice before insertio
   page,
 }) => {
   await page.goto(base + "/elements.html");
+  await page
+    .locator(".element-category-grid")
+    .getByRole("button", { name: /نصوص وعناوين/ })
+    .click();
   await page.locator(".element-inspect").first().click();
   const link = page.getByRole("link", {
     name: /إضافة للتايم لاين في الاستوديو/,
@@ -172,3 +176,25 @@ for (const width of [320, 390])
       path: `test-results/elements-mobile-${width}.png`,
     });
   });
+test("ready compositions insert independently editable parts in a single undo step", async ({
+  page,
+}) => {
+  await openEditor(page);
+  await elements(page);
+  await page
+    .locator(".studio-elements")
+    .getByLabel("القسم", { exact: true })
+    .selectOption("kits");
+  await page.locator(".studio-elements-grid button").first().click();
+  await expect(page.locator(".text-object-list")).toContainText("اسم المتحدث");
+  await expect(
+    page.getByRole("textbox", { name: "اسم المشروع", exact: true }),
+  ).toHaveValue("Existing project");
+  await page
+    .getByRole("button", { name: "تراجع", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".text-object-list")).not.toContainText(
+    "اسم المتحدث",
+  );
+});
