@@ -1,5 +1,6 @@
 import { rulerTicks } from "./timeline/ruler";
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { useId } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import {
   Plus,
@@ -24,6 +25,14 @@ import {
   Unlink,
   MousePointer2,
   Focus,
+  Play,
+  Pause,
+  LocateFixed,
+  Rows3,
+  X,
+  Diamond,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import {
   uid,
@@ -50,6 +59,9 @@ import { Waveform } from "./Waveform";
 import { ThumbnailStrip } from "./timeline/ThumbnailStrip";
 import { TrackControls } from "./timeline/TrackControls";
 import { ContextMenu } from "./timeline/ContextMenu";
+import { TimelineOverview } from "./timeline/TimelineOverview";
+import { adjacentPoint, followOffset, navigationPoints } from "./timeline/navigation";
+import { readTimelineView, writeTimelineView } from "./timeline/view";
 import {
   allPoints,
   closeGaps,
@@ -86,6 +98,9 @@ type Drag = {
 };
 type Props = {
   compact?: boolean;
+  playing: boolean;
+  onPlayingChange: (playing: boolean) => void;
+  selection?: Item | null;
   project: Project;
   assets: Asset[];
   time: number;
@@ -104,9 +119,13 @@ type Props = {
   onSelectItem?: (s: Item) => void;
   onFreeze?: (id: string) => void;
   onInspectOverlay?: () => void;
+  onInspectItem?: (s: Item) => void;
 };
 export function Timeline({
   compact = false,
+  playing,
+  onPlayingChange,
+  selection,
   project,
   assets,
   time,
@@ -121,13 +140,19 @@ export function Timeline({
   onSelectItem,
   onFreeze,
   onInspectOverlay,
+  onInspectItem,
 }: Props) {
   const [mobileOptions, setMobileOptions] = useState(false);
+  const [view, setView] = useState(readTimelineView);
+  const { snap, ripple, follow, roomy, height } = view;
+  const patchView = (patch: Partial<typeof view>) =>
+    setView((old) => ({ ...old, ...patch }));
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const optionsButton = useRef<HTMLButtonElement>(null);
+  const optionsId = useId();
+  const [viewport, setViewport] = useState({ left: 0, width: 0, total: 0 });
   const [rulerBucket, setRulerBucket] = useState(0);
   const [zoom, setZoom] = useState(55),
-    [snap, setSnap] = useState(true),
-    [ripple, setRipple] = useState(true),
-    [height, setHeight] = useState(300),
     [multiple, setMultiple] = useState(false),
     [precise, setPrecise] = useState(false);
   const [items, setItems] = useState<Item[]>([]),
@@ -184,24 +209,24 @@ export function Timeline({
     selectedMarker = p.markers?.find((m) => m.id === marker),
     keyClip = kf ? p.clips.find((c) => c.id === kf.clipId) : undefined,
     keyframe = keyClip?.keyframes?.find((f) => f.id === kf?.id);
-  const rulerHeight = compact ? 30 : 48,
-    laneHeight = compact ? 24 : 34;
+  const rulerHeight = compact ? 30 : roomy ? 40 : 26,
+    laneHeight = compact || !roomy ? 24 : 34;
   const rowHeight = (id: string, normal: number) =>
     p.tracks?.[id]?.collapsed
-      ? compact
+      ? compact || !roomy
         ? 24
         : 32
       : p.tracks?.[id]?.height
-        ? compact
+        ? compact || !roomy
           ? clamp(p.tracks[id].height! * 0.7, 32, 98)
           : p.tracks[id].height!
         : normal;
-  const videoHeight = rowHeight("video", compact ? 60 : 88),
+  const videoHeight = rowHeight("video", compact ? 60 : roomy ? 88 : 52),
     textHeight = rowHeight(
       "text",
-      Math.max(compact ? 28 : 44, lanes.count * laneHeight + (compact ? 4 : 8)),
+      Math.max(compact || !roomy ? 28 : 44, lanes.count * laneHeight + (compact || !roomy ? 4 : 8)),
     ),
-    audioHeight = rowHeight("audio", compact ? 34 : 54);
+    audioHeight = rowHeight("audio", compact ? 34 : roomy ? 54 : 32);
   const clearLong = () => {
     if (long.current) clearTimeout(long.current);
     long.current = null;
@@ -220,6 +245,41 @@ export function Timeline({
   useEffect(() => {
     if (drag.current && drag.current.p !== project) cancel();
   }, [project]);
+  useEffect(() => writeTimelineView(view), [view]);
+  useEffect(() => {
+    setItems((old) => old.filter((s) => selectedObject(project, s)));
+    setMarker((old) => (project.markers?.some((m) => m.id === old) ? old : null));
+    setKf((old) =>
+      old && project.clips.find((c) => c.id === old.clipId)?.keyframes?.some((f) => f.id === old.id)
+        ? old
+        : null,
+    );
+  }, [project]);
+  useEffect(() => {
+    if (!multiple) setItems(selection ? [selection] : []);
+  }, [selection?.kind, selection?.id, multiple]);
+  useEffect(() => {
+    if (!mobileOptions) return;
+    const outside = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (!optionsRef.current?.contains(target) && !optionsButton.current?.contains(target))
+        setMobileOptions(false);
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        setMobileOptions(false);
+        optionsButton.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", key, true);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", key, true);
+    };
+  }, [mobileOptions]);
   useEffect(
     () => () => {
       clearLong();
@@ -234,6 +294,16 @@ export function Timeline({
     }
   }, [zoom]);
   useLayoutEffect(() => {
+    const el = scroll.current;
+    if (!el) return;
+    const measure = () =>
+      setViewport({ left: el.scrollLeft, width: el.clientWidth, total: el.scrollWidth });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [width, height, mobileOptions]);
+  useLayoutEffect(() => {
     const el = scroll.current,
       clip = project.clips.find((c) => c.id === selected);
     if (!el?.clientWidth || !clip || drag.current) return;
@@ -242,6 +312,29 @@ export function Timeline({
     if (right < el.scrollLeft || left > el.scrollLeft + el.clientWidth - 30)
       el.scrollLeft = Math.max(0, left - 32);
   }, [selected, project.clips.length]);
+  useEffect(() => {
+    const el = scroll.current;
+    if (!el || !playing || !follow || drag.current) return;
+    const next = followOffset(time, zoom, el.scrollLeft, el.clientWidth);
+    if (next !== null) el.scrollLeft = next;
+  }, [time, playing, follow, zoom]);
+  function seek(next: number, center = false) {
+    const t = clamp(next, 0, duration);
+    setTime(t);
+    const el = scroll.current;
+    if (el) {
+      const x = t * zoom;
+      if (center) el.scrollLeft = Math.max(0, x - el.clientWidth / 2);
+      else {
+        const offset = followOffset(t, zoom, el.scrollLeft, el.clientWidth);
+        if (offset !== null) el.scrollLeft = offset;
+      }
+    }
+  }
+  function fit() {
+    cancel();
+    setZoom(clamp(((scroll.current?.clientWidth || 700) - 45) / Math.max(duration, 0.5), 5, 720));
+  }
   function zoomAt(next: number, clientX?: number) {
     cancel();
     const el = scroll.current;
@@ -675,13 +768,24 @@ export function Timeline({
     );
   }
   function jump(dir: number) {
-    const points = boundaries(project);
-    setTime(
-      (dir < 0
-        ? [...points].reverse().find((t) => t < time - 0.02)
-        : points.find((t) => t > time + 0.02)) ?? (dir < 0 ? 0 : duration),
-    );
+    seek(adjacentPoint(navigationPoints(project), time, dir));
   }
+  function moveSelection(dir: number) {
+    const selection = active.length ? active : fallback;
+    const clips = selection.filter((s) => s.kind === "clip");
+    if (!clips.length || clips.some((s) => locked(project, s))) return;
+    const indexes = clips.map((s) => project.clips.findIndex((c) => c.id === s.id));
+    const first = Math.min(...indexes), last = Math.max(...indexes);
+    const before = dir < 0 ? project.clips[first - 1]?.id : project.clips[last + 2]?.id ?? null;
+    if (dir < 0 && first === 0) return;
+    if (dir > 0 && last === project.clips.length - 1) return;
+    onChange(reorderItems(project, selection, before));
+  }
+  const cursorClip = project.clips.find(
+    (c) => time >= clipStart(project, c.id) && time < clipStart(project, c.id) + clipDuration(c),
+  );
+  const canSplit = !!cursorClip && !cursorClip.gap && !locked(project, { kind: "clip", id: cursorClip.id }) &&
+    time > clipStart(project, cursorClip.id) + 0.1 / cursorClip.speed && time < clipStart(project, cursorClip.id) + clipDuration(cursorClip) - 0.1 / cursorClip.speed;
   const contextItems = menu?.items || fallback,
     contextClip =
       contextItems.length === 1 && contextItems[0].kind === "clip"
@@ -715,12 +819,13 @@ export function Timeline({
   };
   return (
     <section
-      className={`timeline timeline-enhanced timeline-pro ${compact ? "is-compact" : ""} ${mobileOptions ? "show-options" : ""}`}
+      className={`timeline timeline-enhanced timeline-pro ${compact ? "is-compact" : ""} ${roomy ? "is-roomy" : "is-dense"} ${mobileOptions ? "show-options" : ""}`}
       style={{ height }}
+      aria-label="الخط الزمني للمشروع"
       onKeyDown={(e) => {
         if (
           (e.target as HTMLElement).closest(
-            "input,textarea,[role=combobox],[role=dialog],dialog",
+            "input,textarea,select,[role=combobox],[role=dialog],dialog",
           )
         )
           return;
@@ -729,6 +834,7 @@ export function Timeline({
           e.stopPropagation();
           cancel();
           setMenu(null);
+          setMobileOptions(false);
           setItems([]);
         }
         if ((e.key === "Delete" || e.key === "Backspace") && active.length) {
@@ -736,254 +842,185 @@ export function Timeline({
           e.stopPropagation();
           erase();
         }
-        if (
-          (e.ctrlKey || e.metaKey) &&
-          e.key.toLowerCase() === "d" &&
-          active.length
-        ) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && active.length) {
           e.preventDefault();
           e.stopPropagation();
           copy();
+        }
+        if (e.code === "Space" && (e.target as HTMLElement).closest(".tracks")) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (duration) {
+            if (time >= duration) setTime(0);
+            onPlayingChange(!playing);
+          }
+        }
+        if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+          e.preventDefault();
+          e.stopPropagation();
+          moveSelection(e.key === "ArrowLeft" ? -1 : 1);
+        }
+        if (e.shiftKey && e.key.toLowerCase() === "m") {
+          e.preventDefault();
+          e.stopPropagation();
+          addMarker();
+        }
+        if (e.key === "+" || e.key === "=") {
+          e.preventDefault();
+          zoomAt(zoom * 1.3);
+        }
+        if (e.key === "-") {
+          e.preventDefault();
+          zoomAt(zoom / 1.3);
+        }
+        if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          fit();
         }
       }}
     >
       <div
         className="timeline-resize"
-        title="اسحب لتغيير ارتفاع الخط الزمني"
+        role="separator"
+        tabIndex={compact ? -1 : 0}
+        aria-label="تغيير ارتفاع التايم لاين"
+        aria-orientation="horizontal"
+        aria-valuemin={180}
+        aria-valuemax={540}
+        aria-valuenow={height}
+        title="اسحب لتغيير الارتفاع • الأسهم للتحكم • نقرتان لإعادة الضبط"
+        onDoubleClick={() => patchView({ height: 248 })}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            e.stopPropagation();
+            patchView({ height: clamp(height + (e.key === "ArrowUp" ? 16 : -16), 180, 540) });
+          }
+          if (e.key === "Home") {
+            e.preventDefault();
+            patchView({ height: 248 });
+          }
+        }}
         onPointerDown={(e) => {
-          const el = e.currentTarget,
-            y = e.clientY,
-            h = height;
+          if (e.button !== 0) return;
+          const el = e.currentTarget, y = e.clientY, h = height;
           el.setPointerCapture(e.pointerId);
           const move = (ev: PointerEvent) =>
-            setHeight(
-              clamp(h + y - ev.clientY, 210, Math.min(540, innerHeight * 0.65)),
-            );
+            patchView({ height: clamp(h + y - ev.clientY, 180, Math.min(540, innerHeight * 0.65)) });
           const up = () => {
             el.removeEventListener("pointermove", move);
             el.removeEventListener("pointerup", up);
             el.removeEventListener("pointercancel", up);
+            el.removeEventListener("lostpointercapture", up);
           };
           el.addEventListener("pointermove", move);
           el.addEventListener("pointerup", up);
           el.addEventListener("pointercancel", up);
+          el.addEventListener("lostpointercapture", up);
         }}
       >
         <i />
       </div>
       <div className="timeline-toolbar">
         <button
+          ref={optionsButton}
           className="timeline-options-toggle"
           aria-label="خيارات التايم لاين"
           aria-expanded={mobileOptions}
+          aria-controls={optionsId}
           onClick={() => setMobileOptions((v) => !v)}
         >
           <MoreHorizontal size={18} />
+          <span>أدوات</span>
         </button>
-        <div>
-          <IconButton
-            icon={Scissors}
-            label="تقسيم عند المؤشر"
-            onClick={onSplit}
-          />
-          <IconButton
-            icon={PanelLeftClose}
-            label="حذف ما قبل المؤشر من المقطع"
-            onClick={() => trimCursor("start")}
-          />
-          <IconButton
-            icon={PanelRightClose}
-            label="حذف ما بعد المؤشر من المقطع"
-            onClick={() => trimCursor("end")}
-          />
-          <IconButton
-            icon={Copy}
-            label="نسخ المقطع"
-            disabled={
-              !fallback.length || fallback.every((s) => locked(project, s))
-            }
-            onClick={() => copy()}
-          />
-          <IconButton
-            icon={Trash2}
-            label="حذف المقطع"
-            disabled={
-              !fallback.length || fallback.every((s) => locked(project, s))
-            }
-            onClick={() => erase()}
-          />
-          <IconButton
-            icon={selectedClip?.volume === 0 ? VolumeX : Volume2}
-            label="كتم / استعادة صوت المقطع"
-            disabled={
-              !selectedClip ||
-              !!selectedClip.locked ||
-              !!project.tracks?.video?.locked
-            }
-            onClick={() =>
-              selectedClip &&
-              onChange(
-                patchObject(
-                  project,
-                  { kind: "clip", id: selectedClip.id },
-                  { volume: selectedClip.volume ? 0 : 1 },
-                ),
-              )
-            }
-          />
-          <button
-            aria-label="الجذب المغناطيسي"
-            aria-pressed={snap}
-            onClick={() => setSnap(!snap)}
-          >
-            <Magnet size={16} /> جذب
-          </button>
-          <button
-            aria-label="القص المتتابع Ripple"
-            aria-pressed={ripple}
-            onClick={() => setRipple(!ripple)}
-          >
-            Ripple {ripple ? "✓" : "—"}
-          </button>
-          <button
-            aria-label="تحديد متعدد"
-            aria-pressed={multiple}
-            onClick={() => setMultiple(!multiple)}
-          >
-            <MousePointer2 size={15} /> تحديد {active.length || ""}
-          </button>
-          <IconButton
-            icon={Link}
-            label="تجميع وربط التحديد"
-            disabled={
-              active.length < 2 || active.some((s) => locked(project, s))
-            }
-            onClick={() => onChange(groupItems(project, active))}
-          />
-          <IconButton
-            icon={Unlink}
-            label="فك ارتباط التحديد"
-            disabled={!active.length}
-            onClick={() =>
-              onChange(groupItems(project, expand(project, active), true))
-            }
-          />
-          <button
-            onClick={() => onChange(closeGaps(project))}
-            disabled={!project.clips.some((c) => c.gap)}
-          >
-            حذف الفراغات
-          </button>
-          <IconButton
-            icon={Flag}
-            label="إضافة علامة عند المؤشر"
-            onClick={addMarker}
-          />
-          <button
-            disabled={!selectedClip}
-            onClick={() =>
-              selectedClip &&
-              addKeyframe(
-                selectedClip.id,
-                time - clipStart(project, selectedClip.id),
-              )
-            }
-          >
-            ◇ Keyframe
+        <div className="timeline-primary-tools">
+          <IconButton icon={Scissors} label="تقسيم عند المؤشر" disabled={!canSplit} onClick={onSplit} />
+          <IconButton icon={Copy} label="نسخ المقطع" disabled={!fallback.length || fallback.every((s) => locked(project, s))} onClick={() => copy()} />
+          <IconButton icon={Trash2} label="حذف المقطع" disabled={!fallback.length || fallback.every((s) => locked(project, s))} onClick={() => erase()} />
+          <IconButton icon={Flag} label="إضافة علامة عند المؤشر" onClick={addMarker} />
+          <button aria-label="الجذب المغناطيسي" aria-pressed={snap} title="الجذب المغناطيسي" onClick={() => patchView({ snap: !snap })}>
+            <Magnet size={16} />
           </button>
         </div>
-        <div>
-          <IconButton
-            icon={ScanLine}
-            label="ملاءمة المشروع للعرض"
-            onClick={() => {
-              cancel();
-              setZoom(
-                clamp(
-                  ((scroll.current?.clientWidth || 700) - 45) /
-                    Math.max(duration, 0.5),
-                  5,
-                  720,
-                ),
-              );
-            }}
-          />
-          <IconButton
-            icon={Focus}
-            label="تكبير عند المؤشر"
-            onClick={() => {
-              anchor.current = {
-                time,
-                offset: (scroll.current?.clientWidth || 700) / 2,
-              };
-              setZoom(240);
-            }}
-          />
-          <button
-            aria-label="وضع القص الدقيق"
-            aria-pressed={precise}
-            onClick={() => {
-              setPrecise(!precise);
-              if (!precise) {
-                anchor.current = {
-                  time,
-                  offset: (scroll.current?.clientWidth || 700) / 2,
-                };
-                setZoom(720);
-              }
-            }}
-          >
-            قص دقيق
-          </button>
-          <IconButton
-            icon={ZoomOut}
-            label="تصغير الخط الزمني"
-            onClick={() => zoomAt(zoom / 1.3)}
-          />
-          <input
-            aria-label="تكبير الخط الزمني"
-            type="range"
-            min="5"
-            max="720"
-            value={zoom}
-            onChange={(e) => zoomAt(+e.target.value)}
-          />
-          <IconButton
-            icon={ZoomIn}
-            label="تكبير الخط الزمني"
-            onClick={() => zoomAt(zoom * 1.3)}
-          />
+        <div className="timeline-zoom-tools">
+          <IconButton icon={ScanLine} label="ملاءمة المشروع للعرض" onClick={fit} />
+          <IconButton icon={Focus} label="تكبير عند المؤشر" onClick={() => {
+            anchor.current = { time, offset: (scroll.current?.clientWidth || 700) / 2 };
+            setZoom(240);
+          }} />
+          <IconButton icon={ZoomOut} label="تصغير الخط الزمني" onClick={() => zoomAt(zoom / 1.3)} />
+          <input aria-label="تكبير الخط الزمني" type="range" min="5" max="720" value={zoom} onChange={(e) => zoomAt(+e.target.value)} />
+          <IconButton icon={ZoomIn} label="تكبير الخط الزمني" onClick={() => zoomAt(zoom * 1.3)} />
         </div>
+        {mobileOptions && (
+          <div ref={optionsRef} id={optionsId} className="timeline-options-panel" role="group" aria-label="أدوات التايم لاين المتقدمة" dir="rtl">
+            <div className="timeline-options-heading">
+              <b>أدوات المونتاج</b>
+              <button aria-label="إغلاق أدوات التايم لاين" onClick={() => { setMobileOptions(false); optionsButton.current?.focus(); }}><X size={15} /></button>
+            </div>
+            <section>
+              <h4>القص والتوقيت</h4>
+              <div>
+                <IconButton icon={PanelLeftClose} label="حذف ما قبل المؤشر من المقطع" disabled={!cursorClip || locked(project, { kind: "clip", id: cursorClip.id })} onClick={() => trimCursor("start")} />
+                <IconButton icon={PanelRightClose} label="حذف ما بعد المؤشر من المقطع" disabled={!cursorClip || locked(project, { kind: "clip", id: cursorClip.id })} onClick={() => trimCursor("end")} />
+                <button aria-label="القص المتتابع Ripple" aria-pressed={ripple} onClick={() => patchView({ ripple: !ripple })}>Ripple {ripple ? "✓" : "—"}</button>
+                <button aria-label="وضع القص الدقيق" aria-pressed={precise} onClick={() => {
+                  setPrecise(!precise);
+                  if (!precise) {
+                    anchor.current = { time, offset: (scroll.current?.clientWidth || 700) / 2 };
+                    setZoom(720);
+                  }
+                }}>قص دقيق</button>
+                <button onClick={() => onChange(closeGaps(project))} disabled={!project.clips.some((c) => c.gap)}>حذف الفراغات</button>
+              </div>
+            </section>
+            <section>
+              <h4>التحديد والترتيب</h4>
+              <div>
+                <button aria-label="تحديد متعدد" aria-pressed={multiple} onClick={() => setMultiple(!multiple)}><MousePointer2 size={15} /> تحديد {active.length || ""}</button>
+                <IconButton icon={Link} label="تجميع وربط التحديد" disabled={active.length < 2 || active.some((s) => locked(project, s))} onClick={() => onChange(groupItems(project, active))} />
+                <IconButton icon={Unlink} label="فك ارتباط التحديد" disabled={!active.length} onClick={() => onChange(groupItems(project, expand(project, active), true))} />
+                <IconButton icon={ArrowRight} label="تقديم العنصر المحدد" disabled={!fallback.some((s) => s.kind === "clip") || fallback.every((s) => locked(project, s))} onClick={() => moveSelection(-1)} />
+                <IconButton icon={ArrowLeft} label="تأخير العنصر المحدد" disabled={!fallback.some((s) => s.kind === "clip") || fallback.every((s) => locked(project, s))} onClick={() => moveSelection(1)} />
+              </div>
+            </section>
+            <section>
+              <h4>الصوت والحركة</h4>
+              <div>
+                <IconButton icon={selectedClip?.volume === 0 ? VolumeX : Volume2} label="كتم / استعادة صوت المقطع" disabled={!selectedClip || locked(project, { kind: "clip", id: selectedClip.id })} onClick={() => selectedClip && onChange(patchObject(project, { kind: "clip", id: selectedClip.id }, { volume: selectedClip.volume ? 0 : 1 }))} />
+                <button disabled={!selectedClip || selectedClip.gap || locked(project, { kind: "clip", id: selectedClip.id })} onClick={() => selectedClip && addKeyframe(selectedClip.id, time - clipStart(project, selectedClip.id))}><Diamond size={14} /> Keyframe</button>
+              </div>
+            </section>
+            <p className="timeline-options-hint">Shift + M علامة • Alt + الأسهم ترتيب • F ملاءمة • + / − تكبير</p>
+          </div>
+        )}
       </div>
       <div className="timeline-meta">
-        <span>
-          {precise
-            ? `فريم ${Math.round(time * 30)} · شبكة 30 FPS`
-            : "اسحب الحواف للقص • Shift أو وضع التحديد لاختيار مجموعة • ضغطة مطولة للإجراءات"}
-        </span>
-        <div dir="ltr">
-          <IconButton
-            icon={ChevronLeft}
-            label="حد المقطع السابق"
-            onClick={() => jump(-1)}
-          />
-          <label>
-            الثانية{" "}
-            <input
-              aria-label="الانتقال إلى ثانية"
-              type="number"
-              min="0"
-              max={duration}
-              step={1 / 30}
-              value={Number(time.toFixed(3))}
-              onChange={(e) => setTime(clamp(+e.target.value, 0, duration))}
-            />
+        <div className="timeline-transport" dir="ltr">
+          <IconButton icon={ChevronLeft} label="حد المقطع السابق" onClick={() => jump(-1)} />
+          <button
+            className="timeline-play"
+            aria-label={playing ? "إيقاف المعاينة من التايم لاين" : "تشغيل المعاينة من التايم لاين"}
+            disabled={!duration}
+            onClick={() => {
+              if (time >= duration) setTime(0);
+              onPlayingChange(!playing);
+            }}
+          >
+            {playing ? <Pause size={15} /> : <Play size={15} />}
+          </button>
+          <IconButton icon={ChevronRight} label="حد المقطع التالي" onClick={() => jump(1)} />
+          <label className="timeline-timecode">
+            <input aria-label="الانتقال إلى ثانية" type="number" min="0" max={duration} step={1 / 30} value={Number(time.toFixed(3))} onChange={(e) => seek(+e.target.value)} />
+            <span>/ {timeLabel(duration)}</span>
           </label>
-          <IconButton
-            icon={ChevronRight}
-            label="حد المقطع التالي"
-            onClick={() => jump(1)}
-          />
+        </div>
+        <div className="timeline-view-tools">
+          <span className="timeline-selection-status" role="status">
+            {active.length > 1 ? `${active.length} عناصر محددة` : selectedClip ? (selectedClip.gap ? "فراغ" : assets.find((a) => a.id === selectedClip.assetId)?.name) : "اختار عنصر من المسار"}
+          </span>
+          <button aria-label="تتبع المؤشر أثناء التشغيل" aria-pressed={follow} title="تتبع المؤشر أثناء التشغيل" onClick={() => patchView({ follow: !follow })}><LocateFixed size={15} /></button>
+          <button aria-label="تبديل عرض المسارات المدمج والواسع" aria-pressed={roomy} title={roomy ? "عرض مدمج" : "عرض واسع"} onClick={() => patchView({ roomy: !roomy, height: roomy ? 248 : 320 })}><Rows3 size={15} /></button>
         </div>
       </div>
       {selectedMarker && (
@@ -1102,7 +1139,9 @@ export function Timeline({
           className="timeline-scroll"
           ref={scroll}
           onScroll={(e) => {
-            const bucket = Math.floor(e.currentTarget.scrollLeft / 600);
+            const el = e.currentTarget;
+            setViewport({ left: el.scrollLeft, width: el.clientWidth, total: el.scrollWidth });
+            const bucket = Math.floor(el.scrollLeft / 600);
             if (bucket !== rulerBucket) setRulerBucket(bucket);
             if (labels.current)
               labels.current.scrollTop = e.currentTarget.scrollTop;
@@ -1210,9 +1249,11 @@ export function Timeline({
                       height: Math.max(24, videoHeight - 12),
                     }}
                     onPointerDown={(e) => start(e, "reorder", s)}
+                    onDoubleClick={() => onInspectItem?.(s)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
+                        e.stopPropagation();
                         choose(s, e.shiftKey || multiple);
                       }
                     }}
@@ -1444,17 +1485,12 @@ export function Timeline({
                     }}
                     onPointerDown={(e) => start(e, "overlay", s)}
                     onDoubleClick={() => {
-                      onInspectOverlay?.();
                       setTime(l.at);
-                      document
-                        .getElementById("studio-layers")
-                        ?.setAttribute("open", "");
-                      document
-                        .getElementById("studio-inspector")
-                        ?.querySelector<HTMLButtonElement>(
-                          'button[aria-expanded="false"]',
-                        )
-                        ?.click();
+                      if (onInspectItem) onInspectItem(s);
+                      else {
+                        onInspectOverlay?.();
+                        document.getElementById("studio-layers")?.setAttribute("open", "");
+                      }
                     }}
                   >
                     <span
@@ -1489,6 +1525,7 @@ export function Timeline({
           </div>
         </div>
       </div>
+      <TimelineOverview project={p} duration={duration} time={time} viewport={viewport} onSeek={(t) => seek(t, true)} />
       {menu && (
         <ContextMenu
           touchOpening={menu.touch}
@@ -1510,6 +1547,11 @@ export function Timeline({
               run: () => {
                 onSplit();
               },
+            },
+            {
+              label: "فتح خصائص العنصر",
+              disabled: contextItems.length !== 1 || !onInspectItem,
+              run: () => contextItems[0] && onInspectItem?.(contextItems[0]),
             },
             {
               label: "نسخ التحديد",

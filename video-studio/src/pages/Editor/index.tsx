@@ -722,6 +722,15 @@ export function Editor({
       )}
       <Timeline
         compact={isMobile}
+        playing={playing}
+        onPlayingChange={setPlaying}
+        selection={visualSelection}
+        onInspectItem={(s) => {
+          setVisualSelection(s);
+          if (s.kind === "clip") select(s.id);
+          if (s.kind === "text") openTool("text");
+          else openPanel("inspector");
+        }}
         onInspectOverlay={() => openPanel("inspector")}
         onFreeze={freezeAtCursor}
         onSelectItem={(s) => {

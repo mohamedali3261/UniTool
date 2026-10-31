@@ -118,8 +118,27 @@ async function save(page: Page) {
   await page.getByRole("button", { name: "حفظ المشروع", exact: true }).click();
   return JSON.parse(await fs.readFile(await (await promise).path(), "utf8"));
 }
-const tool = (page: Page, name: string) =>
-  page.locator(".timeline-toolbar").getByRole("button", { name, exact: true });
+const advancedTools = new Set([
+  "حذف ما قبل المؤشر من المقطع",
+  "حذف ما بعد المؤشر من المقطع",
+  "القص المتتابع Ripple",
+  "وضع القص الدقيق",
+  "حذف الفراغات",
+  "تحديد متعدد",
+  "تجميع وربط التحديد",
+  "فك ارتباط التحديد",
+  "تقديم العنصر المحدد",
+  "تأخير العنصر المحدد",
+  "كتم / استعادة صوت المقطع",
+  "Keyframe",
+]);
+async function tool(page: Page, name: string) {
+  const button = page.locator(".timeline-toolbar").getByRole("button", { name, exact: true });
+  if (advancedTools.has(name) && !(await button.isVisible())) {
+    await page.getByRole("button", { name: "خيارات التايم لاين", exact: true }).click();
+  }
+  return button;
+}
 async function drag(
   page: Page,
   locator: ReturnType<Page["locator"]>,
@@ -145,7 +164,7 @@ test("overlay body and edges drag, Escape cancels, and one undo restores the ent
   page,
 }) => {
   await open(page);
-  await tool(page, "الجذب المغناطيسي").click();
+  await (await tool(page, "الجذب المغناطيسي")).click();
   await drag(page, page.locator(".overlay-timeline-track>button"), 27.5);
   let saved = await save(page);
   expect(saved.project.overlays[0].at).toBeCloseTo(0.9, 1);
@@ -168,14 +187,14 @@ test("multi-select links text and overlay, moves relative offsets, duplicates at
   page,
 }) => {
   await open(page);
-  await tool(page, "الجذب المغناطيسي").click();
-  await tool(page, "تحديد متعدد").click();
+  await (await tool(page, "الجذب المغناطيسي")).click();
+  await (await tool(page, "تحديد متعدد")).click();
   await page.locator(".timeline-text").click();
   await page.locator(".overlay-timeline-track>button").click();
-  await tool(page, "تجميع وربط التحديد").click();
+  await (await tool(page, "تجميع وربط التحديد")).click();
   const linked = (await save(page)).project;
   expect(linked.texts[0].groupId).toBe(linked.overlays[0].groupId);
-  await tool(page, "تحديد متعدد").click();
+  await (await tool(page, "تحديد متعدد")).click();
   await drag(page, page.locator(".timeline-text"), 27.5);
   const moved = (await save(page)).project;
   expect(moved.texts[0].start).toBeCloseTo(3, 1);
@@ -186,7 +205,7 @@ test("multi-select links text and overlay, moves relative offsets, duplicates at
   expect(copied.texts).toHaveLength(2);
   expect(copied.overlays).toHaveLength(2);
   expect(copied.texts[1].groupId).not.toBe(linked.texts[0].groupId);
-  await tool(page, "فك ارتباط التحديد").click();
+  await (await tool(page, "فك ارتباط التحديد")).click();
   expect((await save(page)).project.texts[0].groupId).toBeUndefined();
 });
 test("non-Ripple deletion leaves a gap; close gaps translates cues, and undo restores both", async ({
@@ -194,15 +213,12 @@ test("non-Ripple deletion leaves a gap; close gaps translates cues, and undo res
 }) => {
   await open(page);
   await page.locator(".timeline-clip").first().click();
-  await tool(page, "القص المتتابع Ripple").click();
-  await tool(page, "حذف المقطع").click();
+  await (await tool(page, "القص المتتابع Ripple")).click();
+  await (await tool(page, "حذف المقطع")).click();
   let p = (await save(page)).project;
   expect(p.clips[0].gap).toBe(true);
   expect(p.texts[0].start).toBe(2.5);
-  await page
-    .locator(".timeline-toolbar")
-    .getByRole("button", { name: "حذف الفراغات", exact: true })
-    .click();
+  await (await tool(page, "حذف الفراغات")).click();
   p = (await save(page)).project;
   expect(p.clips).toHaveLength(1);
   expect(p.texts[0].start).toBe(0.5);
@@ -216,17 +232,14 @@ test("markers, draggable keyframes and easing persist alongside track controls",
   page,
 }) => {
   await open(page);
-  await tool(page, "الجذب المغناطيسي").click();
+  await (await tool(page, "الجذب المغناطيسي")).click();
   await seek(page, 0.5);
-  await tool(page, "إضافة علامة عند المؤشر").click();
+  await (await tool(page, "إضافة علامة عند المؤشر")).click();
   await page
     .getByRole("textbox", { name: "اسم علامة التوقيت", exact: true })
     .fill("بداية الحركة");
   await seek(page, 1);
-  await page
-    .locator(".timeline-toolbar")
-    .getByRole("button", { name: "◇ Keyframe", exact: true })
-    .click();
+  await (await tool(page, "Keyframe")).click();
   await drag(page, page.locator(".timeline-keyframe"), 16.5);
   await page
     .getByRole("combobox", { name: "انسيابية نقطة الحركة", exact: true })
@@ -325,7 +338,7 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
     type: "touchEnd",
     touchPoints: [],
   });
-  await tool(page, "خيارات التايم لاين").click();
+  await (await tool(page, "خيارات التايم لاين")).click();
   expect(
     Number(
       await page
@@ -333,7 +346,7 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
         .inputValue(),
     ),
   ).toBeGreaterThan(90);
-  await tool(page, "خيارات التايم لاين").click();
+  await (await tool(page, "خيارات التايم لاين")).click();
   // Pinch anchors the viewport under the fingers; expose the whole clip before holding its body (not a trim handle).
   await page.locator(".timeline-scroll").evaluate((el) => {
     el.scrollLeft = 0;
@@ -355,8 +368,8 @@ test("two-finger zoom and long-press menu work on mobile, with no page overflow"
     .getByRole("dialog", { name: "إجراءات الخط الزمني", exact: true })
     .getByRole("button", { name: "إغلاق", exact: true })
     .click();
-  await tool(page, "خيارات التايم لاين").click();
-  await tool(page, "وضع القص الدقيق").click();
+  await (await tool(page, "خيارات التايم لاين")).click();
+  await (await tool(page, "وضع القص الدقيق")).click();
   expect(
     await page
       .getByRole("slider", { name: "تكبير الخط الزمني", exact: true })

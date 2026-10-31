@@ -837,14 +837,14 @@
     min-height: 36px;
     padding: 0;
   }
-  .editor-shell .timeline-toolbar > div:first-of-type {
+  .editor-shell .timeline-toolbar > .timeline-primary-tools {
     flex: 1 1 0;
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
   }
-  .editor-shell .timeline-toolbar > div:last-of-type {
+  .editor-shell .timeline-toolbar > .timeline-zoom-tools {
     display: none;
   }
   .editor-shell .timeline-toolbar button {
@@ -875,7 +875,7 @@
   .editor-shell
     .timeline-pro.show-options
     .timeline-toolbar
-    > div:last-of-type {
+    > .timeline-zoom-tools {
     display: flex;
     flex: 1 0 100%;
     min-width: 0;
