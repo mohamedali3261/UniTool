@@ -1,3 +1,6 @@
+import { readAsset } from "../../lib/media";
+import { synthSound } from "../../sound/synth";
+import type { SoundPreset } from "../../sound/presets";
 import { PanelDivider } from "./desktop/PanelDivider";
 import type { TextPresetStyle } from "../../text/presets/types";
 import { MobileToolPage } from "./mobile/MobileToolPage";
@@ -422,6 +425,35 @@ export function Editor({
       audioOffset: 0,
     })),
   );
+  const onSoundProject = useEvent((patch: Partial<Project>) =>
+    update((p) => ({ ...p, ...patch })),
+  );
+  const onSoundAdd = useEvent(async (preset: SoundPreset) => {
+    if (project.tracks?.sfx?.locked)
+      throw new Error("مسار المؤثرات مقفول؛ افتح القفل أولًا");
+    if (!duration)
+      throw new Error("أضف فيديو أو قالبًا أولًا لتحديد مكان المؤثر");
+    if ((project.sounds?.length || 0) >= 32)
+      throw new Error("الحد 32 مؤثرًا في المشروع؛ احذف مؤثرًا لإضافة آخر");
+    const filename = `SFX-${preset.id} • ${preset.name}.wav`;
+    let asset = assets.find((a) => a.name === filename && a.type === "audio");
+    if (!asset) {
+      asset = await readAsset(
+        new File([synthSound(preset)], filename, { type: "audio/wav" }),
+      );
+      onRegisterAsset(asset);
+    }
+    const cue = {
+      id: uid(),
+      assetId: asset.id,
+      at: Math.min(getTime(), Math.max(0, duration - 0.01)),
+      start: 0,
+      end: asset.duration,
+      volume: 0.7,
+    };
+    update((p) => ({ ...p, sounds: [...(p.sounds || []), cue] }));
+    notify(`تمت إضافة ${preset.name} عند المؤشر — الموسيقى لم تتغيّر`);
+  });
   const onRemoveAudio = useEvent(() =>
     update((p) => ({
       ...p,
@@ -607,6 +639,8 @@ export function Editor({
           onEffect={onLibraryEffect}
           onEffectSettings={onLibrarySettings}
           onAudio={onLibraryAudio}
+          onSoundAdd={onSoundAdd}
+          onSoundProject={onSoundProject}
           onRemoveAudio={onRemoveAudio}
           updateText={updateText}
           removeText={removeText}

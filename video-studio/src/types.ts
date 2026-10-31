@@ -114,7 +114,16 @@ export type TimelineMarker = {
   label: string;
   color: string;
 };
+export type SoundCue = {
+  id: string;
+  assetId: string;
+  at: number;
+  start: number;
+  end: number;
+  volume: number;
+};
 export type Project = {
+  sounds?: SoundCue[];
   markers?: TimelineMarker[];
   tracks?: Record<string, TrackSettings>;
   audioEnd?: number;
@@ -161,6 +170,7 @@ export function assetIsUsed(p: Project, id: string) {
   return (
     p.clips.some((c) => c.assetId === id) ||
     p.overlays?.some((l) => l.assetId === id) ||
+    p.sounds?.some((c) => c.assetId === id) ||
     p.audioId === id
   );
 }

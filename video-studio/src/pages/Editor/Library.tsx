@@ -1,3 +1,5 @@
+import { SoundCatalog } from "../../sound/SoundCatalog";
+import type { SoundPreset } from "../../sound/presets";
 import type { TextPresetStyle } from "../../text/presets/types";
 import { TextPanel } from "../../text/TextPanel";
 import { lazy, memo, Suspense, useState } from "react";
@@ -47,6 +49,8 @@ function LibraryView({
   updateText,
   removeText,
   onRemoveAudio,
+  onSoundAdd,
+  onSoundProject,
 }: {
   selectedTextId: string | null;
   onSelectText: (id: string) => void;
@@ -68,8 +72,11 @@ function LibraryView({
   updateText: (id: string, patch: Partial<TextLayer>) => void;
   removeText: (id: string) => void;
   onRemoveAudio: () => void;
+  onSoundAdd: (p: SoundPreset) => Promise<void>;
+  onSoundProject: (patch: Partial<Project>) => void;
 }) {
   const [source, setSource] = useState<"local" | "pexels">("local");
+  const FileSection = tab === "audio" ? "details" : "div";
   return (
     <aside
       className={`library-panel ${tab === "text" ? "is-text" : ""} ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
@@ -121,7 +128,15 @@ function LibraryView({
         </Suspense>
       )}
       {(tab === "audio" || (tab === "media" && source === "local")) && (
-        <>
+        <FileSection
+          className={tab === "audio" ? "sound-local-files" : undefined}
+        >
+          {tab === "audio" && (
+            <summary>
+              ♫ موسيقاي وملفاتي (
+              {assets.filter((a) => a.type === "audio").length})
+            </summary>
+          )}
           <button className="upload-zone" onClick={onImport}>
             <div>
               <Upload size={22} />
@@ -178,7 +193,16 @@ function LibraryView({
               الملف أكثر من مرة.
             </p>
           </div>
-        </>
+        </FileSection>
+      )}
+      {tab === "audio" && (
+        <SoundCatalog
+          project={project}
+          assets={assets}
+          suspended={suspendPreviews}
+          onAdd={onSoundAdd}
+          onProject={onSoundProject}
+        />
       )}
       {(tab === "filters" || tab === "effects") && (
         <EffectsCatalog

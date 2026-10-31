@@ -201,7 +201,7 @@ test("mobile keyboard viewport, orientation changes and leaving editor clean up 
   await page
     .getByRole("button", { name: "العودة للاستوديو", exact: true })
     .click();
-  await expect(page.locator(".template-card")).toHaveCount(4);
+  await expect(page.locator(".template-card")).toHaveCount(5);
   await expect(page.locator("body")).not.toHaveClass(/studio-mobile-editing/);
   expect(
     await page.evaluate(() =>
