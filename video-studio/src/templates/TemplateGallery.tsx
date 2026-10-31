@@ -1,3 +1,4 @@
+import "./editable/styles.css";
 import { InterfaceFeatured } from "./interface-flow/Featured";
 import { NovaShowcase } from "./nova/Showcase";
 import "./nova/styles.css";
@@ -22,6 +23,14 @@ export function TemplateGallery({
         خلفيات تصميمية محلية ونصوص وانتقالات قابلة للتعديل. استبدل الخلفيات من
         خصائص المقطع بملفاتك أو لقطات Pexels.
       </p>
+      <div className="template-file-links">
+        <a href="/video-studio-templates/orbit-launch.json" download>
+          ↓ ملف ORBIT قابل للتعديل
+        </a>
+        <a href="/video-studio-templates/paper-stories.json" download>
+          ↓ ملف PAPER قابل للتعديل
+        </a>
+      </div>
       <InterfaceFeatured busy={busy} onUse={onUse} />
       <NovaShowcase onUse={onUse} busy={busy} />
       <div className="template-cards">

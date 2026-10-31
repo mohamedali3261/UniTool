@@ -206,7 +206,7 @@ export function boxesAt(
       angle: t.rotation || 0,
       locked: !!(t.locked || p.tracks?.text?.locked),
       hidden: !!(t.hidden || p.tracks?.text?.hidden),
-      label: t.text.slice(0, 40) || "نص فارغ",
+      label: t.name || t.text.slice(0, 40) || "نص فارغ",
     });
   }
   return boxes;
@@ -250,6 +250,20 @@ export function scaleObject(p: Project, s: Selection, factor: number): Project {
   if (s.kind === "text")
     return patchObject(p, s, {
       size: clamp((o as TextLayer).size * factor, 12, 180),
+      ...((o as TextLayer).box
+        ? {
+            box: {
+              ...(o as TextLayer).box!,
+              width: clamp((o as TextLayer).box!.width * factor, 1, 4000),
+              height: clamp((o as TextLayer).box!.height * factor, 1, 4000),
+              radius: clamp(
+                ((o as TextLayer).box!.radius || 0) * factor,
+                0,
+                2000,
+              ),
+            },
+          }
+        : {}),
     });
   if (s.kind === "overlay")
     return patchObject(p, s, {

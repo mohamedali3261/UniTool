@@ -291,6 +291,17 @@ export function validateProjectData(
         !["none", "fade", "slide", "pop"].includes(t.animationOut)) ||
       (t.animationDuration !== undefined &&
         !num(t.animationDuration, 0.1, 3)) ||
+      (t.name !== undefined &&
+        (typeof t.name !== "string" || t.name.length > 160)) ||
+      (t.box !== undefined &&
+        (!t.box ||
+          !num(t.box.width, 1, 4000) ||
+          !num(t.box.height, 1, 4000) ||
+          (t.box.radius !== undefined && !num(t.box.radius, 0, 2000)) ||
+          (t.box.borderWidth !== undefined &&
+            !num(t.box.borderWidth, 0, 100)) ||
+          (t.box.borderColor !== undefined &&
+            !/^#[0-9a-f]{6}$/i.test(t.box.borderColor)))) ||
       !id(t.id) ||
       typeof t.text !== "string" ||
       typeof t.color !== "string" ||

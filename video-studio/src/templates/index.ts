@@ -1,3 +1,5 @@
+import { orbitLaunch, buildOrbitLaunch } from "./orbit-launch";
+import { paperStories, buildPaperStories } from "./paper-stories";
 import { interfaceFlow } from "./interface-flow";
 import { buildInterfaceFlow } from "./interface-flow/build";
 import { nova } from "./nova";
@@ -9,10 +11,21 @@ import { slideshow } from "./slideshow";
 import { uid, blankProject, newClip, type Project, type Asset } from "../types";
 import { readAsset } from "../lib/media";
 import type { StudioTemplate } from "./types";
-export const templates = [reel, product, quote, slideshow, nova, interfaceFlow];
+export const templates = [
+  reel,
+  product,
+  quote,
+  slideshow,
+  nova,
+  interfaceFlow,
+  orbitLaunch,
+  paperStories,
+];
 export async function buildTemplate(
   template: StudioTemplate,
 ): Promise<{ project: Project; assets: Asset[] }> {
+  if (template.id === "orbit-launch") return buildOrbitLaunch();
+  if (template.id === "paper-stories") return buildPaperStories();
   if (template.id === "interface-flow") return buildInterfaceFlow();
   if (template.id === "nova") return buildNova();
   const project: Project = {

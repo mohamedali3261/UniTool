@@ -1,6 +1,8 @@
 import type { TextLayer } from "../../types";
 export type TextPresetStyle = Pick<
   TextLayer,
+  | "box"
+  | "name"
   | "font"
   | "bold"
   | "size"

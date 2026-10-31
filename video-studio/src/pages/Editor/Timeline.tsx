@@ -1,5 +1,5 @@
 import { rulerTicks } from "./timeline/ruler";
-import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import {
   Plus,
@@ -85,6 +85,8 @@ type Drag = {
   pointer: number;
 };
 type Props = {
+  playing?: boolean;
+  clockRef?: React.MutableRefObject<number>;
   compact?: boolean;
   project: Project;
   assets: Asset[];
@@ -106,6 +108,8 @@ type Props = {
   onInspectOverlay?: () => void;
 };
 export function Timeline({
+  playing = false,
+  clockRef,
   compact = false,
   project,
   assets,
@@ -141,6 +145,18 @@ export function Timeline({
       items: Item[];
       touch?: boolean;
     } | null>(null);
+  const head = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!playing || !clockRef) return;
+    let raf: number;
+    const paint = () => {
+      if (head.current)
+        head.current.style.transform = `translateX(${clockRef.current * zoom}px)`;
+      raf = requestAnimationFrame(paint);
+    };
+    paint();
+    return () => cancelAnimationFrame(raf);
+  }, [playing, clockRef, zoom]);
   const track = useRef<HTMLDivElement>(null),
     scroll = useRef<HTMLDivElement>(null),
     labels = useRef<HTMLDivElement>(null),
@@ -158,7 +174,7 @@ export function Timeline({
   const p = draft || project,
     duration = durationOf(p),
     width = Math.max(560, (duration + 2) * zoom),
-    lanes = textLanes(p.texts);
+    lanes = useMemo(() => textLanes(p.texts), [p.texts]);
   const active = items.filter((s) => selectedObject(project, s));
   const fallback: Item[] = active.length
     ? active
@@ -1370,7 +1386,7 @@ export function Timeline({
                     key={t.id}
                     role="button"
                     tabIndex={0}
-                    aria-label={`توقيت النص ${t.text}`}
+                    aria-label={`توقيت النص ${t.name || t.text}`}
                     {...attributes(s)}
                     className={`timeline-text ${isSelected(s) ? "selected" : ""} ${locked(p, s) ? "item-locked" : ""}`}
                     style={{
@@ -1393,7 +1409,7 @@ export function Timeline({
                     />
                     <Type size={13} />
                     <span>
-                      {t.text}
+                      {t.name || t.text}
                       {t.groupId ? " ⛓" : ""}
                     </span>
                     <span
@@ -1527,8 +1543,12 @@ export function Timeline({
               />
             )}
             <div
+              ref={head}
               className="playhead"
-              style={{ left: time * zoom }}
+              style={{
+                left: playing ? 0 : time * zoom,
+                transform: playing ? undefined : "none",
+              }}
               onPointerDown={(e) => start(e, "scrub")}
             >
               <i />

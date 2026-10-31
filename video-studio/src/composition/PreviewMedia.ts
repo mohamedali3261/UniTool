@@ -135,6 +135,14 @@ export class PreviewMedia {
       el.load();
     } else el.src = "";
   }
+  /** Pause immediately, including a decoder still awaiting its seek. */
+  suspend() {
+    this.generation++;
+    for (const slot of this.slots.values()) {
+      if (slot.el instanceof HTMLVideoElement) slot.el.pause();
+      for (const done of [...slot.pending]) done();
+    }
+  }
   dispose() {
     this.disposed = true;
     ++this.generation;

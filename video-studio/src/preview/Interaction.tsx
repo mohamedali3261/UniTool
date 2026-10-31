@@ -89,7 +89,8 @@ export function Interaction(props: Props) {
   const field = useRef<HTMLTextAreaElement>(null);
   const [moreTools, setMoreTools] = useState(false);
   const ctx = canvas?.getContext("2d");
-  const boxes = ctx ? boxesAt(props.displayProject, time, ctx, dimensions) : [];
+  const boxes =
+    ctx && !playing ? boxesAt(props.displayProject, time, ctx, dimensions) : [];
   const box = boxes.find(
     (b) => selection && b.id === selection.id && b.kind === selection.kind,
   );

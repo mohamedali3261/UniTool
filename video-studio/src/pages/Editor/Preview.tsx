@@ -1,3 +1,4 @@
+import { LatestFrameQueue } from "../../performance/LatestFrameQueue";
 import { primeMediaPlayback, playbackMessage } from "../../sound/playback";
 import { CueAudio } from "../../sound/CueAudio";
 import { Interaction } from "../../preview/Interaction";
@@ -26,6 +27,7 @@ export type PreviewPlayback = {
 };
 export function Preview({
   playbackRef,
+  clockRef,
   mobileHistory,
   project,
   assets,
@@ -41,6 +43,7 @@ export function Preview({
   inlineRequest,
 }: {
   playbackRef?: React.Ref<PreviewPlayback>;
+  clockRef?: React.MutableRefObject<number>;
   mobileHistory?: React.ReactNode;
   project: Project;
   assets: Asset[];
@@ -55,6 +58,11 @@ export function Preview({
   inlineRequest?: { id: string; nonce: number };
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }) {
+  const [playTime, setPlayTime] = useState(time);
+  const renderTime = playing ? playTime : time;
+  const currentTime = useRef(time);
+  currentTime.current = renderTime;
+  if (clockRef) clockRef.current = renderTime;
   const audio = useRef<HTMLAudioElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const [audioError, setAudioError] = useState("");
@@ -75,6 +83,8 @@ export function Preview({
     if (mounted.current) setAudioError(playbackMessage(error));
   }
   function pause() {
+    runtime.current?.suspend();
+    if (playing) setTime(currentTime.current);
     stage.current
       ?.querySelectorAll<HTMLAudioElement>("audio")
       .forEach((a) => a.pause());
@@ -133,26 +143,57 @@ export function Preview({
   const runtime = useRef<PreviewMedia>(null);
   const [mediaError, setMediaError] = useState("");
   useEffect(() => {
-    runtime.current = new PreviewMedia();
-    return () => runtime.current?.dispose();
-  }, []);
+    if (!playing) runtime.current?.suspend();
+  }, [playing]);
+  type FrameRequest = {
+    project: Project;
+    assets: Asset[];
+    time: number;
+    playing: boolean;
+    width: number;
+  };
+  const frameQueue = useRef<LatestFrameQueue<FrameRequest> | null>(null);
+  const latestFrame = useRef<FrameRequest>({
+    project: displayProject,
+    assets,
+    time: renderTime,
+    playing,
+    width: previewWidth,
+  });
+  latestFrame.current = {
+    project: displayProject,
+    assets,
+    time: renderTime,
+    playing,
+    width: previewWidth,
+  };
   useEffect(() => {
-    let cancelled = false;
-    const engine = runtime.current;
-    void engine
-      ?.sync(
-        sceneAt(displayProject, time).entries,
-        assets,
-        playing,
-        (error) => {
-          if (!cancelled) reportAudioError(error);
-        },
-      )
-      .then((sources) => {
-        if (cancelled || !sources) return;
+    const engine = new PreviewMedia();
+    runtime.current = engine;
+    const queue = new LatestFrameQueue<FrameRequest>(
+      async (frame) => {
+        const sources = await engine.sync(
+          sceneAt(frame.project, frame.time).entries,
+          frame.assets,
+          frame.playing,
+          (error) => {
+            if (mounted.current) reportAudioError(error);
+          },
+        );
+        const latest = latestFrame.current;
+        if (
+          !mounted.current ||
+          !sources ||
+          latest.project !== frame.project ||
+          latest.assets !== frame.assets ||
+          latest.playing !== frame.playing ||
+          latest.width !== frame.width
+        )
+          return;
         const ctx = canvasRef.current?.getContext("2d");
-        if (ctx) {
-          drawFrame(ctx, null, displayProject, time, undefined, sources);
+        if (!ctx) return;
+        drawFrame(ctx, null, frame.project, frame.time, undefined, sources);
+        if (!frame.playing) {
           const next: Dimensions = new Map();
           sources.forEach((source, id) => {
             const s = source as HTMLImageElement & HTMLVideoElement;
@@ -166,19 +207,27 @@ export function Preview({
               ? previous
               : next,
           );
-          setMediaError("");
         }
-      })
-      .catch((error) => {
-        if (!cancelled) setMediaError(error.message);
-      });
+        setMediaError("");
+      },
+      (error) => {
+        if (mounted.current) setMediaError((error as Error).message);
+      },
+    );
+    frameQueue.current = queue;
+    queue.request(latestFrame.current);
     return () => {
-      cancelled = true;
+      queue.dispose();
+      engine.dispose();
     };
-  }, [displayProject, assets, time, playing, previewWidth, canvasRef]);
+  }, [canvasRef]);
+  useEffect(() => {
+    frameQueue.current?.request(latestFrame.current);
+  }, [displayProject, assets, renderTime, playing, previewWidth]);
   useEffect(() => {
     const pause = () => {
       if (document.hidden) {
+        if (playing) setTime(currentTime.current);
         request.current++;
         setPreparing(false);
         setPlaying(false);
@@ -186,13 +235,13 @@ export function Preview({
     };
     document.addEventListener("visibilitychange", pause);
     return () => document.removeEventListener("visibilitychange", pause);
-  }, [setPlaying]);
+  }, [setPlaying, playing]);
   useEffect(() => {
     const a = audio.current;
     if (!a) return;
     a.volume = project.audioVolume;
     a.playbackRate = project.audioSpeed || 1;
-    const local = musicTime(project, music?.duration || 0, time);
+    const local = musicTime(project, music?.duration || 0, renderTime);
     if (local === null) {
       a.pause();
       return;
@@ -201,7 +250,7 @@ export function Preview({
     if (playing) void a.play().catch(reportAudioError);
     else a.pause();
   }, [
-    time,
+    renderTime,
     playing,
     music?.id,
     project.audioVolume,
@@ -214,20 +263,32 @@ export function Preview({
   ]);
   useEffect(() => {
     if (!playing) return;
-    let raf: number;
-    let last = performance.now();
+    let raf: number,
+      last = performance.now(),
+      published = last;
     const began = last,
       initial = latest.current.time;
+    setPlayTime(initial);
     const tick = (now: number) => {
       if (now - last >= 1000 / 30) {
         last = now;
-        const next = initial + (now - began) / 1000;
+        const next = Math.min(
+          initial + (now - began) / 1000,
+          durationOf(latest.current.project),
+        );
+        currentTime.current = next;
+        if (clockRef) clockRef.current = next;
+        setPlayTime(next);
         if (next >= durationOf(latest.current.project)) {
-          setTime(durationOf(latest.current.project));
+          setTime(next);
           setPlaying(false);
           return;
         }
-        setTime(next);
+        // Heavy editor panels/timeline rows do not need 30 React renders/second.
+        if (now - published >= 250) {
+          published = now;
+          setTime(next);
+        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -271,7 +332,7 @@ export function Preview({
           <Interaction
             project={project}
             displayProject={displayProject}
-            time={time}
+            time={renderTime}
             playing={playing}
             canvas={canvasRef.current}
             dimensions={dimensions}
@@ -288,7 +349,7 @@ export function Preview({
         <CueAudio
           project={project}
           assets={assets}
-          time={time}
+          time={renderTime}
           playing={playing}
           onError={reportAudioError}
         />
@@ -313,7 +374,7 @@ export function Preview({
       <div className="player-controls">
         {mobileHistory}
         <span className="timecode" dir="ltr">
-          {timeLabel(time)} <em>/ {timeLabel(durationOf(project))}</em>
+          {timeLabel(renderTime)} <em>/ {timeLabel(durationOf(project))}</em>
         </span>
         <div>
           <IconButton
