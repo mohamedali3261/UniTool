@@ -1,3 +1,4 @@
+import { drawInterfaceScene } from "../templates/interface-flow/render";
 import { classifyMedia, localMediaURL, releaseMediaURL } from "../media/files";
 import { textLayout } from "../text/layout";
 import { motionAt, textAt } from "../animation/evaluate";
@@ -213,6 +214,18 @@ function drawSingleFrame(
         sw * scale,
         sh * scale,
       );
+      if (clip?.designScene) {
+        ctx.save();
+        ctx.translate((-sw * scale) / 2, (-sh * scale) / 2);
+        ctx.scale((sw * scale) / 720, (sh * scale) / 1280);
+        drawInterfaceScene(
+          ctx,
+          clip.designScene,
+          clip.start + elapsed * clip.speed,
+          clip.designAccent,
+        );
+        ctx.restore();
+      }
       ctx.restore();
     }
   }

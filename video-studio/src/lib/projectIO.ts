@@ -1,3 +1,4 @@
+import { isInterfaceScene } from "../templates/interface-flow/scenes";
 import {
   estimatedMediaBytes,
   portableMemoryLimit,
@@ -207,6 +208,10 @@ export function validateProjectData(
     );
     if (
       !c ||
+      (c.designScene !== undefined && !isInterfaceScene(c.designScene)) ||
+      (c.designAccent !== undefined &&
+        (typeof c.designAccent !== "string" ||
+          !/^#[0-9a-f]{6}$/i.test(c.designAccent))) ||
       (c.motion !== undefined &&
         c.motion !== "none" &&
         !motionById.has(c.motion)) ||

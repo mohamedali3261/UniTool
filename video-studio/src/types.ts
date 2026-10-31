@@ -1,3 +1,4 @@
+import type { InterfaceScene } from "./templates/interface-flow/scenes";
 import { filterPresets } from "./effects/registry";
 export type Asset = {
   size?: number;
@@ -32,6 +33,8 @@ export type MotionKeyframe = {
   opacity: number;
 };
 export type Clip = {
+  designScene?: InterfaceScene;
+  designAccent?: string;
   gap?: boolean;
   hidden?: boolean;
   groupId?: string;

@@ -1,0 +1,101 @@
+.interface-featured {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  background:
+    radial-gradient(ellipse at 100% 0, #1d5c443d, transparent 70%), #0b1818;
+  border: 1px solid #4bdfc53b;
+  border-radius: 16px;
+  padding: 26px;
+  margin: 25px 0;
+}
+.interface-featured h3 {
+  font-size: 27px;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+.interface-featured p {
+  font-size: 12px;
+  color: #a4bfb3;
+  line-height: 2;
+  max-width: 680px;
+}
+.interface-featured small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #86a99a;
+}
+.interface-featured .primary {
+  display: flex;
+  margin-top: 20px;
+  background: #4bdfc5;
+  color: #06241b;
+}
+.interface-eyebrow {
+  font: 10px monospace;
+  letter-spacing: 2px;
+  color: #4bdfc5;
+}
+.interface-mini-art {
+  padding: 22px 18px;
+  aspect-ratio: 9/13;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: linear-gradient(150deg, #102f27, #061316);
+  border: 1px solid #4bdfc522;
+  border-radius: 10px;
+  direction: ltr;
+  box-shadow: 0 12px 30px #0004;
+}
+.interface-mini-art > span {
+  color: #4bdfc5;
+  font: 12px monospace;
+  letter-spacing: 3px;
+}
+.interface-mini-art b {
+  font: 700 21px monospace;
+  color: #eefaf3;
+}
+.interface-mini-art small {
+  color: #4bdfc5;
+  font: 11px monospace;
+}
+.interface-mini-art > div {
+  padding: 20px 10px;
+  border: 1px solid #ffffff16;
+  background: #112523;
+  border-radius: 8px;
+  font: 11px monospace;
+}
+.interface-mini-art i {
+  display: block;
+  font: 700 30px monospace;
+  color: #4bdfc5;
+  margin-top: 15px;
+}
+.interface-mini-art em {
+  font: 9px monospace;
+  letter-spacing: 2px;
+  color: #789a8d;
+}
+@media (max-width: 650px) {
+  .interface-featured {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  .interface-mini-art {
+    aspect-ratio: auto;
+    gap: 14px;
+  }
+  .interface-mini-art > div,
+  .interface-mini-art em {
+    display: none;
+  }
+  .interface-featured h3 {
+    font-size: 23px;
+  }
+}
