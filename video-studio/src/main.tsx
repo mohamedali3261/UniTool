@@ -10,6 +10,7 @@ import "./pages/Editor/mobile/compact.css";
 import "./pages/Editor/mobile/tool-pages.css";
 import "./pages/Editor/desktop/desktop.css";
 import "./pages/Editor/timeline/timeline.css";
+import "./pages/Editor/preview/preview.css";
 createRoot(document.getElementById("root")!).render(
   <StudioSettings>
     <App />

@@ -1,3 +1,5 @@
+import { usePreviewViewport } from "./preview/usePreviewViewport";
+import { PreviewViewControls } from "./preview/PreviewViewControls";
 import { LatestFrameQueue } from "../../performance/LatestFrameQueue";
 import { primeMediaPlayback, playbackMessage } from "../../sound/playback";
 import { CueAudio } from "../../sound/CueAudio";
@@ -18,7 +20,7 @@ import {
   Clapperboard,
 } from "lucide-react";
 import { Asset, Project, durationOf, timeLabel } from "../../types";
-import { drawFrame } from "../../lib/media";
+import { download, drawFrame } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
 export type PreviewPlayback = {
   play: () => void;
@@ -65,6 +67,7 @@ export function Preview({
   if (clockRef) clockRef.current = renderTime;
   const audio = useRef<HTMLAudioElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const viewport = usePreviewViewport(stage, canvasRef);
   const [audioError, setAudioError] = useState("");
   const [preparing, setPreparing] = useState(false);
   const request = useRef(0);
@@ -307,7 +310,19 @@ export function Preview({
       <div ref={setToolbarHost} className="preview-toolbar-host" />
       <div
         ref={stage}
-        className="canvas-stage"
+        className={`canvas-stage ${viewport.panning && viewport.view.zoom > 1 ? "is-panning" : ""}`}
+        tabIndex={0}
+        aria-label="مساحة المعاينة"
+        {...viewport.handlers}
+        onKeyDown={(e) => {
+          if (
+            (e.target as HTMLElement).closest(
+              "input,textarea,[data-preview-tools]",
+            )
+          )
+            return;
+          if (e.key === "Escape") viewport.finish(true);
+        }}
         onPointerDown={(e) => {
           if (e.target === e.currentTarget) onSelect(null);
         }}
@@ -324,12 +339,16 @@ export function Preview({
           width={previewWidth}
           height={Math.round((previewWidth * rh) / rw)}
           style={{
+            transform: `translate(${viewport.view.x}px, ${viewport.view.y}px) scale(${viewport.view.zoom})`,
+            transformOrigin: "center",
             aspectRatio: `${rw}/${rh}`,
             display: project.clips.length ? "block" : "none",
           }}
         />
         {!!project.clips.length && (
           <Interaction
+            viewVersion={`${viewport.view.zoom}:${viewport.view.x}:${viewport.view.y}`}
+            compositionGuides={viewport.guides}
             project={project}
             displayProject={displayProject}
             time={renderTime}
@@ -346,6 +365,34 @@ export function Preview({
             toolbarHost={toolbarHost}
           />
         )}
+        <PreviewViewControls
+          viewport={viewport}
+          disabled={!project.clips.length}
+          onStep={(direction) => {
+            pause();
+            setTime(
+              Math.max(
+                0,
+                Math.min(
+                  durationOf(project),
+                  currentTime.current + direction / 30,
+                ),
+              ),
+            );
+          }}
+          onSnapshot={async () => {
+            const canvas = canvasRef.current;
+            if (!canvas || !project.clips.length) throw new Error("No frame");
+            const at = currentTime.current;
+            const blob = await new Promise<Blob>((resolve, reject) =>
+              canvas.toBlob(
+                (b) => (b ? resolve(b) : reject(new Error("Empty frame"))),
+                "image/png",
+              ),
+            );
+            download(blob, `${project.name}-${at.toFixed(2)}s.png`);
+          }}
+        />
         <CueAudio
           project={project}
           assets={assets}
