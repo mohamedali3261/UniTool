@@ -7,12 +7,14 @@ function Cue({
   asset,
   time,
   playing,
+  onError,
 }: {
   cue: SoundCue;
   project: Project;
   asset: Asset;
   time: number;
   playing: boolean;
+  onError?: (error: unknown) => void;
 }) {
   const ref = useRef<HTMLAudioElement>(null);
   useEffect(() => {
@@ -31,14 +33,15 @@ function Cue({
       return;
     }
     if (Math.abs(a.currentTime - local) > 0.12) a.currentTime = local;
-    if (playing && a.paused) void a.play().catch(() => {});
+    if (playing && a.paused) void a.play().catch((error) => onError?.(error));
     if (!playing) a.pause();
   }, [cue, project.tracks, time, playing]);
   return (
     <audio
       ref={ref}
       src={asset.url}
-      preload="metadata"
+      preload="auto"
+      onError={() => onError?.(new Error("ملف مؤثر الصوت غير قابل للتشغيل"))}
       hidden
       data-sound-cue={cue.id}
     />
@@ -49,11 +52,13 @@ export function CueAudio({
   assets,
   time,
   playing,
+  onError,
 }: {
   project: Project;
   assets: Asset[];
   time: number;
   playing: boolean;
+  onError?: (error: unknown) => void;
 }) {
   return (
     <>
@@ -67,6 +72,7 @@ export function CueAudio({
             project={project}
             time={time}
             playing={playing}
+            onError={onError}
           />
         ) : null;
       })}

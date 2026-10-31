@@ -40,7 +40,7 @@ import {
 } from "../../types";
 import { download, locate } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
-import { Preview } from "./Preview";
+import { Preview, type PreviewPlayback } from "./Preview";
 import { Timeline } from "./Timeline";
 import { Library, Tab, tabs } from "./Library";
 import { Inspector } from "./Inspector";
@@ -86,6 +86,7 @@ export function Editor({
   notify,
 }: Props) {
   const onStockAdd = useEvent((asset: Asset) => {
+    playback.current?.pause();
     setPlaying(false);
     setTime(durationOf(project));
     select(onStockAsset(asset));
@@ -116,6 +117,7 @@ export function Editor({
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const playback = useRef<PreviewPlayback>(null);
   const freezeController = useRef<AbortController | null>(null);
   const currentProject = useRef(project);
   currentProject.current = project;
@@ -124,6 +126,7 @@ export function Editor({
     const c = project.clips.find((c) => c.id === id),
       a = assets.find((a) => a.id === c?.assetId);
     if (!c || !a || locked(project, { kind: "clip", id })) return;
+    playback.current?.pause();
     setPlaying(false);
     freezeController.current?.abort();
     const abort = new AbortController();
@@ -143,7 +146,7 @@ export function Editor({
       const frozen = newClip(asset);
       update(insertFrozen(project, id, at, frozen));
       select(frozen.id);
-      setVisualSelection({ kind: "clip", id: frozen.id });
+      setVisualSelection(null);
       notify("تمت إضافة إطار ثابت لمدة ثانيتين");
     } catch {
       if (!abort.signal.aborted) notify("تعذّر التقاط إطار من هذا الملف");
@@ -153,21 +156,23 @@ export function Editor({
   const duration = durationOf(project);
   const getTime = useEvent(() => time);
   const importLayerAtCursor = useEvent(() => {
+    playback.current?.pause();
     setPlaying(false);
     onImportLayer(time);
   });
   const previewCreative = useEvent((at: number) => {
     setTime(at);
-    setPlaying(true);
+    playback.current?.play();
   });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (!importNotice?.revision) return;
+    playback.current?.pause();
     setPlaying(false);
     openPanel(importNotice.layer ? "inspector" : "timeline");
     if (!importNotice.layer && importNotice.clipId) {
       select(importNotice.clipId);
-      setVisualSelection({ kind: "clip", id: importNotice.clipId });
+      setVisualSelection(null);
       setTime(clipStart(project, importNotice.clipId));
     }
   }, [importNotice?.revision]);
@@ -190,10 +195,11 @@ export function Editor({
   };
   function addAsset(a: Asset) {
     const id = uid();
+    playback.current?.pause();
     setPlaying(false);
     setTime(duration);
     select(id);
-    setVisualSelection({ kind: "clip", id });
+    setVisualSelection(null);
     openPanel("timeline");
     update((p) => ({
       ...p,
@@ -262,6 +268,7 @@ export function Editor({
       notify("حرّك المؤشر داخل المقطع أولًا");
       return;
     }
+    playback.current?.pause();
     setPlaying(false);
     select(found.clip.id);
     update((p) => ({
@@ -294,6 +301,7 @@ export function Editor({
     const start = Math.min(time, Math.max(0, duration - 0.1));
     const textId = uid();
     setVisualSelection({ kind: "text", id: textId });
+    playback.current?.pause();
     setPlaying(false);
     update((p) => ({
       ...p,
@@ -339,6 +347,7 @@ export function Editor({
         return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
+        playback.current?.pause();
         setPlaying(false);
         setTime((t) =>
           Math.max(
@@ -353,6 +362,7 @@ export function Editor({
       }
       if (e.key === "Home" || e.key === "End") {
         e.preventDefault();
+        playback.current?.pause();
         setPlaying(false);
         setTime(e.key === "Home" ? 0 : duration);
         return;
@@ -381,7 +391,7 @@ export function Editor({
         e.preventDefault();
         if (duration) {
           if (time >= duration) setTime(0);
-          setPlaying((p) => !p);
+          playback.current?.toggle();
         }
       }
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -475,6 +485,7 @@ export function Editor({
   const selectText = useEvent((id: string) => {
     const t = project.texts.find((t) => t.id === id);
     if (!t) return;
+    playback.current?.pause();
     setPlaying(false);
     setVisualSelection({ kind: "text", id });
     if (time < t.start || time >= t.end)
@@ -508,6 +519,7 @@ export function Editor({
             icon={ArrowRight}
             label="العودة للاستوديو"
             onClick={() => {
+              playback.current?.pause();
               setPlaying(false);
               onHome();
             }}
@@ -529,6 +541,7 @@ export function Editor({
           {isMobile && (
             <MobileProjectMenu
               onOpen={() => {
+                playback.current?.pause();
                 setPlaying(false);
                 onOpen();
               }}
@@ -547,6 +560,7 @@ export function Editor({
             icon={FolderOpen}
             label="فتح مشروع"
             onClick={() => {
+              playback.current?.pause();
               setPlaying(false);
               onOpen();
             }}
@@ -563,6 +577,7 @@ export function Editor({
             className="primary"
             disabled={!duration}
             onClick={() => {
+              playback.current?.pause();
               setPlaying(false);
               setExporting(true);
             }}
@@ -680,6 +695,7 @@ export function Editor({
             />
           </div>
           <Preview
+            playbackRef={playback}
             mobileHistory={
               <div className="mobile-player-history">
                 <IconButton
@@ -759,25 +775,29 @@ export function Editor({
         onInspectOverlay={() => openPanel("inspector")}
         onFreeze={freezeAtCursor}
         onSelectItem={(s) => {
+          playback.current?.pause();
           setPlaying(false);
-          setVisualSelection(s);
+          setVisualSelection(null);
         }}
         project={project}
         assets={assets}
         time={time}
         setTime={(t) => {
+          setVisualSelection(null);
+          playback.current?.pause();
           setPlaying(false);
           setTime(t);
         }}
         selected={selected}
         select={(id) => {
           select(id);
-          setVisualSelection({ kind: "clip", id });
+          setVisualSelection(null);
           let t = 0;
           for (const c of project.clips) {
             if (c.id === id) break;
             t += clipDuration(c);
           }
+          playback.current?.pause();
           setPlaying(false);
           setTime(t);
         }}
@@ -788,6 +808,7 @@ export function Editor({
         onText={() => openTool("text")}
         onAudio={() => openTool("audio")}
         onChange={(p) => {
+          playback.current?.pause();
           setPlaying(false);
           update(p);
         }}

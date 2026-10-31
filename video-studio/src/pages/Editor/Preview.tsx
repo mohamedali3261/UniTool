@@ -1,3 +1,4 @@
+import { primeMediaPlayback, playbackMessage } from "../../sound/playback";
 import { CueAudio } from "../../sound/CueAudio";
 import { Interaction } from "../../preview/Interaction";
 import type { Dimensions, Selection } from "../../preview/model";
@@ -6,7 +7,7 @@ import { sceneAt } from "../../composition/scene";
 
 import { useStudioSettings } from "../../settings/StudioSettings";
 import { musicTime } from "../../lib/timeline";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Maximize,
   Pause,
@@ -18,7 +19,13 @@ import {
 import { Asset, Project, durationOf, timeLabel } from "../../types";
 import { drawFrame } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
+export type PreviewPlayback = {
+  play: () => void;
+  toggle: () => void;
+  pause: () => void;
+};
 export function Preview({
+  playbackRef,
   mobileHistory,
   project,
   assets,
@@ -33,6 +40,7 @@ export function Preview({
   onTextPanel,
   inlineRequest,
 }: {
+  playbackRef?: React.Ref<PreviewPlayback>;
   mobileHistory?: React.ReactNode;
   project: Project;
   assets: Asset[];
@@ -48,6 +56,63 @@ export function Preview({
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }) {
   const audio = useRef<HTMLAudioElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const [audioError, setAudioError] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const request = useRef(0);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    const a = audio.current;
+    return () => {
+      mounted.current = false;
+      request.current++;
+      a?.pause();
+    };
+  }, []);
+  function reportAudioError(error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    if (mounted.current) setAudioError(playbackMessage(error));
+  }
+  function pause() {
+    stage.current
+      ?.querySelectorAll<HTMLAudioElement>("audio")
+      .forEach((a) => a.pause());
+    runtime.current?.playbackElements().forEach((a) => a.pause());
+    request.current++;
+    setPreparing(false);
+    setPlaying(false);
+  }
+  function play() {
+    const token = ++request.current;
+    setAudioError("");
+    setPreparing(true);
+    // Start all play promises within this actual user gesture, not a React effect.
+    const elements = [
+      ...Array.from(
+        stage.current?.querySelectorAll<HTMLAudioElement>("audio[src]") || [],
+      ),
+      ...(runtime.current?.playbackElements() || []),
+    ];
+    void primeMediaPlayback(elements)
+      .then(() => {
+        if (mounted.current && token === request.current) {
+          setPreparing(false);
+          setPlaying(true);
+        }
+      })
+      .catch((error) => {
+        if (mounted.current && token === request.current) {
+          setPreparing(false);
+          reportAudioError(error);
+        }
+      });
+  }
+  function toggle() {
+    if (playing || preparing) pause();
+    else play();
+  }
+  useImperativeHandle(playbackRef, () => ({ play, toggle, pause }));
   const [draft, setDraft] = useState<Project | null>(null);
   const displayProject = draft || project;
   const [dimensions, setDimensions] = useState<Dimensions>(new Map());
@@ -75,7 +140,14 @@ export function Preview({
     let cancelled = false;
     const engine = runtime.current;
     void engine
-      ?.sync(sceneAt(displayProject, time).entries, assets, playing)
+      ?.sync(
+        sceneAt(displayProject, time).entries,
+        assets,
+        playing,
+        (error) => {
+          if (!cancelled) reportAudioError(error);
+        },
+      )
       .then((sources) => {
         if (cancelled || !sources) return;
         const ctx = canvasRef.current?.getContext("2d");
@@ -106,7 +178,11 @@ export function Preview({
   }, [displayProject, assets, time, playing, previewWidth, canvasRef]);
   useEffect(() => {
     const pause = () => {
-      if (document.hidden) setPlaying(false);
+      if (document.hidden) {
+        request.current++;
+        setPreparing(false);
+        setPlaying(false);
+      }
     };
     document.addEventListener("visibilitychange", pause);
     return () => document.removeEventListener("visibilitychange", pause);
@@ -122,7 +198,7 @@ export function Preview({
       return;
     }
     if (Math.abs(a.currentTime - local) > 0.15) a.currentTime = local;
-    if (playing) void a.play().catch(() => {});
+    if (playing) void a.play().catch(reportAudioError);
     else a.pause();
   }, [
     time,
@@ -168,7 +244,13 @@ export function Preview({
         </span>
       </div>
       <div ref={setToolbarHost} className="preview-toolbar-host" />
-      <div className="canvas-stage">
+      <div
+        ref={stage}
+        className="canvas-stage"
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) onSelect(null);
+        }}
+      >
         {!project.clips.length && (
           <div className="empty-preview">
             <Clapperboard size={42} />
@@ -197,7 +279,7 @@ export function Preview({
             onSelect={onSelect}
             onChange={onChange}
             onDraft={setDraft}
-            onPause={() => setPlaying(false)}
+            onPause={pause}
             onTextPanel={onTextPanel}
             inlineRequest={inlineRequest}
             toolbarHost={toolbarHost}
@@ -208,13 +290,25 @@ export function Preview({
           assets={assets}
           time={time}
           playing={playing}
+          onError={reportAudioError}
         />
-        <audio ref={audio} src={music?.url} hidden />
+        <audio
+          ref={audio}
+          src={music?.url}
+          preload="auto"
+          onError={() => reportAudioError(new Error("audio"))}
+          hidden
+        />
       </div>
       {mediaError && (
         <p role="status" className="composition-error">
           {mediaError}
         </p>
+      )}
+      {audioError && (
+        <div className="composition-error" role="alert">
+          {audioError} <button onClick={play}>إعادة تفعيل الصوت</button>
+        </div>
       )}
       <div className="player-controls">
         {mobileHistory}
@@ -225,15 +319,19 @@ export function Preview({
           <IconButton
             icon={SkipForward}
             label="البداية"
-            onClick={() => setTime(0)}
+            onClick={() => {
+              pause();
+              setTime(0);
+            }}
           />
           <button
             className="play-button"
-            aria-label={playing ? "إيقاف" : "تشغيل"}
+            aria-label={playing || preparing ? "إيقاف" : "تشغيل"}
+            aria-busy={preparing}
             disabled={!project.clips.length}
             onClick={() => {
               if (time >= durationOf(project)) setTime(0);
-              setPlaying(!playing);
+              toggle();
             }}
           >
             {playing ? <Pause size={19} /> : <Play size={19} />}
@@ -242,7 +340,7 @@ export function Preview({
             icon={SkipBack}
             label="النهاية"
             onClick={() => {
-              setPlaying(false);
+              pause();
               setTime(durationOf(project));
             }}
           />
