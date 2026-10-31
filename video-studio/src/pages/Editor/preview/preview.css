@@ -1,0 +1,143 @@
+.editor-shell .canvas-stage {
+  isolation: isolate;
+}
+.preview-view-toggle {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #ffffff30;
+  border-radius: 7px;
+  background: #101a23df;
+  color: #d6f2f4;
+  font: 11px monospace;
+  cursor: pointer;
+}
+.canvas-stage.is-panning,
+.canvas-stage.is-panning .preview-interaction {
+  cursor: grab;
+  touch-action: none;
+}
+.canvas-stage.is-panning:active {
+  cursor: grabbing;
+}
+.preview-composition-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent calc(33.333% - 0.5px),
+      #c7f9ff80 33.333%,
+      transparent calc(33.333% + 0.5px),
+      transparent calc(66.666% - 0.5px),
+      #c7f9ff80 66.666%,
+      transparent calc(66.666% + 0.5px)
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(33.333% - 0.5px),
+      #c7f9ff80 33.333%,
+      transparent calc(33.333% + 0.5px),
+      transparent calc(66.666% - 0.5px),
+      #c7f9ff80 66.666%,
+      transparent calc(66.666% + 0.5px)
+    );
+}
+.preview-composition-guides::after {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border: 1px dashed #f4e5ad99;
+}
+.preview-view-panel {
+  position: fixed;
+  z-index: 160;
+  box-sizing: border-box;
+  padding: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid #40565f;
+  border-radius: 12px;
+  background: #172126;
+  color: #d2e4e8;
+  box-shadow: 0 12px 48px #0008;
+}
+.preview-view-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.preview-view-panel button {
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid #ffffff18;
+  border-radius: 6px;
+  background: #ffffff06;
+  color: inherit;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.preview-view-panel button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.preview-view-panel button[aria-pressed="true"] {
+  background: #25c9ce20;
+  border-color: #25c9ce88;
+  color: #7ee7e8;
+}
+.preview-view-panel :focus-visible,
+.preview-view-toggle:focus-visible {
+  outline: 2px solid #25c9ce;
+  outline-offset: 2px;
+}
+.preview-view-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  margin: 8px 0;
+  font-size: 11px;
+}
+.preview-view-row input {
+  min-width: 0;
+  width: 100%;
+  accent-color: #25c9ce;
+}
+.preview-view-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.preview-view-panel p {
+  font-size: 10px;
+  color: #93aeb5;
+  line-height: 1.8;
+  margin: 10px 0 0;
+}
+@media (pointer: coarse) {
+  .preview-view-toggle {
+    min-height: 40px;
+    min-width: 64px;
+    bottom: 5px;
+    right: 5px;
+  }
+  .preview-view-panel button {
+    min-height: 44px;
+  }
+}

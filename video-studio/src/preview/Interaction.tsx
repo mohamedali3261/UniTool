@@ -15,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { StudioSelect } from "../components/StudioSelect";
 import type { Project, TextLayer } from "../types";
@@ -35,6 +35,8 @@ import {
   type Dimensions,
 } from "./model";
 type Props = {
+  viewVersion?: string;
+  compositionGuides?: boolean;
   project: Project;
   displayProject: Project;
   toolbarHost: HTMLElement | null;
@@ -112,7 +114,7 @@ export function Interaction(props: Props) {
     onDraft(null);
     setGuides({ x: false, y: false });
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!canvas) return;
     const measure = () => {
       const c = canvas.getBoundingClientRect(),
@@ -129,7 +131,7 @@ export function Interaction(props: Props) {
     observer.observe(canvas);
     observer.observe(canvas.parentElement!);
     return () => observer.disconnect();
-  }, [canvas]);
+  }, [canvas, props.viewVersion]);
   useEffect(() => {
     if (gesture.current && gesture.current.project !== project) cancel();
     // Keep inline typing transient, but rebase it on external style/timing edits.
@@ -617,6 +619,9 @@ export function Interaction(props: Props) {
           }
         }}
       >
+        {props.compositionGuides && (
+          <div className="preview-composition-guides" aria-hidden="true" />
+        )}
         {editing && !playing && box && !box.hidden && !inline && (
           <div
             className={`preview-selection ${box.locked ? "is-locked" : ""}`}

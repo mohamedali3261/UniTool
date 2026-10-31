@@ -229,6 +229,13 @@ export const toolCategories: ToolCategory[] = [
     soft: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
     tools: [
       {
+        id: 'compress', icon: AudioLines,
+        titleAr: 'ضغط الصوت', titleEn: 'Audio Compression',
+        descAr: 'قلّل حجم الملفات الصوتية مع إعدادات الصيغة والجودة',
+        descEn: 'Reduce audio file size with format and quality controls',
+        gradient: 'from-blue-500 to-indigo-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
+      },
+      {
         id: 'audioExtractor', icon: AudioLines,
         titleAr: 'استخراج الصوت', titleEn: 'Extract Audio',
         descAr: 'اسحب الصوت من أي فيديو بصيغ متعددة',
