@@ -1,3 +1,4 @@
+import { cueTime } from "../sound/timing";
 import { sceneAt, layerClip } from "../composition/scene";
 import { musicTime, clipOpacity } from "./timeline";
 import { Asset, Project, durationOf, clipDuration } from "../types";
@@ -181,6 +182,18 @@ export async function exportVideo(
       music.playbackRate = p.audioSpeed || 1;
       await loadSource(music, audio.url, signal);
     }
+    const cues = [];
+    for (const cue of p.sounds || []) {
+      const asset = assets.find((a) => a.id === cue.assetId);
+      if (!asset) throw new Error("ملف مؤثر الصوت مفقود");
+      const el = new Audio();
+      elements.push(el);
+      const gain = audioCtx.createGain();
+      gain.gain.value = cue.volume;
+      audioCtx.createMediaElementSource(el).connect(gain).connect(dest);
+      await loadSource(el, asset.url, signal);
+      cues.push({ cue, el });
+    }
     // Prime the first multi-source blend before starting the realtime clock.
     // Software/GPU backends can spend seconds on their first cross-canvas copy;
     // doing that during recording would skip the transition's frames and audio.
@@ -259,6 +272,15 @@ export async function exportVideo(
               if (Math.abs(music.currentTime - local) > 0.2)
                 music.currentTime = local;
               if (music.paused) await music.play();
+            }
+          }
+          for (const { cue, el } of cues) {
+            const local = cueTime(p, cue, time);
+            if (local === null) el.pause();
+            else {
+              if (Math.abs(el.currentTime - local) > 0.15)
+                el.currentTime = local;
+              if (el.paused) await el.play();
             }
           }
           const scene = sceneAt(p, time);

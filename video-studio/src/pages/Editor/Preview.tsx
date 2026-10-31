@@ -1,3 +1,4 @@
+import { CueAudio } from "../../sound/CueAudio";
 import { Interaction } from "../../preview/Interaction";
 import type { Dimensions, Selection } from "../../preview/model";
 import { PreviewMedia } from "../../composition/PreviewMedia";
@@ -202,6 +203,12 @@ export function Preview({
             toolbarHost={toolbarHost}
           />
         )}
+        <CueAudio
+          project={project}
+          assets={assets}
+          time={time}
+          playing={playing}
+        />
         <audio ref={audio} src={music?.url} hidden />
       </div>
       {mediaError && (

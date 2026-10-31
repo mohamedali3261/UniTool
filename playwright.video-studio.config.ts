@@ -16,6 +16,9 @@ export default defineConfig({
       args: [
         "--no-sandbox",
         "--disable-dev-shm-usage",
+        // SwiftShader GPU readback can stall CanvasCapture in headless QA.
+        // Software 2D keeps decoded export assertions deterministic; app config is unchanged.
+        "--disable-accelerated-2d-canvas",
         "--use-gl=angle",
         "--use-angle=swiftshader",
         "--enable-unsafe-swiftshader",

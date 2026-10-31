@@ -88,6 +88,26 @@ export function validateProjectData(
     )
       throw new Error("وسائط المشروع غير صالحة");
   }
+  if (p.sounds !== undefined) {
+    if (!Array.isArray(p.sounds) || p.sounds.length > 32 || !unique(p.sounds))
+      throw new Error("مؤثرات الصوت غير صالحة");
+    for (const cue of p.sounds) {
+      const a = d.assets.find(
+        (a: Asset) => a.id === cue?.assetId && a.type === "audio",
+      );
+      if (
+        !a ||
+        !id(cue.id) ||
+        !num(cue.at) ||
+        !num(cue.start) ||
+        !num(cue.end, 0.01) ||
+        cue.end <= cue.start ||
+        cue.end > a.duration + 0.05 ||
+        !num(cue.volume, 0, 1)
+      )
+        throw new Error("توقيت أو مستوى مؤثر الصوت غير صالح");
+    }
+  }
   if (!unique(d.assets)) throw new Error("وسائط المشروع مكررة");
   if (
     p.audioId !== null &&
@@ -153,13 +173,14 @@ export function validateProjectData(
     (!p.tracks ||
       typeof p.tracks !== "object" ||
       Array.isArray(p.tracks) ||
-      Object.keys(p.tracks).length > 9 ||
+      Object.keys(p.tracks).length > 10 ||
       Object.entries(p.tracks).some(
         ([key, v]: [string, any]) =>
           ![
             "video",
             "text",
             "audio",
+            "sfx",
             ...(p.overlays || []).map((l: any) => l.id),
           ].includes(key) ||
           !v ||

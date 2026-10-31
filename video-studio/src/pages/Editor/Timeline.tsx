@@ -201,7 +201,31 @@ export function Timeline({
       "text",
       Math.max(compact ? 28 : 44, lanes.count * laneHeight + (compact ? 4 : 8)),
     ),
-    audioHeight = rowHeight("audio", compact ? 34 : 54);
+    audioHeight = rowHeight("audio", compact ? 34 : 54),
+    sfxHeight = rowHeight("sfx", compact ? 34 : 48);
+  const previousCueCount = useRef(p.sounds?.length || 0);
+  useLayoutEffect(() => {
+    const count = p.sounds?.length || 0,
+      el = scroll.current;
+    if (count > previousCueCount.current && el) {
+      const bottom =
+        rulerHeight + videoHeight + textHeight + audioHeight + sfxHeight;
+      if (bottom > el.scrollTop + el.clientHeight)
+        el.scrollTop = bottom - el.clientHeight;
+      const x = p.sounds![count - 1].at * zoom;
+      if (x < el.scrollLeft || x > el.scrollLeft + el.clientWidth - 30)
+        el.scrollLeft = Math.max(0, x - 80);
+    }
+    previousCueCount.current = count;
+  }, [
+    p.sounds?.length,
+    rulerHeight,
+    videoHeight,
+    textHeight,
+    audioHeight,
+    sfxHeight,
+    zoom,
+  ]);
   const clearLong = () => {
     if (long.current) clearTimeout(long.current);
     long.current = null;
@@ -1081,6 +1105,7 @@ export function Timeline({
             ["video", "الفيديو", videoHeight, true],
             ["text", "النصوص", textHeight, false],
             ["audio", "الصوت", audioHeight, true],
+            ...(p.sounds?.length ? [["sfx", "المؤثرات", sfxHeight, true]] : []),
             ...(p.overlays || []).map((l, i) => [
               l.id,
               `طبقة ${i + 1}`,
@@ -1119,6 +1144,7 @@ export function Timeline({
                 videoHeight +
                 textHeight +
                 audioHeight +
+                (p.sounds?.length ? sfxHeight : 0) +
                 (p.overlays || []).reduce(
                   (n, l) => n + rowHeight(l.id, compact ? 32 : 50),
                   0,
@@ -1421,6 +1447,27 @@ export function Timeline({
                 </button>
               )}
             </div>
+            {!!p.sounds?.length && (
+              <div className="sfx-timeline-track" style={{ height: sfxHeight }}>
+                {p.sounds.map((c) => (
+                  <button
+                    key={c.id}
+                    className="sfx-timeline-cue"
+                    title={assets.find((a) => a.id === c.assetId)?.name}
+                    style={{
+                      left: c.at * zoom,
+                      width: Math.max(12, (c.end - c.start) * zoom),
+                      height: Math.max(16, sfxHeight - 10),
+                      opacity: p.tracks?.sfx?.muted ? 0.4 : 1,
+                    }}
+                    onClick={() => setTime(c.at)}
+                    onDoubleClick={onAudio}
+                  >
+                    ♫ {assets.find((a) => a.id === c.assetId)?.name}
+                  </button>
+                ))}
+              </div>
+            )}
             {(p.overlays || []).map((l, i) => {
               const s: Item = { kind: "overlay", id: l.id };
               return (

@@ -1,3 +1,5 @@
+import { NovaShowcase } from "./nova/Showcase";
+import "./nova/styles.css";
 import { templates } from "./index";
 import type { StudioTemplate } from "./types";
 export function TemplateGallery({
@@ -19,12 +21,13 @@ export function TemplateGallery({
         خلفيات تصميمية محلية ونصوص وانتقالات قابلة للتعديل. استبدل الخلفيات من
         خصائص المقطع بملفاتك أو لقطات Pexels.
       </p>
+      <NovaShowcase onUse={onUse} busy={busy} />
       <div className="template-cards">
         {templates.map((t, i) => (
           <button
             disabled={busy}
             key={t.id}
-            className="template-card"
+            className={`template-card ${t.id === "nova" ? "template-nova" : ""}`}
             onClick={() => onUse(t)}
             style={{
               background: `linear-gradient(145deg,${t.colors[0]},#11171e)`,
@@ -35,9 +38,17 @@ export function TemplateGallery({
               <span>
                 0{i + 1} / {t.ratio}
               </span>
+              {t.id === "nova" && (
+                <strong className="nova-wordmark">NOVA</strong>
+              )}
               <b>{t.scenes[0].text}</b>
               <i>◇ ───── ◇</i>
             </div>
+            {t.id === "nova" && (
+              <div className="nova-features">
+                ♫ موسيقى أصلية · انتقالات مسموعة · ٦ مشاهد
+              </div>
+            )}
             <h3>{t.name}</h3>
             <p>{t.description}</p>
             <span>استخدم القالب ↗</span>

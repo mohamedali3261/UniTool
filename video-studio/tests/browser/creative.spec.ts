@@ -115,7 +115,7 @@ test("templates, animation controls, keyframes and reload recovery", async ({
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await open(page);
-  await expect(page.locator(".template-card")).toHaveCount(4);
+  await expect(page.locator(".template-card")).toHaveCount(5);
   await page.locator(".template-card").first().click();
   await expect(page.locator(".timeline-clip")).toHaveCount(3);
   await page
