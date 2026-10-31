@@ -164,7 +164,7 @@ test("300 MiB local video uses file-backed import, reduced preview and one thumb
     page.getByRole("textbox", { name: "اسم المشروع", exact: true }),
   ).toHaveValue("ملف كبير قابل للتعديل");
 });
-test("56 motion cards apply a trajectory that survives JSON save", async ({
+test("106 motion cards apply a new trajectory that survives JSON save", async ({
   page,
 }) => {
   await start(page);
@@ -175,24 +175,24 @@ test("56 motion cards apply a trajectory that survives JSON save", async ({
     .locator(".creative-tools")
     .getByText("تحريك الصورة وKeyframes", { exact: true })
     .click();
-  await page.getByText("استعراض كروت الحركات (56)", { exact: true }).click();
-  await expect(page.locator(".motion-card")).toHaveCount(56);
+  await page.getByText("استعراض كروت الحركات (106)", { exact: true }).click();
+  await expect(page.locator(".motion-card")).toHaveCount(106);
   await page
     .getByRole("textbox", { name: "البحث في الحركات", exact: true })
-    .fill("حلزون");
+    .fill("رحلة لولبية — مرن");
   await expect(page.locator(".motion-card")).toHaveCount(1);
   await page
-    .getByRole("button", { name: "تطبيق حركة حلزون", exact: true })
+    .getByRole("button", { name: "تطبيق حركة رحلة لولبية — مرن", exact: true })
     .click();
   await expect(
     page.getByRole("combobox", { name: "حركة الصورة", exact: true }),
-  ).toContainText("حلزون");
+  ).toContainText("رحلة لولبية — مرن");
   const pending = page.waitForEvent("download");
   await page.getByRole("button", { name: "حفظ المشروع", exact: true }).click();
   const saved = JSON.parse(
     await fs.readFile((await (await pending).path())!, "utf8"),
   );
-  expect(saved.project.clips[0].motion).toBe("loop-spiral");
+  expect(saved.project.clips[0].motion).toBe("extended-7-1");
 });
 
 test("appending beyond the visible timeline scrolls to the newly imported clip", async ({
@@ -238,13 +238,11 @@ test("appending beyond the visible timeline scrolls to the newly imported clip",
       ],
     },
   };
-  await page
-    .locator('input[accept=".json"]')
-    .setInputFiles({
-      name: "long.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(project)),
-    });
+  await page.locator('input[accept=".json"]').setInputFiles({
+    name: "long.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(project)),
+  });
   await input(page, [
     { name: "append.mp4", mimeType: "video/mp4", buffer: fixture },
   ]);

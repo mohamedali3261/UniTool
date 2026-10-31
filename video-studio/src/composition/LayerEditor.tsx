@@ -121,9 +121,35 @@ export function LayerEditor({
               <input
                 type="checkbox"
                 checked={!!l.foreground}
-                onChange={(e) => edit(l.id, { foreground: e.target.checked })}
+                onChange={(e) =>
+                  edit(l.id, {
+                    foreground: e.target.checked,
+                    ...(e.target.checked ? { backgroundLayer: false } : {}),
+                  })
+                }
               />{" "}
               فوق النصوص والخلفيات التصميمية
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={!!l.backgroundLayer}
+                onChange={(e) =>
+                  edit(l.id, {
+                    backgroundLayer: e.target.checked,
+                    ...(e.target.checked
+                      ? {
+                          foreground: false,
+                          fit: "cover",
+                          width: 100,
+                          x: 50,
+                          y: 50,
+                        }
+                      : {}),
+                  })
+                }
+              />
+              خلفية تحت العناصر
             </label>
             <div className="two-fields">
               {(

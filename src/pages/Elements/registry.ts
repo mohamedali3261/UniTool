@@ -1,3 +1,5 @@
+import { category as kits } from "./categories/kits";
+import { load as loadKits } from "./categories/kits/load";
 import type { LibraryElement } from "./types";
 import { category as typography } from "./categories/typography";
 import { category as shapes } from "./categories/shapes";
@@ -12,6 +14,7 @@ import { load as loadBackgrounds } from "./categories/backgrounds/load";
 import { load as loadMotion } from "./categories/motion/load";
 import { load as loadScenes } from "./categories/scenes/load";
 export const categories = [
+  kits,
   typography,
   shapes,
   panels,
@@ -21,6 +24,7 @@ export const categories = [
 ];
 export function loadElements(): LibraryElement[] {
   const loaders: Array<() => LibraryElement[]> = [
+    loadKits,
     loadType,
     loadShapes,
     loadPanels,

@@ -426,7 +426,9 @@ export function Editor({
         setPlaying(false);
         result.assets.forEach(onRegisterAsset);
         update(result.project);
-        setTime(result.at);
+        setTime(
+          result.at + (item.animated ? Math.min(0.8, seconds * 0.25) : 0),
+        );
         if (result.selection.kind === "clip") {
           select(result.selection.id);
           setVisualSelection(null);

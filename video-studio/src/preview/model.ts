@@ -1,3 +1,4 @@
+import { isBackgroundText } from "../composition/stacking";
 import { layerFrameAt } from "../animation/layerFrames";
 import { sceneAt } from "../composition/scene";
 import { motionAt, textAt } from "../animation/evaluate";
@@ -215,11 +216,14 @@ export function boxesAt(
       label: t.name || t.text.slice(0, 40) || "نص فارغ",
     });
   }
-  return boxes.sort(
-    (a, b) =>
-      Number(!!p.overlays?.find((l) => l.id === a.id)?.foreground) -
-      Number(!!p.overlays?.find((l) => l.id === b.id)?.foreground),
-  );
+  const rank = (box: Box) => {
+    if (box.kind === "clip") return 0;
+    if (box.kind === "text")
+      return isBackgroundText(p.texts.find((t) => t.id === box.id)!) ? 1 : 4;
+    const l = p.overlays?.find((l) => l.id === box.id);
+    return l?.backgroundLayer ? 2 : l?.foreground ? 5 : 3;
+  };
+  return boxes.sort((a, b) => rank(a) - rank(b));
 }
 export function hitBox(box: Box, x: number, y: number, padding = 0) {
   const r = (-box.angle * Math.PI) / 180,

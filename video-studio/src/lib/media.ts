@@ -1,3 +1,4 @@
+import { isBackgroundText } from "../composition/stacking";
 import { drawInterfaceScene } from "../templates/interface-flow/render";
 import { classifyMedia, localMediaURL, releaseMediaURL } from "../media/files";
 import { drawTextLayers } from "../text/render";
@@ -291,7 +292,7 @@ export function drawFrame(
   };
   const baseCount = entries.filter((entry) => !entry.overlay).length;
   for (const entry of entries) {
-    if (entry.overlay?.foreground) continue;
+    if (entry.overlay) continue;
     if (entry.overlay && !flashed) {
       paintFlash();
       flashed = true;
@@ -339,9 +340,33 @@ export function drawFrame(
     }
   }
   if (!flashed) paintFlash();
-  drawSingleFrame(ctx, null, p, time, undefined, 0, false);
+  drawTextLayers(
+    ctx,
+    p.texts.filter(isBackgroundText),
+    time,
+    !!p.tracks?.text?.hidden,
+  );
   for (const entry of entries)
-    if (entry.overlay?.foreground) paintOverlay(entry);
+    if (entry.overlay?.backgroundLayer) paintOverlay(entry);
+  for (const entry of entries)
+    if (
+      entry.overlay &&
+      !entry.overlay.backgroundLayer &&
+      !entry.overlay.foreground
+    )
+      paintOverlay(entry);
+  drawSingleFrame(
+    ctx,
+    null,
+    { ...p, texts: p.texts.filter((t) => !isBackgroundText(t)) },
+    time,
+    undefined,
+    0,
+    false,
+  );
+  for (const entry of entries)
+    if (entry.overlay?.foreground && !entry.overlay.backgroundLayer)
+      paintOverlay(entry);
 }
 /** Portable filenames avoid browsers dropping the extension on non-Latin names. */
 export function portableFilename(name: string) {

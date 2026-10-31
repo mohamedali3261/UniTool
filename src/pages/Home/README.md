@@ -24,6 +24,6 @@ npm run test:home
 ```
 The browser suite uses Playwright Chromium. For a custom installation, set `STUDIO_CHROMIUM_PATH`; for an already-running production preview set `HOME_QA_URL`. QA artifacts belong in `.cache`, `test-results` or other ignored directories, not in the homepage source.
 
-## Workspace hero and restored brand
+## Motion-graphics hero and restored brand
 
-The navbar/footer use the original `/UniTool_logo.png` asset. `components/HeroWorkspace.tsx` and `hero.css` implement the new full-width tool launcher: all 31 canonical tools, the five studios, the Elements library, category browsing, direct search (Ctrl/Cmd+K), quick picks and four device-local recent tools. It doesn't import any editor implementation. The existing `/` shortcut still focuses the complete tool directory further down the page. Recents record only tools opened from this launcher and can be cleared there.
+The navbar/footer use the original `/UniTool_logo.png` asset. `components/motion/` replaces the old static launcher with seven animated chapters, sourced from the canonical tool/studio metadata. Every one of the 31 tools, five studios and the Elements library appears in the film with a real link. Orbit paths, staggered entrances, floating cards and a graphic cursor animate using CSS. The chapter clock pauses offscreen, in background tabs, on hover/focus, with the global pause preference, or with reduced motion. Manual chapter buttons always work. `/` and Ctrl/Cmd+K focus the full tool directory below; it still provides complete search and filters.

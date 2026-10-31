@@ -6,14 +6,17 @@ export type CategoryId =
   | "panels"
   | "backgrounds"
   | "motion"
-  | "scenes";
+  | "scenes"
+  | "kits";
 export type LibraryElement = {
   id: string;
   name: string;
   source: string;
   sourceName: string;
   category: CategoryId;
-  kind: "layer" | "svg" | "scene";
+  kind: "layer" | "svg" | "scene" | "group";
+  layers?: TextLayer[];
+  placement?: "background" | "content";
   layer?: TextLayer;
   svg?: string;
   scene?: InterfaceScene;

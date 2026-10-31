@@ -1,3 +1,4 @@
+import { isBackgroundText } from "../composition/stacking";
 import type { TextLayer } from "../types";
 import { textLayout } from "./layout";
 import { textAt } from "../animation/evaluate";
@@ -10,9 +11,9 @@ export function drawTextLayers(
 ) {
   const w = ctx.canvas.width,
     h = ctx.canvas.height;
-  for (const t of texts.filter(
-    (t) => !t.hidden && !hidden && time >= t.start && time < t.end,
-  )) {
+  for (const t of [...texts]
+    .sort((a, b) => Number(isBackgroundText(b)) - Number(isBackgroundText(a)))
+    .filter((t) => !t.hidden && !hidden && time >= t.start && time < t.end)) {
     const animation = textAt(t, time),
       f = layerFrameAt(t, time);
     ctx.save();

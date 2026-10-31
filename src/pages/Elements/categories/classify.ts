@@ -1,5 +1,6 @@
 import type { LibraryElement, CategoryId } from "../types";
 export function classify(item: LibraryElement): CategoryId {
+  if (item.kind === "group") return "kits";
   if (item.kind === "scene") return "scenes";
   if (item.kind === "svg") return "backgrounds";
   const layer = item.layer!;

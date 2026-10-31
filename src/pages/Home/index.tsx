@@ -1,4 +1,4 @@
-import { HeroWorkspace } from "./components/HeroWorkspace";
+import { HeroMotion } from "./components/motion/HeroMotion";
 import "./hero.css";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -83,9 +83,8 @@ export default function HomePage() {
           menuRef.current?.focus();
       }
       if (
-        e.key === "/" &&
-        !e.ctrlKey &&
-        !e.metaKey &&
+        ((e.key === "/" && !e.ctrlKey && !e.metaKey) ||
+          ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) &&
         !e.altKey &&
         !(e.target as HTMLElement).closest(
           "input,textarea,[contenteditable=true]",
@@ -251,7 +250,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <HeroWorkspace lang={lang} />
+          <HeroMotion lang={lang} paused={paused} />
           <a href="#tools" className="hero-scroll">
             <ArrowDown size={15} />
             {t.scroll}

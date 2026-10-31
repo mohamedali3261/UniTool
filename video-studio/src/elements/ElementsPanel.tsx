@@ -10,6 +10,7 @@ export default function ElementsPanel({
   onAdd: (item: LibraryElement, color?: string, seconds?: number) => void;
   suspended: boolean;
 }) {
+  const [live, setLive] = useState(true);
   const items = useMemo(loadElements, []);
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
@@ -30,6 +31,13 @@ export default function ElementsPanel({
         طبقات حقيقية من القوالب. النصوص والأشكال تُضاف عند المؤشر، وSVG كطبقة
         صورة. المشاهد بالكود تُضاف كمقطع في النهاية.
       </p>
+      <button
+        className="secondary"
+        aria-pressed={live}
+        onClick={() => setLive(!live)}
+      >
+        {live ? "إيقاف المعاينات الحية" : "تشغيل المعاينات الحية"}
+      </button>
       <label>
         بحث في عناصر القوالب
         <input
@@ -99,14 +107,20 @@ export default function ElementsPanel({
       <div className="studio-elements-grid">
         {filtered.slice(0, limit).map((item) => (
           <article key={item.id}>
-            <div>{!suspended && <ElementPreview item={item} />}</div>
+            <div>
+              {!suspended && (
+                <ElementPreview live={live && item.animated} item={item} />
+              )}
+            </div>
             <small>
               {item.sourceName} ·{" "}
-              {item.kind === "layer"
-                ? "طبقة مستقلة"
-                : item.kind === "svg"
-                  ? "SVG"
-                  : "مشهد مركّب"}
+              {item.kind === "group"
+                ? "تكوين جاهز"
+                : item.kind === "layer"
+                  ? "طبقة مستقلة"
+                  : item.kind === "svg"
+                    ? "SVG"
+                    : "مشهد مركّب"}
             </small>
             <strong>{item.name}</strong>
             <button

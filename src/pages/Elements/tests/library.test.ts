@@ -7,8 +7,8 @@ import { readFavorites, saveFavorites } from "../lib/preferences";
 import { novaArt } from "../../../../video-studio/src/templates/nova/art";
 import { orbitElements } from "../../../../video-studio/src/templates/orbit-launch";
 const items = loadElements();
-test("all nine template sources and six nonempty, disjoint maintenance categories", () => {
-  assert.equal(categories.length, 6);
+test("all nine template sources and seven nonempty, disjoint maintenance categories", () => {
+  assert.equal(categories.length, 7);
   assert.equal(new Set(items.map((i) => i.id)).size, items.length);
   assert.deepEqual(
     [...new Set(items.map((i) => i.source))].sort(),
@@ -22,6 +22,9 @@ test("all nine template sources and six nonempty, disjoint maintenance categorie
       "product",
       "quote",
       "slideshow",
+      "unitool-ready",
+      "unitool-kits",
+      "unitool-motion",
     ].sort(),
   );
   for (const c of categories)
@@ -132,4 +135,11 @@ test("favorites tolerate corrupt/disabled storage and filter malformed values", 
       value: old,
     });
   }
+});
+test("ready catalog adds 110 assets: twenty shape designs, twenty typography styles, twenty kits and fifty persisted motions", () => {
+  assert.equal(items.filter((i) => i.id.startsWith("ready-shape-")).length, 20);
+  assert.equal(items.filter((i) => i.id.startsWith("ready-type-")).length, 20);
+  assert.equal(items.filter((i) => i.kind === "group").length, 20);
+  assert.equal(items.filter((i) => i.source === "unitool-motion").length, 50);
+  assert.equal(items.length, 482);
 });

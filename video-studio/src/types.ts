@@ -66,6 +66,8 @@ export type Clip = {
   keyframes?: MotionKeyframe[];
 };
 export type OverlayLayer = {
+  fit?: "contain" | "cover";
+  backgroundLayer?: boolean;
   foreground?: boolean;
   groupId?: string;
   locked?: boolean;
@@ -94,6 +96,7 @@ export type LayerFrame = {
   easing?: "linear" | "smooth" | "spring";
 };
 export type TextLayer = {
+  backgroundLayer?: boolean;
   frames?: LayerFrame[];
   counter?: {
     from: number;

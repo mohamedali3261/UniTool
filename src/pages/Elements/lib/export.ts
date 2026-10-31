@@ -61,19 +61,29 @@ export function elementProject(item: LibraryElement, color?: string) {
       },
     ],
     texts:
-      item.kind === "layer"
-        ? [
-            {
-              ...fittedLayer(item, color),
-              id: "element-layer",
-              animationOut: "none" as const,
-            },
-          ]
-        : [],
+      item.kind === "group"
+        ? structuredClone(item.layers!).map((l) =>
+            color && l.text ? { ...l, color } : l,
+          )
+        : item.kind === "layer"
+          ? [
+              {
+                ...fittedLayer(item, color),
+                id: "element-layer",
+                animationOut: "none" as const,
+              },
+            ]
+          : [],
   };
   return { version: 1, project, assets: [asset] };
 }
 export function elementCode(item: LibraryElement, color?: string) {
+  if (item.kind === "group")
+    return JSON.stringify(
+      item.layers!.map((l) => (color && l.text ? { ...l, color } : l)),
+      null,
+      2,
+    );
   if (item.kind === "svg") return item.svg!;
   if (item.kind === "scene")
     return `// Interface Flow — ${item.name}\nimport { drawInterfaceScene } from "./video-studio/src/templates/interface-flow/render";\n// ctx is a 720 × 1280 canvas context; time is in seconds.\ndrawInterfaceScene(ctx, ${JSON.stringify(item.scene)}, time, ${JSON.stringify(color || "#4bdfc5")});`;
