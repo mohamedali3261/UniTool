@@ -19,12 +19,12 @@ export default defineConfig(() => {
       rollupOptions: {
         input: {
           landing: path.resolve(__dirname, 'index.html'),
+          logoDesigner: path.resolve(__dirname, 'logo-designer/index.html'),
           elements: path.resolve(__dirname, 'elements.html'),
           main: path.resolve(__dirname, 'app.html'),
           designcraft: path.resolve(__dirname, 'designcraft.html'),
           audioreader: path.resolve(__dirname, 'the-audio-reader.html'),
           unitoolSvg: path.resolve(__dirname, 'unitool-svg.html'),
-          logoStudio: path.resolve(__dirname, 'logo-studio.html'),
           videoStudio: path.resolve(__dirname, 'video-studio.html'),
         },
       },

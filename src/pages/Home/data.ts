@@ -1,4 +1,4 @@
-import { PenTool, Film, AudioLines, Braces, Shapes } from "lucide-react";
+import { PenTool, Film, AudioLines, Braces } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
   {
@@ -85,24 +85,7 @@ export const studios = [
     action: { ar: "افتح القارئ", en: "Open audio reader" },
     color: "#ffc0a2",
   },
-  {
-    id: "logo",
-    href: "/logo-studio.html",
-    icon: Shapes,
-    name: { ar: "مصمم الشعارات", en: "Logo studio" },
-    eyebrow: "MAKE YOUR MARK",
-    description: { ar: "علامة تشبه فكرتك.", en: "A mark that feels like you." },
-    detail: {
-      ar: "جرّب الأشكال والخطوط والألوان، وابدأ بناء شخصية بصرية مميزة لعلامتك.",
-      en: "Explore shapes, typography and colors to build a distinct visual identity for your brand.",
-    },
-    tags: {
-      ar: ["أشكال وخطوط", "ألوان وهوية", "تصدير الشعار"],
-      en: ["Shapes & type", "Brand colors", "Logo export"],
-    },
-    action: { ar: "صمّم شعارك", en: "Make your logo" },
-    color: "#f1d588",
-  },
+
 ] as const;
 export const copy = {
   ar: {
@@ -144,7 +127,7 @@ export const copy = {
     studioEyebrow: "02 / YOUR CREATIVE SPACES",
     studioTitle: "كل فكرة، وليها مساحتها.",
     studioDesc:
-      "خمس استوديوهات. نفس روح الإبداع. اختار نقطة البداية والباقي عليك.",
+      "أربع استوديوهات. نفس روح الإبداع. اختار نقطة البداية والباقي عليك.",
     open: "افتح المساحة",
     howEyebrow: "03 / LESS FRICTION. MORE FLOW.",
     howTitle: "من أول فكرة، لآخر لمسة.",
@@ -207,7 +190,7 @@ export const copy = {
     studioEyebrow: "02 / YOUR CREATIVE SPACES",
     studioTitle: "An idea? There’s a space for it.",
     studioDesc:
-      "Five studios. One creative spirit. Pick your starting point and make it your own.",
+      "Four studios. One creative spirit. Pick your starting point and make it your own.",
     open: "Open workspace",
     howEyebrow: "03 / LESS FRICTION. MORE FLOW.",
     howTitle: "From first thought to final touch.",

@@ -284,50 +284,6 @@ export function ReaderArt({ lang }: { lang: Language }) {
     </div>
   );
 }
-export function LogoArt() {
-  return (
-    <div className="logo-art" aria-hidden="true">
-      <div className="logo-mini logo-mini-a">
-        <svg viewBox="0 0 70 70">
-          <path
-            d="M10 55 35 12 60 55H10M24 55l12-21 12 21"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-        </svg>
-      </div>
-      <div className="logo-mini logo-mini-b">
-        <Shapes size={29} />
-      </div>
-      <div className="logo-board">
-        <svg viewBox="0 0 110 110">
-          <g fill="none" stroke="currentColor" strokeWidth="10">
-            {[0, 60, 120].map((a) => (
-              <ellipse
-                key={a}
-                cx="55"
-                cy="55"
-                rx="23"
-                ry="40"
-                transform={`rotate(${a} 55 55)`}
-              />
-            ))}
-          </g>
-        </svg>
-        <span>nūn studio</span>
-        <small>A BRAND IN BLOOM.</small>
-      </div>
-      <div className="logo-palette">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-      <span className="logo-grid-cross">+</span>
-    </div>
-  );
-}
 export function ToolsArt() {
   return (
     <div className="tools-art home-art" aria-hidden="true">

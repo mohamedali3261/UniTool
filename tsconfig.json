@@ -23,5 +23,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "designcraft/src/**/*", "video-studio/src/**/*"]
+  "include": ["logo-designer/**/*.ts", "logo-designer/**/*.tsx", "src/**/*", "designcraft/src/**/*", "video-studio/src/**/*"]
 }

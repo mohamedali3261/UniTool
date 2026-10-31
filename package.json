@@ -19,7 +19,9 @@
     "render:unitool": "node video-studio/promos/unitool/render.mjs",
     "test:unitool-promo": "tsx --test video-studio/promos/unitool/film.test.ts",
     "test:home": "playwright test --config playwright.home.config.ts",
-    "test:elements": "tsx --test src/pages/Elements/tests/*.test.ts"
+    "test:elements": "tsx --test src/pages/Elements/tests/*.test.ts",
+    "test:logo-designer": "tsx --test logo-designer/tests/*.test.ts",
+    "test:logo-designer:browser": "playwright test --config logo-designer/tests/playwright.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",
