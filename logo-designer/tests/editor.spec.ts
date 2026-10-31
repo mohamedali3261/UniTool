@@ -231,13 +231,11 @@ test("upload, background removal, tracing and validated JSON round trip", async 
     ctx.fillRect(8, 8, 16, 16);
     return c.toDataURL().split(",")[1];
   });
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "mark.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(png, "base64"),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "mark.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
   await expect(page.getByRole("img", { name: "Image preview" })).toBeVisible();
   await page
     .getByRole("button", { name: "Remove background", exact: true })
@@ -267,34 +265,30 @@ test("upload, background removal, tracing and validated JSON round trip", async 
   expect(p.nodes).toHaveLength(5);
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Projects", exact: true }).click();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "project.json",
-      mimeType: "application/json",
-      buffer: bytes,
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "project.json",
+    mimeType: "application/json",
+    buffer: bytes,
+  });
   await expect(
     page.getByRole("button", { name: "Select Traced vector" }),
   ).toHaveCount(1);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "unsafe.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(
-        JSON.stringify({
-          ...p,
-          nodes: [
-            {
-              ...p.nodes[0],
-              kind: "image",
-              asset: "https://example.com/unsafe.png",
-            },
-          ],
-        }),
-      ),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "unsafe.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        ...p,
+        nodes: [
+          {
+            ...p.nodes[0],
+            kind: "image",
+            asset: "https://example.com/unsafe.png",
+          },
+        ],
+      }),
+    ),
+  });
   await expect(page.getByRole("alert")).toContainText("Invalid project");
 });
 test("first-use tour and real pinch gesture on a touch viewport", async ({
@@ -339,4 +333,201 @@ test("first-use tour and real pinch gesture on a touch viewport", async ({
   );
   await page.screenshot({ path: "test-results/logo-designer/mobile-ar.png" });
   await context.close();
+});
+
+test("expanded library filters original marks, favorites persist, and recent tracks additions", async ({
+  page,
+}) => {
+  await start(page);
+  await page
+    .getByRole("combobox", { name: "Element type", exact: true })
+    .selectOption("vector");
+  await expect(page.locator(".ld-library-item")).toHaveCount(28);
+  await page.getByRole("searchbox", { name: "Search symbols" }).fill("North");
+  await expect(page.locator(".ld-library-item")).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Favorite North arrow", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Add North arrow", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Select North arrow", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Favorites", exact: true }).click();
+  await expect(page.locator(".ld-library-item")).toHaveCount(1);
+  await page.reload();
+  await page.getByRole("button", { name: "Favorites", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Favorite North arrow", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Recent", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Add North arrow", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("searchbox", { name: "Search symbols" })
+    .fill("no-matches-xyz");
+  await expect(
+    page.getByRole("button", { name: "Show all elements", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Show all elements", exact: true })
+    .click();
+  await expect(page.locator(".ld-library-item")).toHaveCount(208);
+});
+
+test("new template families preview a custom name, apply editable layers and undo", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await expect(page.locator(".ld-template-grid>button")).toHaveCount(60);
+  await page
+    .getByRole("textbox", { name: "Template brand name", exact: true })
+    .fill("LUMEN");
+  await page
+    .getByRole("combobox", { name: "Layout family", exact: true })
+    .selectOption("crest");
+  await expect(page.locator(".ld-template-grid>button")).toHaveCount(4);
+  await expect(
+    page
+      .locator(".ld-template-grid>button")
+      .first()
+      .locator("text")
+      .filter({ hasText: "LUMEN" }),
+  ).toHaveCount(1);
+  page.once("dialog", (d) => d.accept());
+  await page.locator(".ld-template-grid>button").first().click();
+  await expect(
+    page.locator(".ld-artboard text").filter({ hasText: "LUMEN" }),
+  ).toHaveCount(1);
+  await expect(page.locator(".ld-artboard [role=button]")).toHaveCount(8);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(
+    page.locator(".ld-artboard text").filter({ hasText: "LUMEN" }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("combobox", { name: "Layout family", exact: true })
+    .selectOption("all");
+  await page
+    .getByRole("searchbox", { name: "Search templates" })
+    .fill("education");
+  await expect(page.locator(".ld-template-grid>button")).toHaveCount(2);
+  await page
+    .getByRole("searchbox", { name: "Search templates" })
+    .fill("nothing-xyz");
+  await expect(page.locator(".ld-library .ld-empty")).toBeVisible();
+});
+
+test("multi-selection alignment is undoable and enables distribution", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  await page.getByRole("button", { name: "Add Square", exact: true }).click();
+  await page.locator(".ld-canvas-heading").click();
+  await page.keyboard.press("Control+a");
+  await expect(
+    page.getByRole("button", { name: "Align left", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Align left", exact: true }).click();
+  const locations = () =>
+    page
+      .locator(".ld-artboard rect[role=button]")
+      .evaluateAll((nodes) =>
+        nodes.map((n) => n.parentElement!.getAttribute("transform")),
+      );
+  const aligned = await locations();
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  expect(await locations()).not.toEqual(aligned);
+  await expect(
+    page.getByRole("button", { name: "Distribute horizontally", exact: true }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Distribute horizontally", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Bring to front", exact: true })
+    .click();
+});
+
+test("composed icons add independent parts, allow editing one part, ungroup and undo", async ({
+  page,
+}) => {
+  await start(page);
+  await page
+    .getByRole("button", { name: "Editable icon combinations", exact: true })
+    .click();
+  await expect(page.locator(".ld-composition-grid>button")).toHaveCount(12);
+  await page
+    .getByRole("textbox", { name: "Your initial for shield / arrow" })
+    .fill("N");
+  await page
+    .getByRole("button", {
+      name: "Add composition Shield & initial",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(6);
+  await expect(
+    page.getByRole("heading", { name: "Icon parts", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Part 3 · Your initial", exact: true })
+    .click();
+  await expect(page.locator(".ld-properties-heading small")).toHaveText(
+    "1 selected",
+  );
+  const x = page.getByRole("spinbutton", { name: "X", exact: true });
+  await x.fill("450");
+  await expect(x).toHaveValue("450");
+  await page
+    .getByRole("button", { name: "Select whole icon", exact: true })
+    .click();
+  await expect(page.locator(".ld-properties-heading small")).toHaveText(
+    "3 selected",
+  );
+  await page
+    .getByRole("button", { name: "Ungroup for free editing", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Icon parts", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Icon parts", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "Add composition Shield & initial",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(9);
+  await expect(page.locator(".ld-part-list>button")).toHaveCount(3);
+});
+test("compositions can be added ungrouped and searched without replacing design", async ({
+  page,
+}) => {
+  await start(page);
+  await page
+    .getByRole("button", { name: "Editable icon combinations", exact: true })
+    .click();
+  await page
+    .getByRole("searchbox", { name: "Search combinations", exact: true })
+    .fill("Coffee");
+  await expect(page.locator(".ld-composition-grid>button")).toHaveCount(1);
+  await page
+    .getByRole("checkbox", { name: "Add as an editable group", exact: true })
+    .uncheck();
+  await page
+    .getByRole("button", { name: "Add composition Coffee & sun", exact: true })
+    .click();
+  await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(6);
+  await expect(
+    page.getByRole("heading", { name: "Icon parts", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(3);
 });

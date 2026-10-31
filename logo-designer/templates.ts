@@ -1,3 +1,4 @@
+import { extendedTemplates, composeExtended } from "./extended-templates";
 import { node, uid, type Project } from "./types";
 import { palettes } from "./catalog";
 export type Template = {
@@ -8,7 +9,17 @@ export type Template = {
   icon: string;
   font: string;
   palette: number;
-  layout: "vertical" | "horizontal" | "badge";
+  layout:
+    | "vertical"
+    | "horizontal"
+    | "badge"
+    | "seal"
+    | "monogram"
+    | "editorial"
+    | "crest"
+    | "split"
+    | "orbital";
+  mark?: string;
 };
 const industries = [
   ["nature", "نواة", "NAWA", "Leaf", "cairo"],
@@ -24,8 +35,8 @@ const industries = [
   ["animals", "جناح", "WING", "Bird", "changa"],
   ["brand", "رؤية", "VISION", "Aperture", "poppins"],
 ] as const;
-export const templates: Template[] = industries.flatMap(
-  ([category, ar, en, icon, font], i) =>
+export const templates: Template[] = [
+  ...industries.flatMap(([category, ar, en, icon, font], i) =>
     (["vertical", "horizontal", "badge"] as const).map((layout, j) => ({
       id: `${category}-${i}-${j}`,
       ar: ar + " / " + ["01", "02", "03"][j],
@@ -36,7 +47,9 @@ export const templates: Template[] = industries.flatMap(
       palette: (i + j) % palettes.length,
       layout,
     })),
-);
+  ),
+  ...extendedTemplates,
+];
 /** القالب مجموعة عناصر مستقلة، مش صورة مسطحة. */
 export function templateProject(
   t: Template,
@@ -56,6 +69,8 @@ export function templateProject(
     nodes: [],
     updated: Date.now(),
   };
+  if (extendedTemplates.some((v) => v.id === t.id))
+    return composeExtended(p, t, title, palette, lang);
   if (t.layout === "badge")
     p.nodes.push(
       node({

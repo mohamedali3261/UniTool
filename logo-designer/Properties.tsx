@@ -1,3 +1,4 @@
+import GroupParts from "./GroupParts";
 /** خصائص سياقية للمحدد، وخصائص عامة لمساحة العمل. */
 import {
   FlipHorizontal,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { useDesigner } from "./state";
 import { NumberField } from "./ui";
+import SelectionTools from "./SelectionTools";
 export default function Properties() {
   const s = useDesigner(),
     n = s.doc.nodes.find((n) => s.selected.includes(n.id));
@@ -22,6 +24,8 @@ export default function Properties() {
             : "ARTBOARD"}
         </small>
       </div>
+      <GroupParts />
+      <SelectionTools />
       {n ? (
         <>
           <div className="ld-object-heading">
