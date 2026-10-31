@@ -118,6 +118,7 @@ export function Editor({
   const [exporting, setExporting] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const playback = useRef<PreviewPlayback>(null);
+  const clock = useRef(0);
   const freezeController = useRef<AbortController | null>(null);
   const currentProject = useRef(project);
   currentProject.current = project;
@@ -154,7 +155,7 @@ export function Editor({
   });
   const clip = project.clips.find((c) => c.id === selected);
   const duration = durationOf(project);
-  const getTime = useEvent(() => time);
+  const getTime = useEvent(() => (playing ? clock.current : time));
   const importLayerAtCursor = useEvent(() => {
     playback.current?.pause();
     setPlaying(false);
@@ -696,6 +697,7 @@ export function Editor({
           </div>
           <Preview
             playbackRef={playback}
+            clockRef={clock}
             mobileHistory={
               <div className="mobile-player-history">
                 <IconButton
@@ -771,6 +773,8 @@ export function Editor({
         />
       )}
       <Timeline
+        playing={playing}
+        clockRef={clock}
         compact={isMobile}
         onInspectOverlay={() => openPanel("inspector")}
         onFreeze={freezeAtCursor}

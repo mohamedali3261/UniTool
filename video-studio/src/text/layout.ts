@@ -24,8 +24,8 @@ export function textLayout(
     font,
     size,
     lines,
-    width,
-    height: size + (lines.length - 1) * size * 1.2,
-    offsetY: (lines.length - 1) * size * 0.6,
+    width: t.box ? t.box.width*w/960 : width,
+    height: t.box ? t.box.height*w/960 : size + (lines.length - 1) * size * 1.2,
+    offsetY: t.box ? 0 : (lines.length - 1) * size * 0.6,
   };
 }

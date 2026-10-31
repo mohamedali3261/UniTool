@@ -1,3 +1,4 @@
+import "./elements.css";
 import { useEffect, useState } from "react";
 import { TextPresetCatalog } from "./TextPresetCatalog";
 import { textPresets } from "./presets";
@@ -61,6 +62,24 @@ export function TextPanel({
       >
         + إضافة نص
       </button>
+      <button
+        className="full-width"
+        disabled={!project.clips.length}
+        onClick={() => {
+          onAdd("", {
+            x: 50,
+            y: 50,
+            size: 32,
+            color: "#ffffff",
+            name: "شكل جديد",
+            background: "#8271ec",
+            box: { width: 480, height: 260, radius: 32 },
+          });
+          setMode("edit");
+        }}
+      >
+        + إضافة شكل قابل للتعديل
+      </button>
       <div
         className="text-panel-modes"
         role="group"
@@ -95,7 +114,7 @@ export function TextPanel({
               onValueChange={onSelect}
               options={project.texts.map((t, i) => ({
                 value: t.id,
-                label: `${i + 1} · ${t.text || "نص فارغ"}`,
+                label: `${i + 1} · ${t.name || t.text || "نص فارغ"}`,
               }))}
             />
             <button
@@ -129,7 +148,7 @@ export function TextPanel({
                 onClick={() => onSelect(t.id)}
               >
                 <span>T{i + 1}</span>
-                <b>{t.text || "نص فارغ"}</b>
+                <b>{t.name || t.text || "نص فارغ"}</b>
               </button>
               <button
                 aria-label={`${t.hidden ? "إظهار" : "إخفاء"} النص ${i + 1}`}
@@ -168,6 +187,84 @@ export function TextPanel({
                 النص أو مساره مقفول. افتح القفل من القائمة أو أدوات المسار.
               </p>
             )}
+            <fieldset className="element-properties" disabled={active.locked}>
+              <label className="field-label">
+                اسم العنصر
+                <input
+                  aria-label="اسم العنصر"
+                  value={active.name || ""}
+                  maxLength={160}
+                  onChange={(e) => edit({ name: e.target.value })}
+                />
+              </label>
+              {active.box && (
+                <>
+                  <label className="field-label">
+                    لون الشكل
+                    <input
+                      aria-label="لون الشكل"
+                      type="color"
+                      value={active.background || "#ffffff"}
+                      onChange={(e) => edit({ background: e.target.value })}
+                    />
+                  </label>
+                  <div className="field-row">
+                    {(
+                      ["width", "height", "radius", "borderWidth"] as const
+                    ).map((key, i) => (
+                      <label key={key}>
+                        {
+                          ["العرض", "الارتفاع", "تدوير الزوايا", "سمك الإطار"][
+                            i
+                          ]
+                        }
+                        <input
+                          aria-label={
+                            [
+                              "عرض الشكل",
+                              "ارتفاع الشكل",
+                              "زوايا الشكل",
+                              "سمك إطار الشكل",
+                            ][i]
+                          }
+                          type="number"
+                          min={i < 2 ? 1 : 0}
+                          max={i < 2 ? 4000 : i === 2 ? 2000 : 100}
+                          value={active.box![key] || 0}
+                          onChange={(e) =>
+                            edit({
+                              box: {
+                                ...active.box!,
+                                [key]: Math.max(
+                                  i < 2 ? 1 : 0,
+                                  Math.min(
+                                    i < 2 ? 4000 : i === 2 ? 2000 : 100,
+                                    +e.target.value,
+                                  ),
+                                ),
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <label className="field-label">
+                    لون الإطار
+                    <input
+                      aria-label="لون إطار الشكل"
+                      type="color"
+                      value={active.box.borderColor || active.color}
+                      onChange={(e) =>
+                        edit({
+                          box: { ...active.box!, borderColor: e.target.value },
+                        })
+                      }
+                    />
+                  </label>
+                </>
+              )}
+            </fieldset>
             <textarea
               aria-label="محتوى النص"
               disabled={active.locked}

@@ -145,9 +145,9 @@ test("text entry/exit clamps short layers and typewriter never splits a grapheme
   assert.equal(textAt(t, 4).opacity, 0);
   assert.ok(Number.isFinite(textAt({ ...t, end: 0.2 }, 0.1).scale));
 });
-test("all six templates have valid ratios and distinct editable scene scripts", () => {
-  assert.equal(templates.length, 6);
-  assert.equal(new Set(templates.map((t) => t.id)).size, 6);
+test("all eight templates have valid ratios and distinct editable scene scripts", () => {
+  assert.equal(templates.length, 8);
+  assert.equal(new Set(templates.map((t) => t.id)).size, 8);
   for (const t of templates) {
     assert.ok(["9:16", "4:5", "1:1", "16:9"].includes(t.ratio));
     assert.ok(t.scenes.length);

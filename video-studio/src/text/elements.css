@@ -1,0 +1,41 @@
+.element-properties {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.element-properties .field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.element-properties label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+  color: #bbc4ce;
+}
+.element-properties input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #343942;
+  border-radius: 8px;
+  background: #20242b;
+  color: #edf1f5;
+  padding: 8px;
+  font: inherit;
+}
+.element-properties input[type="color"] {
+  height: 32px;
+  padding: 3px;
+  cursor: pointer;
+}
+@media (max-width: 700px) {
+  .editor-shell .element-properties {
+    gap: 6px;
+  }
+  .editor-shell .element-properties input {
+    padding: 5px;
+    font-size: 11px;
+  }
+}

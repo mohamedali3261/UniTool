@@ -82,6 +82,15 @@ export type OverlayLayer = {
   volume: number;
 };
 export type TextLayer = {
+  name?: string;
+  /** Editable vector geometry in 960px reference units (same as font size). */
+  box?: {
+    width: number;
+    height: number;
+    radius?: number;
+    borderWidth?: number;
+    borderColor?: string;
+  };
   groupId?: string;
   rotation?: number;
   opacity?: number;

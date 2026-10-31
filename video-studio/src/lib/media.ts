@@ -254,8 +254,33 @@ function drawSingleFrame(
     ctx.textBaseline = "middle";
     ctx.fillStyle = t.color;
     ctx.shadowColor = "#000a";
-    ctx.shadowBlur = 8;
-    if (t.background) {
+    ctx.shadowBlur = t.box ? 0 : 8;
+    if (t.box) {
+      ctx.beginPath();
+      ctx.roundRect(
+        -layout.width / 2,
+        -layout.height / 2,
+        layout.width,
+        layout.height,
+        Math.min(
+          layout.width / 2,
+          layout.height / 2,
+          ((t.box.radius || 0) * w) / 960,
+        ),
+      );
+      if (t.background) {
+        ctx.fillStyle = t.background;
+        ctx.fill();
+      }
+      if (t.box.borderWidth) {
+        ctx.strokeStyle = t.box.borderColor || t.color;
+        ctx.lineWidth = (t.box.borderWidth * w) / 960;
+        ctx.stroke();
+      }
+      ctx.clip();
+      ctx.fillStyle = t.color;
+    }
+    if (t.background && !t.box) {
       ctx.save();
       ctx.shadowBlur = 0;
       ctx.fillStyle = t.background;
@@ -269,14 +294,14 @@ function drawSingleFrame(
     }
     const lines = animation.text.split("\n");
     lines.forEach((line, i) => {
-      const y = i * layout.size * 1.2;
+      const y = (i - (t.box ? (lines.length - 1) / 2 : 0)) * layout.size * 1.2;
       if (t.outline) {
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = Math.max(1, layout.size * 0.07);
         ctx.lineJoin = "round";
-        ctx.strokeText(line, 0, y, w * 0.94);
+        ctx.strokeText(line, 0, y, t.box ? layout.width : w * 0.94);
       }
-      ctx.fillText(line, 0, y, w * 0.94);
+      ctx.fillText(line, 0, y, t.box ? layout.width : w * 0.94);
     });
     ctx.restore();
   }
