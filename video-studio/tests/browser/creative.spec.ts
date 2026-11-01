@@ -218,16 +218,21 @@ for (const format of ["webm", "mp4"] as const)
           canvas.width = v.videoWidth;
           canvas.height = v.videoHeight;
           const ctx = canvas.getContext("2d")!;
-          await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(() => {
-              v.pause();
-              resolve();
-            }, 12000);
-            v.onended = () => {
-              clearTimeout(timer);
-              resolve();
-            };
-            const sample = () => {
+          if (format === "mp4") {
+            // Paused seeks inspect actual encoded frames without relying on
+            // Chromium's offscreen H.264 requestVideoFrameCallback cadence.
+            for (const time of [0.5, 1.5, 2.5, 3, 3.5, 4.5, 5.5]) {
+              await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(
+                  () => reject(new Error("MP4 seek timed out")),
+                  3000,
+                );
+                v.onseeked = () => {
+                  clearTimeout(timer);
+                  resolve();
+                };
+                v.currentTime = time;
+              });
               ctx.drawImage(v, 0, 0);
               samples.push({
                 center: Array.from(
@@ -243,14 +248,41 @@ for (const format of ["webm", "mp4"] as const)
                   ).data,
                 ),
               });
-              if (!v.ended) v.requestVideoFrameCallback(sample);
-            };
-            v.requestVideoFrameCallback(sample);
-            void v.play().catch((error) => {
-              clearTimeout(timer);
-              reject(error);
+            }
+          } else
+            await new Promise<void>((resolve, reject) => {
+              const timer = setTimeout(() => {
+                v.pause();
+                resolve();
+              }, 12000);
+              v.onended = () => {
+                clearTimeout(timer);
+                resolve();
+              };
+              const sample = () => {
+                ctx.drawImage(v, 0, 0);
+                samples.push({
+                  center: Array.from(
+                    ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1)
+                      .data,
+                  ),
+                  edge: Array.from(
+                    ctx.getImageData(
+                      canvas.width * 0.9,
+                      canvas.height * 0.5,
+                      1,
+                      1,
+                    ).data,
+                  ),
+                });
+                if (!v.ended) v.requestVideoFrameCallback(sample);
+              };
+              v.requestVideoFrameCallback(sample);
+              void v.play().catch((error) => {
+                clearTimeout(timer);
+                reject(error);
+              });
             });
-          });
           return {
             width: v.videoWidth,
             height: v.videoHeight,

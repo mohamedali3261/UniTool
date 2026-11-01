@@ -9,3 +9,5 @@
 - Undo removes the addition/change through normal project history. Registered but unused assets are excluded by the existing project-save path.
 
 Checks: `video-studio/tests/elements-insert.test.ts`, `src/pages/Home/tests/element-insertion.spec.ts`, plus the existing editor and homepage suites. Generated PNGs belong under ignored `test-results`.
+
+- The additional **حركات إبداعية · 36** filter exposes native animated text/background/UI/data/icon presets. The catalogue now totals 566 entries. Implementation, settings, Three.js/font assets and interactive-scene limitations: `../creative/README.md`.

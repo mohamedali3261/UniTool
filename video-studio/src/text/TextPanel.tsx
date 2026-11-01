@@ -1,3 +1,4 @@
+import { CreativeControls } from "../creative/CreativeControls";
 import { VectorPathEditor } from "./VectorPathEditor";
 import { LayerMotionEditor } from "../animation/LayerMotionEditor";
 import "./elements.css";
@@ -387,6 +388,7 @@ export function TextPanel({
                 ]}
               />
             </fieldset>
+            <CreativeControls layer={active} onChange={edit} />
             <details className="text-advanced">
               <summary>التوقيت والحركة وإعدادات إضافية</summary>
               <fieldset disabled={active.locked}>

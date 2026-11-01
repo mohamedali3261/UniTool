@@ -1,3 +1,4 @@
+import { CommandPalette } from "../../creative/CommandPalette";
 import { insertElement } from "../../elements/insert";
 import type { LibraryElement } from "../../../../src/pages/Elements/types";
 import { readAsset } from "../../lib/media";
@@ -654,6 +655,7 @@ export function Editor({
         </div>
       </header>
       <div className="editor-workspace">
+        <CommandPalette onAdd={onElementAdd} />
         <nav className="tool-rail" aria-label="أقسام التحرير">
           <button
             className={`mobile-edit-tab ${mobilePanel === "inspector" && !previewFocused ? "active" : ""}`}

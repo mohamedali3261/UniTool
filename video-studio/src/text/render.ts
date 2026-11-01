@@ -1,3 +1,5 @@
+import { textCreativeIds } from "../creative/catalog";
+import { drawCreative } from "../creative/render";
 import { isBackgroundText } from "../composition/stacking";
 import type { TextLayer } from "../types";
 import { textLayout } from "./layout";
@@ -33,6 +35,11 @@ export function drawTextLayers(
     ctx.fillStyle = t.color;
     ctx.shadowColor = "#000a";
     ctx.shadowBlur = t.box ? 0 : 8;
+    if (t.creative && !textCreativeIds.has(t.creative.id)) {
+      drawCreative(ctx, t, layout, animation.text, time);
+      ctx.restore();
+      continue;
+    }
     if (t.box) {
       ctx.beginPath();
       if (t.box.points) {
@@ -89,6 +96,11 @@ export function drawTextLayers(
         layout.height + layout.size * 0.3,
       );
       ctx.restore();
+    }
+    if (t.creative) {
+      drawCreative(ctx, t, layout, animation.text, time);
+      ctx.restore();
+      continue;
     }
     const lines = animation.text.split("\n");
     lines.forEach((line, i) => {

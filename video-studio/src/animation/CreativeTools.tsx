@@ -49,6 +49,11 @@ export function CreativeTools({
             options={[
               { value: "none", label: "بدون انتقال" },
               { value: "crossfade", label: "تلاشي متبادل" },
+              { value: "shared-card", label: "تمدد كارت إلى المشهد" },
+              { value: "circle-reveal", label: "كشف دائري" },
+              { value: "page-flip", label: "قلب صفحة" },
+              { value: "zoom-through", label: "عبور داخل المشهد" },
+              { value: "liquid-wipe", label: "مسح سائل" },
               { value: "slide", label: "سحب" },
               { value: "zoom", label: "زووم" },
               { value: "light", label: "وميض ضوئي" },

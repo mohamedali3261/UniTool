@@ -17,7 +17,8 @@ export default function ElementsPanel({
   const [live, setLive] = useState(true);
   const [favorites, setFavorites] = useState(readFavorites),
     [onlyFavorites, setOnlyFavorites] = useState(false),
-    [onlyNew, setOnlyNew] = useState(false);
+    [onlyNew, setOnlyNew] = useState(false),
+    [onlyCreative, setOnlyCreative] = useState(false);
   useEffect(() => saveFavorites(favorites), [favorites]);
   useEffect(() => setLimit(12), [onlyFavorites, onlyNew]);
   const items = useMemo(loadElements, []);
@@ -29,6 +30,7 @@ export default function ElementsPanel({
   const filtered = items.filter(
     (i) =>
       (!onlyFavorites || favorites.includes(i.id)) &&
+      (!onlyCreative || i.id.startsWith("creative-")) &&
       (!onlyNew || i.id.startsWith("video-")) &&
       (category === "all" || category === i.category) &&
       (source === "all" || source === i.source) &&
@@ -50,7 +52,26 @@ export default function ElementsPanel({
         {live ? "إيقاف المعاينات الحية" : "تشغيل المعاينات الحية"}
       </button>
       <div className="studio-elements-quick">
-        <button aria-pressed={onlyNew} onClick={() => setOnlyNew((v) => !v)}>
+        <button
+          aria-pressed={onlyCreative}
+          onClick={() => {
+            setOnlyCreative((v) => !v);
+            setOnlyNew(false);
+            setCategory("all");
+            setSource("all");
+            setQuery("");
+            setLimit(12);
+          }}
+        >
+          حركات إبداعية · 36
+        </button>
+        <button
+          aria-pressed={onlyNew}
+          onClick={() => {
+            setOnlyNew((v) => !v);
+            setOnlyCreative(false);
+          }}
+        >
           الجديد · {items.filter((i) => i.id.startsWith("video-")).length} عنصر
         </button>
         <button

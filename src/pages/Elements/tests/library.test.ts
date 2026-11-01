@@ -25,6 +25,7 @@ test("all nine template sources and seven nonempty, disjoint maintenance categor
       "unitool-ready",
       "unitool-kits",
       "unitool-motion",
+      "unitool-creative",
     ].sort(),
   );
   for (const c of categories)
@@ -141,7 +142,7 @@ test("ready catalog retains original designs and adds 48 video-focused elements"
   assert.equal(items.filter((i) => i.id.startsWith("ready-type-")).length, 20);
   assert.equal(items.filter((i) => i.kind === "group").length, 32);
   assert.equal(items.filter((i) => i.source === "unitool-motion").length, 50);
-  assert.equal(items.length, 530);
+  assert.equal(items.length, 566);
   const added = items.filter((i) => i.id.startsWith("video-"));
   assert.equal(added.length, 48);
   assert.equal(

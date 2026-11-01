@@ -1,3 +1,4 @@
+import type { CreativeSettings } from "./creative/catalog";
 import type { InterfaceScene } from "./templates/interface-flow/scenes";
 import { filterPresets } from "./effects/registry";
 export type Asset = {
@@ -18,7 +19,17 @@ export type Asset = {
     quality: "hd" | "fullhd";
   };
 };
-export type TransitionKind = "none" | "crossfade" | "slide" | "zoom" | "light";
+export type TransitionKind =
+  | "none"
+  | "crossfade"
+  | "slide"
+  | "zoom"
+  | "light"
+  | "shared-card"
+  | "circle-reveal"
+  | "page-flip"
+  | "zoom-through"
+  | "liquid-wipe";
 export type MotionPreset = string;
 export type TextAnimation = "none" | "fade" | "slide" | "pop" | "typewriter";
 export type MotionKeyframe = {
@@ -96,6 +107,7 @@ export type LayerFrame = {
   easing?: "linear" | "smooth" | "spring";
 };
 export type TextLayer = {
+  creative?: CreativeSettings;
   backgroundLayer?: boolean;
   frames?: LayerFrame[];
   counter?: {

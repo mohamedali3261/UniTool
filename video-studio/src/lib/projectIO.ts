@@ -1,3 +1,4 @@
+import { validCreative } from "../creative/catalog";
 import { validPoints } from "../text/vectorPath";
 import { validLayerAnimation } from "../animation/layerFrames";
 import { isInterfaceScene } from "../templates/interface-flow/scenes";
@@ -222,9 +223,18 @@ export function validateProjectData(
       (c.hidden !== undefined && typeof c.hidden !== "boolean") ||
       (c.transition !== undefined &&
         (!c.transition ||
-          !["none", "crossfade", "slide", "zoom", "light"].includes(
-            c.transition.kind,
-          ) ||
+          ![
+            "none",
+            "crossfade",
+            "slide",
+            "zoom",
+            "light",
+            "shared-card",
+            "circle-reveal",
+            "page-flip",
+            "zoom-through",
+            "liquid-wipe",
+          ].includes(c.transition.kind) ||
           !num(c.transition.duration, 0.1, 3))) ||
       (c.rotation !== undefined && !num(c.rotation, 0, 360)) ||
       (c.x !== undefined && !num(c.x, -100, 100)) ||
@@ -299,6 +309,7 @@ export function validateProjectData(
       (t.animationDuration !== undefined &&
         !num(t.animationDuration, 0.1, 3)) ||
       !validLayerAnimation(t) ||
+      (t.creative !== undefined && !validCreative(t.creative)) ||
       (t.name !== undefined &&
         (typeof t.name !== "string" || t.name.length > 160)) ||
       (t.box !== undefined &&
