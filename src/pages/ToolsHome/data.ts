@@ -45,6 +45,7 @@ export const toolCategories: ToolCategory[] = [
     accent: 'from-red-500 to-rose-600',
     soft: 'bg-red-500/10 text-red-300 border-red-500/20',
     tools: [
+      {id:'pdfStudio',href:'/pdf-studio/',icon:FileText,titleAr:'استوديو تعديل PDF',titleEn:'PDF Studio',descAr:'اقرأ العربي وعلّق ورتّب صفحاتك، مع OCR محلي وتصدير نسخة جديدة',descEn:'Read Arabic, annotate and organize pages with local OCR and copy export',gradient:'from-orange-500 to-amber-600',border:'border-orange-500/25 hover:border-orange-400/50',glow:'group-hover:shadow-orange-500/20',badgeAr:'جديد',badgeEn:'New'},
       {
         id: 'imageToPdf', icon: Image,
         titleAr: 'صور → PDF', titleEn: 'Images → PDF',

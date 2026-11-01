@@ -16,7 +16,7 @@ export const heroScenes = toolCategories.flatMap((c) =>
     })),
   })),
 );
-heroScenes.push({
+const studioScene = {
   id: "studios",
   ar: "استوديوهات الإبداع",
   en: "Creative studios",
@@ -37,4 +37,11 @@ heroScenes.push({
       href: "/elements.html",
     },
   ],
-});
+};
+
+for (let i = 0; i < studioScene.items.length; i += 6)
+  heroScenes.push({
+    ...studioScene,
+    id: i === 0 ? "studios" : `studios-${i / 6}`,
+    items: studioScene.items.slice(i, i + 6),
+  });

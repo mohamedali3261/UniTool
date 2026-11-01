@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "prebuild": "npm --prefix bloub-svg run build",
+    "prebuild": "npm run prepare:pdf-studio && npm --prefix bloub-svg run build",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -26,7 +26,11 @@
     "test:audio-reader:browser": "playwright test --config the-audio-reader/tests/playwright.config.ts",
     "test:excel-studio": "tsx --test excel-studio/tests/*.test.ts",
     "test:excel-studio:browser": "playwright test --config excel-studio/tests/playwright.config.ts",
-    "catalog:excel-studio": "tsx excel-studio/scripts/build-catalog.ts"
+    "catalog:excel-studio": "tsx excel-studio/scripts/build-catalog.ts",
+    "prepare:pdf-studio": "node pdf-studio/scripts/prepare-assets.mjs",
+    "predev": "npm run prepare:pdf-studio",
+    "test:pdf-studio": "tsx --test pdf-studio/tests/*.test.ts",
+    "test:pdf-studio:browser": "playwright test --config pdf-studio/tests/playwright.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

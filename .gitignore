@@ -17,3 +17,6 @@ coverage/
 
 # Local render tooling and intermediate audio
 /.cache/
+
+# Regenerated from installed dependencies and PDF Studio OCR assets
+/public/pdf-studio/vendor/
