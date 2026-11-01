@@ -1,7 +1,17 @@
-import React from 'react';
-import { X, Keyboard, Play, SkipForward, SkipBack, Volume2, Search, Settings } from 'lucide-react';
-import { UILanguage } from '../types';
-import { getTranslation } from '../translations';
+import { DialogBackdrop } from "./DialogBackdrop";
+import React from "react";
+import {
+  X,
+  Keyboard,
+  Play,
+  SkipForward,
+  SkipBack,
+  Volume2,
+  Search,
+  Settings,
+} from "lucide-react";
+import { UILanguage } from "../types";
+import { getTranslation } from "../translations";
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -18,19 +28,23 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: 'Space', desc: t.shortcutSpace, icon: Play },
-    { key: '→', desc: t.shortcutNext, icon: SkipForward },
-    { key: '←', desc: t.shortcutPrev, icon: SkipBack },
-    { key: 'Shift + →', desc: t.shortcutNextPage, icon: SkipForward },
-    { key: 'Shift + ←', desc: t.shortcutPrevPage, icon: SkipBack },
-    { key: 'M', desc: t.shortcutMute, icon: Volume2 },
-    { key: 'Ctrl / Cmd + F', desc: t.shortcutSearch, icon: Search },
-    { key: 'S', desc: t.shortcutSettings, icon: Settings },
+    { key: "Space", desc: t.shortcutSpace, icon: Play },
+    { key: "→", desc: t.shortcutNext, icon: SkipForward },
+    { key: "←", desc: t.shortcutPrev, icon: SkipBack },
+    { key: "Shift + →", desc: t.shortcutNextPage, icon: SkipForward },
+    { key: "Shift + ←", desc: t.shortcutPrevPage, icon: SkipBack },
+    { key: "M", desc: t.shortcutMute, icon: Volume2 },
+    { key: "Ctrl / Cmd + F", desc: t.shortcutSearch, icon: Search },
+    { key: "S", desc: t.shortcutSettings, icon: Settings },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in">
-      <div 
+    <DialogBackdrop
+      label={uiLang === "ar" ? "اختصارات لوحة المفاتيح" : "Keyboard shortcuts"}
+      onClose={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in"
+    >
+      <div
         className="relative flex h-auto max-h-[85vh] w-full max-w-md flex-col rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl backdrop-blur-2xl"
         id="shortcuts-modal"
       >
@@ -81,6 +95,6 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </DialogBackdrop>
   );
 };

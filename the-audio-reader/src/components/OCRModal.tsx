@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { 
-  X, 
-  FileScan, 
-  Sparkles, 
-  CheckCircle2, 
-  AlertCircle, 
-  Layers, 
-  Globe, 
-  Loader2, 
-  StopCircle 
-} from 'lucide-react';
-import { BookDocument, OCRJobState, UILanguage } from '../types';
-import { getTranslation } from '../translations';
+import { DialogBackdrop } from "./DialogBackdrop";
+import React, { useState } from "react";
+import {
+  X,
+  FileScan,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Layers,
+  Globe,
+  Loader2,
+  StopCircle,
+} from "lucide-react";
+import { BookDocument, OCRJobState, UILanguage } from "../types";
+import { getTranslation } from "../translations";
 
 interface OCRModalProps {
   isOpen: boolean;
@@ -19,7 +20,10 @@ interface OCRModalProps {
   uiLang: UILanguage;
   book: BookDocument;
   ocrState: OCRJobState;
-  onStartOCR: (lang: 'ara' | 'eng' | 'ara+eng', onlyEmptyPages: boolean) => void;
+  onStartOCR: (
+    lang: "ara" | "eng" | "ara+eng",
+    onlyEmptyPages: boolean,
+  ) => void;
   onCancelOCR: () => void;
 }
 
@@ -33,16 +37,24 @@ export const OCRModal: React.FC<OCRModalProps> = ({
   onCancelOCR,
 }) => {
   const t = getTranslation(uiLang);
-  const [selectedLang, setSelectedLang] = useState<'ara' | 'eng' | 'ara+eng'>('ara+eng');
+  const [selectedLang, setSelectedLang] = useState<"ara" | "eng" | "ara+eng">(
+    "ara+eng",
+  );
   const [onlyEmptyPages, setOnlyEmptyPages] = useState<boolean>(true);
 
   if (!isOpen) return null;
 
-  const scannedCount = book.pages.filter(p => p.isScannedImage || p.wordCount < 4).length;
+  const scannedCount = book.pages.filter(
+    (p) => p.isScannedImage || p.wordCount < 4,
+  ).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in">
-      <div 
+    <DialogBackdrop
+      label={uiLang === "ar" ? "استخراج النص من الصور" : "Extract image text"}
+      onClose={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in"
+    >
+      <div
         className="relative flex h-auto max-h-[85vh] w-full max-w-lg flex-col rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl backdrop-blur-2xl"
         id="ocr-dialog-modal"
       >
@@ -57,7 +69,10 @@ export const OCRModal: React.FC<OCRModalProps> = ({
                 {t.ocrTitle}
               </h2>
               <p className="text-xs text-slate-400">
-                {scannedCount} {uiLang === 'ar' ? 'صفحة مصورة تم رصدها' : 'scanned pages detected'}
+                {scannedCount}{" "}
+                {uiLang === "ar"
+                  ? "صفحة مصورة تم رصدها"
+                  : "scanned pages detected"}
               </p>
             </div>
           </div>
@@ -90,12 +105,14 @@ export const OCRModal: React.FC<OCRModalProps> = ({
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs text-slate-300 font-medium">
                   <span>{ocrState.statusMessage}</span>
-                  <span className="text-amber-400 font-bold">{ocrState.overallProgress}%</span>
+                  <span className="text-amber-400 font-bold">
+                    {ocrState.overallProgress}%
+                  </span>
                 </div>
-                
+
                 {/* Overall Progress */}
                 <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300"
                     style={{ width: `${ocrState.overallProgress}%` }}
                   />
@@ -117,7 +134,6 @@ export const OCRModal: React.FC<OCRModalProps> = ({
           ) : (
             /* OCR Configuration Form */
             <div className="space-y-4">
-              
               {/* Language Selection */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
@@ -127,33 +143,33 @@ export const OCRModal: React.FC<OCRModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedLang('ara+eng')}
+                    onClick={() => setSelectedLang("ara+eng")}
                     className={`rounded-xl border p-2.5 text-xs font-semibold transition ${
-                      selectedLang === 'ara+eng'
-                        ? 'border-indigo-500 bg-indigo-950/40 text-indigo-300'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                      selectedLang === "ara+eng"
+                        ? "border-indigo-500 bg-indigo-950/40 text-indigo-300"
+                        : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     {t.ocrArabicEng}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedLang('ara')}
+                    onClick={() => setSelectedLang("ara")}
                     className={`rounded-xl border p-2.5 text-xs font-semibold transition ${
-                      selectedLang === 'ara'
-                        ? 'border-indigo-500 bg-indigo-950/40 text-indigo-300'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                      selectedLang === "ara"
+                        ? "border-indigo-500 bg-indigo-950/40 text-indigo-300"
+                        : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     {t.ocrArabicOnly}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedLang('eng')}
+                    onClick={() => setSelectedLang("eng")}
                     className={`rounded-xl border p-2.5 text-xs font-semibold transition ${
-                      selectedLang === 'eng'
-                        ? 'border-indigo-500 bg-indigo-950/40 text-indigo-300'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                      selectedLang === "eng"
+                        ? "border-indigo-500 bg-indigo-950/40 text-indigo-300"
+                        : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     {t.ocrEngOnly}
@@ -173,8 +189,8 @@ export const OCRModal: React.FC<OCRModalProps> = ({
                     onClick={() => setOnlyEmptyPages(true)}
                     className={`rounded-xl border p-2.5 text-xs font-semibold transition ${
                       onlyEmptyPages
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        ? "border-amber-500 bg-amber-500/10 text-amber-300"
+                        : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     {t.ocrScopeEmptyOnly}
@@ -184,15 +200,14 @@ export const OCRModal: React.FC<OCRModalProps> = ({
                     onClick={() => setOnlyEmptyPages(false)}
                     className={`rounded-xl border p-2.5 text-xs font-semibold transition ${
                       !onlyEmptyPages
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                        ? "border-amber-500 bg-amber-500/10 text-amber-300"
+                        : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     {t.ocrScopeAll}
                   </button>
                 </div>
               </div>
-
             </div>
           )}
         </div>
@@ -216,8 +231,7 @@ export const OCRModal: React.FC<OCRModalProps> = ({
             </button>
           </div>
         )}
-
       </div>
-    </div>
+    </DialogBackdrop>
   );
 };

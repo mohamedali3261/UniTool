@@ -1,6 +1,7 @@
-import { PenTool, Film, AudioLines, Braces } from "lucide-react";
+import { PenTool, Film, AudioLines, Braces, Table2 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
+  {id:'sheets',href:'/excel-studio/',icon:Table2,name:{ar:'استوديو الجداول',en:'Sheet Studio'},eyebrow:'SPREADSHEETS, SIMPLIFIED.',description:{ar:'أرقام مرتبة. من غير تعقيد.',en:'Clear numbers. Without the complexity.'},detail:{ar:'صمم جداولك، تعلم المعادلات بأمثلة، وابدأ من قوالب جاهزة مع استيراد وتصدير Excel.',en:'Build tables, learn formulas with examples, use ready-made templates and import or export Excel files.'},tags:{ar:['جداول ومعادلات','قوالب جاهزة','تصدير Excel'],en:['Tables & formulas','Templates','Excel export']},action:{ar:'افتح استوديو الجداول',en:'Open Sheet Studio'},color:'#a9cfa8'},
   {
     id: "design",
     href: "/designcraft.html",
@@ -127,7 +128,7 @@ export const copy = {
     studioEyebrow: "02 / YOUR CREATIVE SPACES",
     studioTitle: "كل فكرة، وليها مساحتها.",
     studioDesc:
-      "أربع استوديوهات. نفس روح الإبداع. اختار نقطة البداية والباقي عليك.",
+      "مساحات متخصصة. نفس روح الإبداع. اختار نقطة البداية والباقي عليك.",
     open: "افتح المساحة",
     howEyebrow: "03 / LESS FRICTION. MORE FLOW.",
     howTitle: "من أول فكرة، لآخر لمسة.",
@@ -190,7 +191,7 @@ export const copy = {
     studioEyebrow: "02 / YOUR CREATIVE SPACES",
     studioTitle: "An idea? There’s a space for it.",
     studioDesc:
-      "Four studios. One creative spirit. Pick your starting point and make it your own.",
+      "Specialized spaces. One creative spirit. Pick your starting point and make it your own.",
     open: "Open workspace",
     howEyebrow: "03 / LESS FRICTION. MORE FLOW.",
     howTitle: "From first thought to final touch.",

@@ -43,6 +43,8 @@ export default function App() {
   const [minDelayDone, setMinDelayDone] = useState(false);
   const t = translations[lang];
 
+  useEffect(()=>{if(String(currentPage)==="excelStudio")window.location.replace("/excel-studio/");},[currentPage]);
+
   // Keep the logo-video splash visible long enough to be seen
   useEffect(() => {
     const timer = setTimeout(() => setMinDelayDone(true), 2500);
@@ -52,6 +54,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
   const navigateToPage = (page: string) => {
+    if(page === "excelStudio"){window.location.assign("/excel-studio/");return;}
     if (knownPageIds.has(page) && window.location.hash.slice(1) !== page) {
       history.replaceState(null, '', `#${page}`);
     }

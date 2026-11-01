@@ -2,11 +2,11 @@
 
 @layer base {
   :root {
-    --font-cairo: 'Cairo', system-ui, -apple-system, sans-serif;
-    --font-amiri: 'Amiri', serif;
-    --font-tajawal: 'Tajawal', system-ui, sans-serif;
-    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-serif: 'Newsreader', serif;
+    --font-cairo: "Cairo", system-ui, -apple-system, sans-serif;
+    --font-amiri: "Amiri", serif;
+    --font-tajawal: "Tajawal", system-ui, sans-serif;
+    --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+    --font-serif: "Newsreader", serif;
   }
 
   body {
@@ -32,7 +32,8 @@
 
 /* Reader active word highlight animation */
 @keyframes pulse-subtle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -46,7 +47,8 @@
 
 /* Sound wave animation for active speech */
 @keyframes soundwave {
-  0%, 100% {
+  0%,
+  100% {
     height: 4px;
   }
   50% {
@@ -54,12 +56,139 @@
   }
 }
 
-.soundwave-bar-1 { animation: soundwave 0.8s ease-in-out infinite 0.1s; }
-.soundwave-bar-2 { animation: soundwave 0.8s ease-in-out infinite 0.3s; }
-.soundwave-bar-3 { animation: soundwave 0.8s ease-in-out infinite 0.2s; }
-.soundwave-bar-4 { animation: soundwave 0.8s ease-in-out infinite 0.4s; }
+.soundwave-bar-1 {
+  animation: soundwave 0.8s ease-in-out infinite 0.1s;
+}
+.soundwave-bar-2 {
+  animation: soundwave 0.8s ease-in-out infinite 0.3s;
+}
+.soundwave-bar-3 {
+  animation: soundwave 0.8s ease-in-out infinite 0.2s;
+}
+.soundwave-bar-4 {
+  animation: soundwave 0.8s ease-in-out infinite 0.4s;
+}
 
 /* Custom focus ring */
 .focus-ring {
   @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
+}
+
+/* قواعد محلية للقارئ: النوافذ أعلى شريط الموقع والمشغّل، وأهداف لمس واضحة. */
+.reader-dialog-backdrop {
+  z-index: 200 !important;
+}
+.reader-dialog-backdrop > [role="dialog"] {
+  min-height: 0;
+  max-height: calc(100dvh - 2rem);
+}
+.reader-app {
+  padding-top: 64px;
+}
+.reader-help-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  background: #111827;
+  color: #cbd5e1;
+  border-bottom: 1px solid #293244;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.reader-help-strip button,
+.reader-error button {
+  color: #c7d2fe;
+  border: 1px solid #4f46e5;
+  border-radius: 9px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.reader-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: #35151b;
+  color: #fecaca;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.reader-arabic-help {
+  background: #312717;
+  color: #fde68a;
+  font-size: 12px;
+  line-height: 1.8;
+  padding: 12px 20px;
+  max-height: 160px;
+  overflow: auto;
+  flex-shrink: 0;
+}
+.reader-voice-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  min-width: 30px;
+}
+@media (max-width: 640px) {
+  .reader-help-strip {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 16px;
+    gap: 5px;
+  }
+  .reader-error {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .reader-dialog-backdrop {
+    padding: 10px !important;
+  }
+  .reader-dialog-backdrop > [role="dialog"] {
+    max-height: calc(100dvh - 20px);
+  }
+  #voice-selector-modal {
+    height: 90dvh;
+  }
+  .reader-app nav {
+    padding-inline: 12px !important;
+  }
+}
+.reader-has-book {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.reader-has-book > main {
+  min-height: 0;
+  padding-bottom: 96px;
+}
+.reader-has-book > main > div {
+  min-height: 0;
+}
+.reader-help-strip,
+.reader-error {
+  flex-shrink: 0;
+}
+.reader-has-book #main-reader-scroll-container {
+  padding-bottom: 24px;
+}
+@media (max-width: 640px) {
+  .reader-has-book > main {
+    padding-bottom: 86px;
+  }
+}
+.reader-toasts {
+  top: auto;
+  bottom: 112px;
+}
+@media (max-width: 640px) {
+  .reader-page-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
 }

@@ -240,7 +240,7 @@ export default function HomePage() {
                 <small>{t.tools}</small>
               </div>
               <div>
-                <strong>05</strong>
+                <strong>{String(studios.length + 1).padStart(2, "0")}</strong>
                 <small>{t.studios}</small>
               </div>
               <div>
@@ -334,7 +334,7 @@ export default function HomePage() {
               <p>{t.studioDesc}</p>
             </div>
             <span className="studio-count">
-              <i /> 05 CREATIVE SPACES
+              <i /> {String(studios.length + 1).padStart(2, "0")} CREATIVE SPACES
             </span>
           </div>
           <div className="studio-grid">
