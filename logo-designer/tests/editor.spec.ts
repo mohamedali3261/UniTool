@@ -374,7 +374,7 @@ test("expanded library filters original marks, favorites persist, and recent tra
   await page
     .getByRole("button", { name: "Show all elements", exact: true })
     .click();
-  await expect(page.locator(".ld-library-item")).toHaveCount(208);
+  await expect(page.locator(".ld-library-item")).toHaveCount(295);
 });
 
 test("new template families preview a custom name, apply editable layers and undo", async ({
@@ -382,7 +382,7 @@ test("new template families preview a custom name, apply editable layers and und
 }) => {
   await start(page);
   await page.getByRole("button", { name: "Templates", exact: true }).click();
-  await expect(page.locator(".ld-template-grid>button")).toHaveCount(60);
+  await expect(page.locator(".ld-template-grid>button")).toHaveCount(80);
   await page
     .getByRole("textbox", { name: "Template brand name", exact: true })
     .fill("LUMEN");
@@ -413,7 +413,7 @@ test("new template families preview a custom name, apply editable layers and und
   await page
     .getByRole("searchbox", { name: "Search templates" })
     .fill("education");
-  await expect(page.locator(".ld-template-grid>button")).toHaveCount(2);
+  await expect(page.locator(".ld-template-grid>button")).toHaveCount(4);
   await page
     .getByRole("searchbox", { name: "Search templates" })
     .fill("nothing-xyz");
@@ -530,4 +530,230 @@ test("compositions can be added ungrouped and searched without replacing design"
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(3);
+});
+
+test("context menu supports copy, paste, cut, lock, unlock, delete and keyboard navigation", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  const circle = () =>
+    page.getByRole("button", { name: "Select Circle", exact: true });
+  await circle().click({ button: "right" });
+  const menu = page.getByRole("menu", { name: "Element actions" });
+  await expect(menu).toBeVisible();
+  await page.keyboard.press("End");
+  await expect(
+    page.getByRole("menuitem", { name: "Delete", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await circle().click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Copy", exact: false }).click();
+  await page
+    .locator(".ld-artboard")
+    .click({ button: "right", position: { x: 80, y: 80 } });
+  await page
+    .getByRole("menuitem", { name: "Paste here", exact: false })
+    .click();
+  await expect(circle()).toHaveCount(2);
+  await circle().last().click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Cut", exact: false }).click();
+  await expect(circle()).toHaveCount(1);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(circle()).toHaveCount(2);
+  await circle().last().click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Lock", exact: true }).click();
+  await circle().last().click({ button: "right" });
+  await expect(
+    page.getByRole("menuitem", { name: "Cut", exact: false }),
+  ).toBeDisabled();
+  await page.getByRole("menuitem", { name: "Unlock", exact: true }).click();
+  await circle().last().click({ button: "right" });
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+  await expect(circle()).toHaveCount(1);
+});
+
+test("canvas keyboard clipboard shortcuts and keyboard context menu do not affect text input", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  const circle = page.getByRole("button", {
+    name: "Select Circle",
+    exact: true,
+  });
+  await circle.focus();
+  await page.keyboard.press("Control+c");
+  await page.keyboard.press("Control+v");
+  await expect(circle).toHaveCount(2);
+  await circle.first().focus();
+  await page.keyboard.press("Shift+F10");
+  await expect(page.getByRole("menu")).toBeVisible();
+  await page.keyboard.press("Control+d");
+  await expect(circle).toHaveCount(3);
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await page
+    .getByRole("textbox", { name: "Project name", exact: true })
+    .fill("Typing is safe");
+  await page.keyboard.press("Control+a");
+  await expect(page.locator(".ld-properties-heading small")).not.toHaveText(
+    "6 selected",
+  );
+});
+
+test("touch long press opens a bounded menu; moving or pinching cancels it", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    localStorage.setItem("logo-designer-tour", "done");
+    localStorage.setItem("logo-designer-lang", "en");
+  });
+  await page.goto("/logo-designer/");
+  await page
+    .getByRole("button", { name: "Close library", exact: true })
+    .click();
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 350, y: 660 }],
+  });
+  await expect(page.getByRole("menu")).toBeVisible();
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  const box = (await page.getByRole("menu").boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  expect(box.y + box.height).toBeLessThanOrEqual(844);
+  await page.getByRole("menuitem", { name: "Select all", exact: true }).tap();
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 200, y: 420 }],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: 240, y: 450 }],
+  });
+  await page.waitForTimeout(650);
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [
+      { x: 100, y: 400 },
+      { x: 250, y: 400 },
+    ],
+  });
+  await page.waitForTimeout(650);
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await context.close();
+});
+
+test("new template edition has distinct editable layouts and new symbols are searchable", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("searchbox", { name: "Search symbols" }).fill("Guitar");
+  await expect(
+    page.getByRole("button", { name: "Add Guitar", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add Guitar", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Select Guitar", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  for (const layout of [
+    "archway",
+    "mosaic",
+    "capsule",
+    "beacon",
+    "signature",
+  ]) {
+    await page
+      .getByRole("combobox", { name: "Layout family", exact: true })
+      .selectOption(layout);
+    await expect(page.locator(".ld-template-grid>button")).toHaveCount(4);
+  }
+  page.once("dialog", (d) => d.accept());
+  await page.locator(".ld-template-grid>button").first().click();
+  await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(6);
+});
+for (const width of [320, 390, 600])
+  test(`mobile dock at ${width}px keeps canvas visible and all tools accessible`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await start(page);
+    const canvas = await page.locator(".ld-center").boundingBox(),
+      panel = await page.locator(".ld-library").boundingBox();
+    expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(panel!.y + 1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width);
+    for (const name of [
+      "Elements",
+      "Templates",
+      "Text",
+      "Colors",
+      "Layers",
+      "Upload",
+      "Assistant",
+      "Mockups",
+      "Projects",
+      "Help",
+    ])
+      await expect(
+        page.getByRole("button", { name, exact: true }),
+      ).toBeInViewport();
+    await page
+      .getByRole("button", { name: "Expand tool panel", exact: true })
+      .click();
+    await expect(page.locator(".ld-center")).toBeHidden();
+    await page
+      .getByRole("button", { name: "Expand tool panel", exact: true })
+      .click();
+    await expect(page.locator(".ld-center")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Toggle properties", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Close properties", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Close properties", exact: true })
+      .click();
+    await expect(page.locator(".ld-inspector")).toHaveCount(0);
+  });
+
+test("resizing desktop to a phone never stacks two open tool panels", async ({
+  page,
+}) => {
+  await start(page);
+  await expect(page.locator(".ld-library")).toBeVisible();
+  await expect(page.locator(".ld-inspector")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".ld-inspector")).toHaveCount(0);
+  const c = (await page.locator(".ld-center").boundingBox())!,
+    p = (await page.locator(".ld-library").boundingBox())!;
+  expect(c.y + c.height).toBeLessThanOrEqual(p.y + 1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    390,
+  );
 });

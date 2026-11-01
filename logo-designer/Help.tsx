@@ -67,6 +67,11 @@ export default function Help() {
             ["Ctrl / ⌘ + Z", s.t("تراجع", "Undo")],
             ["Ctrl / ⌘ + Shift + Z", s.t("إعادة", "Redo")],
             ["Ctrl / ⌘ + S", s.t("حفظ", "Save")],
+            [
+              "Ctrl / ⌘ + C / X / V",
+              s.t("نسخ / قص / لصق داخل المحرر", "Copy / cut / paste in editor"),
+            ],
+            ["Shift + F10", s.t("قائمة العنصر", "Element context menu")],
             ["Ctrl / ⌘ + D", s.t("نسخ العناصر", "Duplicate selection")],
             ["Ctrl / ⌘ + A", s.t("تحديد الكل", "Select all")],
             [

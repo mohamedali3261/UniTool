@@ -1,5 +1,5 @@
 /** مجمّع الأقسام والاختصارات؛ المشروع نفسه يأتي من الحالة المشتركة. */
-import { useEffect, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import {
   Shapes,
   Type,
@@ -13,6 +13,8 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  Maximize,
+  X,
 } from "lucide-react";
 import { DesignerProvider, useDesigner } from "./state";
 import TopBar from "./TopBar";
@@ -65,9 +67,22 @@ const tabs = [
   },
 ];
 function Workspace() {
+  const [panelExpanded, setPanelExpanded] = useState(false);
   const s = useDesigner(),
     View: ComponentType =
       tabs.find((t) => t.id === s.tab)?.view || ShapeLibrary;
+  useEffect(() => {
+    if (window.innerWidth <= 850 && s.leftOpen && s.rightOpen)
+      s.setRightOpen(false);
+  }, [s.leftOpen, s.rightOpen]);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 850px)");
+    const narrow = () => {
+      if (media.matches) s.setRightOpen(false);
+    };
+    media.addEventListener("change", narrow);
+    return () => media.removeEventListener("change", narrow);
+  }, []);
   useEffect(() => {
     try {
       if (!localStorage.getItem("logo-designer-tour")) s.setModal("help");
@@ -81,12 +96,15 @@ function Workspace() {
         return;
       const ctrl = e.ctrlKey || e.metaKey,
         k = e.key.toLowerCase();
-      if (ctrl && ["z", "y", "s", "d", "a"].includes(k)) {
+      if (ctrl && ["z", "y", "s", "d", "a", "c", "x", "v"].includes(k)) {
         e.preventDefault();
         if (k === "z") s.dispatch({ type: e.shiftKey ? "redo" : "undo" });
         if (k === "y") s.dispatch({ type: "redo" });
         if (k === "s") void s.save();
         if (k === "d") s.duplicate();
+        if (k === "c") s.copySelection();
+        if (k === "x") s.cutSelection();
+        if (k === "v") s.pasteSelection();
         if (k === "a")
           s.setSelected(
             s.doc.nodes.filter((n) => !n.locked && !n.hidden).map((n) => n.id),
@@ -134,7 +152,7 @@ function Workspace() {
   }, [s]);
   return (
     <div
-      className={`ld-app ld-${s.theme} ${s.leftOpen ? "" : "ld-left-closed"} ${s.rightOpen ? "" : "ld-right-closed"}`}
+      className={`ld-app ld-${s.theme} ${s.leftOpen ? "" : "ld-left-closed"} ${s.rightOpen ? "" : "ld-right-closed"} ${panelExpanded ? "ld-panel-expanded" : ""}`}
       dir={s.lang === "ar" ? "rtl" : "ltr"}
     >
       <TopBar />
@@ -150,7 +168,11 @@ function Workspace() {
               aria-pressed={s.tab === t.id && s.leftOpen}
               onClick={() => {
                 s.setTab(t.id);
-                s.setLeftOpen(true);
+                s.setLeftOpen(
+                  window.innerWidth <= 600 && s.tab === t.id
+                    ? !s.leftOpen
+                    : true,
+                );
                 if (window.innerWidth < 851) s.setRightOpen(false);
               }}
             >
@@ -175,6 +197,14 @@ function Workspace() {
                   tabs.find((t) => t.id === s.tab)!.en,
                 )}
               </span>
+              <button
+                className="ld-mobile-only"
+                aria-label={s.t("توسيع لوحة الأدوات", "Expand tool panel")}
+                aria-pressed={panelExpanded}
+                onClick={() => setPanelExpanded(!panelExpanded)}
+              >
+                <Maximize size={16} />
+              </button>
               <button
                 aria-label={s.t("إغلاق المكتبة", "Close library")}
                 onClick={() => s.setLeftOpen(false)}
@@ -212,6 +242,25 @@ function Workspace() {
             className="ld-inspector"
             aria-label={s.t("خصائص التصميم", "Design properties")}
           >
+            <div className="ld-mobile-panel-head">
+              <strong>{s.t("خصائص التصميم", "Design properties")}</strong>
+              <button
+                aria-label={s.t(
+                  "توسيع لوحة الخصائص",
+                  "Expand properties panel",
+                )}
+                aria-pressed={panelExpanded}
+                onClick={() => setPanelExpanded(!panelExpanded)}
+              >
+                <Maximize size={16} />
+              </button>
+              <button
+                aria-label={s.t("إغلاق الخصائص", "Close properties")}
+                onClick={() => s.setRightOpen(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
             <Properties />
           </aside>
         )}

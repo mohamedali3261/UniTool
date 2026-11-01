@@ -1,3 +1,4 @@
+import ContextMenu, { type MenuAnchor } from "./ContextMenu";
 /** اللمس والسحب في وحدات اللوحة، والتغييرات الحية تُجمع في خطوة تراجع واحدة. */
 import { useEffect, useRef, useState } from "react";
 import {
@@ -22,6 +23,34 @@ export default function Canvas() {
       x: null,
       y: null,
     });
+  const [menu, setMenu] = useState<MenuAnchor | null>(null);
+  const hold = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    x: number;
+    y: number;
+  } | null>(null);
+  function cancelHold() {
+    if (hold.current) clearTimeout(hold.current.timer);
+    hold.current = null;
+  }
+  useEffect(() => () => cancelHold(), []);
+  function openMenu(x: number, y: number, id?: string) {
+    cancelHold();
+    s.dispatch({ type: "end" });
+    gesture.current = undefined;
+    pointers.current.clear();
+    if (id) {
+      if (!s.selected.includes(id)) {
+        const n = s.doc.nodes.find((n) => n.id === id);
+        s.setSelected(
+          n?.group
+            ? s.doc.nodes.filter((v) => v.group === n.group).map((v) => v.id)
+            : [id],
+        );
+      }
+    } else s.setSelected([]);
+    setMenu({ x, y, point: point(x, y) });
+  }
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{
     kind: "move" | "resize" | "pan" | "pinch";
@@ -47,9 +76,10 @@ export default function Canvas() {
     el.addEventListener("wheel", prevent, { passive: false });
     return () => el.removeEventListener("wheel", prevent);
   }, []);
+  const compact = size.w < 600 || size.h < 300;
   const fit = Math.min(
-      (size.w - 70) / s.doc.width,
-      (size.h - 100) / s.doc.height,
+      (size.w - (compact ? 24 : 70)) / s.doc.width,
+      (size.h - (compact ? 24 : 100)) / s.doc.height,
     ),
     scale = Math.max(0.03, fit) * s.zoom;
   const point = (x: number, y: number) => {
@@ -64,6 +94,13 @@ export default function Canvas() {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    cancelHold();
+    if (e.pointerType === "touch" && !resize && pointers.current.size === 1) {
+      const x = e.clientX,
+        y = e.clientY;
+      hold.current = { x, y, timer: setTimeout(() => openMenu(x, y, id), 550) };
+    }
+
     if (pointers.current.size === 2) {
       s.dispatch({ type: "end" });
       const [a, b] = [...pointers.current.values()];
@@ -115,6 +152,14 @@ export default function Canvas() {
     };
   }
   function move(e: React.PointerEvent) {
+    if (hold.current) {
+      if (
+        Math.hypot(e.clientX - hold.current.x, e.clientY - hold.current.y) > 8
+      )
+        cancelHold();
+      else return;
+    }
+
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const g = gesture.current;
@@ -196,6 +241,7 @@ export default function Canvas() {
     });
   }
   function end(e: React.PointerEvent) {
+    cancelHold();
     pointers.current.delete(e.pointerId);
     if (gesture.current?.kind === "move" || gesture.current?.kind === "resize")
       s.dispatch({ type: "end" });
@@ -239,6 +285,30 @@ export default function Canvas() {
       <div
         ref={wrap}
         className={`ld-canvas-viewport ${s.hand ? "is-hand" : ""}`}
+        tabIndex={0}
+        aria-label={s.t("مساحة اللوحة التفاعلية", "Interactive canvas")}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const target = (e.target as HTMLElement).closest("[data-node-id]");
+          openMenu(
+            e.clientX,
+            e.clientY,
+            target?.getAttribute("data-node-id") || undefined,
+          );
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) {
+            e.preventDefault();
+            e.stopPropagation();
+            const target = e.target as HTMLElement,
+              r = target.getBoundingClientRect();
+            openMenu(
+              r.x + r.width / 2,
+              r.y + r.height / 2,
+              target.getAttribute("data-node-id") || s.selected[0],
+            );
+          }
+        }}
         onPointerDown={(e) => start(e)}
         onPointerMove={move}
         onPointerUp={end}
@@ -311,6 +381,7 @@ export default function Canvas() {
                 transform={`translate(${n.x} ${n.y}) rotate(${n.rotation})`}
               >
                 <rect
+                  data-node-id={n.id}
                   tabIndex={n.locked ? -1 : 0}
                   role="button"
                   aria-label={s.t("اختيار ", "Select ") + n.name}
@@ -406,6 +477,7 @@ export default function Canvas() {
           </button>
         </div>
       </div>
+      {menu && <ContextMenu anchor={menu} onClose={() => setMenu(null)} />}
     </section>
   );
 }

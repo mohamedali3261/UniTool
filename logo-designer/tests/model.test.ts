@@ -12,8 +12,8 @@ import { templates, templateProject } from "../templates";
 import { removeBackground, traceRuns } from "../image-tools";
 import { generatePalette } from "../Colors";
 import { reducer } from "../state";
-test("60 templates have editable, valid independent nodes", () => {
-  assert.equal(templates.length, 60);
+test("80 templates have editable, valid independent nodes", () => {
+  assert.equal(templates.length, 80);
   for (const t of templates)
     for (const lang of ["ar", "en"] as const) {
       const p = validateProject(templateProject(t, lang));
@@ -178,4 +178,47 @@ test("composition instances have fresh groups, scalable positions and editable i
   assert.ok(first.some((n) => n.fill === "#aabbcc"));
   const again = compositionNodes(c, { x: 400, y: 300, size: 200 });
   assert.notEqual(first[0].group, again[0].group);
+});
+
+test("internal clipboard pastes with fresh IDs and group identity without mutating source", async () => {
+  const { pasteNodes } = await import("../clipboard");
+  const source = [
+    node({ x: 100, y: 100, w: 40, h: 40, group: "old", locked: true }),
+    node({ x: 200, y: 100, w: 40, h: 40, group: "old" }),
+  ];
+  const p = pasteNodes(source, { x: 400, y: 300 });
+  assert.equal(p[0].x, 350);
+  assert.equal(p[1].x, 450);
+  assert.equal(p[0].y, 300);
+  assert.notEqual(p[0].id, source[0].id);
+  assert.notEqual(p[0].group, "old");
+  assert.equal(p[0].group, p[1].group);
+  assert.equal(p[0].locked, false);
+  assert.equal(source[0].locked, true);
+  assert.equal(source[0].x, 100);
+  assert.notEqual(pasteNodes(source)[0].group, p[0].group);
+});
+
+test("new edition has exactly twenty valid editable templates in five new families", async () => {
+  const { latestTemplates } = await import("../collection-2026");
+  const { symbolMap } = await import("../catalog");
+  assert.equal(latestTemplates.length, 20);
+  assert.equal(new Set(latestTemplates.map((t) => t.layout)).size, 5);
+  for (const t of latestTemplates) {
+    assert.ok(symbolMap.has(t.icon));
+    for (const lang of ["ar", "en"] as const) {
+      const p = validateProject(templateProject(t, lang));
+      assert.ok(p.nodes.length >= 6);
+      assert.equal(new Set(p.nodes.map((n) => n.id)).size, p.nodes.length);
+      assert.ok(p.nodes.some((n) => n.kind === "text"));
+    }
+  }
+});
+test("new symbol collection adds more than fifty unique registered icons", async () => {
+  const { moreSymbols } = await import("../more-symbols");
+  const { symbolMap, symbols } = await import("../catalog");
+  assert.ok(moreSymbols.length > 50);
+  assert.equal(new Set(moreSymbols.map((n) => n.id)).size, moreSymbols.length);
+  assert.equal(new Set(symbols.map((n) => n.id)).size, symbols.length);
+  for (const n of moreSymbols) assert.ok(symbolMap.has(n.id));
 });

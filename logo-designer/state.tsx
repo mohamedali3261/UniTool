@@ -1,3 +1,4 @@
+import { pasteNodes } from "./clipboard";
 import {
   createContext,
   useContext,
@@ -85,6 +86,7 @@ function useStore() {
     future: [],
   }));
   const doc = history.doc;
+  const [clipboard, setClipboard] = useState<Element[]>([]);
   const [selected, setSelected] = useState<string[]>([]),
     [tab, setTab] = useState("library"),
     [notice, setNotice] = useState(""),
@@ -224,6 +226,28 @@ function useStore() {
     commit((p) => ({ ...p, nodes: [...p.nodes, ...nodes] }));
     setSelected(nodes.map((n) => n.id));
   };
+  const copySelection = () => {
+    const nodes = doc.nodes.filter((n) => selected.includes(n.id));
+    if (nodes.length) setClipboard(structuredClone(nodes));
+  };
+  const cutSelection = () => {
+    const nodes = doc.nodes.filter((n) => selected.includes(n.id) && !n.locked);
+    if (!nodes.length) return;
+    setClipboard(structuredClone(nodes));
+    const ids = new Set(nodes.map((n) => n.id));
+    commit((p) => ({ ...p, nodes: p.nodes.filter((n) => !ids.has(n.id)) }));
+    setSelected([]);
+  };
+  const pasteSelection = (at?: { x: number; y: number }) => {
+    if (!clipboard.length) return;
+    if (doc.nodes.length + clipboard.length > 500) {
+      setNotice(t("الحد ٥٠٠ عنصر للمشروع.", "Limit: 500 elements."));
+      return;
+    }
+    const nodes = pasteNodes(clipboard, at);
+    commit((p) => ({ ...p, nodes: [...p.nodes, ...nodes] }));
+    setSelected(nodes.map((n) => n.id));
+  };
   const save = async () => {
     try {
       await saveProject(doc);
@@ -252,6 +276,10 @@ function useStore() {
     choose,
     remove,
     duplicate,
+    clipboard,
+    copySelection,
+    cutSelection,
+    pasteSelection,
     save,
     lang,
     setLang,

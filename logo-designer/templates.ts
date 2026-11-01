@@ -1,3 +1,4 @@
+import { latestTemplates, composeLatest } from "./collection-2026";
 import { extendedTemplates, composeExtended } from "./extended-templates";
 import { node, uid, type Project } from "./types";
 import { palettes } from "./catalog";
@@ -18,7 +19,12 @@ export type Template = {
     | "editorial"
     | "crest"
     | "split"
-    | "orbital";
+    | "orbital"
+    | "archway"
+    | "mosaic"
+    | "capsule"
+    | "beacon"
+    | "signature";
   mark?: string;
 };
 const industries = [
@@ -49,6 +55,7 @@ export const templates: Template[] = [
     })),
   ),
   ...extendedTemplates,
+  ...latestTemplates,
 ];
 /** القالب مجموعة عناصر مستقلة، مش صورة مسطحة. */
 export function templateProject(
@@ -69,6 +76,8 @@ export function templateProject(
     nodes: [],
     updated: Date.now(),
   };
+  if (latestTemplates.some((v) => v.id === t.id))
+    return composeLatest(p, t, title, palette, lang);
   if (extendedTemplates.some((v) => v.id === t.id))
     return composeExtended(p, t, title, palette, lang);
   if (t.layout === "badge")
