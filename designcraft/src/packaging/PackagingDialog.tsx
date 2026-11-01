@@ -140,7 +140,7 @@ export function PackagingDialog({
                     ar ? `${arabic} بالملليمتر` : `${en} in millimetres`
                   }
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   min={min}
                   max={max}
                   value={draft[k]}

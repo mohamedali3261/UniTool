@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs/promises";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFRawStream, PDFName } from "pdf-lib";
 const base = process.env.DESIGN_QA_URL || "http://localhost:3000";
 async function open(page: Page) {
   await page.goto(base + "/designcraft.html");
@@ -180,4 +180,124 @@ test("English controls retain physical units", async ({ page }) => {
   await expect(page.getByTestId("carton-sheet-size")).toHaveText(
     "242 × 234 mm",
   );
+});
+test("print downloads preserve full artwork, silhouette, DPI and actual physical size", async ({
+  page,
+}) => {
+  await open(page);
+  await page
+    .getByRole("textbox", { name: "اسم قالب العلبة", exact: true })
+    .fill("Print QA");
+  await page
+    .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
+    .click();
+  await expect(page.locator("#editor-layout")).toBeVisible();
+  // Native project fixture: a full-sheet background, deliberately extending beyond every cut edge.
+  await page.evaluate(() => {
+    const key = "designcraft_saved_projects_v1",
+      items = JSON.parse(localStorage.getItem(key)!);
+    const p = items.find((p: any) => p.title === "Print QA");
+    p.canvasData.background = "#ef2345";
+    localStorage.setItem(key, JSON.stringify(items));
+  });
+  await page.reload();
+  await page.getByRole("button", { name: /مشاريعي/ }).click();
+  await page.getByRole("heading", { name: "Print QA", exact: true }).click();
+  await expect(page.locator("#editor-layout")).toBeVisible();
+  await page
+    .getByRole("button", { name: "تصدير للطباعة", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "صيغة ملف الطباعة", exact: true })
+    .selectOption("png");
+  await page.getByRole("checkbox", { name: "تضمين خطوط القص والطي" }).uncheck();
+  let pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "تنزيل ملف الطباعة", exact: true })
+    .click();
+  const png = await fs.readFile((await (await pending).path())!);
+  const raster = await page.evaluate(async (base64) => {
+    const image = await createImageBitmap(
+      await (await fetch("data:image/png;base64," + base64)).blob(),
+    );
+    const c = document.createElement("canvas");
+    c.width = image.width;
+    c.height = image.height;
+    const ctx = c.getContext("2d")!;
+    ctx.drawImage(image, 0, 0);
+    const at = (x: number, y: number) =>
+      Array.from(
+        ctx.getImageData(
+          Math.round((x * image.width) / 262),
+          Math.round((y * image.height) / 234),
+          1,
+          1,
+        ).data,
+      );
+    return {
+      w: image.width,
+      h: image.height,
+      outside: at(5, 5),
+      inside: at(60, 100),
+      betweenFlaps: at(16, 15),
+    };
+  }, png.toString("base64"));
+  expect(raster.w).toBe(3095);
+  expect(raster.h).toBe(2764);
+  expect(raster.outside[3]).toBe(0);
+  expect(raster.betweenFlaps[3]).toBe(0);
+  expect(raster.inside).toEqual([239, 35, 69, 255]);
+  const phys = png.indexOf("pHYs");
+  expect(phys).toBeGreaterThan(0);
+  expect(png.readUInt32BE(phys + 4)).toBe(11811);
+  await page
+    .getByRole("combobox", { name: "صيغة ملف الطباعة", exact: true })
+    .selectOption("svg");
+  pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "تنزيل ملف الطباعة", exact: true })
+    .click();
+  const svg = await fs.readFile((await (await pending).path())!, "utf8");
+  expect(svg).toContain('width="262mm"');
+  expect(svg).toContain("<clipPath");
+  expect(svg).toContain('clip-path="url(#');
+  expect(svg).toContain('fill="#ef2345"');
+  await page
+    .getByRole("combobox", { name: "صيغة ملف الطباعة", exact: true })
+    .selectOption("pdf");
+  await page.getByRole("checkbox", { name: "تضمين خطوط القص والطي" }).check();
+  pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "تنزيل ملف الطباعة", exact: true })
+    .click();
+  const pdf = await PDFDocument.load(
+    await fs.readFile((await (await pending).path())!),
+  );
+  expect((pdf.getPage(0).getWidth() * 25.4) / 72).toBeCloseTo(262, 6);
+  expect((pdf.getPage(0).getHeight() * 25.4) / 72).toBeCloseTo(234, 6);
+  expect(pdf.getSubject()).toContain("300 DPI");
+  expect(
+    pdf.context
+      .enumerateIndirectObjects()
+      .some(
+        ([, o]) =>
+          o instanceof PDFRawStream &&
+          o.dict.get(PDFName.of("Width"))?.toString() === "3095" &&
+          o.dict.get(PDFName.of("Height"))?.toString() === "2764",
+      ),
+  ).toBe(true);
+  await page
+    .getByRole("combobox", { name: "صيغة ملف الطباعة", exact: true })
+    .selectOption("png");
+  await page
+    .getByRole("combobox", { name: "دقة الطباعة", exact: true })
+    .selectOption("600");
+  pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "تنزيل ملف الطباعة", exact: true })
+    .click();
+  const high = await fs.readFile((await (await pending).path())!);
+  expect(high.readUInt32BE(16)).toBe(6189);
+  expect(high.readUInt32BE(20)).toBe(5528);
+  expect(high.readUInt32BE(high.indexOf("pHYs") + 4)).toBe(23622);
 });
