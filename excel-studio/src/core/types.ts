@@ -1,3 +1,8 @@
+import type {
+  Dashboard,
+  ValidationRule,
+  ConditionalRule,
+} from "./analyticsTypes";
 export type CellFormat = "auto" | "number" | "currency" | "percent" | "date";
 export interface Cell {
   raw: string;
@@ -20,10 +25,16 @@ export interface Sheet {
   freeze: boolean;
   decimals: number;
   currency: string;
+  columnWidths?: Record<string, number>;
+  wrap?: boolean;
+  showFormulas?: boolean;
+  validation?: ValidationRule[];
+  conditional?: ConditionalRule[];
   negative: boolean;
 }
 export interface Workbook {
   version: 1;
+  dashboard?: Dashboard;
   id: string;
   name: string;
   active: string;

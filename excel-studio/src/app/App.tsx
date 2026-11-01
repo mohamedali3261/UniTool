@@ -30,12 +30,15 @@ import {
 } from "../core/io";
 import type { Lang, Selection, Workbook } from "../core/types";
 import "../app/styles.css";
+const Analytics = lazy(() => import("../pages/analytics/AnalyticsPage"));
 const Editor = lazy(() => import("../pages/editor/EditorPage")),
   Functions = lazy(() => import("../pages/functions/FunctionsPage")),
   Templates = lazy(() => import("../pages/templates/TemplatesPage"));
 function currentPage(): StudioContext["page"] {
   const hash = location.hash.slice(1);
-  return hash === "functions" || hash === "templates" ? hash : "editor";
+  return hash === "functions" || hash === "templates" || hash === "analytics"
+    ? hash
+    : "editor";
 }
 export default function App() {
   const state = useWorkbook(),
@@ -173,7 +176,9 @@ export default function App() {
             </div>
           }
         >
-          {page === "editor" ? (
+          {page === "analytics" ? (
+            <Analytics />
+          ) : page === "editor" ? (
             <Editor selection={selection} setSelection={setSelection} />
           ) : page === "functions" ? (
             <Functions />

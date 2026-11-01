@@ -1,3 +1,4 @@
+import { ToolPreview } from "./ToolPreview";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpLeft, Layers3, MousePointer2 } from "lucide-react";
 import type { Language } from "../../data";
@@ -12,6 +13,9 @@ export function HeroMotion({
 }) {
   const [interacting, setInteracting] = useState(false),
     [index, setIndex] = useState(0),
+    [tool, setTool] = useState(0),
+    [phase, setPhase] = useState<"move" | "click" | "open">("move"),
+    [cursor, setCursor] = useState({ x: 60, y: 72 }),
     [visible, setVisible] = useState(true),
     [reduced, setReduced] = useState(false),
     [hidden, setHidden] = useState(document.hidden);
@@ -38,12 +42,41 @@ export function HeroMotion({
   const running = !interacting && !paused && !reduced && !hidden && visible;
   useEffect(() => {
     if (!running) return;
-    const id = setInterval(
-      () => setIndex((n) => (n + 1) % heroScenes.length),
-      4800,
+    const id = setTimeout(
+      () => {
+        if (phase === "move") setPhase("click");
+        else if (phase === "click") setPhase("open");
+        else {
+          setPhase("move");
+          if (tool + 1 < scene.items.length) setTool(tool + 1);
+          else {
+            setTool(0);
+            setIndex((n) => (n + 1) % heroScenes.length);
+          }
+        }
+      },
+      phase === "move" ? 850 : phase === "click" ? 400 : 2300,
     );
-    return () => clearInterval(id);
-  }, [running, index]);
+    return () => clearTimeout(id);
+  }, [running, index, tool, phase, scene.items.length]);
+  useEffect(() => {
+    const place = () => {
+      const node = stage.current?.querySelector(".film-scene"),
+        target = stage.current?.querySelectorAll(".film-tool")[tool];
+      if (!node || !target) return;
+      const a = node.getBoundingClientRect(),
+        b = target.getBoundingClientRect();
+      setCursor({
+        x: ((b.x + b.width * 0.58 - a.x) / a.width) * 100,
+        y: ((b.y + b.height * 0.55 - a.y) / a.height) * 100,
+      });
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    if (stage.current) observer.observe(stage.current);
+    return () => observer.disconnect();
+  }, [index, tool]);
+  const active = scene.items[tool] || scene.items[0];
   return (
     <div
       ref={stage}
@@ -54,7 +87,7 @@ export function HeroMotion({
         if (!e.currentTarget.contains(e.relatedTarget as Node))
           setInteracting(false);
       }}
-      className={`hero-motion ${running ? "is-running" : "is-still"}`}
+      className={`hero-motion ${running ? "is-running" : "is-still"} phase-${phase}`}
       aria-label={
         ar ? "عرض موشن جرافيك لأدوات UniTool" : "UniTool tools motion showcase"
       }
@@ -88,7 +121,9 @@ export function HeroMotion({
         </span>
         <span className="film-coordinate coord-b">∞ POSSIBILITIES</span>
         <div key={scene.id} className="film-scene" data-scene={scene.id}>
-          <div className="film-hub">
+          <div
+            className={"film-hub " + (phase === "open" ? "preview-behind" : "")}
+          >
             <span className="film-hub-icon">
               <scene.icon size={42} />
             </span>
@@ -110,7 +145,7 @@ export function HeroMotion({
           {scene.items.map((item, i) => (
             <a
               key={item.id}
-              className={`film-tool film-slot-${i}`}
+              className={`film-tool film-slot-${i} ${i === tool ? "tool-current" : ""}`}
               href={item.href}
               style={
                 {
@@ -132,9 +167,17 @@ export function HeroMotion({
               <ArrowUpLeft size={13} />
             </a>
           ))}
-          <span className="film-cursor" aria-hidden="true">
+          {phase === "open" && (
+            <ToolPreview key={active.id} item={active} ar={ar} />
+          )}
+          <span
+            className="film-cursor"
+            style={{ left: cursor.x + "%", top: cursor.y + "%" }}
+            aria-hidden="true"
+          >
             <MousePointer2 size={24} />
-            <span>LET’S CREATE</span>
+            <span>{phase === "open" ? "OPENED ✓" : "LET’S CREATE"}</span>
+            <i className="film-click-ring" />
           </span>
           <span className="film-spark spark-a" aria-hidden="true">
             ✳
@@ -158,9 +201,16 @@ export function HeroMotion({
               key={s.id}
               aria-label={`${ar ? "عرض" : "Show"} ${ar ? s.ar : s.en} ${i + 1}`}
               aria-pressed={i === index}
-              onClick={() => setIndex(i)}
+              onClick={() => {
+                setIndex(i);
+                setTool(0);
+                setPhase("move");
+              }}
             >
-              <i key={`${index}-${running}`} />
+              <i
+                key={`${index}-${running}`}
+                style={{ animationDuration: `${scene.items.length * 3550}ms` }}
+              />
             </button>
           ))}
         </div>

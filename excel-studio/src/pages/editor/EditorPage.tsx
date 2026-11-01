@@ -1,3 +1,4 @@
+import { TableTools } from "./TableTools";
 import { useMemo, useState } from "react";
 import {
   Sparkles,
@@ -215,8 +216,14 @@ export default function EditorPage({
             onCommit={commit}
             onAssistant={() => setAssistant(true)}
           />
+          <TableTools sheet={sheet} selection={selection} patch={patchSheet} />
           <SheetGrid
             sheet={sheet}
+            onResize={(col, width) =>
+              patchSheet({
+                columnWidths: { ...sheet.columnWidths, [col]: width },
+              })
+            }
             selection={selection}
             setSelection={setSelection}
             result={result}

@@ -1,3 +1,4 @@
+import { conditionalStyle } from "../../core/tableFeatures";
 import { useEffect, useRef, useState } from "react";
 import { address, colName, position, bounds } from "../../core/address";
 import { display } from "../../core/calculate";
@@ -16,6 +17,7 @@ export function SheetGrid({
   onCommit,
   onPaste,
   filter,
+  onResize,
 }: {
   sheet: Sheet;
   selection: Selection;
@@ -24,11 +26,30 @@ export function SheetGrid({
   onCommit: (raw: string, ref?: string) => void;
   onPaste: (text: string) => void;
   filter: string;
+  onResize: (col: number, width: number) => void;
 }) {
   const { lang, t } = useStudio(),
     [editing, setEditing] = useState<string | null>(null),
     [draft, setDraft] = useState(""),
     root = useRef<HTMLDivElement>(null);
+  const [resizing, setResizing] = useState<{
+    col: number;
+    start: number;
+    width: number;
+    current: number;
+  } | null>(null);
+  const counts = new Map<string, number>();
+  if (sheet.conditional?.some((r) => r.op === "duplicates"))
+    for (let r = sheet.header ? 1 : 0; r < sheet.rows; r++)
+      for (const c of new Set(
+        sheet.conditional
+          .filter((v) => v.op === "duplicates")
+          .map((v) => v.column),
+      )) {
+        const value = result(address(r, c)).value,
+          key = c + ":" + typeof value + ":" + String(value ?? "");
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
   const b = bounds(selection.anchor, selection.end),
     theme = themes[sheet.theme as keyof typeof themes] || themes.emerald;
   useEffect(() => {
@@ -66,19 +87,98 @@ export function SheetGrid({
       }}
     >
       <table
-        className="xs-grid"
+        className={"xs-grid " + (sheet.wrap ? "xs-wrap" : "")}
         role="grid"
         aria-label={t("جدول البيانات", "Spreadsheet")}
         aria-rowcount={sheet.rows + 1}
         aria-colcount={sheet.cols + 1}
         dir="ltr"
       >
+        <colgroup>
+          <col style={{ width: 34 }} />
+          {Array.from({ length: sheet.cols }, (_, c) => (
+            <col
+              key={c}
+              style={{
+                width:
+                  resizing?.col === c
+                    ? resizing.current
+                    : sheet.columnWidths?.[c] || 125,
+              }}
+            />
+          ))}
+        </colgroup>
         <thead>
           <tr>
             <th className="xs-corner">▦</th>
             {Array.from({ length: sheet.cols }, (_, c) => (
-              <th key={c} scope="col">
+              <th
+                key={c}
+                scope="col"
+                style={{
+                  width:
+                    resizing?.col === c
+                      ? resizing.current
+                      : sheet.columnWidths?.[c] || 125,
+                }}
+              >
                 {colName(c)}
+                <span
+                  className="xs-column-resize"
+                  role="separator"
+                  aria-label={t("عرض العمود ", "Column width ") + colName(c)}
+                  aria-orientation="vertical"
+                  tabIndex={0}
+                  aria-valuenow={sheet.columnWidths?.[c] || 125}
+                  aria-valuemin={70}
+                  aria-valuemax={400}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                      e.preventDefault();
+                      onResize(
+                        c,
+                        Math.max(
+                          70,
+                          Math.min(
+                            400,
+                            (sheet.columnWidths?.[c] || 125) +
+                              (e.key === "ArrowRight" ? 10 : -10),
+                          ),
+                        ),
+                      );
+                    }
+                  }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setResizing({
+                      col: c,
+                      start: e.clientX,
+                      width: sheet.columnWidths?.[c] || 125,
+                      current: sheet.columnWidths?.[c] || 125,
+                    });
+                  }}
+                  onPointerMove={(e) => {
+                    if (resizing?.col === c)
+                      setResizing({
+                        ...resizing,
+                        current: Math.max(
+                          70,
+                          Math.min(
+                            400,
+                            resizing.width + e.clientX - resizing.start,
+                          ),
+                        ),
+                      });
+                  }}
+                  onPointerUp={() => {
+                    if (resizing) {
+                      onResize(c, resizing.current);
+                      setResizing(null);
+                    }
+                  }}
+                  onPointerCancel={() => setResizing(null)}
+                />
               </th>
             ))}
           </tr>
@@ -105,7 +205,15 @@ export function SheetGrid({
                     res = result(ref),
                     selected = r >= b.r1 && r <= b.r2 && c >= b.c1 && c <= b.c2,
                     active = selection.end === ref,
-                    header = sheet.header && r === 0;
+                    header = sheet.header && r === 0,
+                    conditional = header
+                      ? null
+                      : conditionalStyle(
+                          res.value,
+                          c,
+                          sheet.conditional || [],
+                          counts,
+                        );
                   return (
                     <td
                       key={c}
@@ -123,6 +231,7 @@ export function SheetGrid({
                       title={res.error || cell?.raw || ref}
                       style={{
                         backgroundColor:
+                          conditional?.fill ||
                           cell?.fill ||
                           (header
                             ? theme.head
@@ -131,7 +240,8 @@ export function SheetGrid({
                               : "#fff"),
                         color: res.error
                           ? "#c03440"
-                          : cell?.color ||
+                          : conditional?.color ||
+                            cell?.color ||
                             (header
                               ? "#fff"
                               : sheet.negative &&
@@ -225,7 +335,10 @@ export function SheetGrid({
                         />
                       ) : (
                         <span dir="auto">
-                          {display(res.value, cell, sheet, lang) || "\u00a0"}
+                          {(sheet.showFormulas && cell?.raw.startsWith("=")
+                            ? cell.raw
+                            : display(res.value, cell, sheet, lang)) ||
+                            "\u00a0"}
                           {cell?.raw.startsWith("=") && (
                             <i className="xs-formula-indicator" />
                           )}

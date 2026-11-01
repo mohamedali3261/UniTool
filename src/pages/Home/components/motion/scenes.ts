@@ -7,15 +7,13 @@ export const heroScenes = toolCategories.flatMap((c) =>
     ar: c.titleAr,
     en: c.titleEn,
     icon: c.icon,
-    items: c.tools
-      .slice(i * 6, i * 6 + 6)
-      .map((t) => ({
-        id: t.id,
-        ar: t.titleAr,
-        en: t.titleEn,
-        icon: t.icon,
-        href: `/app.html#${t.id}`,
-      })),
+    items: c.tools.slice(i * 6, i * 6 + 6).map((t) => ({
+      id: t.id,
+      ar: t.titleAr,
+      en: t.titleEn,
+      icon: t.icon,
+      href: t.href || `/app.html#${t.id}`,
+    })),
   })),
 );
 heroScenes.push({

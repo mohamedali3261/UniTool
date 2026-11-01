@@ -1,3 +1,5 @@
+import { validationError, sanitizeTableFeatures } from "./tableFeatures";
+import { sanitizeDashboard } from "./analytics";
 import { address, position, refs, shiftFormula } from "./address";
 import {
   themes,
@@ -48,6 +50,13 @@ export function applyCells(
     const p = position(key);
     if (p.row < 0 || p.col < 0 || p.row >= LIMITS.rows || p.col >= LIMITS.cols)
       throw Error("حدود الجدول 300 صف × 30 عمود");
+    if (value?.raw !== undefined && !(sheet.header && p.row === 0)) {
+      const rule = sheet.validation?.find((r) => r.column === p.col);
+      if (rule) {
+        const error = validationError(value?.raw ?? "", rule);
+        if (error) throw Error(key + ": " + error);
+      }
+    }
     if (value === null) delete sheet.cells[key];
     else {
       if (
@@ -217,12 +226,14 @@ export function validateBook(input: unknown): Workbook {
       if (c.color && !/^#[a-f\d]{6}$/i.test(c.color)) delete c.color;
       if (++count > LIMITS.cells) throw Error("المشروع أكبر من الحد المسموح");
     }
+    sanitizeTableFeatures(s);
     s.decimals = Math.max(0, Math.min(6, Number(s.decimals) || 0));
     s.currency = ["EGP", "USD", "EUR", "SAR", "AED"].includes(s.currency)
       ? s.currency
       : "EGP";
   }
   if (!ids.has(b.active)) b.active = b.sheets[0].id;
+  b.dashboard = sanitizeDashboard(b.dashboard);
   b.name = String(b.name || "Workbook").slice(0, 100);
   return b;
 }
