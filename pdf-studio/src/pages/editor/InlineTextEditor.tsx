@@ -1,3 +1,4 @@
+import { RebuildTextEditor } from "./RebuildTextEditor";
 import { useEffect, useState } from "react";
 import {
   inspectNativeText,
@@ -29,6 +30,7 @@ export function InlineTextEditor({
   commit: (bytes: Uint8Array) => Promise<void>;
   t: Translate;
 }) {
+  const [rebuild, setRebuild] = useState(false);
   const [targets, setTargets] = useState<Target[]>([]),
     [selected, setSelected] = useState<Target | null>(null),
     [text, setText] = useState(""),
@@ -106,116 +108,145 @@ export function InlineTextEditor({
   };
   return (
     <div className="ps-inline-native-layer">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="ps-inline-native-targets"
-        aria-label={t("تحديد النص للتعديل", "Select text to edit")}
-        onClick={(e) => {
-          if (e.target === e.currentTarget && !busy) {
-            setSelected(null);
-            setMessage(
-              t(
-                "هذا النص غير مدعوم للتعديل المحافظ. لم يتم تغيير الصفحة.",
-                "This area is not supported for conservative text editing. Page unchanged.",
-              ),
-            );
-          }
+      <button
+        className="ps-rebuild-toggle"
+        type="button"
+        aria-pressed={rebuild}
+        onClick={() => {
+          setSelected(null);
+          setRebuild((v) => !v);
         }}
       >
-        {targets.map((target, i) => (
-          <rect
-            key={i}
-            x={target.x}
-            y={target.y}
-            width={Math.max(4, target.w)}
-            height={Math.max(4, target.h)}
-            role="button"
-            tabIndex={busy ? -1 : 0}
-            aria-label={
-              t("تعديل النص ", "Edit text ") + (target.item.text || i + 1)
-            }
-            aria-pressed={selected === target}
-            fill={selected === target ? "#1677dd22" : "transparent"}
-            stroke={target.item.replaceable ? "#1677dd" : "#ad7c36"}
-            vectorEffect="non-scaling-stroke"
-            onClick={(e) => {
-              e.stopPropagation();
-              pick(target);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                pick(target);
-              }
-            }}
-          />
-        ))}
-      </svg>
-      {(loading || message) && (
-        <p className="ps-inline-native-message" role="status">
-          {loading ? t("جاري فحص النصوص…", "Inspecting text…") : message}
-        </p>
-      )}
-      {selected && (
-        <form
-          className="ps-inline-native-form"
-          style={{
-            left: `clamp(0px, ${(selected.x / width) * 100}%, max(0px, calc(100% - 280px)))`,
-            top: `${Math.min(85, Math.max(0, (selected.y / height) * 100))}%`,
-          }}
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (busy) return;
-            setBusy(true);
-            setMessage("");
-            try {
-              const result = await replaceNativeTextInPlace(
-                bytes,
-                source,
-                selected.item,
-                text,
-              );
-              await commit(result);
-              setSelected(null);
-            } catch (err) {
-              setMessage((err as Error).message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <input
-            autoFocus
-            aria-label={t("النص داخل الصفحة", "Text inside page")}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            maxLength={1000}
-            disabled={busy}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Escape" && !busy) {
-                e.preventDefault();
-                setSelected(null);
-              }
-            }}
-          />
-          <span>
-            {t(
-              "نفس الخط والحجم والموضع؛ النص الأطول يُرفض.",
-              "Same font, size and origin; wider text is refused.",
+        {rebuild
+          ? t("العودة للتعديل الأصلي", "Return to native editing")
+          : t(
+              "تفعيل إعادة البناء — دعم أوسع",
+              "Enable rebuild — broader support",
             )}
-          </span>
-          <button type="submit" disabled={busy}>
-            {t("حفظ النص", "Save text change")}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => setSelected(null)}
+      </button>
+      {rebuild ? (
+        <RebuildTextEditor
+          bytes={bytes}
+          source={source}
+          width={width}
+          height={height}
+          commit={commit}
+          t={t}
+        />
+      ) : (
+        <>
+          <svg
+            viewBox={`0 0 ${width} ${height}`}
+            className="ps-inline-native-targets"
+            aria-label={t("تحديد النص للتعديل", "Select text to edit")}
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !busy) {
+                setSelected(null);
+                setMessage(
+                  t(
+                    "هذا النص غير مدعوم للتعديل المحافظ. لم يتم تغيير الصفحة.",
+                    "This area is not supported for conservative text editing. Page unchanged.",
+                  ),
+                );
+              }
+            }}
           >
-            {t("إلغاء", "Cancel")}
-          </button>
-        </form>
+            {targets.map((target, i) => (
+              <rect
+                key={i}
+                x={target.x}
+                y={target.y}
+                width={Math.max(4, target.w)}
+                height={Math.max(4, target.h)}
+                role="button"
+                tabIndex={busy ? -1 : 0}
+                aria-label={
+                  t("تعديل النص ", "Edit text ") + (target.item.text || i + 1)
+                }
+                aria-pressed={selected === target}
+                fill={selected === target ? "#1677dd22" : "transparent"}
+                stroke={target.item.replaceable ? "#1677dd" : "#ad7c36"}
+                vectorEffect="non-scaling-stroke"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  pick(target);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    pick(target);
+                  }
+                }}
+              />
+            ))}
+          </svg>
+          {(loading || message) && (
+            <p className="ps-inline-native-message" role="status">
+              {loading ? t("جاري فحص النصوص…", "Inspecting text…") : message}
+            </p>
+          )}
+          {selected && (
+            <form
+              className="ps-inline-native-form"
+              style={{
+                left: `clamp(0px, ${(selected.x / width) * 100}%, max(0px, calc(100% - 280px)))`,
+                top: `${Math.min(85, Math.max(0, (selected.y / height) * 100))}%`,
+              }}
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (busy) return;
+                setBusy(true);
+                setMessage("");
+                try {
+                  const result = await replaceNativeTextInPlace(
+                    bytes,
+                    source,
+                    selected.item,
+                    text,
+                  );
+                  await commit(result);
+                  setSelected(null);
+                } catch (err) {
+                  setMessage((err as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <input
+                autoFocus
+                aria-label={t("النص داخل الصفحة", "Text inside page")}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                maxLength={1000}
+                disabled={busy}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape" && !busy) {
+                    e.preventDefault();
+                    setSelected(null);
+                  }
+                }}
+              />
+              <span>
+                {t(
+                  "نفس الخط والحجم والموضع؛ النص الأطول يُرفض.",
+                  "Same font, size and origin; wider text is refused.",
+                )}
+              </span>
+              <button type="submit" disabled={busy}>
+                {t("حفظ النص", "Save text change")}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setSelected(null)}
+              >
+                {t("إلغاء", "Cancel")}
+              </button>
+            </form>
+          )}
+        </>
       )}
     </div>
   );
