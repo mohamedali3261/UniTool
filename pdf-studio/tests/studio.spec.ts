@@ -850,13 +850,11 @@ test("toolbar text edits survive PDF export with annotations and protect JSON pr
     .drawText("Original 123", { x: 70, y: 650, size: 22, font });
   await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
   await page.goto("/pdf-studio/");
-  await page
-    .locator(".ps-upload input[type=file]")
-    .setInputFiles({
-      name: "inline-export.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from(await doc.save()),
-    });
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "inline-export.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await doc.save()),
+  });
   await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   await page.locator(".ps-interaction").click({ position: { x: 100, y: 300 } });
@@ -899,4 +897,190 @@ test("toolbar text edits survive PDF export with annotations and protect JSON pr
   expect(
     (await inspectNativeText(bytes, 0)).map((item) => item.text),
   ).not.toContain("Original 123");
+});
+
+test("explicit rebuild replaces unsupported Arabic visually, keeps other pages, and supports undo", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  const doc = await PDFDocument.load(
+    await readFile(fixture("arabic-native-movable.pdf")),
+  );
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  doc
+    .addPage([595, 842])
+    .drawText("Other page retained", { x: 50, y: 700, size: 20, font });
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "rebuild-arabic.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await doc.save()),
+  });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Enable rebuild — broader support",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("button", { name: "Rebuild text 1", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Rebuild replacement text", exact: true })
+    .fill("جديد");
+  await page
+    .getByRole("spinbutton", { name: "Rebuild region w", exact: true })
+    .fill("150");
+  await page
+    .getByRole("spinbutton", { name: "Rebuild region h", exact: true })
+    .fill("55");
+  await page
+    .getByRole("button", { name: "Apply rebuild", exact: true })
+    .click();
+  await expect(
+    page.getByRole("img", { name: "Rebuilt page preview", exact: true }),
+  ).toBeVisible();
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", { name: "Confirm rebuild", exact: true })
+    .click();
+  await expect(page.locator(".ps-rebuild-form")).toHaveCount(0, {
+    timeout: 30000,
+  });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await expect(
+    page.getByRole("button", { name: "Undo text edit", exact: true }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Finish editing", exact: true })
+    .click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export PDF", exact: true }).click();
+  const bytes = new Uint8Array(
+    await readFile((await (await download).path())!),
+  );
+  expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
+  const { inspectNativeText } = await import("../src/core/nativeText");
+  expect(await inspectNativeText(bytes, 0)).toHaveLength(0);
+  expect((await inspectNativeText(bytes, 1)).map((x) => x.text)).toContain(
+    "Other page retained",
+  );
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Undo text edit", exact: true })
+    .click();
+  await expect(page.locator(".ps-inline-native-targets rect")).toHaveCount(1, {
+    timeout: 30000,
+  });
+});
+
+test("rebuild lets a scanned page use a manual region and cancels without modifying the PDF", async ({
+  page,
+}) => {
+  await boot(page, "arabic-scanned.pdf", "en");
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Enable rebuild — broader support",
+      exact: true,
+    })
+    .click();
+  const svg = page.locator(".ps-rebuild-targets"),
+    box = (await svg.boundingBox())!;
+  await page.mouse.move(box.x + 60, box.y + 150);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 260, box.y + 220);
+  await page.mouse.up();
+  await expect(
+    page.getByRole("textbox", {
+      name: "Rebuild replacement text",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Rebuild replacement text", exact: true })
+    .fill("نص جديد");
+  await page
+    .getByRole("button", { name: "Apply rebuild", exact: true })
+    .click();
+  await expect(
+    page.getByRole("img", { name: "Rebuilt page preview", exact: true }),
+  ).toBeVisible();
+  page.once("dialog", (d) => d.dismiss());
+  await page
+    .getByRole("button", { name: "Confirm rebuild", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Back without applying", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", {
+      name: "Rebuild replacement text",
+      exact: true,
+    }),
+  ).toHaveValue("نص جديد");
+  await expect(
+    page.getByRole("button", { name: "Undo text edit", exact: true }),
+  ).toBeDisabled();
+});
+
+test("mobile rebuild supports touch-selected regions without horizontal overflow", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await boot(page, "arabic-scanned.pdf", "en");
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Enable rebuild — broader support",
+      exact: true,
+    })
+    .click();
+  const svg = page.locator(".ps-rebuild-targets");
+  await svg.scrollIntoViewIfNeeded();
+  const box = (await svg.boundingBox())!,
+    client = await context.newCDPSession(page);
+  const x = box.x + 40,
+    y = box.y + 160;
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: x + 150, y: y + 65 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await expect(
+    page.getByRole("textbox", {
+      name: "Rebuild replacement text",
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(
+    Number(
+      await page
+        .getByRole("spinbutton", { name: "Rebuild region w", exact: true })
+        .inputValue(),
+    ),
+  ).toBeGreaterThan(100);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+  ).toBe(false);
 });

@@ -134,7 +134,9 @@ export default function EditorPage({
         help={() => setHelp(true)}
         t={t}
         exportFile={async () => {
-          if (document.querySelector(".ps-inline-native-form")) {
+          if (
+            document.querySelector(".ps-inline-native-form, .ps-rebuild-form")
+          ) {
             notice(
               t(
                 "احفظ تعديل النص أو ألغِه قبل تصدير PDF.",
