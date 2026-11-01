@@ -1,3 +1,5 @@
+import { ScrollJourney } from "./components/scroll/ScrollJourney";
+import { useScrollMotion } from "./components/scroll/useScrollMotion";
 import { HeroMotion } from "./components/motion/HeroMotion";
 import "./hero.css";
 import { useEffect, useRef, useState } from "react";
@@ -42,6 +44,8 @@ export default function HomePage() {
     [paused, setPaused] = useState(
       () => stored("unitool-home-motion") === "paused",
     );
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollMotion(pageRef, paused);
   const menuRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const t = copy[lang];
@@ -111,7 +115,7 @@ export default function HomePage() {
     searchRef.current?.focus({ preventScroll: true });
   };
   return (
-    <div className={`home-page ${paused ? "motion-paused" : ""}`}>
+    <div ref={pageRef} className={`home-page ${paused ? "motion-paused" : ""}`}>
       <a href="#main" className="skip-link">
         {t.skip}
       </a>
@@ -223,7 +227,10 @@ export default function HomePage() {
                 {t.find}
                 <Command size={17} />
               </button>
-              <a className="hero-elements-link" href="/video-studio.html#elements">
+              <a
+                className="hero-elements-link"
+                href="/video-studio.html#elements"
+              >
                 {lang === "ar" ? "اكتشف مكتبة العناصر" : "Discover elements"}
                 <Layers3 size={15} />
               </a>
@@ -274,7 +281,12 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        <section className="home-section home-container" id="tools">
+        <ScrollJourney lang={lang} />
+        <section
+          data-scroll-scene
+          className="home-section home-container"
+          id="tools"
+        >
           <div className="section-heading">
             <div>
               <span className="section-eyebrow">{t.toolsEyebrow}</span>
@@ -325,6 +337,7 @@ export default function HomePage() {
         </section>
         <section
           className="home-section home-container studio-section"
+          data-scroll-scene
           id="studios"
         >
           <div className="section-heading">
@@ -334,13 +347,15 @@ export default function HomePage() {
               <p>{t.studioDesc}</p>
             </div>
             <span className="studio-count">
-              <i /> {String(studios.length + 1).padStart(2, "0")} CREATIVE SPACES
+              <i /> {String(studios.length + 1).padStart(2, "0")} CREATIVE
+              SPACES
             </span>
           </div>
           <div className="studio-grid">
             {studios.map((s, i) => (
               <article
                 key={s.id}
+                data-scroll-scene
                 id={s.id}
                 className={`studio-card studio-${s.id} home-art`}
                 style={{ "--studio-color": s.color } as React.CSSProperties}
@@ -387,7 +402,11 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-        <section className="home-section how-section" id="how">
+        <section
+          data-scroll-scene
+          className="home-section how-section"
+          id="how"
+        >
           <div className="home-container">
             <span className="section-eyebrow">{t.howEyebrow}</span>
             <h2>{t.howTitle}</h2>
@@ -414,7 +433,7 @@ export default function HomePage() {
             <p className="home-privacy-note">{t.note}</p>
           </div>
         </section>
-        <section className="home-container final-cta">
+        <section data-scroll-scene className="home-container final-cta">
           <span className="cta-asterisk" aria-hidden="true">
             ✳
           </span>

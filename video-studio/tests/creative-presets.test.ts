@@ -7,11 +7,11 @@ import { blankProject, newClip, type Asset } from "../src/types";
 import { validateProjectData } from "../src/lib/projectIO";
 import { sceneAt } from "../src/composition/scene";
 import { noise } from "../src/creative/renderers/common";
-test("36 creative presets are unique, persisted native layers with a real registry entry", () => {
-  assert.equal(creativeCatalog.length, 36);
-  assert.equal(new Set(creativeCatalog.map((x) => x[0])).size, 36);
+test("96 creative presets are unique, persisted native layers with a real registry entry", () => {
+  assert.equal(creativeCatalog.length, 96);
+  assert.equal(new Set(creativeCatalog.map((x) => x[0])).size, 96);
   const items = loadElements().filter((i) => i.id.startsWith("creative-"));
-  assert.equal(items.length, 36);
+  assert.equal(items.length, 96);
   for (const item of items) {
     assert.equal(item.animated, true);
     assert.ok(validCreative(item.layer?.creative));

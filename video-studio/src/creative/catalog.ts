@@ -1,3 +1,4 @@
+import { motionPack2 } from "./pack2/catalog";
 export const creativeCatalog = [
   ["scramble", "Text scramble · تشفير الحروف", "typography"],
   ["split", "Split reveal · كشف الكلمات بالقناع", "typography"],
@@ -35,6 +36,7 @@ export const creativeCatalog = [
   ["bounce", "Icon bounce · ارتداد مرن", "motion"],
   ["spinners", "Loading spinners · أقواس ونقط ونبض", "motion"],
   ["confetti", "Confetti particles · قصاصات نجاح", "motion"],
+  ...motionPack2,
 ] as const;
 export type CreativeId = (typeof creativeCatalog)[number][0];
 export type CreativeSettings = {
@@ -81,4 +83,7 @@ export const textCreativeIds = new Set<CreativeId>([
   "weight",
   "marker",
   "odometer",
+  ...motionPack2
+    .filter((entry) => entry[2] === "typography")
+    .map((entry) => entry[0]),
 ]);

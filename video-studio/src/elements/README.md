@@ -10,4 +10,7 @@
 
 Checks: `video-studio/tests/elements-insert.test.ts`, `src/pages/Home/tests/element-insertion.spec.ts`, plus the existing editor and homepage suites. Generated PNGs belong under ignored `test-results`.
 
-- The additional **حركات إبداعية · 36** filter exposes native animated text/background/UI/data/icon presets. The catalogue now totals 566 entries. Implementation, settings, Three.js/font assets and interactive-scene limitations: `../creative/README.md`.
+- The additional **حركات إبداعية · 36** filter exposes native animated text/background/UI/data/icon presets. The catalogue now totals 626 entries. Implementation, settings, Three.js/font assets and interactive-scene limitations: `../creative/README.md`.
+
+## Motion pack 2
+60 additional native animated elements are available under **الإضافات الجديدة · 60**; **حركات إبداعية · 96** includes both creative packs. See `video-studio/src/creative/pack2/README.md` for designs, editable settings, illustrative-data limitations and tests.

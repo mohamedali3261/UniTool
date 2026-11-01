@@ -100,7 +100,7 @@ export function CreativeControls({
               />
             </label>
           )}
-          {value.id === "donut" && (
+          {(value.id === "donut" || value.id === "p2-data-gauge") && (
             <label>
               نسبة التقدم
               <input
@@ -108,17 +108,21 @@ export function CreativeControls({
                 type="range"
                 min="0"
                 max="100"
-                value={value.value ?? 86}
+                value={value.value ?? (value.id === "p2-data-gauge" ? 72 : 86)}
                 onChange={(e) =>
                   onChange({
                     creative: { ...value, value: Number(e.target.value) },
                   })
                 }
               />
-              <output>{value.value ?? 86}%</output>
+              <output>
+                {value.value ?? (value.id === "p2-data-gauge" ? 72 : 86)}%
+              </output>
             </label>
           )}
-          {["line", "sparkline", "heatmap"].includes(value.id) && (
+          {(["line", "sparkline", "heatmap"].includes(value.id) ||
+            (value.id.startsWith("p2-data-") &&
+              value.id !== "p2-data-gauge")) && (
             <CreativeDataControl
               value={value}
               change={(creative) => onChange({ creative })}

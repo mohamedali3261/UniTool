@@ -1,6 +1,6 @@
 # Native creative motion
 
-36 editable presets live in the editor's **العناصر → حركات إبداعية · 36** filter. The complete shared catalogue contains 566 entries, including the previous 48-item video pack and 32 composition kits. This is not a separate landing page.
+96 editable presets live in the editor's **العناصر → حركات إبداعية · 96** filter. The complete shared catalogue contains 626 entries, including the previous 48-item video pack and 32 composition kits. This is not a separate landing page.
 
 ## Effects
 - Text: Arabic-safe scramble, whole-word masked reveal, single gradient sweep, variable font weight (100–900), configurable important-word marker and vertically rolling odometer digits (Latin/Arabic/Persian).
@@ -28,8 +28,11 @@ One 640×360 Three.js renderer is reused with deterministic poses; geometries/ma
 WebGL support, Canvas blur support and export throughput vary by device; no actual-device iOS/Android performance claim is made. UI assets are illustrative motion graphics, not DOM widgets. Large bundles still produce Vite's non-blocking size warning.
 
 ## Verification
-`video-studio/tests/creative-presets.test.ts`: registry uniqueness, bounded settings, all 36 insertion/project round trips, transition scene planning and deterministic noise.
+`video-studio/tests/creative-presets.test.ts`: registry uniqueness, bounded settings, all 96 insertion/project round trips, transition scene planning and deterministic noise.
 
-`video-studio/tests/browser/creative-presets.spec.ts`: 36 changing frames and deterministic rewind, actual WebGL draw calls, loaded local variable font faces, insertion/settings/save, real command palette, five native transitions with actual source images, downloaded/decoded moving WebM and MP4, 390px layout and editable chart data. Existing `creative.spec.ts` additionally checks decoded MP4/WebM compositing. Browser checks run with software SwiftShader, not a physical GPU/device.
+`video-studio/tests/browser/creative-presets.spec.ts`: 96 changing frames and deterministic rewind, actual WebGL draw calls, loaded local variable font faces, insertion/settings/save, real command palette, five native transitions with actual source images, downloaded/decoded moving WebM and MP4, 390px layout and editable chart data. Existing `creative.spec.ts` additionally checks decoded MP4/WebM compositing. Browser checks run with software SwiftShader, not a physical GPU/device.
 
-Latest verification: **127/127** Video Studio unit tests, **6/6** Elements unit tests, and **19/19** targeted browser checks (`creative-presets` + `creative.spec`) pass; TypeScript and production build pass. The broader 98-test run was not fully green. After targeted fixes/rechecks (including avoiding an always-mounted hidden dialog and sampling MP4 by actual decoded seeks), two local-video-import first-frame pixel assertions remain failing on the headless Chromium environment. No claim is made that the full browser suite passes; actual-device verification is still outstanding.
+Previous-pack verification: **127/127** Video Studio unit tests, **6/6** Elements unit tests, and **19/19** targeted browser checks (`creative-presets` + `creative.spec`) pass; TypeScript and production build pass. The broader 98-test run was not fully green. After targeted fixes/rechecks (including avoiding an always-mounted hidden dialog and sampling MP4 by actual decoded seeks), two local-video-import first-frame pixel assertions remain failing on the headless Chromium environment. No claim is made that the full browser suite passes; actual-device verification is still outstanding.
+
+## Second pack
+[Motion pack 2](pack2/README.md) adds 60 distinct designs across six ten-item families, with a dedicated **الإضافات الجديدة · 60** filter. The existing six text effects now coexist with ten additional effects. This pack adds no runtime dependencies.

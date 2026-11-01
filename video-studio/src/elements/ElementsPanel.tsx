@@ -18,9 +18,13 @@ export default function ElementsPanel({
   const [favorites, setFavorites] = useState(readFavorites),
     [onlyFavorites, setOnlyFavorites] = useState(false),
     [onlyNew, setOnlyNew] = useState(false),
-    [onlyCreative, setOnlyCreative] = useState(false);
+    [onlyCreative, setOnlyCreative] = useState(false),
+    [onlyPack2, setOnlyPack2] = useState(false);
   useEffect(() => saveFavorites(favorites), [favorites]);
-  useEffect(() => setLimit(12), [onlyFavorites, onlyNew]);
+  useEffect(
+    () => setLimit(12),
+    [onlyFavorites, onlyNew, onlyCreative, onlyPack2],
+  );
   const items = useMemo(loadElements, []);
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
@@ -30,6 +34,7 @@ export default function ElementsPanel({
   const filtered = items.filter(
     (i) =>
       (!onlyFavorites || favorites.includes(i.id)) &&
+      (!onlyPack2 || i.id.startsWith("creative-p2-")) &&
       (!onlyCreative || i.id.startsWith("creative-")) &&
       (!onlyNew || i.id.startsWith("video-")) &&
       (category === "all" || category === i.category) &&
@@ -53,9 +58,26 @@ export default function ElementsPanel({
       </button>
       <div className="studio-elements-quick">
         <button
+          aria-pressed={onlyPack2}
+          onClick={() => {
+            setOnlyPack2((v) => !v);
+            setOnlyCreative(false);
+            setOnlyNew(false);
+            setOnlyFavorites(false);
+            setCategory("all");
+            setSource("all");
+            setQuery("");
+            setLimit(12);
+          }}
+        >
+          الإضافات الجديدة ·{" "}
+          {items.filter((i) => i.id.startsWith("creative-p2-")).length}
+        </button>
+        <button
           aria-pressed={onlyCreative}
           onClick={() => {
             setOnlyCreative((v) => !v);
+            setOnlyPack2(false);
             setOnlyNew(false);
             setCategory("all");
             setSource("all");
@@ -63,13 +85,15 @@ export default function ElementsPanel({
             setLimit(12);
           }}
         >
-          حركات إبداعية · 36
+          حركات إبداعية ·{" "}
+          {items.filter((i) => i.id.startsWith("creative-")).length}
         </button>
         <button
           aria-pressed={onlyNew}
           onClick={() => {
             setOnlyNew((v) => !v);
             setOnlyCreative(false);
+            setOnlyPack2(false);
           }}
         >
           الجديد · {items.filter((i) => i.id.startsWith("video-")).length} عنصر

@@ -1,3 +1,5 @@
+import { drawPack2 } from "./pack2/render";
+import { packText } from "./pack2/text";
 import type { TextLayer } from "../types";
 import { textCreativeIds } from "./catalog";
 import { drawBackground } from "./renderers/backgrounds";
@@ -18,6 +20,18 @@ export function drawCreative(
     local = Math.max(0, time - t.start) * v.speed;
   c.shadowBlur = 0;
   if (textCreativeIds.has(v.id)) {
+    if (v.id.startsWith("p2-text-")) {
+      packText(
+        c,
+        v.id.slice(8),
+        text,
+        layout.size,
+        Math.min(c.canvas.width * 0.94, layout.width * 1.2),
+        local,
+        t.color,
+      );
+      return;
+    }
     drawCreativeText(
       c,
       t,
@@ -40,7 +54,8 @@ export function drawCreative(
   c.rect(0, 0, 960, 540);
   c.clip();
   const color = t.color;
-  if (["blob", "mesh", "grid", "aurora", "grain", "glass"].includes(v.id))
+  if (v.id.startsWith("p2-")) drawPack2(c, v.id, local, color, text, v);
+  else if (["blob", "mesh", "grid", "aurora", "grain", "glass"].includes(v.id))
     drawBackground(
       c,
       v.id,
