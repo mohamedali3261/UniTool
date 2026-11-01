@@ -30,7 +30,9 @@
     "prepare:pdf-studio": "node pdf-studio/scripts/prepare-assets.mjs",
     "predev": "npm run prepare:pdf-studio",
     "test:pdf-studio": "tsx --test pdf-studio/tests/*.test.ts",
-    "test:pdf-studio:browser": "playwright test --config pdf-studio/tests/playwright.config.ts"
+    "test:pdf-studio:browser": "playwright test --config pdf-studio/tests/playwright.config.ts",
+    "test:designcraft": "tsx --test designcraft/tests/*.test.ts",
+    "test:designcraft:browser": "playwright test --config designcraft/playwright.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

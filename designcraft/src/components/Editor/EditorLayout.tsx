@@ -1,3 +1,5 @@
+import {PackagingDialog} from "../../packaging/PackagingDialog";
+import {physicalCartonSvg} from "../../packaging/physicalSvg";
 import React, { useState, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
@@ -82,6 +84,7 @@ interface EditorLayoutProps {
   onCloseTab: (id: string) => void;
   onNewTab: () => void;
   onProjectUpdated?: (project: ProjectItem) => void;
+  onOpenPackagingProject?: (project: ProjectItem) => void;
 }
 
 export interface EditorLayoutHandle {
@@ -98,9 +101,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   onSelectTab,
   onCloseTab,
   onNewTab,
-  onProjectUpdated
+  onProjectUpdated,
+  onOpenPackagingProject
 }, ref) {
   const { t, lang } = useDcLang();
+  const [isPackagingOpen,setIsPackagingOpen]=useState(false);
 
   // State
   const [projectTitle, setProjectTitle] = useState(initialProject.title);
@@ -150,6 +155,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const recordHistory = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || isHistoryLockedRef.current) return;
+    canvas.getObjects().filter((o:any)=>o.lockMovementX && o.lockMovementY && String(o.id||'').startsWith('packaging-')).forEach(o=>canvas.bringToFront(o));
 
     const json = JSON.stringify(
       canvas.toJSON([
@@ -158,6 +164,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         'locked',
         'lockMovementX',
         'lockMovementY',
+      'lockScalingX',
+      'lockScalingY',
+      'selectable',
+      'evented',
         'lockRotation',
         'clipCornerTL',
         'clipCornerTR',
@@ -532,8 +542,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       'id',
       'name',
       'locked',
+      'lockRotation',
       'lockMovementX',
       'lockMovementY',
+      'lockScalingX',
+      'lockScalingY',
+      'selectable',
+      'evented',
       'clipCornerTL',
       'clipCornerTR',
       'clipCornerBR',
@@ -1188,6 +1203,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                   lockScalingX: next,
                   lockScalingY: next
                 });
+                if (String(found.rawObject.id||'').startsWith('packaging-')) found.rawObject.set({locked:next,selectable:!next,evented:!next});
                 canvas.renderAll();
                 updateLayersList();
                 recordHistory();
@@ -1343,8 +1359,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onQuickDownload={handleQuickExportPng}
         onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
         isSaving={isSaving}
-        width={canvasWidth}
-        height={canvasHeight}
+        width={Math.round(canvasWidth)}
+        height={Math.round(canvasHeight)}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isPropertiesOpen={isPropertiesOpen}
@@ -1353,6 +1369,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
       />
 
+      {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'مرجع العلبة':'Carton reference'} · {initialProject.packaging.size.width} × {initialProject.packaging.size.height} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button></div>}
       {/* 2. Open Design Tabs */}
       <DesignTabs
         tabs={tabs}
@@ -1557,6 +1574,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       )}
 
       {/* Modals */}
+      {isPackagingOpen && initialProject.packaging && <PackagingDialog initial={initialProject.packaging.size} onClose={()=>setIsPackagingOpen(false)} onCreate={p=>{persistProject();setIsPackagingOpen(false);onOpenPackagingProject?.(p);}}/>}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -1573,7 +1591,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         }}
         onExportSvg={() => {
           if (!fabricCanvasRef.current) return '';
-          return exportCanvasSvg(fabricCanvasRef.current, canvasWidth, canvasHeight);
+          const svg=exportCanvasSvg(fabricCanvasRef.current, canvasWidth, canvasHeight);
+          return initialProject.packaging ? physicalCartonSvg(svg,initialProject.packaging.size,canvasWidth,canvasHeight):svg;
         }}
         onExportPdf={async (filename) => {
           if (!fabricCanvasRef.current) return;

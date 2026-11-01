@@ -29,6 +29,7 @@ export interface ProjectItem {
   pages?: CanvasPage[];
   thumbnail?: string;
   category: string;
+  packaging?: {kind:'reverse-tuck';size:import('./packaging/geometry').CartonSize;version:1};
   createdAt: number;
   updatedAt: number;
 }

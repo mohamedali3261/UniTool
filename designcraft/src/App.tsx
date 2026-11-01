@@ -200,11 +200,12 @@ export default function App() {
           initialProject={activeProject}
           onBackToDashboard={handleBackToDashboard}
           onShowToast={showToast}
-          tabs={openTabs.map(({ id, title, width, height }) => ({ id, title, width, height }))}
+          tabs={openTabs.map(({ id, title, width, height }) => ({ id, title, width:Math.round(width), height:Math.round(height) }))}
           activeTabId={activeProject.id}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
           onNewTab={handleNewTab}
+          onOpenPackagingProject={openProjectInTab}
           onProjectUpdated={(project) => {
             setOpenTabs((prev) => prev.map((p) => (p.id === project.id ? project : p)));
           }}

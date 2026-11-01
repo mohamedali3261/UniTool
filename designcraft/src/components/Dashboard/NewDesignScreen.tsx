@@ -1,3 +1,4 @@
+import {PackagingEntry} from "../../packaging/PackagingEntry";
 import React, { useState, useEffect, useRef } from 'react';
 import { ProjectItem, DimensionPreset } from '../../types';
 import { DIMENSION_PRESETS } from '../../data/presets';
@@ -394,6 +395,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
           {/* Create New Design */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
+              <PackagingEntry onCreate={onOpenProject}/>
               {/* Custom Dimension Box */}
               <section className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -914,7 +916,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                               className="w-12 h-12"
                             />
                             <span className="text-[10px] font-mono text-slate-400">
-                              {p.width} × {p.height} px
+                              {p.packaging ? `${p.packaging.size.width} × ${p.packaging.size.height} × ${p.packaging.size.depth} mm` : `${Math.round(p.width)} × ${Math.round(p.height)} px`}
                             </span>
                           </div>
                         )}
@@ -936,7 +938,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             {p.title}
                           </h4>
                           <span className="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20 shrink-0">
-                            {p.width}×{p.height}
+                            {p.packaging ? `${p.packaging.size.width}×${p.packaging.size.height}×${p.packaging.size.depth} mm` : `${Math.round(p.width)}×${Math.round(p.height)}`}
                           </span>
                         </div>
 
