@@ -131,3 +131,4 @@
   outline: 2px solid #9ce1bd;
   outline-offset: 2px;
 }
+.studio-elements-quick{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.studio-elements-quick button{min-height:36px;flex:1;font-size:11px}.studio-elements-quick button[aria-pressed=true]{background:#204e43;color:#a5f0d1;border-color:#73bba0}.studio-elements-grid .studio-element-favorite{background:transparent;color:#b9cfbf;border:0;font-size:11px;padding:4px 8px;min-height:32px}.studio-elements-grid .studio-element-favorite[aria-pressed=true]{color:#ffc577}

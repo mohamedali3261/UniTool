@@ -2,7 +2,7 @@ import type { LibraryElement, CategoryId } from "../types";
 export function classify(item: LibraryElement): CategoryId {
   if (item.kind === "group") return "kits";
   if (item.kind === "scene") return "scenes";
-  if (item.kind === "svg") return "backgrounds";
+  if (item.kind === "svg") return item.category;
   const layer = item.layer!;
   if (layer.frames?.length || layer.counter) return "motion";
   if (!layer.box) return "typography";

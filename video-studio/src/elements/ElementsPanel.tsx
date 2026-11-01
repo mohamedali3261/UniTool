@@ -1,4 +1,8 @@
-import { useMemo, useState } from "react";
+import {
+  readFavorites,
+  saveFavorites,
+} from "../../../src/pages/Elements/lib/preferences";
+import { useEffect, useMemo, useState } from "react";
 import { loadElements, categories } from "../../../src/pages/Elements/registry";
 import { ElementPreview } from "../../../src/pages/Elements/components/ElementPreview";
 import type { LibraryElement } from "../../../src/pages/Elements/types";
@@ -11,6 +15,11 @@ export default function ElementsPanel({
   suspended: boolean;
 }) {
   const [live, setLive] = useState(true);
+  const [favorites, setFavorites] = useState(readFavorites),
+    [onlyFavorites, setOnlyFavorites] = useState(false),
+    [onlyNew, setOnlyNew] = useState(false);
+  useEffect(() => saveFavorites(favorites), [favorites]);
+  useEffect(() => setLimit(12), [onlyFavorites, onlyNew]);
   const items = useMemo(loadElements, []);
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
@@ -19,6 +28,8 @@ export default function ElementsPanel({
     [seconds, setSeconds] = useState(5);
   const filtered = items.filter(
     (i) =>
+      (!onlyFavorites || favorites.includes(i.id)) &&
+      (!onlyNew || i.id.startsWith("video-")) &&
       (category === "all" || category === i.category) &&
       (source === "all" || source === i.source) &&
       `${i.name} ${i.sourceName}`
@@ -38,6 +49,17 @@ export default function ElementsPanel({
       >
         {live ? "إيقاف المعاينات الحية" : "تشغيل المعاينات الحية"}
       </button>
+      <div className="studio-elements-quick">
+        <button aria-pressed={onlyNew} onClick={() => setOnlyNew((v) => !v)}>
+          الجديد · {items.filter((i) => i.id.startsWith("video-")).length} عنصر
+        </button>
+        <button
+          aria-pressed={onlyFavorites}
+          onClick={() => setOnlyFavorites((v) => !v)}
+        >
+          المفضلة ({favorites.length})
+        </button>
+      </div>
       <label>
         بحث في عناصر القوالب
         <input
@@ -123,6 +145,20 @@ export default function ElementsPanel({
                     : "مشهد مركّب"}
             </small>
             <strong>{item.name}</strong>
+            <button
+              className="studio-element-favorite"
+              aria-label={`حفظ ${item.name} في المفضلة`}
+              aria-pressed={favorites.includes(item.id)}
+              onClick={() =>
+                setFavorites((old) =>
+                  old.includes(item.id)
+                    ? old.filter((id) => id !== item.id)
+                    : [...old, item.id],
+                )
+              }
+            >
+              {favorites.includes(item.id) ? "♥ محفوظ" : "♡ حفظ"}
+            </button>
             <button
               disabled={
                 !Number.isFinite(seconds) || seconds < 0.1 || seconds > 30

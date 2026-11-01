@@ -39,7 +39,6 @@ async function openEditor(page: import("@playwright/test").Page, suffix = "") {
   await expect(page.locator(".editor-shell")).toBeVisible();
 }
 async function elements(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "وسائط", exact: true }).click();
   await page.getByRole("button", { name: "العناصر", exact: true }).click();
   await expect(page.locator(".studio-elements-grid article")).toHaveCount(12);
 }
@@ -54,7 +53,10 @@ test("insert a real text layer, edit it immediately, undo and preserve existing 
     .locator(".studio-elements")
     .getByLabel("القسم", { exact: true })
     .selectOption("typography");
-  await page.locator(".studio-elements-grid button").first().click();
+  await page
+    .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+    .first()
+    .click();
   const content = page.getByRole("textbox", {
     name: "محتوى النص",
     exact: true,
@@ -85,7 +87,10 @@ test("SVG adds an overlay, supports source editing and rejects executable conten
     .locator(".studio-elements")
     .getByLabel("القالب", { exact: true })
     .selectOption("nova");
-  await page.locator(".studio-elements-grid button").first().click();
+  await page
+    .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+    .first()
+    .click();
   await expect(page.locator("#studio-layers")).toHaveAttribute("open", "");
   await page.locator(".studio-svg-editor summary").click();
   const select = page.getByLabel("عنصر SVG للتعديل", { exact: true });
@@ -123,33 +128,22 @@ test("code scene appends and scene/accent controls remain editable", async ({
     .locator(".studio-elements")
     .getByLabel("القسم", { exact: true })
     .selectOption("scenes");
-  await page.locator(".studio-elements-grid button").first().click();
+  await page
+    .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+    .first()
+    .click();
   await expect(page.locator("#studio-inspector")).toContainText("مشهد الواجهة");
   await expect(
     page.getByRole("textbox", { name: "اسم المشروع", exact: true }),
   ).toHaveValue("Existing project");
 });
-test("standalone library links to non-destructive project choice before insertion", async ({
+test("legacy library links open the elements section directly in the video editor", async ({
   page,
 }) => {
   await page.goto(base + "/elements.html");
-  await page
-    .locator(".element-category-grid")
-    .getByRole("button", { name: /نصوص وعناوين/ })
-    .click();
-  await page.locator(".element-inspect").first().click();
-  const link = page.getByRole("link", {
-    name: /إضافة للتايم لاين في الاستوديو/,
-  });
-  const url = await link.getAttribute("href");
-  expect(url).toContain("?element=");
-  await page.goto(base + url);
-  await expect(page.locator(".element-handoff")).toBeVisible();
-  await openEditor(page, url!.slice(url!.indexOf("?")));
-  await expect(
-    page.getByRole("textbox", { name: "محتوى النص", exact: true }),
-  ).toBeVisible();
-  await expect(page).not.toHaveURL(/element=/);
+  await expect(page).toHaveURL(/video-studio.html#elements$/);
+  await expect(page.locator(".editor-shell")).toBeVisible();
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(12);
 });
 for (const width of [320, 390])
   test(`mobile ${width}: add and edit a real layer without overflow`, async ({
@@ -162,7 +156,10 @@ for (const width of [320, 390])
       .locator(".studio-elements")
       .getByLabel("القسم", { exact: true })
       .selectOption("typography");
-    await page.locator(".studio-elements-grid button").first().click();
+    await page
+      .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+      .first()
+      .click();
     const content = page.getByRole("textbox", {
       name: "محتوى النص",
       exact: true,
@@ -185,7 +182,10 @@ test("ready compositions insert independently editable parts in a single undo st
     .locator(".studio-elements")
     .getByLabel("القسم", { exact: true })
     .selectOption("kits");
-  await page.locator(".studio-elements-grid button").first().click();
+  await page
+    .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+    .first()
+    .click();
   await expect(page.locator(".text-object-list")).toContainText("اسم المتحدث");
   await expect(
     page.getByRole("textbox", { name: "اسم المشروع", exact: true }),

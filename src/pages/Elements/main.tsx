@@ -1,5 +1,2 @@
-import { createRoot } from "react-dom/client";
-import ElementsPage from "./index";
-import "../Home/home.css";
-import "./elements.css";
-createRoot(document.getElementById("root")!).render(<ElementsPage />);
+// Legacy bookmarks now enter the actual video editor, not a separate catalogue page.
+window.location.replace("/video-studio.html#elements");

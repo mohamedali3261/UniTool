@@ -129,7 +129,7 @@ export default function HomePage() {
           <nav className="desktop-home-nav" aria-label={t.menu}>
             <a href="#tools">{t.navTools}</a>
             <a href="#studios">{t.navStudios}</a>
-            <a href="/elements.html">
+            <a href="/video-studio.html#elements">
               {lang === "ar" ? "العناصر" : "Elements"}
             </a>
             <a href="#how">{t.navHow}</a>
@@ -223,7 +223,7 @@ export default function HomePage() {
                 {t.find}
                 <Command size={17} />
               </button>
-              <a className="hero-elements-link" href="/elements.html">
+              <a className="hero-elements-link" href="/video-studio.html#elements">
                 {lang === "ar" ? "اكتشف مكتبة العناصر" : "Discover elements"}
                 <Layers3 size={15} />
               </a>

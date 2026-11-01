@@ -22,14 +22,10 @@ import {
 import { Asset, Project, TextLayer, Clip } from "../../types";
 const ElementsPanel = lazy(() => import("../../elements/ElementsPanel"));
 export type Tab =
-  | "media"
-  | "audio"
-  | "text"
-  | "filters"
-  | "effects"
-  | "stickers";
+  "elements" | "media" | "audio" | "text" | "filters" | "effects" | "stickers";
 export const tabs: { id: Tab; label: string; icon: typeof Film }[] = [
   { id: "media", label: "وسائط", icon: Film },
+  { id: "elements", label: "العناصر", icon: Layers },
   { id: "audio", label: "الصوت", icon: Music2 },
   { id: "text", label: "النصوص", icon: Type },
   { id: "filters", label: "الفلاتر", icon: SlidersHorizontal },
@@ -89,9 +85,7 @@ function LibraryView({
   onSoundAdd: (p: SoundPreset) => Promise<void>;
   onSoundProject: (patch: Partial<Project>) => void;
 }) {
-  const [source, setSource] = useState<"local" | "pexels" | "elements">(
-    "local",
-  );
+  const [source, setSource] = useState<"local" | "pexels">("local");
   const FileSection = tab === "audio" ? "details" : "div";
   return (
     <aside
@@ -126,16 +120,9 @@ function LibraryView({
             <Film size={15} />
             مكتبة Pexels
           </button>
-          <button
-            aria-pressed={source === "elements"}
-            onClick={() => setSource("elements")}
-          >
-            <Layers size={15} />
-            العناصر
-          </button>
         </div>
       )}
-      {tab === "media" && source === "elements" && (
+      {tab === "elements" && (
         <Suspense fallback={<p role="status">تحميل العناصر…</p>}>
           <ElementsPanel onAdd={onElementAdd} suspended={suspendPreviews} />
         </Suspense>
