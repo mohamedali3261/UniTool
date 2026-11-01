@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { InlineTextEditor } from "./InlineTextEditor";
 import { TextLayer } from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
 import type { PdfDoc } from "../../core/pdf";
@@ -16,6 +17,10 @@ import {
 } from "../../core/types";
 interface Props {
   doc: PdfDoc;
+  inlineEdit?: {
+    bytes: Uint8Array;
+    commit: (bytes: Uint8Array) => Promise<void>;
+  };
   page: PageState;
   tool: Tool;
   zoom: number;
@@ -32,6 +37,7 @@ interface Props {
 }
 export function DocumentCanvas({
   doc,
+  inlineEdit,
   page,
   tool,
   zoom,
@@ -356,6 +362,16 @@ export function DocumentCanvas({
               />
             ))}
           </svg>
+          {ready && inlineEdit && (
+            <InlineTextEditor
+              bytes={inlineEdit.bytes}
+              source={page.source}
+              width={size.w}
+              height={size.h}
+              commit={inlineEdit.commit}
+              t={t}
+            />
+          )}
           {!ready && !error && (
             <div className="ps-render-loading">
               {t("جاري عرض الأصل…", "Rendering original…")}

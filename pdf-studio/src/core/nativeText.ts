@@ -183,3 +183,43 @@ export async function isolateNativeText(
   );
   return output.save();
 }
+
+/** In-place replacement only: same operators/font/size/origin, no reflow or scaling. */
+export async function replaceNativeTextInPlace(
+  bytes: Uint8Array,
+  pageIndex: number,
+  target: NativeTextItem,
+  text: string,
+) {
+  const valid = (await inspectNativeText(bytes, pageIndex)).find(
+    (i) => i.stream === target.stream && i.block === target.block,
+  );
+  if (!valid?.replaceable || !/^[\x20-\x7E]{1,1000}$/.test(text))
+    throw Error("Unsupported replacement / النص أو ترميز الخط غير مدعوم");
+  const doc = await PDFDocument.load(bytes, { updateMetadata: false });
+  const stream = streams(doc, pageIndex)[target.stream]!;
+  const match = blocks(
+    new TextDecoder("latin1").decode(decodePDFRawStream(stream).decode()),
+  )[target.block];
+  const resources = doc
+    .getPage(pageIndex)
+    .node.Resources()!
+    .lookup(PDFName.of("Font"), PDFDict);
+  const dict = doc.context.lookup(
+    resources.get(PDFName.of(match[1]))!,
+    PDFDict,
+  );
+  const base = dict.get(PDFName.of("BaseFont"))!.toString().slice(1);
+  const { StandardFonts } = await import("pdf-lib");
+  const font = await doc.embedFont(
+    base as (typeof StandardFonts)[keyof typeof StandardFonts],
+  );
+  if (
+    font.widthOfTextAtSize(text, 1) >
+    font.widthOfTextAtSize(valid.text, 1) + 0.001
+  )
+    throw Error(
+      "النص الجديد يتجاوز عرض النص الأصلي؛ اختصره للحفاظ على التخطيط. / Replacement exceeds original width; shorten it to preserve layout.",
+    );
+  return editNativeText(bytes, pageIndex, valid, { text, dx: 0, dy: 0 });
+}

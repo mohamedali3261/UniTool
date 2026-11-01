@@ -104,14 +104,12 @@ test("native isolation keeps only the exact requested block and page geometry", 
   const { isolateNativeText } = await import("../src/core/nativeText");
   const doc = await PDFDocument.load(await fixture());
   doc.getPage(0).setCropBox(10, 30, 400, 700);
-  doc
-    .getPage(0)
-    .drawText("Second block", {
-      x: 70,
-      y: 500,
-      size: 18,
-      font: await doc.embedFont(StandardFonts.Helvetica),
-    });
+  doc.getPage(0).drawText("Second block", {
+    x: 70,
+    y: 500,
+    size: 18,
+    font: await doc.embedFont(StandardFonts.Helvetica),
+  });
   const bytes = await doc.save(),
     items = await inspectNativeText(bytes, 0);
   assert.equal(items.length, 2);
@@ -136,4 +134,35 @@ test("unknown inherited transforms are refused rather than shown at incorrect po
     doc.context.register(doc.context.flateStream("2 0 0 2 10 20 cm")),
   );
   assert.equal((await inspectNativeText(await doc.save(), 0)).length, 0);
+});
+
+test("in-place text replacement keeps original operators and refuses overflow or unsupported glyphs", async () => {
+  const { replaceNativeTextInPlace } = await import("../src/core/nativeText");
+  const bytes = await fixture(),
+    [item] = await inspectNativeText(bytes, 0);
+  const edited = await replaceNativeTextInPlace(bytes, 0, item, "New 123");
+  const before = await content(bytes),
+    after = await content(edited);
+  assert.equal(
+    before.replace(/<[0-9A-Fa-f]*>\s+Tj/, "TEXT"),
+    after.replace(/<[0-9A-Fa-f]*>\s+Tj/, "TEXT"),
+  );
+  assert.equal((await inspectNativeText(edited, 0))[0].text, "New 123");
+  await assert.rejects(
+    replaceNativeTextInPlace(
+      bytes,
+      0,
+      item,
+      "This replacement is much wider than the original text",
+    ),
+    /exceeds original width/,
+  );
+  await assert.rejects(
+    replaceNativeTextInPlace(bytes, 0, item, "عربي"),
+    /Unsupported replacement/,
+  );
+  await assert.rejects(
+    replaceNativeTextInPlace(bytes, 0, item, ""),
+    /Unsupported replacement/,
+  );
 });

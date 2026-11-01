@@ -3,6 +3,7 @@ import { ShieldCheck, Check, FileText } from "lucide-react";
 import type { useSession } from "../../app/useSession";
 import type { Translate, Annotation, PageText, Tool } from "../../core/types";
 import { uid } from "../../core/types";
+import { useNativeSource } from "../../app/useNativeSource";
 import { saveBlob } from "../../core/pdf";
 import { parseProject } from "../../core/project";
 import { DocumentBar } from "./DocumentBar";
@@ -39,13 +40,18 @@ export default function EditorPage({
     [query, setQuery] = useState(""),
     [panel, setPanel] = useState(""),
     [help, setHelp] = useState(false),
+    [inlineEditing, setInlineEditing] = useState(false),
     [nativeEdit, setNativeEdit] = useState<{
       bytes: Uint8Array;
       pageIndex: number;
     } | null>(null),
     [busy, setBusy] = useState(""),
     [removePage, setRemovePage] = useState<string | null>(null);
-  const s = session!,
+  const native = useNativeSource(session!, () => {
+    setDirty(true);
+    setTexts({});
+  });
+  const s = { ...session!, ...native.source },
     page = edit.pages.find((p) => p.id === current) || edit.pages[0],
     index = edit.pages.findIndex((p) => p.id === page.id),
     onExtract = useCallback(
@@ -128,6 +134,15 @@ export default function EditorPage({
         help={() => setHelp(true)}
         t={t}
         exportFile={async () => {
+          if (document.querySelector(".ps-inline-native-form")) {
+            notice(
+              t(
+                "احفظ تعديل النص أو ألغِه قبل تصدير PDF.",
+                "Save or cancel the active text edit before exporting PDF.",
+              ),
+            );
+            return;
+          }
           setBusy(t("تصدير…", "Exporting…"));
           try {
             const { exportPdf } = await import("../../core/export");
@@ -154,6 +169,15 @@ export default function EditorPage({
           }
         }}
         exportProject={() => {
+          if (native.modified) {
+            notice(
+              t(
+                "احفظ PDF المعدل وافتحه أولًا قبل حفظ مشروع الإضافات؛ المشروع لا يتضمن تعديلات النص الأصلي.",
+                "Save and reopen the edited PDF before saving an annotation project; projects do not include native text edits.",
+              ),
+            );
+            return;
+          }
           saveBlob(
             new Blob(
               [
@@ -175,6 +199,15 @@ export default function EditorPage({
           );
         }}
         importProject={async (file) => {
+          if (native.modified) {
+            notice(
+              t(
+                "احفظ PDF المعدل وافتحه أولًا قبل استعادة مشروع.",
+                "Save and reopen the edited PDF before restoring a project.",
+              ),
+            );
+            return;
+          }
           try {
             if (file.size > 5 * 1024 * 1024)
               throw Error("Maximum project size: 5 MB");
@@ -218,18 +251,60 @@ export default function EditorPage({
         zoom={zoom}
         setZoom={setZoom}
         rotate={() => action("rotate", page.id)}
+        editing={inlineEditing}
+        toggleEditing={() => {
+          setInlineEditing((v) => !v);
+          setTool("select");
+          setSelected(null);
+        }}
         panel={panel}
         setPanel={setPanel}
         t={t}
       />
+      {inlineEditing && (
+        <div
+          className="ps-inline-edit-toolbar"
+          role="region"
+          aria-label={t("وضع تعديل النص", "Text edit mode")}
+        >
+          <span>
+            {t(
+              "اضغط إطار النص لتعديله في نفس موضعه. الأزرق قابل للتعديل؛ البرتقالي غير مدعوم لتغيير الحروف.",
+              "Tap a text frame to edit in place. Blue supports replacement; amber does not support character changes.",
+            )}
+          </span>
+          <button
+            disabled={!native.canUndo || native.busy}
+            onClick={async () => {
+              try {
+                await native.undo();
+              } catch (e) {
+                notice((e as Error).message);
+              }
+            }}
+          >
+            {t("تراجع عن تعديل النص", "Undo text edit")}
+          </button>
+          <button onClick={() => setInlineEditing(false)}>
+            {t("إنهاء التعديل", "Finish editing")}
+          </button>
+        </div>
+      )}
       <div
         className={"ps-editor-layout panel-" + panel}
-        inert={!!busy || state.loading}
+        inert={!!busy || state.loading || native.busy}
       >
         <aside className="ps-left-sidebar">
           <div className="ps-tool-section">
             <div className="ps-section-eyebrow">MARK IT. MAKE IT YOURS.</div>
-            <ToolRail tool={tool} setTool={setTool} t={t} />
+            <ToolRail
+              tool={tool}
+              setTool={(value) => {
+                setInlineEditing(false);
+                setTool(value);
+              }}
+              t={t}
+            />
             <button
               className="ps-button"
               onClick={async () => {
@@ -290,6 +365,26 @@ export default function EditorPage({
         </aside>
         <DocumentCanvas
           doc={s.doc}
+          inlineEdit={
+            inlineEditing
+              ? {
+                  bytes: s.bytes,
+                  commit: async (bytes) => {
+                    if (
+                      edit.pages.filter((p) => p.source === page.source)
+                        .length > 1
+                    )
+                      throw Error(
+                        t(
+                          "هذه الصفحة مكررة من نفس المصدر. صدّر PDF وافتحه أولًا لتعديل نسخة واحدة فقط.",
+                          "This source page is duplicated. Export and reopen the PDF before editing just one copy.",
+                        ),
+                      );
+                    await native.apply(bytes);
+                  },
+                }
+              : undefined
+          }
           page={page}
           tool={tool}
           zoom={zoom}
