@@ -1,7 +1,55 @@
-import { PenTool, Film, AudioLines, Braces, Table2 } from "lucide-react";
+import {
+  PenTool,
+  Film,
+  AudioLines,
+  Braces,
+  Table2,
+  FileText,
+} from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
-  {id:'sheets',href:'/excel-studio/',icon:Table2,name:{ar:'استوديو الجداول',en:'Sheet Studio'},eyebrow:'SPREADSHEETS, SIMPLIFIED.',description:{ar:'أرقام مرتبة. من غير تعقيد.',en:'Clear numbers. Without the complexity.'},detail:{ar:'صمم جداولك، تعلم المعادلات بأمثلة، وابدأ من قوالب جاهزة مع استيراد وتصدير Excel.',en:'Build tables, learn formulas with examples, use ready-made templates and import or export Excel files.'},tags:{ar:['جداول ومعادلات','قوالب جاهزة','تصدير Excel'],en:['Tables & formulas','Templates','Excel export']},action:{ar:'افتح استوديو الجداول',en:'Open Sheet Studio'},color:'#a9cfa8'},
+  {
+    id: "pdf",
+    href: "/pdf-studio/",
+    icon: FileText,
+    name: { ar: "استوديو PDF", en: "PDF Studio" },
+    eyebrow: "EVERY WORD. EVERY DETAIL.",
+    description: {
+      ar: "مستندك، بكل تفاصيله.",
+      en: "Your document. Every little detail.",
+    },
+    detail: {
+      ar: "اقرأ النص العربي، أضف التعليقات، ورتب الصفحات مع OCR محلي ومراجعة النتائج.",
+      en: "Read Arabic text, annotate and organize pages with local OCR and reviewable results.",
+    },
+    tags: {
+      ar: ["قراءة عربي", "تعليقات وصفحات", "OCR محلي"],
+      en: ["Arabic reading", "Annotations & pages", "Local OCR"],
+    },
+    action: { ar: "افتح استوديو PDF", en: "Open PDF Studio" },
+    color: "#deb58f",
+  },
+  {
+    id: "sheets",
+    href: "/excel-studio/",
+    icon: Table2,
+    name: { ar: "استوديو الجداول", en: "Sheet Studio" },
+    eyebrow: "SPREADSHEETS, SIMPLIFIED.",
+    description: {
+      ar: "أرقام مرتبة. من غير تعقيد.",
+      en: "Clear numbers. Without the complexity.",
+    },
+    detail: {
+      ar: "صمم جداولك، تعلم المعادلات بأمثلة، وابدأ من قوالب جاهزة مع استيراد وتصدير Excel.",
+      en: "Build tables, learn formulas with examples, use ready-made templates and import or export Excel files.",
+    },
+    tags: {
+      ar: ["جداول ومعادلات", "قوالب جاهزة", "تصدير Excel"],
+      en: ["Tables & formulas", "Templates", "Excel export"],
+    },
+    action: { ar: "افتح استوديو الجداول", en: "Open Sheet Studio" },
+    color: "#a9cfa8",
+  },
   {
     id: "design",
     href: "/designcraft.html",
@@ -86,7 +134,6 @@ export const studios = [
     action: { ar: "افتح القارئ", en: "Open audio reader" },
     color: "#ffc0a2",
   },
-
 ] as const;
 export const copy = {
   ar: {

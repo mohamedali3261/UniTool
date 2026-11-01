@@ -240,7 +240,11 @@ test("hero cursor clicks, opens each tool in order, then advances, with useful p
   const ids = await page
     .locator(".film-tool")
     .evaluateAll((nodes) =>
-      nodes.map((n) => n.getAttribute("href")!.split("#")[1]),
+      nodes.map((n) =>
+        n.getAttribute("href") === "/pdf-studio/"
+          ? "pdfStudio"
+          : n.getAttribute("href")!.split("#")[1],
+      ),
     );
   for (const id of ids.slice(0, 3)) {
     await expect(page.locator(`.film-preview[data-tool="${id}"]`)).toBeVisible({
