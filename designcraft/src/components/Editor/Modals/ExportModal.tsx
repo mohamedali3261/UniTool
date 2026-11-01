@@ -17,7 +17,7 @@ interface ExportModalProps {
   onClose: () => void;
   onExport: (format: 'png' | 'jpeg' | 'webp', quality: number, multiplier: number) => string;
   onExportSvg?: () => string;
-  onExportPdf?: (title: string) => void;
+  onExportPdf?: (title: string) => void | Promise<void>;
   defaultTitle: string;
   canvasWidth: number;
   canvasHeight: number;
@@ -41,22 +41,24 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [multiplier, setMultiplier] = useState(1);
   const [fileName, setFileName] = useState(defaultTitle || 'design');
   const [isCopied, setIsCopied] = useState(false);
+  const [exporting,setExporting]=useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !exporting) onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose,exporting]);
 
   if (!isOpen) return null;
 
   const finalWidth = canvasWidth * multiplier;
   const finalHeight = canvasHeight * multiplier;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if(exporting)return;setExporting(true);
     try {
       if (format === 'svg') {
         const svgContent = onExportSvg ? onExportSvg() : '';
@@ -75,7 +77,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         URL.revokeObjectURL(url);
       } else if (format === 'pdf') {
         if (onExportPdf) {
-          onExportPdf(fileName.trim() || 'my-design');
+          await onExportPdf(fileName.trim() || 'my-design');
         }
       } else {
         const dataUrl = onExport(format, quality, multiplier);
@@ -102,7 +104,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     } catch (err) {
       console.error(err);
       onShowToast(t.exError, t.exErrorHint, 'error');
-    }
+    } finally {setExporting(false);}
   };
 
   const handleCopyToClipboard = async () => {
@@ -253,6 +255,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           <button
             type="button"
+            disabled={exporting}
             onClick={handleDownload}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-sky-500/25 transition transform active:scale-95"
           >

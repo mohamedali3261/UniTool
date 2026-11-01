@@ -350,3 +350,4 @@
     font-size: 12px;
   }
 }
+.carton-print{max-width:700px}.carton-print-body{padding:24px;line-height:1.9}.carton-print-body>strong{display:block;color:#c3bcff;font-size:24px}.carton-print-body p{font-size:13px;color:#b9c7dd}.carton-print-body select{display:block;width:100%;padding:12px;background:#162238;border:1px solid #46597a;color:#fff;border-radius:8px;margin-top:6px}.carton-print-body [role=alert]{color:#ffadbb}.carton-print-body ul{font-size:12px;direction:ltr}

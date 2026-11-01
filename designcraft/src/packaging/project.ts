@@ -1,3 +1,5 @@
+import { withCartonPrecision } from "./precision";
+import { cartonMask } from "./boundary";
 import { fabric } from "fabric";
 import type { ProjectItem } from "../types";
 import {
@@ -32,7 +34,7 @@ export function createCartonProject(
         }),
     ),
   ].map((o, i) => ({
-    ...o.toObject(),
+    ...withCartonPrecision(() => o.toObject()),
     id: `packaging-${i === 0 ? "cut" : `fold-${i}`}`,
     name: i === 0 ? "Cut / قص" : `Fold / طي ${i}`,
     locked: true,
@@ -53,6 +55,11 @@ export function createCartonProject(
     createdAt: Date.now(),
     updatedAt: Date.now(),
     packaging: { kind: "reverse-tuck", size: { ...size }, version: 1 },
-    canvasData: { version: fabric.version, background: "#FFFFFF", objects },
+    canvasData: {
+      version: fabric.version,
+      background: "#FFFFFF",
+      objects,
+      clipPath: withCartonPrecision(() => cartonMask(size).toObject()),
+    },
   };
 }
