@@ -1,3 +1,4 @@
+import { latestLayouts } from "./collection-2026";
 /** كل معاينة مبنية بنفس مرسم اللوحة، وكل قالب يظل قابلًا للتعديل. */
 import { useMemo, useState } from "react";
 import { useDesigner } from "./state";
@@ -39,8 +40,8 @@ export default function Templates() {
       <h2>{s.t("بداية جاهزة. بصمتك أنت.", "Start with something good.")}</h2>
       <p>
         {s.t(
-          `${templates.length} تكوين قابل للتعديل، بتسع عائلات تصميم مختلفة.`,
-          `${templates.length} editable compositions across nine distinct layout families.`,
+          `${templates.length} تكوين قابل للتعديل، بـ14 عائلة تصميم مختلفة.`,
+          `${templates.length} editable compositions across 14 distinct layout families.`,
         )}
       </p>
       <label className="ld-field">
@@ -77,6 +78,7 @@ export default function Templates() {
             ["crest", "درع وشريط", "Crest"],
             ["split", "تكوين جانبي", "Split"],
             ["orbital", "مدارات", "Orbital"],
+            ...latestLayouts,
           ].map(([id, ar, en]) => (
             <option key={id} value={id}>
               {s.t(ar, en)}

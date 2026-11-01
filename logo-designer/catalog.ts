@@ -1,3 +1,4 @@
+import { moreSymbols } from "./more-symbols";
 import { extraSymbols } from "./extra-symbols";
 import {
   Flame,
@@ -261,6 +262,7 @@ const groups: [string, [string, string, LucideIcon][]][] = [
   ],
 ];
 export const symbols: SymbolEntry[] = [
+  ...moreSymbols,
   ...extraSymbols,
   ...groups.flatMap(([category, items]) =>
     items.map(([id, ar, icon]) => ({
@@ -275,6 +277,7 @@ export const symbols: SymbolEntry[] = [
 export const symbolMap = new Map(symbols.map((s) => [s.id, s]));
 export const categories = [
   ["all", "الكل", "All"],
+  ["interior", "أثاث وديكور", "Interiors"],
   ["health", "صحة وعناية", "Health"],
   ["education", "تعليم", "Education"],
   ["travel", "سفر ونقل", "Travel"],

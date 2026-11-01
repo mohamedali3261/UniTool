@@ -1471,3 +1471,321 @@ kbd {
   text-align: start;
   overflow-wrap: anywhere;
 }
+/* قائمة سياقية مدمجة، متوافقة مع اتجاه الصفحة واللمس ولوحة المفاتيح. */
+.ld-context-menu {
+  position: fixed;
+  z-index: 50;
+  width: 214px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 5px;
+  box-shadow: 0 14px 44px #132a2833;
+  backdrop-filter: blur(24px);
+  scrollbar-width: thin;
+  animation: ld-menu-in 0.12s ease-out;
+}
+.ld-context-title {
+  font-size: 9px;
+  color: var(--muted);
+  padding: 5px 8px 7px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 3px;
+}
+.ld-app .ld-context-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 29px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  gap: 9px;
+  font-size: 11px;
+  justify-content: flex-start;
+}
+.ld-context-menu button > span {
+  flex: 1;
+  text-align: start;
+}
+.ld-context-menu kbd {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 8px;
+  color: var(--muted);
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}
+.ld-app .ld-context-menu .ld-menu-divider {
+  border-top: 1px solid var(--line);
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+  margin-top: 3px;
+  padding-top: 7px;
+}
+.ld-app .ld-context-menu .ld-menu-danger {
+  color: #c35e54;
+}
+.ld-canvas-viewport {
+  -webkit-touch-callout: none;
+}
+.ld-context-menu button:focus-visible {
+  outline: 2px solid #78ab94;
+  outline-offset: -2px;
+  background: var(--subtle);
+}
+@keyframes ld-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (pointer: coarse) {
+  .ld-app .ld-context-menu button {
+    min-height: 34px;
+  }
+  .ld-context-menu {
+    width: 220px;
+  }
+}
+/* موبايل: لوحة مرئية بالأعلى وأدوات سفلية مستقلة، بدل النوافذ التي تغطي التصميم. */
+.ld-app .ld-mobile-only,
+.ld-mobile-panel-head {
+  display: none;
+}
+@media (max-width: 600px) {
+  .ld-app .ld-mobile-only {
+    display: inline-flex;
+    margin-inline-start: auto;
+  }
+  .ld-workspace {
+    flex-direction: column;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    position: relative;
+  }
+  .ld-center {
+    order: 0;
+    flex: 1;
+    min-height: 190px;
+    width: 100%;
+    padding: 0 10px;
+  }
+  .ld-workspace-caption {
+    height: 22px;
+  }
+  .ld-canvas-heading {
+    height: 32px;
+  }
+  .ld-library,
+  .ld-inspector {
+    order: 1;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    flex: 0 0 48%;
+    min-height: 0;
+    max-height: 48%;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -5px 20px #1734260a;
+    backdrop-filter: none;
+    background: var(--bg);
+    z-index: 4;
+    overscroll-behavior: contain;
+    scroll-padding-top: 50px;
+  }
+  .ld-panel-title {
+    padding: 8px 15px;
+    min-height: 42px;
+    background: var(--panel);
+  }
+  .ld-panel-title > span {
+    flex: 1;
+  }
+  .ld-panel-title button {
+    min-height: 30px;
+    min-width: 34px;
+  }
+  .ld-section {
+    padding: 16px;
+  }
+  .ld-section h2 {
+    font-size: 20px;
+    margin: 6px 0;
+  }
+  .ld-section .ld-eyebrow {
+    font-size: 7px;
+  }
+  .ld-section p {
+    margin: 7px 0;
+    font-size: 11px;
+  }
+  .ld-rail {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(2, 48px);
+    gap: 2px;
+    position: absolute;
+    height: calc(112px + env(safe-area-inset-bottom, 0px));
+    padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    background: var(--panel);
+    backdrop-filter: blur(20px);
+    width: 100%;
+    align-content: start;
+  }
+  .ld-rail button {
+    width: 100%;
+    min-height: 46px;
+    height: 46px;
+    gap: 3px;
+    font-size: 8px;
+    padding: 3px;
+  }
+  .ld-rail button svg {
+    width: 17px;
+    height: 17px;
+  }
+  .ld-rail button[aria-pressed="true"] {
+    box-shadow: inset 0 -2px var(--accent);
+  }
+  .ld-mobile-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--panel);
+    padding: 8px 15px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .ld-mobile-panel-head strong {
+    flex: 1;
+  }
+  .ld-mobile-panel-head button {
+    min-height: 30px;
+    min-width: 34px;
+    padding: 5px;
+  }
+  .ld-panel-expanded .ld-center {
+    display: none;
+  }
+  .ld-panel-expanded .ld-library,
+  .ld-panel-expanded .ld-inspector {
+    flex: 1;
+    max-height: none;
+  }
+  .ld-library .ld-symbol-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .ld-symbol-grid .ld-element-add {
+    min-height: 94px;
+    padding: 20px 3px 8px;
+  }
+  .ld-symbol-grid .ld-element-add > svg {
+    width: 42px;
+    height: 42px;
+  }
+  .ld-template-grid,
+  .ld-composition-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ld-toast {
+    bottom: 122px;
+  }
+  .ld-top-actions button {
+    min-width: 32px;
+    min-height: 34px;
+  }
+  .ld-app {
+    min-height: 420px;
+  }
+}
+@media (max-width: 600px) and (max-height: 550px) {
+  .ld-topbar {
+    height: 92px;
+  }
+  .ld-workspace {
+    flex-direction: row;
+  }
+  .ld-center {
+    min-height: 0;
+    min-width: 0;
+  }
+  .ld-library,
+  .ld-inspector {
+    flex: 0 0 46%;
+    max-height: none;
+    height: 100%;
+    width: 46%;
+    border-radius: 0;
+  }
+  .ld-canvas-heading {
+    height: 22px;
+  }
+  .ld-workspace-caption {
+    display: none;
+  }
+  .ld-canvas-bar,
+  .ld-canvas-footer {
+    height: 30px;
+  }
+  .ld-library .ld-symbol-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ld-panel-expanded .ld-library,
+  .ld-panel-expanded .ld-inspector {
+    width: 100%;
+    flex: 1;
+  }
+}
+
+@media (pointer: coarse) and (min-width: 601px) and (max-width: 950px) and (max-height: 550px) {
+  .ld-library,
+  .ld-inspector {
+    position: relative;
+    inset: auto;
+    flex: 0 0 32%;
+    height: 100%;
+    max-height: none;
+    width: 32%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .ld-mobile-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px;
+    background: var(--panel);
+  }
+  .ld-mobile-panel-head strong {
+    flex: 1;
+  }
+  .ld-canvas-heading {
+    height: 30px;
+  }
+  .ld-workspace-caption {
+    display: none;
+  }
+  .ld-center {
+    padding: 0 8px;
+  }
+  .ld-app {
+    min-height: 300px;
+  }
+}
