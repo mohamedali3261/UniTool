@@ -428,20 +428,24 @@ test("limited native editing replaces real source text and opens the edited copy
   doc.addPage().drawText("Original 123", { x: 40, y: 700, size: 20, font });
   await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
   await page.goto("/pdf-studio/");
-  await page
-    .locator(".ps-upload input[type=file]")
-    .setInputFiles({
-      name: "native.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from(await doc.save()),
-    });
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "native.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await doc.save()),
+  });
   await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
   await page
     .getByRole("button", { name: "Edit original text (limited)", exact: true })
     .click();
   await page
-    .getByRole("textbox", { name: "Replacement text", exact: true })
+    .getByRole("button", { name: "Edit text on page", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Edit text inside page", exact: true })
     .fill("Changed 456");
+  await page
+    .getByRole("textbox", { name: "Edit text inside page", exact: true })
+    .press("Enter");
   await page
     .getByRole("spinbutton", { name: "Native move X", exact: true })
     .fill("20");
@@ -465,4 +469,266 @@ test("limited native editing replaces real source text and opens the edited copy
   });
   await expect(text).toHaveValue(/Changed 456/);
   await expect(text).not.toHaveValue(/Original 123/);
+});
+
+for (const rotation of [0, 90, 180, 270]) {
+  test(`native page drag respects PDF rotation ${rotation}, crop offsets, zoom and movement undo`, async ({
+    page,
+  }) => {
+    const { degrees } = await import("pdf-lib");
+    const doc = await PDFDocument.create(),
+      font = await doc.embedFont(StandardFonts.Helvetica),
+      p = doc.addPage([595, 842]);
+    p.setCropBox(20, 30, 500, 760);
+    p.setRotation(degrees(rotation));
+    p.drawText("Drag original", { x: 100, y: 650, size: 22, font });
+    await page.addInitScript(() =>
+      localStorage.setItem("pdf-studio.lang", "en"),
+    );
+    await page.goto("/pdf-studio/");
+    await page.locator(".ps-upload input[type=file]").setInputFiles({
+      name: "drag.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await doc.save()),
+    });
+    await expect(page.locator(".ps-paper")).toHaveAttribute(
+      "data-ready",
+      "true",
+    );
+    await page
+      .getByRole("button", {
+        name: "Edit original text (limited)",
+        exact: true,
+      })
+      .click();
+    const rect = page.locator('[data-native-block="0"]');
+    await expect(rect).toHaveAttribute("tabindex", "0", { timeout: 30000 });
+    const zoom = page.getByRole("slider", {
+      name: "Editing preview zoom",
+      exact: true,
+    });
+    await zoom.fill("1.5");
+    await rect.scrollIntoViewIfNeeded();
+    const box = (await rect.boundingBox())!;
+    const expected = await rect.evaluate((el) => {
+      const matrix = (
+        (el as SVGElement).ownerSVGElement as SVGSVGElement
+      ).getScreenCTM()!;
+      const start = new DOMPoint(0, 0).matrixTransform(matrix.inverse());
+      const end = new DOMPoint(24, 12).matrixTransform(matrix.inverse());
+      return { x: end.x - start.x, y: end.y - start.y };
+    });
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      box.x + box.width / 2 + 24,
+      box.y + box.height / 2 + 12,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+    const x = Number(
+      await page
+        .getByRole("spinbutton", { name: "Native move X", exact: true })
+        .inputValue(),
+    );
+    const y = Number(
+      await page
+        .getByRole("spinbutton", { name: "Native move Y", exact: true })
+        .inputValue(),
+    );
+    // Screen vector -> inverse of native page rotation. Viewport in PDF.js has a flipped Y axis.
+    const expectedX =
+      rotation === 0
+        ? expected.x
+        : rotation === 90
+          ? expected.y
+          : rotation === 180
+            ? -expected.x
+            : -expected.y;
+    const expectedY =
+      rotation === 0
+        ? -expected.y
+        : rotation === 90
+          ? expected.x
+          : rotation === 180
+            ? expected.y
+            : -expected.x;
+    expect(x).toBeCloseTo(expectedX, 1);
+    expect(y).toBeCloseTo(expectedY, 1);
+    await page
+      .getByRole("button", { name: "Undo movement", exact: true })
+      .click();
+    await expect(
+      page.getByRole("spinbutton", { name: "Native move X", exact: true }),
+    ).toHaveValue("0");
+    await page
+      .getByRole("button", { name: "Redo movement", exact: true })
+      .click();
+    expect(
+      Number(
+        await page
+          .getByRole("spinbutton", { name: "Native move X", exact: true })
+          .inputValue(),
+      ),
+    ).toBeCloseTo(x, 2);
+    await rect.focus();
+    await page.keyboard.press("Shift+ArrowRight");
+    const keyboardX = Number(
+      await page
+        .getByRole("spinbutton", { name: "Native move X", exact: true })
+        .inputValue(),
+    );
+    const keyboardY = Number(
+      await page
+        .getByRole("spinbutton", { name: "Native move Y", exact: true })
+        .inputValue(),
+    );
+    expect(Math.hypot(keyboardX - x, keyboardY - y)).toBeCloseTo(0.1, 2);
+  });
+}
+
+test("native touch drag commits once and touch cancellation restores the last position on mobile", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const doc = await PDFDocument.create(),
+    font = await doc.embedFont(StandardFonts.Helvetica);
+  doc
+    .addPage([595, 842])
+    .drawText("Touch original", { x: 60, y: 700, size: 28, font });
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "touch.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await doc.save()),
+  });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Edit original text (limited)", exact: true })
+    .click();
+  const rect = page.locator('[data-native-block="0"]');
+  await expect(rect).toHaveAttribute("tabindex", "0", { timeout: 30000 });
+  await rect.scrollIntoViewIfNeeded();
+  const box = (await rect.boundingBox())!,
+    client = await context.newCDPSession(page);
+  const x = box.x + box.width / 2,
+    y = box.y + box.height / 2;
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: x + 18, y: y + 12 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  const moved = await page
+    .getByRole("spinbutton", { name: "Native move X", exact: true })
+    .inputValue();
+  expect(Number(moved)).toBeGreaterThan(0);
+  const nextBox = (await rect.boundingBox())!,
+    nx = nextBox.x + nextBox.width / 2,
+    ny = nextBox.y + nextBox.height / 2;
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: nx, y: ny }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: nx + 12, y: ny + 10 }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchCancel",
+    touchPoints: [],
+  });
+  await expect(
+    page.getByRole("spinbutton", { name: "Native move X", exact: true }),
+  ).toHaveValue(moved);
+  await page
+    .getByRole("button", { name: "Undo movement", exact: true })
+    .click();
+  await expect(
+    page.getByRole("spinbutton", { name: "Native move X", exact: true }),
+  ).toHaveValue("0");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > innerWidth,
+  );
+  expect(overflow).toBe(false);
+});
+
+test("supported embedded Arabic glyphs move on the page without attempting character replacement", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "native-arabic.pdf",
+    mimeType: "application/pdf",
+    buffer: await readFile(fixture("arabic-native-movable.pdf")),
+  });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await expect(
+    page.getByRole("textbox", { name: "Extracted text", exact: true }),
+  ).toHaveValue(/مرحبا/);
+  const original = await page
+    .getByRole("textbox", { name: "Extracted text", exact: true })
+    .inputValue();
+  expect(original).toContain("مرحبا");
+  await page
+    .getByRole("button", { name: "Edit original text (limited)", exact: true })
+    .click();
+  const rect = page.locator('[data-native-block="0"]');
+  await expect(rect).toHaveAttribute("tabindex", "0", { timeout: 30000 });
+  const ink = await page
+    .locator(".ps-native-preview-paper > canvas")
+    .evaluateAll((canvases) =>
+      canvases.map((node) => {
+        const c = node as HTMLCanvasElement,
+          pixels = c
+            .getContext("2d")!
+            .getImageData(0, 0, c.width, c.height).data;
+        let count = 0;
+        for (let i = 0; i < pixels.length; i += 4)
+          if (pixels[i + 3] > 0 && pixels[i] < 128) count++;
+        return count;
+      }),
+    );
+  expect(ink[0]).toBe(0); // No ghost of the original block under the moving layer.
+  expect(ink[1]).toBeGreaterThan(100); // Actual Arabic glyphs, not merely extractable invisible text.
+  await expect(
+    page.getByRole("textbox", { name: "Replacement text", exact: true }),
+  ).toHaveCount(0);
+  await rect.scrollIntoViewIfNeeded();
+  const before = (await rect.boundingBox())!;
+  await page.mouse.move(
+    before.x + before.width / 2,
+    before.y + before.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    before.x + before.width / 2 + 30,
+    before.y + before.height / 2 + 18,
+    { steps: 6 },
+  );
+  await page.mouse.up();
+  const after = (await rect.boundingBox())!;
+  expect(after.x - before.x).toBeCloseTo(30, 0);
+  expect(after.y - before.y).toBeCloseTo(18, 0);
+  await page
+    .getByRole("button", { name: "Create edited copy", exact: true })
+    .click();
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", { name: "Open edited copy for review", exact: true })
+    .click();
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await expect(
+    page.getByRole("textbox", { name: "Extracted text", exact: true }),
+  ).toHaveValue(original);
 });
