@@ -1,11 +1,15 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import JSZip from 'jszip';
-import mammoth from 'mammoth';
-import { BookDocument, BookPage, FileType } from '../types';
-import { processTextIntoChunks, detectTextLanguage, sanitizeExtractedText } from './textProcessor';
+import * as pdfjsLib from "pdfjs-dist";
+import JSZip from "jszip";
+import mammoth from "mammoth";
+import { BookDocument, BookPage, FileType } from "../types";
+import {
+  processTextIntoChunks,
+  detectTextLanguage,
+  sanitizeExtractedText,
+} from "./textProcessor";
 
 // Ensure ReadableStream has asyncIterator and values() in all environments
-if (typeof ReadableStream !== 'undefined') {
+if (typeof ReadableStream !== "undefined") {
   if (!ReadableStream.prototype[Symbol.asyncIterator]) {
     ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
       const reader = this.getReader();
@@ -20,18 +24,19 @@ if (typeof ReadableStream !== 'undefined') {
       }
     };
   }
-  if (typeof (ReadableStream.prototype as any).values !== 'function') {
-    (ReadableStream.prototype as any).values = ReadableStream.prototype[Symbol.asyncIterator];
+  if (typeof (ReadableStream.prototype as any).values !== "function") {
+    (ReadableStream.prototype as any).values =
+      ReadableStream.prototype[Symbol.asyncIterator];
   }
 }
 
 // Configure pdfjs worker to reliably load in browser
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   try {
-    const version = pdfjsLib.version || '4.10.38';
+    const version = pdfjsLib.version || "4.10.38";
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
   } catch (e) {
-    console.warn('PDF Worker initialization fallback:', e);
+    console.warn("PDF Worker initialization fallback:", e);
   }
 }
 
@@ -44,42 +49,48 @@ export interface ParseProgressCallback {
  */
 export async function parseUploadedFile(
   file: File,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): Promise<BookDocument> {
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
   const fileId = `book-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  const cleanTitle = file.name.replace(/\.[^/.]+$/, '').trim();
+  const cleanTitle = file.name.replace(/\.[^/.]+$/, "").trim();
 
-  let fileType: FileType = 'txt';
+  let fileType: FileType = "txt";
   let pages: BookPage[] = [];
 
-  if (extension === 'pdf') {
-    fileType = 'pdf';
+  if (extension === "pdf") {
+    fileType = "pdf";
     pages = await parsePDFFile(file, onProgress);
-  } else if (extension === 'epub') {
-    fileType = 'epub';
+  } else if (extension === "epub") {
+    fileType = "epub";
     pages = await parseEPUBFile(file, onProgress);
-  } else if (extension === 'docx') {
-    fileType = 'docx';
+  } else if (extension === "docx") {
+    fileType = "docx";
     pages = await parseDOCXFile(file, onProgress);
   } else {
     // Default to TXT / plaintext
-    fileType = 'txt';
+    fileType = "txt";
     pages = await parseTXTFile(file, onProgress);
   }
 
   // Calculate stats
   const totalWords = pages.reduce((acc, p) => acc + p.wordCount, 0);
-  const sampleCombinedText = pages.slice(0, 5).map(p => p.rawText).join(' ');
+  const sampleCombinedText = pages
+    .slice(0, 5)
+    .map((p) => p.rawText)
+    .join(" ");
   const detectedLanguage = detectTextLanguage(sampleCombinedText);
 
   // Check if any pages need OCR (empty or image-only)
-  const emptyPagesCount = pages.filter(p => p.wordCount === 0 || p.isScannedImage).length;
-  const isMostlyScanned = pages.length > 0 && (emptyPagesCount / pages.length) > 0.6;
+  const emptyPagesCount = pages.filter(
+    (p) => p.wordCount === 0 || p.isScannedImage,
+  ).length;
+  const isMostlyScanned =
+    pages.length > 0 && emptyPagesCount / pages.length > 0.6;
 
   return {
     id: fileId,
-    title: cleanTitle || 'مستند بدون عنوان',
+    title: cleanTitle || "مستند بدون عنوان",
     fileType,
     fileSize: file.size,
     totalPages: pages.length,
@@ -99,11 +110,11 @@ export async function parseUploadedFile(
  */
 async function parsePDFFile(
   file: File,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): Promise<BookPage[]> {
   const arrayBuffer = await file.arrayBuffer();
   const pdfData = new Uint8Array(arrayBuffer);
-  const version = pdfjsLib.version || '4.10.38';
+  const version = pdfjsLib.version || "4.10.38";
 
   const loadingTask = pdfjsLib.getDocument({
     data: pdfData,
@@ -125,7 +136,7 @@ async function parsePDFFile(
       onProgress(i, numPages, `جاري استخراج الصفحة ${i} من ${numPages}...`);
     }
 
-    let extractedText = '';
+    let extractedText = "";
 
     try {
       const page = await pdfDoc.getPage(i);
@@ -134,11 +145,17 @@ async function parsePDFFile(
       const items = textContent.items as any[];
 
       if (items && items.length > 0) {
-        const allTextItems: { x: number; y: number; str: string; width: number; order: number }[] = [];
+        const allTextItems: {
+          x: number;
+          y: number;
+          str: string;
+          width: number;
+          order: number;
+        }[] = [];
 
         let orderIdx = 0;
         for (const item of items) {
-          if (!('str' in item) || !item.str) continue;
+          if (!("str" in item) || !item.str) continue;
           const x = item.transform ? item.transform[4] : 0;
           const y = item.transform ? item.transform[5] : 0;
           const width = item.width || 0;
@@ -146,15 +163,17 @@ async function parsePDFFile(
         }
 
         if (allTextItems.length > 0) {
-          const minY = Math.min(...allTextItems.map(it => it.y));
-          const maxY = Math.max(...allTextItems.map(it => it.y));
+          const minY = Math.min(...allTextItems.map((it) => it.y));
+          const maxY = Math.max(...allTextItems.map((it) => it.y));
           const ySpread = maxY - minY || 1;
           const adaptiveTolerance = Math.max(8, Math.min(20, ySpread * 0.08));
 
           const lineMap: { y: number; items: typeof allTextItems }[] = [];
 
           for (const item of allTextItems) {
-            const existingLine = lineMap.find((l) => Math.abs(l.y - item.y) <= adaptiveTolerance);
+            const existingLine = lineMap.find(
+              (l) => Math.abs(l.y - item.y) <= adaptiveTolerance,
+            );
             if (existingLine) {
               existingLine.items.push(item);
             } else {
@@ -194,32 +213,41 @@ async function parsePDFFile(
 
               const avgWidth = (prev.width + cur.width) / 2;
               if (gap > avgWidth * 0.25) {
-                parts.push(' ');
+                parts.push(" ");
               }
 
               parts.push(cur.str);
             }
 
-            const lineStr = parts.join('').replace(/\s{2,}/g, ' ').trim();
+            const lineStr = parts
+              .join("")
+              .replace(/\s{2,}/g, " ")
+              .trim();
             if (lineStr) {
               lineStrings.push(lineStr);
             }
           }
 
-          extractedText = lineStrings.join('\n');
+          extractedText = lineStrings.join("\n");
         }
       }
     } catch (pageErr) {
       console.warn(`Error extracting text from PDF page ${i}:`, pageErr);
-      extractedText = '';
+      extractedText = "";
     }
 
     const cleanPageText = sanitizeExtractedText(extractedText);
-    const wordCount = cleanPageText ? cleanPageText.split(/\s+/).filter(Boolean).length : 0;
-    const isScannedImage = wordCount < 4; // Less than 4 words strongly indicates scanned/image-only page
+    const wordCount = cleanPageText
+      ? cleanPageText.split(/\s+/).filter(Boolean).length
+      : 0;
+    const isScannedImage = wordCount === 0; // Less than 4 words strongly indicates scanned/image-only page
 
     const pageLang = detectTextLanguage(cleanPageText);
-    const chunks = processTextIntoChunks(cleanPageText, i, pageLang === 'en' ? 'en' : 'ar');
+    const chunks = processTextIntoChunks(
+      cleanPageText,
+      i,
+      pageLang === "en" ? "en" : "ar",
+    );
 
     pages.push({
       pageNumber: i,
@@ -240,9 +268,9 @@ async function parsePDFFile(
 export async function renderPDFPageToCanvas(
   fileBuffer: ArrayBuffer,
   pageNumber: number,
-  scale: number = 2.0
+  scale: number = 2.0,
 ): Promise<HTMLCanvasElement> {
-  const version = pdfjsLib.version || '4.10.38';
+  const version = pdfjsLib.version || "4.10.38";
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(fileBuffer),
     cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/cmaps/`,
@@ -256,12 +284,12 @@ export async function renderPDFPageToCanvas(
   const page = await pdfDoc.getPage(pageNumber);
   const viewport = page.getViewport({ scale });
 
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
   canvas.width = viewport.width;
   canvas.height = viewport.height;
 
-  if (!context) throw new Error('Could not get 2d context for canvas');
+  if (!context) throw new Error("Could not get 2d context for canvas");
 
   await page.render({
     canvasContext: context,
@@ -277,7 +305,7 @@ export async function renderPDFPageToCanvas(
  */
 async function parseTXTFile(
   file: File,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): Promise<BookPage[]> {
   const text = await file.text();
   return splitPlainTextIntoPages(text, onProgress);
@@ -288,24 +316,28 @@ async function parseTXTFile(
  */
 export function splitPlainTextIntoPages(
   text: string,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): BookPage[] {
-  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
   if (!normalized) {
-    return [{
-      pageNumber: 1,
-      title: 'الصفحة 1',
-      rawText: '',
-      chunks: [],
-      wordCount: 0,
-    }];
+    return [
+      {
+        pageNumber: 1,
+        title: "الصفحة 1",
+        rawText: "",
+        chunks: [],
+        wordCount: 0,
+      },
+    ];
   }
 
   // Split by explicit page breaks if any, or chapters, or paragraph clusters
-  const paragraphs = normalized.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  const paragraphs = normalized
+    .split(/\n\s*\n/)
+    .filter((p) => p.trim().length > 0);
   const pages: BookPage[] = [];
 
-  let currentPageText = '';
+  let currentPageText = "";
   let currentPageWords = 0;
   let pageNumber = 1;
 
@@ -315,7 +347,11 @@ export function splitPlainTextIntoPages(
 
     if (currentPageWords + paraWords > 350 && currentPageText.length > 0) {
       const lang = detectTextLanguage(currentPageText);
-      const chunks = processTextIntoChunks(currentPageText, pageNumber, lang === 'en' ? 'en' : 'ar');
+      const chunks = processTextIntoChunks(
+        currentPageText,
+        pageNumber,
+        lang === "en" ? "en" : "ar",
+      );
       pages.push({
         pageNumber,
         title: `الصفحة ${pageNumber}`,
@@ -328,18 +364,22 @@ export function splitPlainTextIntoPages(
       currentPageText = para;
       currentPageWords = paraWords;
     } else {
-      currentPageText += (currentPageText.length > 0 ? '\n\n' : '') + para;
+      currentPageText += (currentPageText.length > 0 ? "\n\n" : "") + para;
       currentPageWords += paraWords;
     }
 
     if (onProgress && i % 10 === 0) {
-      onProgress(i, paragraphs.length, 'جاري تنظيم صفحات المستند...');
+      onProgress(i, paragraphs.length, "جاري تنظيم صفحات المستند...");
     }
   }
 
   if (currentPageText.trim().length > 0) {
     const lang = detectTextLanguage(currentPageText);
-    const chunks = processTextIntoChunks(currentPageText, pageNumber, lang === 'en' ? 'en' : 'ar');
+    const chunks = processTextIntoChunks(
+      currentPageText,
+      pageNumber,
+      lang === "en" ? "en" : "ar",
+    );
     pages.push({
       pageNumber,
       title: `الصفحة ${pageNumber}`,
@@ -349,13 +389,17 @@ export function splitPlainTextIntoPages(
     });
   }
 
-  return pages.length > 0 ? pages : [{
-    pageNumber: 1,
-    title: 'الصفحة 1',
-    rawText: normalized,
-    chunks: processTextIntoChunks(normalized, 1),
-    wordCount: normalized.split(/\s+/).length,
-  }];
+  return pages.length > 0
+    ? pages
+    : [
+        {
+          pageNumber: 1,
+          title: "الصفحة 1",
+          rawText: normalized,
+          chunks: processTextIntoChunks(normalized, 1),
+          wordCount: normalized.split(/\s+/).length,
+        },
+      ];
 }
 
 /**
@@ -363,14 +407,14 @@ export function splitPlainTextIntoPages(
  */
 async function parseEPUBFile(
   file: File,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): Promise<BookPage[]> {
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
 
   // 1. Read META-INF/container.xml to find OPF path
-  const containerXml = await zip.file('META-INF/container.xml')?.async('text');
-  let opfPath = 'OEBPS/content.opf';
+  const containerXml = await zip.file("META-INF/container.xml")?.async("text");
+  let opfPath = "OEBPS/content.opf";
 
   if (containerXml) {
     const match = containerXml.match(/full-path="([^"]+)"/);
@@ -379,14 +423,17 @@ async function parseEPUBFile(
     }
   }
 
-  const opfFolder = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-  const opfText = await zip.file(opfPath)?.async('text');
+  const opfFolder = opfPath.includes("/")
+    ? opfPath.substring(0, opfPath.lastIndexOf("/") + 1)
+    : "";
+  const opfText = await zip.file(opfPath)?.async("text");
 
   const xhtmlFiles: string[] = [];
 
   if (opfText) {
     // Extract manifest items
-    const itemRegex = /<item\s+[^>]*href="([^"]+)"[^>]*media-type="application\/xhtml\+xml"[^>]*>/gi;
+    const itemRegex =
+      /<item\s+[^>]*href="([^"]+)"[^>]*media-type="application\/xhtml\+xml"[^>]*>/gi;
     let itemMatch: RegExpExecArray | null;
     while ((itemMatch = itemRegex.exec(opfText)) !== null) {
       xhtmlFiles.push(opfFolder + itemMatch[1]);
@@ -396,7 +443,7 @@ async function parseEPUBFile(
   // Fallback: search all html/xhtml files in zip if OPF parsing was partial
   if (xhtmlFiles.length === 0) {
     zip.forEach((relativePath) => {
-      if (relativePath.endsWith('.xhtml') || relativePath.endsWith('.html')) {
+      if (relativePath.endsWith(".xhtml") || relativePath.endsWith(".html")) {
         xhtmlFiles.push(relativePath);
       }
     });
@@ -414,17 +461,17 @@ async function parseEPUBFile(
       onProgress(i + 1, xhtmlFiles.length, `جاري استخراج فصل ${i + 1}...`);
     }
 
-    const htmlContent = await fileEntry.async('text');
+    const htmlContent = await fileEntry.async("text");
     // Strip HTML tags cleanly and extract chapter titles
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    
+    const doc = parser.parseFromString(htmlContent, "text/html");
+
     // Remove scripts/styles
-    doc.querySelectorAll('script, style, head').forEach(el => el.remove());
-    const chapterHeading = doc.querySelector('h1, h2, h3, title')?.textContent?.trim();
-    const cleanText = (doc.body.textContent || '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    doc.querySelectorAll("script, style, head").forEach((el) => el.remove());
+    const chapterHeading = doc
+      .querySelector("h1, h2, h3, title")
+      ?.textContent?.trim();
+    const cleanText = (doc.body.textContent || "").replace(/\s+/g, " ").trim();
 
     if (cleanText.length > 20) {
       // Split large chapters if necessary
@@ -442,13 +489,17 @@ async function parseEPUBFile(
     }
   }
 
-  return pages.length > 0 ? pages : [{
-    pageNumber: 1,
-    title: 'الصفحة 1',
-    rawText: 'لم يتم استخراج نصوص كافية من ملف EPUB',
-    chunks: [],
-    wordCount: 0,
-  }];
+  return pages.length > 0
+    ? pages
+    : [
+        {
+          pageNumber: 1,
+          title: "الصفحة 1",
+          rawText: "لم يتم استخراج نصوص كافية من ملف EPUB",
+          chunks: [],
+          wordCount: 0,
+        },
+      ];
 }
 
 /**
@@ -456,12 +507,12 @@ async function parseEPUBFile(
  */
 async function parseDOCXFile(
   file: File,
-  onProgress?: ParseProgressCallback
+  onProgress?: ParseProgressCallback,
 ): Promise<BookPage[]> {
   const arrayBuffer = await file.arrayBuffer();
-  if (onProgress) onProgress(1, 1, 'جاري معالجة مستند DOCX...');
+  if (onProgress) onProgress(1, 1, "جاري معالجة مستند DOCX...");
 
   const result = await mammoth.extractRawText({ arrayBuffer });
-  const rawText = result.value || '';
+  const rawText = result.value || "";
   return splitPlainTextIntoPages(rawText, onProgress);
 }

@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
-  Bookmark, 
-  BookmarkCheck, 
-  ZoomIn, 
-  ZoomOut, 
+import { SpeechEngineService } from "../utils/speechEngine";
+import { detectChunkLanguage } from "../utils/textProcessor";
+import { DismissiblePopover } from "./DismissiblePopover";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  Bookmark,
+  BookmarkCheck,
+  ZoomIn,
+  ZoomOut,
   FileScan,
   Edit,
   Save,
@@ -20,13 +23,13 @@ import {
   Check,
   Globe,
   Volume2,
-  VolumeX
-} from 'lucide-react';
-import { BookDocument, BookPage, ReaderSettings, UILanguage } from '../types';
-import { getTranslation } from '../translations';
-import { getThemeConfig } from '../utils/theme';
-import { exportBook } from '../utils/exportUtils';
-import { translateText } from '../utils/translationService';
+  VolumeX,
+} from "lucide-react";
+import { BookDocument, BookPage, ReaderSettings, UILanguage } from "../types";
+import { getTranslation } from "../translations";
+import { getThemeConfig } from "../utils/theme";
+import { exportBook } from "../utils/exportUtils";
+import { translateText } from "../utils/translationService";
 
 interface MainReaderTextProps {
   uiLang: UILanguage;
@@ -42,6 +45,7 @@ interface MainReaderTextProps {
   onSelectChunk: (chunkIndex: number) => void;
   onNextPage: () => void;
   onPrevPage: () => void;
+  onBeforeAuxSpeech: () => void;
   onOpenOCRModal: () => void;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
@@ -63,6 +67,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
   onNextPage,
   onPrevPage,
   onOpenOCRModal,
+  onBeforeAuxSpeech,
   onIncreaseFontSize,
   onDecreaseFontSize,
   onUpdatePageText,
@@ -73,12 +78,12 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
-  const [editedText, setEditedText] = useState('');
+  const [editedText, setEditedText] = useState("");
 
   // Find & Replace state
   const [showFindReplace, setShowFindReplace] = useState(false);
-  const [findQuery, setFindQuery] = useState('');
-  const [replaceQuery, setReplaceQuery] = useState('');
+  const [findQuery, setFindQuery] = useState("");
+  const [replaceQuery, setReplaceQuery] = useState("");
 
   // Export dropdown state
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -90,6 +95,8 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isSpeakingTranslation, setIsSpeakingTranslation] = useState(false);
 
+  const translationSpeech = useMemo(() => new SpeechEngineService(), []),
+    ownsSpeech = useRef(false);
   // Load active page text when it changes or when we enter edit mode
   useEffect(() => {
     setEditedText(currentPageData.rawText);
@@ -103,8 +110,9 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
     setTranslatedText(null);
     setTranslationError(null);
     setIsTranslating(false);
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (ownsSpeech.current) {
+      translationSpeech.stop();
+      ownsSpeech.current = false;
     }
     setIsSpeakingTranslation(false);
   }, [currentPageNumber]);
@@ -112,16 +120,18 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
   // Cancel synthesis on unmount
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      if (ownsSpeech.current) {
+        translationSpeech.stop();
+        ownsSpeech.current = false;
       }
     };
   }, []);
 
   const handleSpeakTranslation = () => {
     if (isSpeakingTranslation) {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      if (ownsSpeech.current) {
+        translationSpeech.stop();
+        ownsSpeech.current = false;
       }
       setIsSpeakingTranslation(false);
       return;
@@ -129,32 +139,36 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
 
     if (!translatedText) return;
 
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(translatedText);
-      const isAr = /[\u0600-\u06FF]/.test(translatedText);
-      utterance.lang = isAr ? 'ar-SA' : 'en-US';
-      
-      const voices = window.speechSynthesis.getVoices();
-      const matchedVoice = voices.find((v) => {
-        const l = v.lang.toLowerCase();
-        return isAr ? (l.startsWith('ar') || v.name.toLowerCase().includes('arabic')) : (l.startsWith('en'));
-      });
-      if (matchedVoice) {
-        utterance.voice = matchedVoice;
-      }
-
-      utterance.onend = () => {
-        setIsSpeakingTranslation(false);
-      };
-      utterance.onerror = () => {
-        setIsSpeakingTranslation(false);
-      };
-
-      setIsSpeakingTranslation(true);
-      window.speechSynthesis.speak(utterance);
-    }
+    onBeforeAuxSpeech();
+    ownsSpeech.current = true;
+    setIsSpeakingTranslation(true);
+    const done = () => {
+      ownsSpeech.current = false;
+      setIsSpeakingTranslation(false);
+    };
+    translationSpeech.speak(
+      {
+        id: "translation",
+        text: translatedText,
+        language: detectChunkLanguage(translatedText),
+        pageNumber: currentPageNumber,
+        chunkIndex: 0,
+        startChar: 0,
+        endChar: translatedText.length,
+      },
+      settings,
+      {
+        onEnd: done,
+        onError: () => {
+          done();
+          setTranslationError(
+            uiLang === "ar"
+              ? "تعذر نطق الترجمة. تأكد من وجود صوت مناسب للغتها."
+              : "Cannot read translation. Install a matching voice.",
+          );
+        },
+      },
+    );
   };
 
   const handleTranslatePage = async () => {
@@ -164,12 +178,16 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
     try {
       // Intelligently check if the current page has Arabic characters
       const hasArabic = /[\u0600-\u06FF]/.test(currentPageData.rawText);
-      const targetLang = hasArabic ? 'en' : 'ar';
-      
+      const targetLang = hasArabic ? "en" : "ar";
+
       const res = await translateText(currentPageData.rawText, targetLang);
       setTranslatedText(res);
     } catch (err: any) {
-      setTranslationError(uiLang === 'ar' ? 'فشلت عملية الترجمة. يرجى التحقق من اتصالك بالإنترنت.' : 'Translation failed. Please check your internet connection.');
+      setTranslationError(
+        uiLang === "ar"
+          ? "فشلت عملية الترجمة. يرجى التحقق من اتصالك بالإنترنت."
+          : "Translation failed. Please check your internet connection.",
+      );
     } finally {
       setIsTranslating(false);
     }
@@ -186,8 +204,8 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
   useEffect(() => {
     if (settings.autoScroll && isPlaying && activeChunkRef.current) {
       activeChunkRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
+        behavior: "smooth",
+        block: "center",
       });
     }
   }, [currentChunkIndex, isPlaying, settings.autoScroll]);
@@ -198,21 +216,21 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
   // Determine font family style
   const getFontFamilyStyle = () => {
     switch (settings.fontFamily) {
-      case 'amiri':
-        return { fontFamily: 'var(--font-amiri)' };
-      case 'tajawal':
-        return { fontFamily: 'var(--font-tajawal)' };
-      case 'sans':
-        return { fontFamily: 'var(--font-sans)' };
-      case 'serif':
-        return { fontFamily: 'var(--font-serif)' };
-      case 'cairo':
+      case "amiri":
+        return { fontFamily: "var(--font-amiri)" };
+      case "tajawal":
+        return { fontFamily: "var(--font-tajawal)" };
+      case "sans":
+        return { fontFamily: "var(--font-sans)" };
+      case "serif":
+        return { fontFamily: "var(--font-serif)" };
+      case "cairo":
       default:
-        return { fontFamily: 'var(--font-cairo)' };
+        return { fontFamily: "var(--font-cairo)" };
     }
   };
 
-  const isRtlLang = (lang: string) => lang === 'ar';
+  const isRtlLang = (lang: string) => lang === "ar";
 
   const handleSaveChanges = () => {
     onUpdatePageText(currentPageNumber, editedText);
@@ -221,23 +239,24 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
 
   const handleFindReplace = () => {
     if (!findQuery) return;
-    const regex = new RegExp(findQuery, 'g');
+    const regex = new RegExp(findQuery, "g");
     const newText = editedText.replace(regex, replaceQuery);
     setEditedText(newText);
     // Realtime update or status
   };
 
   return (
-    <div 
+    <div
       ref={scrollContainerRef}
       className={`relative flex-1 overflow-y-auto pb-36 pt-3 sm:pt-4 transition-colors duration-300 ${themeStyle.wrapper}`}
       id="main-reader-scroll-container"
     >
       <div className="mx-auto max-w-4xl px-3 sm:px-6 lg:px-8">
-        
         {/* Floating Top Controls Header */}
-        <div className={`sticky top-0 z-20 mb-4 sm:mb-6 flex flex-col gap-2 rounded-2xl border p-2 sm:p-3 backdrop-blur-xl transition-all shadow-md ${themeStyle.controls}`}>
-          <div className="flex items-center justify-between w-full">
+        <div
+          className={`sticky top-0 z-20 mb-4 sm:mb-6 flex flex-col gap-2 rounded-2xl border p-2 sm:p-3 backdrop-blur-xl transition-all shadow-md ${themeStyle.controls}`}
+        >
+          <div className="reader-page-controls flex items-center justify-between w-full">
             {/* Page Switcher */}
             <div className="flex items-center gap-1 sm:gap-2">
               <button
@@ -250,8 +269,12 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 <ChevronRight className="h-5 w-5 rtl:rotate-0 ltr:rotate-180" />
               </button>
 
-              <span className="text-xs sm:text-sm font-bold tracking-tight px-1 sm:px-2">
-                {t.page} <span className="text-indigo-500 font-extrabold">{currentPageNumber}</span> {t.of} {book.totalPages}
+              <span className="whitespace-nowrap text-xs sm:text-sm font-bold tracking-tight px-1 sm:px-2">
+                {t.page}{" "}
+                <span className="text-indigo-500 font-extrabold">
+                  {currentPageNumber}
+                </span>{" "}
+                {t.of} {book.totalPages}
               </span>
 
               <button
@@ -274,7 +297,9 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
               >
                 <ZoomOut className="h-4 w-4" />
               </button>
-              <span className={`text-xs font-semibold min-w-[28px] text-center ${themeStyle.textMuted}`}>
+              <span
+                className={`text-xs font-semibold min-w-[28px] text-center ${themeStyle.textMuted}`}
+              >
                 {settings.fontSize}px
               </span>
               <button
@@ -285,7 +310,9 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 <ZoomIn className="h-4 w-4" />
               </button>
 
-              <div className={`h-4 w-px mx-0.5 sm:mx-1 ${themeStyle.borderColor}`} />
+              <div
+                className={`h-4 w-px mx-0.5 sm:mx-1 ${themeStyle.borderColor}`}
+              />
 
               {/* Edit Mode Toggle Button */}
               <button
@@ -294,26 +321,34 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                   if (!isEditing) setShowFindReplace(false);
                 }}
                 className={`rounded-lg p-1.5 transition focus-ring ${
-                  isEditing 
-                    ? 'text-indigo-400 bg-indigo-500/10 border border-indigo-500/20' 
+                  isEditing
+                    ? "text-indigo-400 bg-indigo-500/10 border border-indigo-500/20"
                     : themeStyle.buttonSecondary
                 }`}
-                title={uiLang === 'ar' ? 'تعديل نصوص الصفحة' : 'Edit Page Text'}
+                title={uiLang === "ar" ? "تعديل نصوص الصفحة" : "Edit Page Text"}
                 id="edit-page-toggle-btn"
               >
                 <Edit className="h-4 w-4" />
               </button>
 
               {/* Export Book Options Dropdown */}
-              <div className="relative">
+              <DismissiblePopover
+                open={showExportMenu}
+                onClose={() => setShowExportMenu(false)}
+                className="relative"
+              >
                 <button
                   onClick={() => setShowExportMenu(!showExportMenu)}
                   className={`rounded-lg p-1.5 transition focus-ring ${
-                    showExportMenu 
-                      ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' 
+                    showExportMenu
+                      ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
                       : themeStyle.buttonSecondary
                   }`}
-                  title={uiLang === 'ar' ? 'تصدير الكتاب بعدة صيغ' : 'Export Book Formats'}
+                  title={
+                    uiLang === "ar"
+                      ? "تصدير الكتاب بعدة صيغ"
+                      : "Export Book Formats"
+                  }
                   id="export-book-btn"
                 >
                   <FileDown className="h-4 w-4" />
@@ -322,13 +357,43 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 {showExportMenu && (
                   <div className="absolute top-full mt-2 ltr:right-0 ltr:left-auto rtl:left-0 rtl:right-auto w-52 rounded-xl border border-slate-800 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-xl z-50 space-y-1">
                     <div className="px-2 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/60 mb-1">
-                      {uiLang === 'ar' ? 'صيغة التصدير المتاحة' : 'Export Format'}
+                      {uiLang === "ar"
+                        ? "صيغة التصدير المتاحة"
+                        : "Export Format"}
                     </div>
                     {[
-                      { key: 'html', label: uiLang === 'ar' ? '📄 قارئ ويب تفاعلي (HTML)' : 'HTML Interactive Web', color: 'hover:bg-indigo-500/10 hover:text-indigo-400' },
-                      { key: 'txt', label: uiLang === 'ar' ? '📝 نص بسيط (TXT)' : 'Plain Text (TXT)', color: 'hover:bg-blue-500/10 hover:text-blue-400' },
-                      { key: 'md', label: uiLang === 'ar' ? '📐 مستند مارك داون (MD)' : 'Markdown Document (MD)', color: 'hover:bg-emerald-500/10 hover:text-emerald-400' },
-                      { key: 'json', label: uiLang === 'ar' ? '⚙️ نسخة هيكلية (JSON)' : 'Structured JSON (JSON)', color: 'hover:bg-amber-500/10 hover:text-amber-400' },
+                      {
+                        key: "html",
+                        label:
+                          uiLang === "ar"
+                            ? "📄 قارئ ويب تفاعلي (HTML)"
+                            : "HTML Interactive Web",
+                        color: "hover:bg-indigo-500/10 hover:text-indigo-400",
+                      },
+                      {
+                        key: "txt",
+                        label:
+                          uiLang === "ar"
+                            ? "📝 نص بسيط (TXT)"
+                            : "Plain Text (TXT)",
+                        color: "hover:bg-blue-500/10 hover:text-blue-400",
+                      },
+                      {
+                        key: "md",
+                        label:
+                          uiLang === "ar"
+                            ? "📐 مستند مارك داون (MD)"
+                            : "Markdown Document (MD)",
+                        color: "hover:bg-emerald-500/10 hover:text-emerald-400",
+                      },
+                      {
+                        key: "json",
+                        label:
+                          uiLang === "ar"
+                            ? "⚙️ نسخة هيكلية (JSON)"
+                            : "Structured JSON (JSON)",
+                        color: "hover:bg-amber-500/10 hover:text-amber-400",
+                      },
                     ].map((fmt) => (
                       <button
                         key={fmt.key}
@@ -343,21 +408,27 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                     ))}
                   </div>
                 )}
-              </div>
+              </DismissiblePopover>
 
               {/* Translate Page Button */}
               <button
                 onClick={handleTranslatePage}
                 disabled={isTranslating}
                 className={`rounded-lg p-1.5 transition focus-ring flex items-center justify-center ${
-                  isTranslating 
-                    ? 'text-indigo-400 bg-indigo-500/10 border border-indigo-500/20' 
+                  isTranslating
+                    ? "text-indigo-400 bg-indigo-500/10 border border-indigo-500/20"
                     : themeStyle.buttonSecondary
                 }`}
-                title={uiLang === 'ar' ? 'ترجمة الصفحة الحالية فوراً' : 'Translate active page instantly'}
+                title={
+                  uiLang === "ar"
+                    ? "ترجمة الصفحة الحالية فوراً"
+                    : "Translate active page instantly"
+                }
                 id="translate-page-btn"
               >
-                <Languages className={`h-4 w-4 ${isTranslating ? 'animate-spin' : ''}`} />
+                <Languages
+                  className={`h-4 w-4 ${isTranslating ? "animate-spin" : ""}`}
+                />
               </button>
 
               {/* Bookmark Toggle */}
@@ -365,7 +436,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 onClick={onToggleBookmark}
                 className={`rounded-lg p-1.5 transition focus-ring ${
                   isBookmarked
-                    ? 'text-amber-500 bg-amber-500/10 border border-amber-500/20'
+                    ? "text-amber-500 bg-amber-500/10 border border-amber-500/20"
                     : themeStyle.buttonSecondary
                 }`}
                 title={isBookmarked ? t.bookmarked : t.bookmarkPage}
@@ -386,13 +457,21 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                   <Search className="w-3.5 h-3.5 text-indigo-400" />
-                  {uiLang === 'ar' ? 'أداة البحث والاستبدال السريع' : 'Fast Find & Replace'}
+                  {uiLang === "ar"
+                    ? "أداة البحث والاستبدال السريع"
+                    : "Fast Find & Replace"}
                 </span>
-                <button 
+                <button
                   onClick={() => setShowFindReplace(!showFindReplace)}
                   className="text-[10px] font-semibold text-indigo-400 hover:underline"
                 >
-                  {showFindReplace ? (uiLang === 'ar' ? 'إخفاء الأداة' : 'Hide Tool') : (uiLang === 'ar' ? 'إظهار الأداة' : 'Show Tool')}
+                  {showFindReplace
+                    ? uiLang === "ar"
+                      ? "إخفاء الأداة"
+                      : "Hide Tool"
+                    : uiLang === "ar"
+                      ? "إظهار الأداة"
+                      : "Show Tool"}
                 </button>
               </div>
 
@@ -400,14 +479,18 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-1.5 p-1">
                   <input
                     type="text"
-                    placeholder={uiLang === 'ar' ? 'البحث عن كلمة...' : 'Find text...'}
+                    placeholder={
+                      uiLang === "ar" ? "البحث عن كلمة..." : "Find text..."
+                    }
                     value={findQuery}
                     onChange={(e) => setFindQuery(e.target.value)}
                     className="sm:col-span-5 bg-slate-950/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   />
                   <input
                     type="text"
-                    placeholder={uiLang === 'ar' ? 'استبدال بـ...' : 'Replace with...'}
+                    placeholder={
+                      uiLang === "ar" ? "استبدال بـ..." : "Replace with..."
+                    }
                     value={replaceQuery}
                     onChange={(e) => setReplaceQuery(e.target.value)}
                     className="sm:col-span-5 bg-slate-950/60 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
@@ -417,7 +500,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                     className="sm:col-span-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg py-1.5 text-xs flex items-center justify-center gap-1 transition"
                   >
                     <RefreshCw className="w-3 h-3 animate-spin-slow" />
-                    <span>{uiLang === 'ar' ? 'تطبيق' : 'Apply'}</span>
+                    <span>{uiLang === "ar" ? "تطبيق" : "Apply"}</span>
                   </button>
                 </div>
               )}
@@ -426,7 +509,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
         </div>
 
         {/* Reading Content Canvas */}
-        <div 
+        <div
           className={`rounded-2xl sm:rounded-3xl border p-5 sm:p-8 lg:p-10 shadow-xl backdrop-blur-sm transition-all duration-300 ${themeStyle.canvas}`}
           style={{
             ...getFontFamilyStyle(),
@@ -439,8 +522,15 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
             /* Editing Block View */
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs font-semibold text-indigo-400 bg-indigo-500/5 px-3.5 py-2 rounded-xl border border-indigo-500/10">
-                <span>⚠️ {uiLang === 'ar' ? 'أنت الآن في وضع التعديل المباشر للمستند' : 'You are currently in live text edit mode'}</span>
-                <span>{editedText.length} {uiLang === 'ar' ? 'حرف' : 'chars'}</span>
+                <span>
+                  ⚠️{" "}
+                  {uiLang === "ar"
+                    ? "أنت الآن في وضع التعديل المباشر للمستند"
+                    : "You are currently in live text edit mode"}
+                </span>
+                <span>
+                  {editedText.length} {uiLang === "ar" ? "حرف" : "chars"}
+                </span>
               </div>
 
               <textarea
@@ -450,7 +540,9 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 className="w-full p-4 rounded-xl border border-slate-800 bg-slate-950/50 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 text-base leading-relaxed resize-y transition"
                 dir="auto"
                 style={getFontFamilyStyle()}
-                title={uiLang === 'ar' ? 'حقل تعديل النص' : 'Editable text area'}
+                title={
+                  uiLang === "ar" ? "حقل تعديل النص" : "Editable text area"
+                }
               />
 
               <div className="flex items-center justify-end gap-2.5 pt-2">
@@ -459,14 +551,18 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                   className="px-4 py-2 text-xs font-bold rounded-lg text-slate-300 hover:bg-slate-800/60 border border-slate-800 transition flex items-center gap-1.5"
                 >
                   <X className="w-4 h-4" />
-                  <span>{uiLang === 'ar' ? 'إلغاء' : 'Cancel'}</span>
+                  <span>{uiLang === "ar" ? "إلغاء" : "Cancel"}</span>
                 </button>
                 <button
                   onClick={handleSaveChanges}
                   className="px-4 py-2 text-xs font-extrabold rounded-lg text-white bg-emerald-600 hover:bg-emerald-500 transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/10 border border-emerald-500/30"
                 >
                   <Save className="w-4 h-4 animate-pulse" />
-                  <span>{uiLang === 'ar' ? 'حفظ التغييرات ومزامنة الصوت' : 'Save & Sync Audio'}</span>
+                  <span>
+                    {uiLang === "ar"
+                      ? "حفظ التغييرات ومزامنة الصوت"
+                      : "Save & Sync Audio"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -480,23 +576,27 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
 
                   const getHighlightClass = () => {
                     if (!isActive) return themeStyle.inactiveChunk;
-                    
-                    const isSepia = settings.theme === 'sepia';
-                    const isLight = settings.theme === 'light'; // Light is Deep Emerald
-                    
-                    if (settings.highlightMode === 'sentence') {
-                      if (isSepia) return `${themeStyle.activeChunk} bg-amber-500/15 border-r-2 border-l-2 border-amber-500 px-2 py-0.5 rounded shadow-sm text-white font-semibold`;
-                      if (isLight) return `${themeStyle.activeChunk} bg-emerald-500/15 border-r-2 border-l-2 border-emerald-400 px-2 py-0.5 rounded shadow-sm text-white font-semibold`;
+
+                    const isSepia = settings.theme === "sepia";
+                    const isLight = settings.theme === "light"; // Light is Deep Emerald
+
+                    if (settings.highlightMode === "sentence") {
+                      if (isSepia)
+                        return `${themeStyle.activeChunk} bg-amber-500/15 border-r-2 border-l-2 border-amber-500 px-2 py-0.5 rounded shadow-sm text-white font-semibold`;
+                      if (isLight)
+                        return `${themeStyle.activeChunk} bg-emerald-500/15 border-r-2 border-l-2 border-emerald-400 px-2 py-0.5 rounded shadow-sm text-white font-semibold`;
                       return `${themeStyle.activeChunk} bg-indigo-500/15 border-r-2 border-l-2 border-indigo-500 px-2 py-0.5 rounded shadow-sm text-white font-semibold`;
                     }
-                    
-                    if (settings.highlightMode === 'paragraph') {
-                      if (isSepia) return `${themeStyle.activeChunk} bg-[#362e28]/60 px-3 py-2 rounded-xl border border-[#4d4036] block my-1.5 font-medium text-white`;
-                      if (isLight) return `${themeStyle.activeChunk} bg-[#0b3d30]/60 px-3 py-2 rounded-xl border border-[#0f4d3d] block my-1.5 font-medium text-white`;
+
+                    if (settings.highlightMode === "paragraph") {
+                      if (isSepia)
+                        return `${themeStyle.activeChunk} bg-[#362e28]/60 px-3 py-2 rounded-xl border border-[#4d4036] block my-1.5 font-medium text-white`;
+                      if (isLight)
+                        return `${themeStyle.activeChunk} bg-[#0b3d30]/60 px-3 py-2 rounded-xl border border-[#0f4d3d] block my-1.5 font-medium text-white`;
                       return `${themeStyle.activeChunk} bg-slate-800/50 px-3 py-2 rounded-xl border border-slate-700/60 block my-1.5 font-medium text-white`;
                     }
-                    
-                    if (settings.highlightMode === 'glow') {
+
+                    if (settings.highlightMode === "glow") {
                       if (isSepia) {
                         return `${themeStyle.activeChunk} bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-amber-500/15 px-2.5 py-1 rounded-xl shadow-lg ring-1 ring-amber-500/30 animate-pulse font-bold text-amber-200`;
                       }
@@ -505,13 +605,15 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                       }
                       return `${themeStyle.activeChunk} bg-gradient-to-r from-indigo-500/20 via-purple-500/15 to-pink-500/10 px-2.5 py-1 rounded-xl shadow-lg ring-1 ring-indigo-500/30 animate-pulse font-semibold text-white`;
                     }
-                    
-                    if (settings.highlightMode === 'underline') {
-                      if (isSepia) return `${themeStyle.activeChunk} border-b-2 border-dashed border-amber-500 bg-amber-500/5 px-1.5 py-0.5 rounded font-bold text-amber-300`;
-                      if (isLight) return `${themeStyle.activeChunk} border-b-2 border-dashed border-emerald-400 bg-emerald-500/5 px-1.5 py-0.5 rounded font-bold text-emerald-300`;
+
+                    if (settings.highlightMode === "underline") {
+                      if (isSepia)
+                        return `${themeStyle.activeChunk} border-b-2 border-dashed border-amber-500 bg-amber-500/5 px-1.5 py-0.5 rounded font-bold text-amber-300`;
+                      if (isLight)
+                        return `${themeStyle.activeChunk} border-b-2 border-dashed border-emerald-400 bg-emerald-500/5 px-1.5 py-0.5 rounded font-bold text-emerald-300`;
                       return `${themeStyle.activeChunk} border-b-2 border-dashed border-indigo-400 bg-indigo-500/5 px-1.5 py-0.5 rounded font-bold text-indigo-300`;
                     }
-                    
+
                     return themeStyle.activeChunk;
                   };
 
@@ -520,12 +622,18 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                       key={chunk.id}
                       ref={isActive ? activeChunkRef : null}
                       onClick={() => onSelectChunk(index)}
-                      dir={isChunkRtl ? 'rtl' : 'ltr'}
+                      dir={isChunkRtl ? "rtl" : "ltr"}
                       className={`inline cursor-pointer transition-all duration-200 ${getHighlightClass()}`}
                       id={`chunk-${chunk.id}`}
-                      title={uiLang === 'ar' ? 'انقر للاستماع للصفحة' : 'Click to listen to page'}
+                      title={
+                        uiLang === "ar"
+                          ? "انقر للقراءة من هذا المقطع"
+                          : "Read from this passage"
+                      }
                     >
-                      {isActive && settings.highlightMode === 'word' && activeWordRange ? (
+                      {isActive &&
+                      settings.highlightMode === "word" &&
+                      activeWordRange ? (
                         <HighlightedChunkText
                           chunkText={chunk.text}
                           activeRange={activeWordRange}
@@ -533,8 +641,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                         />
                       ) : (
                         <span>{chunk.text}</span>
-                      )}
-                      {' '}
+                      )}{" "}
                     </span>
                   );
                 })}
@@ -543,14 +650,18 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
           )}
 
           {/* Page Footer navigation buttons inside canvas */}
-          <div className={`mt-8 sm:mt-10 flex items-center justify-between border-t pt-4 text-xs ${themeStyle.borderColor} ${themeStyle.textMuted}`}>
+          <div
+            className={`mt-8 sm:mt-10 flex items-center justify-between border-t pt-4 text-xs ${themeStyle.borderColor} ${themeStyle.textMuted}`}
+          >
             <button
               onClick={onPrevPage}
               disabled={currentPageNumber <= 1}
               className="flex items-center gap-1.5 font-semibold hover:text-indigo-500 disabled:opacity-25 disabled:hover:text-inherit transition"
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-0 ltr:rotate-180" />
-              <span>{uiLang === 'ar' ? 'الصفحة السابقة' : 'Previous Page'}</span>
+              <span>
+                {uiLang === "ar" ? "الصفحة السابقة" : "Previous Page"}
+              </span>
             </button>
 
             <span className="text-[11px] font-medium">
@@ -562,16 +673,17 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
               disabled={currentPageNumber >= book.totalPages}
               className="flex items-center gap-1.5 font-semibold hover:text-indigo-500 disabled:opacity-25 disabled:hover:text-inherit transition"
             >
-              <span>{uiLang === 'ar' ? 'الصفحة التالية' : 'Next Page'}</span>
+              <span>{uiLang === "ar" ? "الصفحة التالية" : "Next Page"}</span>
               <ChevronLeft className="h-4 w-4 rtl:rotate-0 ltr:rotate-180" />
             </button>
           </div>
-
         </div>
 
         {/* Translation Output Card */}
         {isTranslating && (
-          <div className={`mt-6 rounded-2xl border p-5 sm:p-6 shadow-md backdrop-blur-sm animate-pulse ${themeStyle.canvas}`}>
+          <div
+            className={`mt-6 rounded-2xl border p-5 sm:p-6 shadow-md backdrop-blur-sm animate-pulse ${themeStyle.canvas}`}
+          >
             <div className="flex items-center gap-3">
               <RefreshCw className="w-5 h-5 animate-spin text-indigo-500" />
               <div className="space-y-1.5 flex-1">
@@ -589,7 +701,7 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
         )}
 
         {translatedText && !isTranslating && (
-          <div 
+          <div
             className={`mt-6 rounded-2xl border p-6 sm:p-8 shadow-lg backdrop-blur-sm transition-all duration-300 relative ${themeStyle.canvas}`}
             style={{
               ...getFontFamilyStyle(),
@@ -602,29 +714,35 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-indigo-400" />
                 <span className="text-xs sm:text-sm font-bold text-indigo-400">
-                  {uiLang === 'ar' ? 'الترجمة الفورية للصفحة' : 'Instant Page Translation'}
+                  {uiLang === "ar"
+                    ? "الترجمة الفورية للصفحة"
+                    : "Instant Page Translation"}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSpeakTranslation}
                   className={`rounded-lg p-1.5 transition flex items-center gap-1.5 text-xs font-semibold ${
-                    isSpeakingTranslation 
-                      ? 'text-teal-400 bg-teal-500/10 border border-teal-500/20' 
+                    isSpeakingTranslation
+                      ? "text-teal-400 bg-teal-500/10 border border-teal-500/20"
                       : themeStyle.buttonSecondary
                   }`}
-                  title={uiLang === 'ar' ? 'استماع للترجمة' : 'Listen to translation'}
+                  title={
+                    uiLang === "ar" ? "استماع للترجمة" : "Listen to translation"
+                  }
                 >
                   {isSpeakingTranslation ? (
                     <>
                       <VolumeX className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-                      <span className="text-teal-400">{uiLang === 'ar' ? 'إيقاف الاستماع' : 'Stop Listening'}</span>
+                      <span className="text-teal-400">
+                        {uiLang === "ar" ? "إيقاف الاستماع" : "Stop Listening"}
+                      </span>
                     </>
                   ) : (
                     <>
                       <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>{uiLang === 'ar' ? 'استماع' : 'Listen'}</span>
+                      <span>{uiLang === "ar" ? "استماع" : "Listen"}</span>
                     </>
                   )}
                 </button>
@@ -632,25 +750,29 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
                 <button
                   onClick={handleCopyTranslation}
                   className={`rounded-lg p-1.5 transition flex items-center gap-1.5 text-xs font-semibold ${themeStyle.buttonSecondary}`}
-                  title={uiLang === 'ar' ? 'نسخ الترجمة' : 'Copy translation'}
+                  title={uiLang === "ar" ? "نسخ الترجمة" : "Copy translation"}
                 >
                   {isCopied ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-emerald-500">{uiLang === 'ar' ? 'تم النسخ!' : 'Copied!'}</span>
+                      <span className="text-emerald-500">
+                        {uiLang === "ar" ? "تم النسخ!" : "Copied!"}
+                      </span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>{uiLang === 'ar' ? 'نسخ' : 'Copy'}</span>
+                      <span>{uiLang === "ar" ? "نسخ" : "Copy"}</span>
                     </>
                   )}
                 </button>
-                
+
                 <button
                   onClick={() => setTranslatedText(null)}
                   className={`rounded-lg p-1.5 transition ${themeStyle.buttonSecondary}`}
-                  title={uiLang === 'ar' ? 'إغلاق الترجمة' : 'Close translation'}
+                  title={
+                    uiLang === "ar" ? "إغلاق الترجمة" : "Close translation"
+                  }
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -658,17 +780,14 @@ export const MainReaderText: React.FC<MainReaderTextProps> = ({
             </div>
 
             {/* Translated Content */}
-            <div 
-              dir={/[\u0600-\u06FF]/.test(translatedText) ? 'rtl' : 'ltr'}
+            <div
+              dir={/[\u0600-\u06FF]/.test(translatedText) ? "rtl" : "ltr"}
               className="text-start leading-relaxed whitespace-pre-wrap select-text text-slate-300 font-normal"
             >
               {translatedText}
             </div>
           </div>
         )}
-
-
-
       </div>
     </div>
   );
@@ -696,7 +815,9 @@ const HighlightedChunkText: React.FC<HighlightedChunkTextProps> = ({
   return (
     <span className="select-text leading-relaxed">
       <span>{before}</span>
-      <span className={`inline-block rounded px-1 transition-all ${wordHighlightClass}`}>
+      <span
+        className={`inline-block rounded px-1 transition-all ${wordHighlightClass}`}
+      >
         {highlighted}
       </span>
       <span>{after}</span>

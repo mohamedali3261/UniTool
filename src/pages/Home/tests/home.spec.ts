@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { toolCategories, totalToolCount } from "../../ToolsHome/data";
+import {studios} from "../data";
 import { sitePages } from "../../../config/sitePages";
 const base = process.env.HOME_QA_URL || "http://localhost:3000";
 test("every studio and live site entry has a real link, and every tool has a deep link", async ({
@@ -12,7 +13,7 @@ test("every studio and live site entry has a real link, and every tool has a dee
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "مساحة واحدة",
   );
-  await expect(page.locator(".studio-card")).toHaveCount(4);
+  await expect(page.locator(".studio-card")).toHaveCount(studios.length);
   await expect(page.locator('a[href="/logo-studio.html"]')).toHaveCount(0);
   for (const p of sitePages.filter((p) => p.href !== "/index.html")) {
     await expect(
@@ -30,7 +31,7 @@ test("every studio and live site entry has a real link, and every tool has a dee
   await expect(page.locator(".directory-tool")).toHaveCount(totalToolCount);
   for (const tool of toolCategories.flatMap((c) => c.tools))
     await expect(
-      page.locator(`.directory-tool[href="/app.html#${tool.id}"]`),
+      page.locator(`.directory-tool[href="${tool.href || `/app.html#${tool.id}`}" ]`),
     ).toHaveCount(1);
   expect(errors).toEqual([]);
 });
@@ -38,7 +39,7 @@ test("quick picks cover each category; search and filters reveal tools, studios 
   page,
 }) => {
   await page.goto(base);
-  await expect(page.locator(".directory-tool")).toHaveCount(8);
+  await expect(page.locator(".directory-tool")).toHaveCount(9);
   for (const c of toolCategories)
     expect(
       await page.locator(`.directory-tool.tone-${c.id}`).count(),

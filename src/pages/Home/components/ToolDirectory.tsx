@@ -45,6 +45,7 @@ export function ToolDirectory({
         )
       : [];
   const featuredIds = [
+    "excelStudio",
     "pdfMerger",
     "imageCropper",
     "videoMerger",
@@ -132,7 +133,7 @@ export function ToolDirectory({
         {visible.map((tool) => (
           <a
             key={tool.id}
-            href={`/app.html#${tool.id}`}
+            href={tool.href || `/app.html#${tool.id}`}
             className={`directory-tool tone-${tool.category}`}
           >
             <span className="tool-icon">

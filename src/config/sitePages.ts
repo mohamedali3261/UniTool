@@ -1,5 +1,6 @@
 /** Shared entry points: the homepage and all workspace headers use the same links. */
 export const sitePages = [
+  { href: "/excel-studio/", ar: "استوديو الجداول", en: "Sheet Studio" },
   { href: "/index.html", ar: "الرئيسية", en: "Home" },
   { href: "/app.html", ar: "الأدوات", en: "Tools" },
   { href: "/elements.html", ar: "العناصر", en: "Elements" },
