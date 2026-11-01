@@ -18,3 +18,13 @@ Print dimensions do not depend on editor zoom/pan. Rendering uses a separate can
 **Manufacturing limits:** nominal geometry only, without paper-caliper, crease, tooling or machine compensation. No automatic bleed/safe-area generation or spot-color production separation. Exports are RGB, not certified CMYK or PDF/X. The proportional assembled view is an illustration, not collision/fold simulation. Prototype, measure and confirm allowances/production suitability with your printer before production.
 
 Checks: `npm run test:designcraft` and `npm run test:designcraft:browser`. Browser QA uses `DESIGN_QA_URL` and optional `STUDIO_CHROMIUM_PATH`; simulation is not physical-device/printer certification. PDF support is locally bundled and loaded on demand; no new runtime dependency is added.
+
+The public dimensions UI uses **length × width × depth** (طول × عرض × عمق), with tab sizes under advanced settings. For compatibility with existing saved projects, the internal `height` key remains the assembled box length (vertical face axis); `width` and `depth` retain their existing axes. No saved project geometry or physical export scale is changed by this terminology update.
+
+## Perfume starter cartons
+
+Editable 30 / 50 / 100 ml capacity labels select these **suggested nominal** length × width × depth sizes: 95 × 40 × 30, 115 × 50 × 35 and 140 × 60 × 45 mm. These are not standardized bottle dimensions, measured samples, guaranteed internal sizes, or molds for manufacturing glass bottles.
+
+`PerfumeTemplates.tsx` offers measured capped-bottle sizing with per-side clearance (default 2 mm). `perfume.ts` computes each nominal dimension as measured dimension + 2×clearance, rounds dimensions to 0.01 mm, and limits tabs to valid proportions (rounded down). It does not compensate for board caliper, inserts, scoring or machine tolerances. All nominal dimensions and tabs remain editable; existing projects retain their old geometry. The dialog includes a dimension review and assembly checklist. Templates create new blank native designs, not destructive resizing of existing artwork.
+
+Tests verify opposing panel dimensions, cover depth, dust-flap gap, crease count, sheet margins, invalid measurements and native persistence of customized preset sizes. Browser checks cannot certify physical assembly or weight-bearing performance. Perfume bottles are heavy and fragile: tuck closures may need an insert or reinforced base approved by the packaging manufacturer. Validate paper prototypes and production-stock samples with the actual capped bottle before a production run.

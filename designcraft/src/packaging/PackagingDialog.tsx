@@ -13,11 +13,12 @@ import { cartonPdf, downloadCartonSvg, downloadPackaging } from "./export";
 import { createCartonProject } from "./project";
 import { getSavedProjects, saveProjectToStorage } from "../utils/fabricHelpers";
 import type { ProjectItem } from "../types";
+import { PerfumeTemplates } from "./PerfumeTemplates";
 import { BoxPreview } from "./BoxPreview";
 import "./packaging.css";
 const fields = [
-  ["width", "عرض الوجه", "Face width", 20, 300],
-  ["height", "ارتفاع العلبة", "Box height", 30, 500],
+  ["height", "طول العلبة", "Box length", 30, 500],
+  ["width", "عرض العلبة", "Box width", 20, 300],
   ["depth", "عمق العلبة", "Box depth", 10, 150],
   ["glue", "لسان اللصق", "Glue tab", 5, 30],
   ["tuck", "لسان القفل", "Tuck tab", 5, 30],
@@ -63,8 +64,8 @@ export function PackagingDialog({
       ? "أدخل أرقامًا صالحة في كل المقاسات."
       : "Enter finite numbers in every field.",
     dimensions: ar
-      ? "العرض 20–300، الارتفاع 30–500، والعمق 10–150 مم."
-      : "Width 20–300, height 30–500, depth 10–150 mm.",
+      ? "الطول 30–500، العرض 20–300، والعمق 10–150 مم."
+      : "Length 30–500, width 20–300, depth 10–150 mm.",
     glue: ar
       ? "لسان اللصق: 5–30 مم، بحد أقصى 40% من العرض."
       : "Glue: 5–30 mm; at most 40% of width.",
@@ -131,8 +132,26 @@ export function PackagingDialog({
               onChange={(e) => setTitle(e.target.value)}
             />
           </label>
+          <p className="carton-note">
+            {ar
+              ? "طول × عرض × عمق — مقاسات العلبة بعد التجميع بالملليمتر، وليست مقاسات الورقة المفرودة."
+              : "Length × width × depth — assembled box dimensions in millimetres, not the unfolded sheet size."}
+          </p>
+          <PerfumeTemplates
+            ar={ar}
+            size={size}
+            onApply={(next, name) => {
+              setDraft(
+                Object.fromEntries(
+                  fields.map(([key]) => [key, String(next[key])]),
+                ) as Record<keyof CartonSize, string>,
+              );
+              if (name) setTitle(name);
+              setError("");
+            }}
+          />
           <div className="carton-fields">
-            {fields.map(([k, arabic, en, min, max]) => (
+            {fields.slice(0, 3).map(([k, arabic, en, min, max]) => (
               <label key={k}>
                 {ar ? arabic : en} · mm
                 <input
@@ -149,6 +168,81 @@ export function PackagingDialog({
               </label>
             ))}
           </div>
+          <details>
+            <summary>
+              {ar ? "إعدادات الألسنة المتقدمة" : "Advanced tab settings"}
+            </summary>
+            <div className="carton-fields">
+              {fields.slice(3).map(([k, arabic, en, min, max]) => (
+                <label key={k}>
+                  {ar ? arabic : en} · mm
+                  <input
+                    aria-label={
+                      ar ? `${arabic} بالملليمتر` : `${en} in millimetres`
+                    }
+                    type="number"
+                    step="0.01"
+                    min={min}
+                    max={max}
+                    value={draft[k]}
+                    onChange={(e) =>
+                      setDraft({ ...draft, [k]: e.target.value })
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </details>
+          <details>
+            <summary>
+              {ar
+                ? "مراجعة المقاسات وطريقة التجميع"
+                : "Dimension review & assembly checklist"}
+            </summary>
+            {!issue && (
+              <p dir="ltr">
+                L {size.height} mm · W {size.width} mm · D {size.depth} mm
+                <br />
+                {ar ? "وجهان / Faces" : "Faces"}: 2 × ({size.width} ×{" "}
+                {size.height}) mm
+                <br />
+                {ar ? "جانبان / Sides" : "Sides"}: 2 × ({size.depth} ×{" "}
+                {size.height}) mm
+              </p>
+            )}
+            <ol>
+              <li>
+                {ar
+                  ? "اطبع بالحجم الفعلي 100% وقِس وجهًا بالمسطرة قبل القص. لا تستخدم ملاءمة الصفحة."
+                  : "Print at actual size / 100% and measure a face with a ruler before cutting; do not fit to page."}
+              </li>
+              <li>
+                {ar
+                  ? "قص على الخط المتصل فقط، ثم خدّد خطوط الطي المتقطعة دون قطعها."
+                  : "Cut only solid lines; score dashed fold lines without cutting through."}
+              </li>
+              <li>
+                {ar
+                  ? "اطوِ الأوجه الأربعة وألصق لسان اللصق داخل الحافة المقابلة. لا تلصق ألسنة القفل."
+                  : "Fold the four panels; glue the seam tab inside the opposite edge. Do not glue tuck tabs."}
+              </li>
+              <li>
+                {ar
+                  ? "اطوِ الألسنة الجانبية الصغيرة أولًا، ثم الغطاء الكبير وأدخل لسان القفل. جرّب الإغلاق دون إجبار."
+                  : "Fold small dust flaps first, then the main cover and insert its tuck tab. Test closure without force."}
+              </li>
+              <li>
+                {ar
+                  ? "جرّب الزجاجة بالغطاء والبطانة، وراجع الخلوص والإغلاق والقاعدة. هذا قفل لساني وليس قاعدة أمان معتمدة لوزن الزجاج؛ قد تحتاج حاملًا أو قاعدة مقوّاة يراجعها مصنع التغليف."
+                  : "Test the capped bottle and insert, clearance, closure and base. This is a tuck closure, not a certified load-bearing glass-bottle base; an insert or reinforced base may be required by your packaging manufacturer."}
+              </li>
+            </ol>
+            <p className="carton-note">
+              {ar
+                ? "الهندسة اسمية بين خطوط الطي. سمك الورق والتخديد واللصق يغيّر الفراغ الداخلي؛ لا يمكن تأكيد الملاءمة من السعة بالملليلتر أو المعاينة وحدها. اعتمد نموذجًا ورقيًا ثم عينة بنفس خامة الإنتاج."
+                : "Dimensions are nominal between fold lines. Board thickness, scoring and gluing affect internal space. Capacity or a preview cannot certify fit: validate a paper prototype, then a sample in production stock."}
+            </p>
+          </details>
           {issue && (
             <p role="alert" className="carton-error">
               {messages[issue]}

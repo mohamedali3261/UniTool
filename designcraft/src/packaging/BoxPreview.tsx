@@ -39,7 +39,7 @@ export function BoxPreview({ size }: { size: CartonSize }) {
         fill="#475569"
         fontSize="11"
       >
-        {size.width} × {size.height} × {size.depth} mm
+        {size.height} × {size.width} × {size.depth} mm
       </text>
     </svg>
   );

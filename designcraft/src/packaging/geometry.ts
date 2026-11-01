@@ -118,9 +118,9 @@ export function cartonSvg(s: CartonSize, dimensions = false) {
     front = a.panels[0],
     side = a.panels[3];
   const labels = dimensions
-    ? `<g fill="#374151" stroke="none" font-family="Arial,sans-serif" font-size="3" text-anchor="middle"><text x="${front.x + s.width / 2}" y="5">W ${s.width} mm</text><text x="${a.width - 4}" y="${front.y + s.height / 2}" transform="rotate(90 ${a.width - 4} ${front.y + s.height / 2})">H ${s.height} mm</text><text x="${side.x + s.depth / 2}" y="${a.height - 4}">D ${s.depth} mm</text></g>`
+    ? `<g fill="#374151" stroke="none" font-family="Arial,sans-serif" font-size="3" text-anchor="middle"><text x="${front.x + s.width / 2}" y="5">W ${s.width} mm</text><text x="${a.width - 4}" y="${front.y + s.height / 2}" transform="rotate(90 ${a.width - 4} ${front.y + s.height / 2})">L ${s.height} mm</text><text x="${side.x + s.depth / 2}" y="${a.height - 4}">D ${s.depth} mm</text></g>`
     : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" direction="ltr" width="${a.width}mm" height="${a.height}mm" viewBox="0 0 ${a.width} ${a.height}"><title>Carton ${s.width} x ${s.height} x ${s.depth} mm</title><g id="cut" fill="none" stroke="${CUT_COLOR}" stroke-width="0.2" stroke-linejoin="round"><path d="${a.cut}"/></g><g id="fold" fill="none" stroke="${FOLD_COLOR}" stroke-width="0.2" stroke-dasharray="2 1">${a.folds.map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`).join("")}</g>${labels}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" direction="ltr" width="${a.width}mm" height="${a.height}mm" viewBox="0 0 ${a.width} ${a.height}"><title>Carton L ${s.height} x W ${s.width} x D ${s.depth} mm</title><g id="cut" fill="none" stroke="${CUT_COLOR}" stroke-width="0.2" stroke-linejoin="round"><path d="${a.cut}"/></g><g id="fold" fill="none" stroke="${FOLD_COLOR}" stroke-width="0.2" stroke-dasharray="2 1">${a.folds.map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`).join("")}</g>${labels}</svg>`;
 }
 export function paperFor(a: { width: number; height: number }) {
   const fits = (w: number, h: number) =>
