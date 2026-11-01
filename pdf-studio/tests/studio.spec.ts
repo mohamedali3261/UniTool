@@ -732,3 +732,171 @@ test("supported embedded Arabic glyphs move on the page without attempting chara
     page.getByRole("textbox", { name: "Extracted text", exact: true }),
   ).toHaveValue(original);
 });
+
+for (const mobile of [false, true])
+  test(`toolbar edit mode edits in place without a dialog and preserves native layout ${mobile ? "on mobile" : "on desktop"}`, async ({
+    page,
+  }) => {
+    if (mobile) await page.setViewportSize({ width: 390, height: 844 });
+    const doc = await PDFDocument.create(),
+      font = await doc.embedFont(StandardFonts.Helvetica);
+    doc
+      .addPage([595, 842])
+      .drawText("Original 123", { x: 70, y: 650, size: 22, font });
+    await page.addInitScript(() =>
+      localStorage.setItem("pdf-studio.lang", "en"),
+    );
+    await page.goto("/pdf-studio/");
+    await page.locator(".ps-upload input[type=file]").setInputFiles({
+      name: "inline.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await doc.save()),
+    });
+    await expect(page.locator(".ps-paper")).toHaveAttribute(
+      "data-ready",
+      "true",
+    );
+    const edit = page.getByRole("button", {
+      name: "Edit page text",
+      exact: true,
+    });
+    await expect(
+      edit.locator("xpath=preceding-sibling::button[1]"),
+    ).toHaveAttribute("aria-label", "Rotate current page");
+    await edit.click();
+    await expect(edit).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
+    const target = page.getByRole("button", {
+      name: "Edit text Original 123",
+      exact: true,
+    });
+    await expect(target).toBeVisible({ timeout: 30000 });
+    const originalBox = (await target.boundingBox())!;
+    await target.click();
+    const input = page.getByRole("textbox", {
+      name: "Text inside page",
+      exact: true,
+    });
+    await expect(input).toHaveValue("Original 123");
+    await input.fill("An excessively wide replacement that should not fit");
+    await page
+      .getByRole("button", { name: "Save text change", exact: true })
+      .click();
+    await expect(page.locator(".ps-inline-native-message")).toContainText(
+      "exceeds original width",
+    );
+    await expect(input).toBeVisible();
+    await input.fill("New 123");
+    await page
+      .getByRole("button", { name: "Save text change", exact: true })
+      .click();
+    const changed = page.getByRole("button", {
+      name: "Edit text New 123",
+      exact: true,
+    });
+    await expect(changed).toBeVisible({ timeout: 30000 });
+    const newBox = (await changed.boundingBox())!;
+    expect(newBox.x).toBeCloseTo(originalBox.x, 0);
+    expect(newBox.y).toBeCloseTo(originalBox.y, 0);
+    expect(newBox.height).toBeCloseTo(originalBox.height, 0);
+    await page
+      .getByRole("button", { name: "Undo text edit", exact: true })
+      .click();
+    await expect(target).toBeVisible({ timeout: 30000 });
+    await target.click();
+    await input.fill("New 123");
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(input).toHaveCount(0);
+    await expect(target).toBeVisible();
+    await page
+      .getByRole("button", { name: "Finish editing", exact: true })
+      .click();
+    await expect(edit).toHaveAttribute("aria-pressed", "false");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+    ).toBe(false);
+  });
+
+test("toolbar text editing refuses embedded Arabic replacement rather than changing its font", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page
+    .locator(".ps-upload input[type=file]")
+    .setInputFiles(fixture("arabic-native-movable.pdf"));
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page.locator(".ps-inline-native-targets rect").click();
+  await expect(page.locator(".ps-inline-native-message")).toContainText(
+    "character replacement",
+  );
+  await expect(
+    page.getByRole("textbox", { name: "Text inside page", exact: true }),
+  ).toHaveCount(0);
+});
+
+test("toolbar text edits survive PDF export with annotations and protect JSON project recovery", async ({
+  page,
+}) => {
+  const doc = await PDFDocument.create(),
+    font = await doc.embedFont(StandardFonts.Helvetica);
+  doc
+    .addPage([595, 842])
+    .drawText("Original 123", { x: 70, y: 650, size: 22, font });
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page
+    .locator(".ps-upload input[type=file]")
+    .setInputFiles({
+      name: "inline-export.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await doc.save()),
+    });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.locator(".ps-interaction").click({ position: { x: 100, y: 300 } });
+  await page
+    .getByRole("button", { name: "Edit page text", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Edit text Original 123", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Text inside page", exact: true })
+    .fill("New 123");
+  await page
+    .getByRole("button", { name: "Save text change", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Edit text New 123", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".ps-interaction rect")).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Save annotation project", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "projects do not include native text edits" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Finish editing", exact: true })
+    .click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export PDF", exact: true }).click();
+  const bytes = new Uint8Array(
+    await readFile((await (await download).path())!),
+  );
+  const { inspectNativeText } = await import("../src/core/nativeText");
+  expect(
+    (await inspectNativeText(bytes, 0)).map((item) => item.text),
+  ).toContain("New 123");
+  expect(
+    (await inspectNativeText(bytes, 0)).map((item) => item.text),
+  ).not.toContain("Original 123");
+});

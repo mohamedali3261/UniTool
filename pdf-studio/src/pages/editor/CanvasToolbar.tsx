@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCw,
+  Pencil,
 } from "lucide-react";
 import type { Translate } from "../../core/types";
 export function CanvasToolbar({
@@ -14,6 +15,8 @@ export function CanvasToolbar({
   zoom,
   setZoom,
   rotate,
+  editing,
+  toggleEditing,
   panel,
   setPanel,
   t,
@@ -24,6 +27,8 @@ export function CanvasToolbar({
   zoom: number;
   setZoom: (n: number) => void;
   rotate: () => void;
+  editing: boolean;
+  toggleEditing: () => void;
   panel: string;
   setPanel: (p: string) => void;
   t: Translate;
@@ -95,6 +100,14 @@ export function CanvasToolbar({
           onClick={rotate}
         >
           <RotateCw size={14} />
+        </button>
+        <button
+          aria-label={t("تعديل النص على الصفحة", "Edit page text")}
+          aria-pressed={editing}
+          onClick={toggleEditing}
+        >
+          <Pencil size={14} />
+          <span>{t("تعديل", "Edit")}</span>
         </button>
       </div>
       <span className="ps-live-chip">
