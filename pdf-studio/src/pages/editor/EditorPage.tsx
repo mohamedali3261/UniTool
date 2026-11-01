@@ -12,6 +12,7 @@ import { PropertiesPanel } from "./PropertiesPanel";
 import { DocumentCanvas } from "./DocumentCanvas";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { TextPanel } from "./TextPanel";
+import { NativeTextEditor } from "./NativeTextEditor";
 import { Guide } from "./Guide";
 import { Modal } from "../../components/Modal";
 import "./editor.css";
@@ -38,6 +39,10 @@ export default function EditorPage({
     [query, setQuery] = useState(""),
     [panel, setPanel] = useState(""),
     [help, setHelp] = useState(false),
+    [nativeEdit, setNativeEdit] = useState<{
+      bytes: Uint8Array;
+      pageIndex: number;
+    } | null>(null),
     [busy, setBusy] = useState(""),
     [removePage, setRemovePage] = useState<string | null>(null);
   const s = session!,
@@ -225,6 +230,26 @@ export default function EditorPage({
           <div className="ps-tool-section">
             <div className="ps-section-eyebrow">MARK IT. MAKE IT YOURS.</div>
             <ToolRail tool={tool} setTool={setTool} t={t} />
+            <button
+              className="ps-button"
+              onClick={async () => {
+                setBusy(t("تجهيز نسخة…", "Preparing copy…"));
+                try {
+                  const { exportPdf } = await import("../../core/export");
+                  const blob = await exportPdf(s.bytes, s.doc, edit, () => {});
+                  setNativeEdit({
+                    bytes: new Uint8Array(await blob.arrayBuffer()),
+                    pageIndex: index,
+                  });
+                } catch (e) {
+                  notice((e as Error).message);
+                } finally {
+                  setBusy("");
+                }
+              }}
+            >
+              {t("تعديل النص الأصلي (محدود)", "Edit original text (limited)")}
+            </button>
             <PropertiesPanel
               tool={tool}
               items={page.annotations}
@@ -323,6 +348,15 @@ export default function EditorPage({
           {page.source + 1}
         </span>
       </footer>
+      {nativeEdit && (
+        <NativeTextEditor
+          {...nativeEdit}
+          name={s.name}
+          close={() => setNativeEdit(null)}
+          open={load}
+          t={t}
+        />
+      )}
       {help && <Guide t={t} onClose={() => setHelp(false)} />}{" "}
       {removePage && (
         <Modal

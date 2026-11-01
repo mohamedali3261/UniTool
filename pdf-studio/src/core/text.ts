@@ -1,3 +1,4 @@
+import { readableText, encodingIssues } from "./textEncoding";
 import type { PageText, TextRun } from "./types";
 export function normalizeSearch(s: string) {
   return s
@@ -60,11 +61,11 @@ export function buildText(runs: TextRun[]): PageText {
   let source = "";
   for (const r of runs) source += r.str + (r.end ? "\n" : " ");
   const groups = geometricLines(runs),
-    lines = groups.map((g) => g.text).join("\n");
+    lines = readableText(groups.map((g) => g.text).join("\n"));
+  const issues = encodingIssues(source);
   const warnings: string[] = [];
   if (!source.trim()) warnings.push("no-text");
-  if (/[\u0000-\u0008\uFFFD\uE000-\uF8FF]/u.test(source))
-    warnings.push("encoding");
+  if (issues.length) warnings.push("encoding");
   if (
     groups.some(
       (g) =>
@@ -77,7 +78,9 @@ export function buildText(runs: TextRun[]): PageText {
     warnings.push("layout");
   return {
     runs,
-    source: source.trim(),
+    rawSource: source.trim(),
+    encodingIssues: issues,
+    source: readableText(source.trim()),
     lines,
     warnings,
     characters: [...lines.trim()].length,

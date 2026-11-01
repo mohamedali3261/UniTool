@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFName, PDFDict, StandardFonts } from "pdf-lib";
 const fixture = (name: string) =>
   fileURLToPath(new URL("./fixtures/" + name, import.meta.url));
 async function boot(page: Page, name = "arabic-native.pdf", lang = "ar") {
@@ -356,4 +356,113 @@ test("keyboard geometry controls move and resize annotations independently of zo
   );
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   await expect(page.locator(".ps-interaction rect")).toHaveAttribute("x", "80");
+});
+test("font-private glyphs are visible as missing text, presentation forms are readable, and raw extraction remains available", async ({
+  page,
+}) => {
+  const doc = await PDFDocument.create(),
+    font = await doc.embedFont(StandardFonts.Helvetica),
+    p = doc.addPage([595, 842]);
+  p.drawText("~ _ ^ 001.02 04-Apr-2027", { x: 40, y: 700, size: 24, font });
+  await font.embed();
+  // PDF.js bidi consumes visual glyph order; use non-date glyphs so date text stays unchanged.
+  const cmap = `/CIDInit /ProcSet findresource begin
+12 dict begin begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /SyntheticTest def /CMapType 2 def
+1 begincodespacerange <00> <FF> endcodespacerange
+3 beginbfchar <7E> <FEC9FEEEFEE7> <5F> <E018> <5E> <E032> endbfchar
+endcmap CMapName currentdict /CMap defineresource pop end end`;
+  doc.context
+    .lookup(font.ref, PDFDict)
+    .set(
+      PDFName.of("ToUnicode"),
+      doc.context.register(doc.context.flateStream(cmap)),
+    );
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page.locator(".ps-upload input[type=file]").setInputFiles({
+    name: "synthetic-font-mappings.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await doc.save()),
+  });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  const text = page.getByRole("textbox", {
+    name: "Extracted text",
+    exact: true,
+  });
+  await expect(text).toHaveValue(/نوع/);
+  const clean = await text.inputValue();
+  expect(clean).not.toMatch(/[\uE000-\uF8FF]/u);
+  expect(clean).toContain("�");
+  expect(clean).toContain("001.02");
+  expect(clean).toContain("04-Apr-2027");
+  await expect(page.getByRole("alert")).toContainText("Incomplete text");
+  await expect(page.locator(".ps-source-badge")).toHaveText(
+    "Text needs review",
+  );
+  await page.locator(".ps-encoding-notice summary").click();
+  await expect(page.locator(".ps-encoding-notice")).toContainText("U+E018");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "TXT", exact: true }).click();
+  const content = await readFile((await (await download).path())!, "utf8");
+  expect(content).toContain("نوع");
+  expect(content).not.toMatch(/[\uE000-\uF8FF]/u);
+  await page
+    .getByRole("combobox", { name: "Reading order", exact: true })
+    .selectOption("rawSource");
+  await expect(text).toHaveValue(/[\uE000-\uF8FF]/u);
+  await page
+    .getByRole("button", { name: "Read the page image with OCR", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Cancel OCR", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cancel OCR", exact: true }).click();
+});
+test("limited native editing replaces real source text and opens the edited copy for review", async ({
+  page,
+}) => {
+  const doc = await PDFDocument.create(),
+    font = await doc.embedFont(StandardFonts.Helvetica);
+  doc.addPage().drawText("Original 123", { x: 40, y: 700, size: 20, font });
+  await page.addInitScript(() => localStorage.setItem("pdf-studio.lang", "en"));
+  await page.goto("/pdf-studio/");
+  await page
+    .locator(".ps-upload input[type=file]")
+    .setInputFiles({
+      name: "native.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await doc.save()),
+    });
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  await page
+    .getByRole("button", { name: "Edit original text (limited)", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Replacement text", exact: true })
+    .fill("Changed 456");
+  await page
+    .getByRole("spinbutton", { name: "Native move X", exact: true })
+    .fill("20");
+  await page
+    .getByRole("button", { name: "Create edited copy", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Download native edited copy",
+      exact: true,
+    }),
+  ).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("button", { name: "Open edited copy for review", exact: true })
+    .click();
+  await expect(page.locator(".ps-paper")).toHaveAttribute("data-ready", "true");
+  const text = page.getByRole("textbox", {
+    name: "Extracted text",
+    exact: true,
+  });
+  await expect(text).toHaveValue(/Changed 456/);
+  await expect(text).not.toHaveValue(/Original 123/);
 });
