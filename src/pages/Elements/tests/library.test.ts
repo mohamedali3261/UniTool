@@ -142,7 +142,7 @@ test("ready catalog retains original designs and adds 48 video-focused elements"
   assert.equal(items.filter((i) => i.id.startsWith("ready-type-")).length, 20);
   assert.equal(items.filter((i) => i.kind === "group").length, 32);
   assert.equal(items.filter((i) => i.source === "unitool-motion").length, 50);
-  assert.equal(items.length, 566);
+  assert.equal(items.length, 626);
   const added = items.filter((i) => i.id.startsWith("video-"));
   assert.equal(added.length, 48);
   assert.equal(

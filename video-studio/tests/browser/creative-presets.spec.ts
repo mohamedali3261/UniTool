@@ -64,7 +64,7 @@ async function seek(page: Page, time: number) {
       new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   );
 }
-test("all 36 native creative presets render changing frames and rewind deterministically", async ({
+test("all 96 native creative presets render changing frames and rewind deterministically", async ({
   page,
 }) => {
   test.setTimeout(180000);
@@ -96,12 +96,28 @@ test("all 36 native creative presets render changing frames and rewind determini
       ),
     )
     .toBe(2);
+  const packFrames = new Set<number>();
   for (let i = 0; i < elements.length; i++) {
     await seek(page, i * 6 + 0.15);
     const first = await fingerprint(page);
     await seek(page, i * 6 + 1.1);
     const second = await fingerprint(page);
     expect(second, `${elements[i].id} animates`).not.toBe(first);
+    if (elements[i].id.startsWith("creative-p2-")) packFrames.add(second);
+    if (
+      [
+        "creative-p2-bg-stars",
+        "creative-p2-shape-fan",
+        "creative-p2-ui-chat",
+        "creative-p2-data-area",
+        "creative-p2-icon-rocket",
+        "creative-p2-text-chroma",
+      ].includes(elements[i].id)
+    ) {
+      await page
+        .locator(".canvas-stage canvas")
+        .screenshot({ path: `test-results/pack2-${elements[i].id}.png` });
+    }
     await seek(page, i * 6 + 0.15);
     expect(await fingerprint(page), `${elements[i].id} rewinds`).toBe(first);
   }
@@ -111,6 +127,9 @@ test("all 36 native creative presets render changing frames and rewind determini
         (window as Window & { creativeGLDraws?: number }).creativeGLDraws || 0,
     ),
   ).toBeGreaterThan(0);
+  expect(packFrames.size, "new pack contains 60 visually distinct frames").toBe(
+    60,
+  );
   expect(errors).toEqual([]);
 });
 test("creative elements insert from the library, expose controls, and survive project save", async ({
@@ -118,7 +137,7 @@ test("creative elements insert from the library, expose controls, and survive pr
 }) => {
   await page.goto(base + "/video-studio.html#elements");
   await page
-    .getByRole("button", { name: "حركات إبداعية · 36", exact: true })
+    .getByRole("button", { name: "حركات إبداعية · 96", exact: true })
     .click();
   await page
     .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
@@ -235,126 +254,137 @@ test("five new clip transitions composite actual source images and preserve thei
   }
 });
 
-for (const format of ["webm", "mp4"] as const)
-  test(`creative motion and variable weight appear in a decoded ${format} export`, async ({
-    page,
-  }) => {
-    test.setTimeout(90000);
-    await project(
+for (const family of ["original", "pack2"] as const)
+  for (const format of ["webm", "mp4"] as const)
+    test(`${family} creative motion appears in a decoded ${format} export`, async ({
       page,
-      [
-        elements.find((i) => i.id === "creative-mesh")!,
-        elements.find((i) => i.id === "creative-weight")!,
-      ],
-      1.4,
-    );
-    await page.getByRole("button", { name: /تصدير/ }).first().click();
-    if (format === "webm") {
+    }) => {
+      test.setTimeout(90000);
+      await project(
+        page,
+        [
+          elements.find(
+            (i) =>
+              i.id ===
+              (family === "pack2" ? "creative-p2-bg-stars" : "creative-mesh"),
+          )!,
+          elements.find(
+            (i) =>
+              i.id ===
+              (family === "pack2"
+                ? "creative-p2-text-chroma"
+                : "creative-weight"),
+          )!,
+        ],
+        1.4,
+      );
+      await page.getByRole("button", { name: /تصدير/ }).first().click();
+      if (format === "webm") {
+        await page
+          .getByRole("combobox", { name: "صيغة التصدير", exact: true })
+          .click();
+        await page.getByRole("option", { name: "WebM", exact: true }).click();
+      }
       await page
-        .getByRole("combobox", { name: "صيغة التصدير", exact: true })
+        .getByRole("combobox", { name: "دقة التصدير", exact: true })
         .click();
-      await page.getByRole("option", { name: "WebM", exact: true }).click();
-    }
-    await page
-      .getByRole("combobox", { name: "دقة التصدير", exact: true })
-      .click();
-    await page
-      .getByRole("option", { name: "480p — خفيف وسريع", exact: true })
-      .click();
-    const pending = page.waitForEvent("download");
-    await page
-      .getByRole("button", { name: "تصدير الفيديو", exact: true })
-      .click();
-    const bytes = await fs.readFile((await (await pending).path())!);
-    expect(bytes.length).toBeGreaterThan(1000);
-    const result = await page.evaluate(
-      async ({ data, format }) => {
-        const v = document.createElement("video");
-        v.muted = true;
-        v.playsInline = true;
-        const url = URL.createObjectURL(
-          new Blob([Uint8Array.from(atob(data), (ch) => ch.charCodeAt(0))], {
-            type: `video/${format}`,
-          }),
-        );
-        try {
-          await new Promise<void>((resolve, reject) => {
-            v.onloadeddata = () => resolve();
-            v.onerror = () => reject(Error("decode failed"));
-            v.src = url;
-          });
-          const c = document.createElement("canvas");
-          c.width = 80;
-          c.height = 45;
-          const x = c.getContext("2d")!,
-            hashes = new Set<number>();
-          let frames = 0;
-          if (format === "mp4") {
-            for (const time of [0.1, 0.3, 0.5, 0.8, 1.1, 1.6, 2, 2.4]) {
-              v.currentTime = time;
-              await new Promise<void>((resolve, reject) => {
-                const timer = setTimeout(
-                  () => reject(Error("seek timeout")),
-                  3000,
-                );
-                v.onseeked = () => {
-                  clearTimeout(timer);
-                  resolve();
-                };
-              });
-              x.drawImage(v, 0, 0, 80, 45);
-              const d = x.getImageData(0, 0, 80, 45).data;
-              let h = 2166136261;
-              for (let i = 0; i < d.length; i++)
-                h = Math.imul(h ^ d[i], 16777619);
-              hashes.add(h >>> 0);
-              frames++;
+      await page
+        .getByRole("option", { name: "480p — خفيف وسريع", exact: true })
+        .click();
+      const pending = page.waitForEvent("download");
+      await page
+        .getByRole("button", { name: "تصدير الفيديو", exact: true })
+        .click();
+      const bytes = await fs.readFile((await (await pending).path())!);
+      expect(bytes.length).toBeGreaterThan(1000);
+      const result = await page.evaluate(
+        async ({ data, format }) => {
+          const v = document.createElement("video");
+          v.muted = true;
+          v.playsInline = true;
+          const url = URL.createObjectURL(
+            new Blob([Uint8Array.from(atob(data), (ch) => ch.charCodeAt(0))], {
+              type: `video/${format}`,
+            }),
+          );
+          try {
+            await new Promise<void>((resolve, reject) => {
+              v.onloadeddata = () => resolve();
+              v.onerror = () => reject(Error("decode failed"));
+              v.src = url;
+            });
+            const c = document.createElement("canvas");
+            c.width = 80;
+            c.height = 45;
+            const x = c.getContext("2d")!,
+              hashes = new Set<number>();
+            let frames = 0;
+            if (format === "mp4") {
+              for (const time of [0.1, 0.3, 0.5, 0.8, 1.1, 1.6, 2, 2.4]) {
+                v.currentTime = time;
+                await new Promise<void>((resolve, reject) => {
+                  const timer = setTimeout(
+                    () => reject(Error("seek timeout")),
+                    3000,
+                  );
+                  v.onseeked = () => {
+                    clearTimeout(timer);
+                    resolve();
+                  };
+                });
+                x.drawImage(v, 0, 0, 80, 45);
+                const d = x.getImageData(0, 0, 80, 45).data;
+                let h = 2166136261;
+                for (let i = 0; i < d.length; i++)
+                  h = Math.imul(h ^ d[i], 16777619);
+                hashes.add(h >>> 0);
+                frames++;
+              }
+              return { frames, unique: hashes.size, height: v.videoHeight };
             }
+            await new Promise<void>((resolve, reject) => {
+              const timer = setTimeout(() => {
+                v.pause();
+                resolve();
+              }, 10000);
+              v.onended = () => {
+                clearTimeout(timer);
+                resolve();
+              };
+              v.onerror = () => {
+                clearTimeout(timer);
+                reject(Error("playback failed"));
+              };
+              const tick = () => {
+                if (v.ended || v.paused) return;
+                x.drawImage(v, 0, 0, 80, 45);
+                const d = x.getImageData(0, 0, 80, 45).data;
+                let h = 2166136261;
+                for (let i = 0; i < d.length; i++)
+                  h = Math.imul(h ^ d[i], 16777619);
+                hashes.add(h >>> 0);
+                frames++;
+                v.requestVideoFrameCallback(tick);
+              };
+              void v
+                .play()
+                .then(() => v.requestVideoFrameCallback(tick))
+                .catch(reject);
+            });
             return { frames, unique: hashes.size, height: v.videoHeight };
+          } finally {
+            v.pause();
+            v.removeAttribute("src");
+            v.load();
+            URL.revokeObjectURL(url);
           }
-          await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(() => {
-              v.pause();
-              resolve();
-            }, 10000);
-            v.onended = () => {
-              clearTimeout(timer);
-              resolve();
-            };
-            v.onerror = () => {
-              clearTimeout(timer);
-              reject(Error("playback failed"));
-            };
-            const tick = () => {
-              if (v.ended || v.paused) return;
-              x.drawImage(v, 0, 0, 80, 45);
-              const d = x.getImageData(0, 0, 80, 45).data;
-              let h = 2166136261;
-              for (let i = 0; i < d.length; i++)
-                h = Math.imul(h ^ d[i], 16777619);
-              hashes.add(h >>> 0);
-              frames++;
-              v.requestVideoFrameCallback(tick);
-            };
-            void v
-              .play()
-              .then(() => v.requestVideoFrameCallback(tick))
-              .catch(reject);
-          });
-          return { frames, unique: hashes.size, height: v.videoHeight };
-        } finally {
-          v.pause();
-          v.removeAttribute("src");
-          v.load();
-          URL.revokeObjectURL(url);
-        }
-      },
-      { data: bytes.toString("base64"), format },
-    );
-    expect(result.height).toBe(480);
-    expect(result.frames).toBeGreaterThan(5);
-    expect(result.unique).toBeGreaterThan(3);
-  });
+        },
+        { data: bytes.toString("base64"), format },
+      );
+      expect(result.height).toBe(480);
+      expect(result.frames).toBeGreaterThan(5);
+      expect(result.unique).toBeGreaterThan(3);
+    });
 
 test("creative controls remain usable on a 390px touch viewport and data edits persist", async ({
   page,
@@ -362,7 +392,7 @@ test("creative controls remain usable on a 390px touch viewport and data edits p
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(base + "/video-studio.html#elements");
   await page
-    .getByRole("button", { name: "حركات إبداعية · 36", exact: true })
+    .getByRole("button", { name: "حركات إبداعية · 96", exact: true })
     .click();
   await page
     .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
@@ -399,7 +429,7 @@ test("chart datasets can be edited and survive project save", async ({
 }) => {
   await page.goto(base + "/video-studio.html#elements");
   await page
-    .getByRole("button", { name: "حركات إبداعية · 36", exact: true })
+    .getByRole("button", { name: "حركات إبداعية · 96", exact: true })
     .click();
   await page
     .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
@@ -424,3 +454,59 @@ test("chart datasets can be edited and survive project save", async ({
   expect(saved.project.texts[0].creative.data).toEqual([12, 35, 20, 60]);
   await page.screenshot({ path: "test-results/creative-desktop-data.png" });
 });
+
+for (const viewport of [1440, 390])
+  test(`new 60-item filter searches, inserts, edits dataset and survives undo/redo at ${viewport}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: viewport, height: 900 });
+    await page.goto(base + "/video-studio.html#elements");
+    await page
+      .getByRole("button", { name: "الإضافات الجديدة · 60", exact: true })
+      .click();
+    await page
+      .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
+      .fill("Growing bars");
+    await expect(
+      page.locator('.studio-elements-grid button[aria-label$="للتايم لاين"]'),
+    ).toHaveCount(1);
+    await page
+      .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+      .click();
+    await page
+      .getByRole("textbox", { name: "قيم الرسم البياني", exact: true })
+      .fill("10, 75, 30, 92");
+    await page
+      .getByRole("button", { name: "تطبيق قيم الرسم", exact: true })
+      .click();
+    // Leave the textbox so editor shortcuts, rather than native text undo, apply.
+    await page
+      .getByRole("button", { name: "تطبيق قيم الرسم", exact: true })
+      .focus();
+    await page.keyboard.press("Control+z");
+    await expect(
+      page.getByRole("textbox", { name: "قيم الرسم البياني", exact: true }),
+    ).toHaveValue("");
+    await page.keyboard.press("Control+Shift+z");
+    await expect(
+      page.getByRole("textbox", { name: "قيم الرسم البياني", exact: true }),
+    ).toHaveValue("10, 75, 30, 92");
+    const pending = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "حفظ المشروع", exact: true })
+      .first()
+      .click();
+    const saved = JSON.parse(
+      await fs.readFile((await (await pending).path())!, "utf8"),
+    );
+    expect(saved.project.texts[0].creative.id).toBe("p2-data-bars");
+    expect(saved.project.texts[0].creative.data).toEqual([10, 75, 30, 92]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `test-results/pack2-library-${viewport}.png`,
+    });
+  });

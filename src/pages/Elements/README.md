@@ -13,7 +13,7 @@ The elements library is now a first-class **العناصر** tab inside Video St
 - `main.tsx`: old-entry redirect only.
 
 ## New video pack
-566 total elements, including **48 additions** in `sources/ready/video-pack.ts`:
+626 total elements, including **48 additions** in `sources/ready/video-pack.ts`:
 - 24 original SVG overlay icons for cameras, microphones, playback, audience actions, publishing and commerce. These are foreground `shapes`, not backgrounds.
 - 12 four-layer lower-third compositions with editable title/subtitle and independent panel/accent layers.
 - 12 editable video-title presets.
@@ -25,3 +25,6 @@ No remote assets or external icon requests. Existing template art and the 50 per
 
 ## Creative motion pack
 36 additional native layers in `sources/ready/creative.ts`, with shared canvas preview/export, real Three.js and local variable fonts. See `video-studio/src/creative/README.md` for settings, actual clip transitions, UI-scene limitations and verification.
+
+## Motion pack 2
+60 additional native animated elements are available under **الإضافات الجديدة · 60**; **حركات إبداعية · 96** includes both creative packs. See `video-studio/src/creative/pack2/README.md` for designs, editable settings, illustrative-data limitations and tests.

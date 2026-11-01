@@ -495,4 +495,7 @@ Play وSpace يجهزان عناصر الصوت والفيديو الحالية 
 الملفات في `src/pages/Editor/preview/`، واختبارات الحسابات في `preview-viewport.test.ts` واختبارات الواجهة في `browser/preview-viewport.spec.ts`. قالب الإعلان منفصل تمامًا عن واجهة الموقع في `promos/unitool/`؛ ملف `output/unitool-film.html` الناتج مستقل ويحتوي الرسوم والخطوط والمشغّل دون طلبات شبكة.
 
 ## الحركات الإبداعية داخل العناصر
-أضيفت 36 حركة أصلية قابلة للإدراج والتعديل (إجمالي المكتبة 566)، مع خط متغير محلي وThree.js فعلي. الانتقالات الخمسة الجديدة متاحة أيضًا بين المقاطع من إعدادات المقطع، وCtrl/Cmd+K يفتح بحث إدراج فعلي. مشاهد المؤشر والأزرار والإشعارات داخل الفيديو حركات توضيحية، وليست واجهات تفاعلية في الملف المصدّر. التفاصيل والقيود والاختبارات: [creative/README.md](src/creative/README.md).
+أضيفت 36 حركة أصلية قابلة للإدراج والتعديل (إجمالي المكتبة 626)، مع خط متغير محلي وThree.js فعلي. الانتقالات الخمسة الجديدة متاحة أيضًا بين المقاطع من إعدادات المقطع، وCtrl/Cmd+K يفتح بحث إدراج فعلي. مشاهد المؤشر والأزرار والإشعارات داخل الفيديو حركات توضيحية، وليست واجهات تفاعلية في الملف المصدّر. التفاصيل والقيود والاختبارات: [creative/README.md](src/creative/README.md).
+
+## Motion pack 2
+60 additional native animated elements are available under **الإضافات الجديدة · 60**; **حركات إبداعية · 96** includes both creative packs. See `video-studio/src/creative/pack2/README.md` for designs, editable settings, illustrative-data limitations and tests.
