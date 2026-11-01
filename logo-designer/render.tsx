@@ -90,6 +90,7 @@ export function ElementGraphic({
         width={n.w}
         height={n.h}
         viewBox="0 0 128 128"
+        preserveAspectRatio="none"
       >
         {n.paths?.map((p, i) => (
           <path

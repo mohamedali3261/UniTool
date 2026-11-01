@@ -718,10 +718,15 @@ for (const width of [320, 390, 600])
       "Mockups",
       "Projects",
       "Help",
-    ])
-      await expect(
-        page.getByRole("button", { name, exact: true }),
-      ).toBeInViewport();
+    ]) {
+      const tool = page.getByRole("button", { name, exact: true });
+      await tool.scrollIntoViewIfNeeded();
+      await expect(tool).toBeInViewport();
+    }
+    const rail = (await page.locator(".ld-rail").boundingBox())!;
+    expect(rail.height).toBeLessThanOrEqual(56);
+    expect(panel!.height).toBeLessThanOrEqual(211);
+    expect(canvas!.height).toBeGreaterThan(panel!.height * 1.8);
     await page
       .getByRole("button", { name: "Expand tool panel", exact: true })
       .click();
@@ -756,4 +761,285 @@ test("resizing desktop to a phone never stacks two open tool panels", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390,
   );
+});
+
+test("closing an expanded mobile panel restores the large preview", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await start(page);
+  await page
+    .getByRole("button", { name: "Expand tool panel", exact: true })
+    .click();
+  await expect(page.locator(".ld-center")).toBeHidden();
+  await page
+    .getByRole("button", { name: "Close library", exact: true })
+    .click();
+  await expect(page.locator(".ld-center")).toBeVisible();
+  expect(
+    (await page.locator(".ld-center").boundingBox())!.height,
+  ).toBeGreaterThan(600);
+});
+
+test("Boolean shapes and path point editing change real geometry with undo", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  await page.getByRole("spinbutton", { name: "X", exact: true }).fill("300");
+  await page.getByRole("button", { name: "Add Square", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Select Circle", exact: true })
+    .click({ position: { x: 8, y: 40 } });
+  await page
+    .getByRole("button", { name: "Select Square", exact: true })
+    .click({ modifiers: ["Shift"], position: { x: 65, y: 40 } });
+  await page.getByRole("button", { name: "Union", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Select Editable path", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Select Circle", exact: true }),
+  ).toHaveCount(0);
+  const editor = page.getByLabel("Path point editor");
+  await expect(editor).toBeVisible();
+  const path = editor.locator("path").first(),
+    before = await path.getAttribute("d");
+  await page
+    .getByRole("spinbutton", { name: "Point X", exact: true })
+    .fill("15");
+  await expect(path).not.toHaveAttribute("d", before!);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(path).toHaveAttribute("d", before!);
+  await page
+    .getByRole("button", { name: "Add curve handles", exact: true })
+    .click();
+  await expect(
+    page.getByRole("spinbutton", { name: "Handle out X", exact: true }),
+  ).toHaveValue("12");
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Delete point", exact: true }).click();
+  await expect(editor.locator("circle[role=button]")).not.toHaveCount(0);
+});
+
+test("style transfer and full screen preview preserve editable design", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  await page.getByLabel("Quick color", { exact: true }).fill("#334455");
+  await page.getByRole("button", { name: "Copy style", exact: true }).click();
+  await page.getByRole("button", { name: "Add Square", exact: true }).click();
+  await page.getByRole("button", { name: "Paste style", exact: true }).click();
+  await expect(page.getByLabel("Quick color", { exact: true })).toHaveValue(
+    "#334455",
+  );
+  await page
+    .getByRole("button", { name: "Full screen preview", exact: true })
+    .click();
+  await expect(page.locator(".ld-topbar")).toBeHidden();
+  await expect(page.locator(".ld-rail")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Show tools", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Show tools", exact: true }).click();
+  await expect(page.locator(".ld-topbar")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Select Square", exact: true }),
+  ).toBeVisible();
+});
+
+test("double click edits inside a group and double click text edits on canvas", async ({
+  page,
+}) => {
+  await start(page);
+  await page
+    .getByRole("button", { name: "Editable icon combinations", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Add composition House & key", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Select House", exact: true })
+    .dblclick({ position: { x: 10, y: 10 } });
+  await expect(
+    page.getByText("Editing inside group", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".ld-properties-heading small")).toHaveText(
+    "1 selected",
+  );
+  await page
+    .getByRole("button", { name: "Finish group editing", exact: true })
+    .click();
+  await expect(page.locator(".ld-properties-heading small")).toHaveText(
+    "3 selected",
+  );
+  await page.getByRole("button", { name: "Text", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add brand name", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Select Brand name", exact: true })
+    .last()
+    .dblclick();
+  await page
+    .getByRole("textbox", { name: "Edit text on canvas", exact: true })
+    .fill("DIRECT EDIT");
+  await page.keyboard.press("Enter");
+  await expect(
+    page.locator(".ld-artboard text").filter({ hasText: "DIRECT EDIT" }),
+  ).toHaveCount(1);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(
+    page.locator(".ld-artboard text").filter({ hasText: "DIRECT EDIT" }),
+  ).toHaveCount(0);
+});
+
+test("brand lab creates persistent variants, shows actual sizes and downloads a PDF guide", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Brand lab", exact: true }).click();
+  await page.getByRole("button", { name: "Dark version", exact: true }).click();
+  await expect(page.locator(".ld-variant-grid article")).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "Light version", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Monochrome", exact: true }).click();
+  await expect(page.locator(".ld-variant-grid article")).toHaveCount(4);
+  await page
+    .getByRole("button", { name: "Open variant Original", exact: true })
+    .click();
+  const size = await page
+    .getByLabel("Logo at 16px", { exact: true })
+    .boundingBox();
+  expect(size!.width).toBe(16);
+  await page
+    .getByRole("button", { name: "Test background #14221d", exact: true })
+    .click();
+  const dl = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download brand guide PDF", exact: true })
+    .click();
+  const file = await dl;
+  expect(file.suggestedFilename()).toContain("brand-guide.pdf");
+  const { readFile } = await import("node:fs/promises");
+  expect((await readFile((await file.path())!)).subarray(0, 4).toString()).toBe(
+    "%PDF",
+  );
+  await expect(page.getByRole("status").first()).toHaveText("Saved locally");
+  await page.reload();
+  await page.getByRole("button", { name: "Brand lab", exact: true }).click();
+  await expect(page.locator(".ld-variant-grid article")).toHaveCount(4);
+});
+
+test("personal library saves editable selection and restores it after reload", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Circle", exact: true }).click();
+  await page
+    .getByRole("button", { name: "My personal library", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Saved mark name", exact: true })
+    .fill("My circle");
+  await page
+    .getByRole("button", { name: "Save selection to my library", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Add saved mark My circle", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("status").first()).toHaveText("Saved locally");
+  await page.reload();
+  await page
+    .getByRole("button", { name: "My personal library", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Add saved mark My circle", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Select Circle", exact: true }),
+  ).toHaveCount(2);
+});
+
+test("mobile direct editing and preview mode work without losing the compact layout", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    localStorage.setItem("logo-designer-tour", "done");
+    localStorage.setItem("logo-designer-lang", "en");
+  });
+  await page.goto("/logo-designer/");
+  await page.getByRole("button", { name: "Text", exact: true }).tap();
+  await page.getByRole("button", { name: "Add brand name", exact: true }).tap();
+  await page.getByRole("button", { name: "Close library", exact: true }).tap();
+  await page
+    .getByRole("button", { name: "Select Brand name", exact: true })
+    .last()
+    .tap();
+  await page
+    .getByRole("button", { name: "Select Brand name", exact: true })
+    .last()
+    .tap();
+  await expect(
+    page.getByRole("textbox", { name: "Edit text on canvas", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Edit text on canvas", exact: true })
+    .fill("MOBILE MARK");
+  await page.keyboard.press("Enter");
+  await expect(
+    page.locator(".ld-artboard text").filter({ hasText: "MOBILE MARK" }),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Full screen preview", exact: true })
+    .tap();
+  await expect(page.locator(".ld-rail")).toBeHidden();
+  await page.getByRole("button", { name: "Show tools", exact: true }).tap();
+  await expect(page.locator(".ld-rail")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    390,
+  );
+  await context.close();
+});
+
+test("point anchors drag with one undo step and the edited SVG is downloadable", async ({
+  page,
+}) => {
+  await start(page);
+  await page.getByRole("button", { name: "Add Square", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Convert to editable path", exact: true })
+    .click();
+  const editor = page.getByLabel("Path point editor"),
+    path = editor.locator("path").first(),
+    before = await path.getAttribute("d");
+  const p = editor.getByRole("button", { name: "Point 1", exact: true });
+  const box = (await p.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 15, box.y + 18, { steps: 5 });
+  await page.mouse.up();
+  await expect(path).not.toHaveAttribute("d", before!);
+  const edited = await path.getAttribute("d");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(path).toHaveAttribute("d", before!);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(path).toHaveAttribute("d", edited!);
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("button", { name: "SVG", exact: true }).click();
+  const dl = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download file", exact: true })
+    .click();
+  const file = await dl;
+  const { readFile } = await import("node:fs/promises");
+  expect((await readFile((await file.path())!)).toString()).toContain(edited!);
 });

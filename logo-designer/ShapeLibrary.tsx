@@ -1,3 +1,4 @@
+import PersonalLibrary from "./PersonalLibrary";
 import Combinations from "./Combinations";
 /** المكتبة تجمع الرموز والعلامات الأصلية؛ الإضافة دائمًا عنصر حقيقي قابل للتعديل. */
 import { useMemo, useState } from "react";
@@ -22,6 +23,7 @@ export default function ShapeLibrary() {
     [collection, setCollection] = useState("all"),
     [kind, setKind] = useState("all"),
     [showCombinations, setShowCombinations] = useState(false),
+    [personal, setPersonal] = useState(false),
     prefs = useLibraryPreferences();
   const entries = useMemo(
     () => [
@@ -114,137 +116,161 @@ export default function ShapeLibrary() {
       </p>
       <button
         className="ld-secondary"
-        aria-pressed={showCombinations}
-        onClick={() => setShowCombinations(!showCombinations)}
+        aria-pressed={personal}
+        onClick={() => {
+          setPersonal(!personal);
+          setShowCombinations(false);
+        }}
       >
         {s.t(
-          showCombinations
-            ? "رجوع للعناصر المفردة"
-            : "تركيبات أيقونات قابلة للتعديل",
-          showCombinations
-            ? "Back to individual elements"
-            : "Editable icon combinations",
+          personal ? "رجوع للمكتبة العامة" : "مكتبتي الشخصية",
+          personal ? "Back to public library" : "My personal library",
         )}
       </button>
-      {showCombinations ? (
-        <Combinations />
+      {personal ? (
+        <PersonalLibrary />
       ) : (
         <>
-          <label className="ld-search">
-            <Search size={17} />
-            <input
-              type="search"
-              aria-label={s.t("بحث في الأشكال", "Search symbols")}
-              placeholder={s.t("ورقة، صحة، عقارات…", "Leaf, health, estate…")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </label>
-          <div className="ld-collection-tabs">
-            {[
-              ["all", "المكتبة", "Library"],
-              ["favorites", "المفضلة", "Favorites"],
-              ["recent", "مؤخرًا", "Recent"],
-            ].map(([id, ar, en]) => (
-              <button
-                key={id}
-                aria-pressed={collection === id}
-                onClick={() => setCollection(id)}
-              >
-                {id === "favorites" ? (
-                  <Star size={12} />
-                ) : id === "recent" ? (
-                  <Clock size={12} />
-                ) : null}
-                {s.t(ar, en)}
-              </button>
-            ))}
-          </div>
-          <label className="ld-field">
-            {s.t("نوع العنصر", "Element type")}
-            <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              {[
-                ["all", "كل العناصر", "All elements"],
-                ["shape", "أشكال هندسية", "Shapes"],
-                ["icon", "رموز خطية", "Line icons"],
-                ["vector", "علامات أصلية", "Original marks"],
-              ].map(([id, ar, en]) => (
-                <option key={id} value={id}>
-                  {s.t(ar, en)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="ld-chips">
-            {categories.map(([id, ar, en]) => (
-              <button
-                key={id}
-                aria-pressed={cat === id}
-                onClick={() => setCat(id)}
-              >
-                {s.t(ar, en)}
-              </button>
-            ))}
-          </div>
-          <p className="ld-results" role="status">
-            {s.t(`${filtered.length} عنصر`, `${filtered.length} elements`)}
-          </p>
-          <div className="ld-symbol-grid">
-            {filtered.map((v) => (
-              <article className="ld-library-item" key={v.id}>
-                <button
-                  className="ld-element-add"
-                  title={s.t(v.ar, v.en)}
-                  aria-label={s.t("إضافة ", "Add ") + s.t(v.ar, v.en)}
-                  onClick={() => add(v.id, v.data)}
-                >
-                  <svg viewBox="0 0 100 100">
-                    <ElementGraphic
-                      n={v.data}
-                      prefix={"library-" + v.id.replace(":", "-")}
-                    />
-                  </svg>
-                  <span>{s.t(v.ar, v.en)}</span>
-                </button>
-                <button
-                  className="ld-favorite-toggle"
-                  aria-label={s.t("مفضلة ", "Favorite ") + s.t(v.ar, v.en)}
-                  aria-pressed={prefs.favorites.includes(v.id)}
-                  onClick={() => prefs.toggle(v.id)}
-                >
-                  <Star
-                    size={11}
-                    fill={
-                      prefs.favorites.includes(v.id) ? "currentColor" : "none"
-                    }
-                  />
-                </button>
-              </article>
-            ))}
-          </div>
-          {!filtered.length && (
-            <div className="ld-empty" role="status">
-              <p>
-                {s.t(
-                  collection === "favorites"
-                    ? "اضغط النجمة على أي عنصر علشان تضيفه للمفضلة."
-                    : "مفيش نتائج بالفلاتر دي. جرّب كلمة أو تصنيف تاني.",
-                  collection === "favorites"
-                    ? "Star any element to save it here."
-                    : "No matches for these filters. Try another search or category.",
-                )}
+          <button
+            className="ld-secondary"
+            aria-pressed={showCombinations}
+            onClick={() => setShowCombinations(!showCombinations)}
+          >
+            {s.t(
+              showCombinations
+                ? "رجوع للعناصر المفردة"
+                : "تركيبات أيقونات قابلة للتعديل",
+              showCombinations
+                ? "Back to individual elements"
+                : "Editable icon combinations",
+            )}
+          </button>
+          {showCombinations ? (
+            <Combinations />
+          ) : (
+            <>
+              <label className="ld-search">
+                <Search size={17} />
+                <input
+                  type="search"
+                  aria-label={s.t("بحث في الأشكال", "Search symbols")}
+                  placeholder={s.t(
+                    "ورقة، صحة، عقارات…",
+                    "Leaf, health, estate…",
+                  )}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </label>
+              <div className="ld-collection-tabs">
+                {[
+                  ["all", "المكتبة", "Library"],
+                  ["favorites", "المفضلة", "Favorites"],
+                  ["recent", "مؤخرًا", "Recent"],
+                ].map(([id, ar, en]) => (
+                  <button
+                    key={id}
+                    aria-pressed={collection === id}
+                    onClick={() => setCollection(id)}
+                  >
+                    {id === "favorites" ? (
+                      <Star size={12} />
+                    ) : id === "recent" ? (
+                      <Clock size={12} />
+                    ) : null}
+                    {s.t(ar, en)}
+                  </button>
+                ))}
+              </div>
+              <label className="ld-field">
+                {s.t("نوع العنصر", "Element type")}
+                <select value={kind} onChange={(e) => setKind(e.target.value)}>
+                  {[
+                    ["all", "كل العناصر", "All elements"],
+                    ["shape", "أشكال هندسية", "Shapes"],
+                    ["icon", "رموز خطية", "Line icons"],
+                    ["vector", "علامات أصلية", "Original marks"],
+                  ].map(([id, ar, en]) => (
+                    <option key={id} value={id}>
+                      {s.t(ar, en)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="ld-chips">
+                {categories.map(([id, ar, en]) => (
+                  <button
+                    key={id}
+                    aria-pressed={cat === id}
+                    onClick={() => setCat(id)}
+                  >
+                    {s.t(ar, en)}
+                  </button>
+                ))}
+              </div>
+              <p className="ld-results" role="status">
+                {s.t(`${filtered.length} عنصر`, `${filtered.length} elements`)}
               </p>
-              <button
-                onClick={() => {
-                  setQ("");
-                  setCat("all");
-                  setKind("all");
-                  setCollection("all");
-                }}
-              >
-                {s.t("إظهار كل العناصر", "Show all elements")}
-              </button>
-            </div>
+              <div className="ld-symbol-grid">
+                {filtered.map((v) => (
+                  <article className="ld-library-item" key={v.id}>
+                    <button
+                      className="ld-element-add"
+                      title={s.t(v.ar, v.en)}
+                      aria-label={s.t("إضافة ", "Add ") + s.t(v.ar, v.en)}
+                      onClick={() => add(v.id, v.data)}
+                    >
+                      <svg viewBox="0 0 100 100">
+                        <ElementGraphic
+                          n={v.data}
+                          prefix={"library-" + v.id.replace(":", "-")}
+                        />
+                      </svg>
+                      <span>{s.t(v.ar, v.en)}</span>
+                    </button>
+                    <button
+                      className="ld-favorite-toggle"
+                      aria-label={s.t("مفضلة ", "Favorite ") + s.t(v.ar, v.en)}
+                      aria-pressed={prefs.favorites.includes(v.id)}
+                      onClick={() => prefs.toggle(v.id)}
+                    >
+                      <Star
+                        size={11}
+                        fill={
+                          prefs.favorites.includes(v.id)
+                            ? "currentColor"
+                            : "none"
+                        }
+                      />
+                    </button>
+                  </article>
+                ))}
+              </div>
+              {!filtered.length && (
+                <div className="ld-empty" role="status">
+                  <p>
+                    {s.t(
+                      collection === "favorites"
+                        ? "اضغط النجمة على أي عنصر علشان تضيفه للمفضلة."
+                        : "مفيش نتائج بالفلاتر دي. جرّب كلمة أو تصنيف تاني.",
+                      collection === "favorites"
+                        ? "Star any element to save it here."
+                        : "No matches for these filters. Try another search or category.",
+                    )}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setQ("");
+                      setCat("all");
+                      setKind("all");
+                      setCollection("all");
+                    }}
+                  >
+                    {s.t("إظهار كل العناصر", "Show all elements")}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

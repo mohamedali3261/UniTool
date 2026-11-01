@@ -86,6 +86,12 @@ function useStore() {
     future: [],
   }));
   const doc = history.doc;
+  const [editingGroup, setEditingGroup] = useState<string | null>(null),
+    [textEditing, setTextEditing] = useState<string | null>(null),
+    [previewOnly, setPreviewOnly] = useState(false),
+    [styleClipboard, setStyleClipboard] = useState<Partial<Element> | null>(
+      null,
+    );
   const [clipboard, setClipboard] = useState<Element[]>([]);
   const [selected, setSelected] = useState<string[]>([]),
     [tab, setTab] = useState("library"),
@@ -103,6 +109,15 @@ function useStore() {
     [rightOpen, setRightOpen] = useState(window.innerWidth > 850),
     [modal, setModal] = useState<string | null>(null);
   const t = (ar: string, en: string) => (lang === "ar" ? ar : en);
+  useEffect(() => {
+    if (
+      editingGroup &&
+      !doc.nodes.some(
+        (n) => n.group === editingGroup && selected.includes(n.id),
+      )
+    )
+      setEditingGroup(null);
+  }, [doc, selected, editingGroup]);
   useEffect(() => {
     allProjects()
       .then((list) => {
@@ -179,11 +194,12 @@ function useStore() {
   const choose = (id: string, multi = false) => {
     const n = doc.nodes.find((n) => n.id === id);
     if (!n || n.locked) return;
-    const ids = n.group
-      ? doc.nodes
-          .filter((v) => v.group === n.group && !v.locked)
-          .map((v) => v.id)
-      : [id];
+    const ids =
+      n.group && editingGroup !== n.group
+        ? doc.nodes
+            .filter((v) => v.group === n.group && !v.locked)
+            .map((v) => v.id)
+        : [id];
     setSelected((old) =>
       multi
         ? old.includes(id)
@@ -268,6 +284,55 @@ function useStore() {
   };
   return {
     doc,
+    editingGroup,
+    setEditingGroup,
+    textEditing,
+    setTextEditing,
+    previewOnly,
+    setPreviewOnly,
+    styleClipboard,
+    copyStyle: () => {
+      const n = doc.nodes.find((n) => selected.includes(n.id));
+      if (n) {
+        const {
+          fill,
+          fill2,
+          gradient,
+          stroke,
+          strokeWidth,
+          shadow,
+          blur,
+          reflection,
+          opacity,
+          font,
+          fontSize,
+          weight,
+          spacing,
+          lineHeight,
+          align,
+        } = n;
+        setStyleClipboard({
+          fill,
+          fill2,
+          gradient,
+          stroke,
+          strokeWidth,
+          shadow,
+          blur,
+          reflection,
+          opacity,
+          font,
+          fontSize,
+          weight,
+          spacing,
+          lineHeight,
+          align,
+        });
+      }
+    },
+    pasteStyle: () => {
+      if (styleClipboard) patch({ ...styleClipboard, recolor: true });
+    },
     history,
     dispatch,
     commit,
@@ -317,6 +382,8 @@ function useStore() {
     load: (p: Project) => {
       dispatch({ type: "load", doc: p });
       setSelected([]);
+      setEditingGroup(null);
+      setTextEditing(null);
       setPan({ x: 0, y: 0 });
       setZoom(1);
     },

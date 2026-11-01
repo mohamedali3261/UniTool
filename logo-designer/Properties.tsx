@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import GroupParts from "./GroupParts";
 /** خصائص سياقية للمحدد، وخصائص عامة لمساحة العمل. */
 import {
@@ -11,6 +12,7 @@ import {
 import { useDesigner } from "./state";
 import { NumberField } from "./ui";
 import SelectionTools from "./SelectionTools";
+const PathTools = lazy(() => import("./PathTools"));
 export default function Properties() {
   const s = useDesigner(),
     n = s.doc.nodes.find((n) => s.selected.includes(n.id));
@@ -26,6 +28,17 @@ export default function Properties() {
       </div>
       <GroupParts />
       <SelectionTools />
+      {s.selected.length > 0 && (
+        <Suspense
+          fallback={
+            <p role="status">
+              {s.t("تحميل أدوات المسارات…", "Loading path tools…")}
+            </p>
+          }
+        >
+          <PathTools />
+        </Suspense>
+      )}
       {n ? (
         <>
           <div className="ld-object-heading">

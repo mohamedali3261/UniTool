@@ -1,5 +1,6 @@
+import QuickEdit from "./QuickEdit";
 /** مجمّع الأقسام والاختصارات؛ المشروع نفسه يأتي من الحالة المشتركة. */
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState, lazy, Suspense, type ComponentType } from "react";
 import {
   Shapes,
   Type,
@@ -31,6 +32,7 @@ import Mockups from "./Mockups";
 import Projects from "./Projects";
 import Export from "./Export";
 import Help from "./Help";
+const DesignLab = lazy(() => import("./DesignLab"));
 const tabs = [
   {
     id: "library",
@@ -65,6 +67,7 @@ const tabs = [
     icon: FolderOpen,
     view: Projects,
   },
+  { id: "lab", ar: "الهوية", en: "Brand lab", icon: Palette, view: DesignLab },
 ];
 function Workspace() {
   const [panelExpanded, setPanelExpanded] = useState(false);
@@ -91,6 +94,10 @@ function Workspace() {
   useEffect(() => {
     function key(e: KeyboardEvent) {
       if (s.modal) return;
+      if (s.previewOnly) {
+        if (e.key === "Escape") s.setPreviewOnly(false);
+        return;
+      }
       const target = e.target as HTMLElement;
       if (target.closest('input,textarea,select,[contenteditable="true"]'))
         return;
@@ -115,7 +122,12 @@ function Workspace() {
         e.preventDefault();
         s.remove();
       }
-      if (e.key === "Escape") s.setSelected([]);
+      if (e.key === "Escape") {
+        s.setSelected([]);
+        s.setEditingGroup(null);
+        s.setTextEditing(null);
+        s.setPreviewOnly(false);
+      }
       if (k === "h") s.setHand(true);
       if (k === "v") s.setHand(false);
       if (e.key.startsWith("Arrow") && s.selected.length) {
@@ -152,7 +164,7 @@ function Workspace() {
   }, [s]);
   return (
     <div
-      className={`ld-app ld-${s.theme} ${s.leftOpen ? "" : "ld-left-closed"} ${s.rightOpen ? "" : "ld-right-closed"} ${panelExpanded ? "ld-panel-expanded" : ""}`}
+      className={`ld-app ld-${s.theme} ${s.leftOpen ? "" : "ld-left-closed"} ${s.rightOpen ? "" : "ld-right-closed"} ${panelExpanded && (s.leftOpen || s.rightOpen) ? "ld-panel-expanded" : ""} ${s.previewOnly ? "ld-preview-only" : ""}`}
       dir={s.lang === "ar" ? "rtl" : "ltr"}
     >
       <TopBar />
@@ -216,7 +228,15 @@ function Workspace() {
                 )}
               </button>
             </div>
-            <View />
+            <Suspense
+              fallback={
+                <p role="status">
+                  {s.t("جاري فتح القسم…", "Opening section…")}
+                </p>
+              }
+            >
+              <View />
+            </Suspense>
           </aside>
         )}
         <main className="ld-center">
@@ -229,6 +249,7 @@ function Workspace() {
               01 / {s.doc.width} × {s.doc.height}
             </span>
           </div>
+          <QuickEdit />
           <Canvas />
           <div className="ld-workspace-caption">
             <span>MADE TO BE YOURS.</span>
