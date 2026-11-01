@@ -1,3 +1,4 @@
+import InlineTextEditor from "./InlineTextEditor";
 import ContextMenu, { type MenuAnchor } from "./ContextMenu";
 /** اللمس والسحب في وحدات اللوحة، والتغييرات الحية تُجمع في خطوة تراجع واحدة. */
 import { useEffect, useRef, useState } from "react";
@@ -115,7 +116,10 @@ export default function Canvas() {
       return;
     }
     if (s.hand || e.button === 1 || !id) {
-      if (!s.hand && !id && !e.shiftKey) s.setSelected([]);
+      if (!s.hand && !id && !e.shiftKey) {
+        s.setSelected([]);
+        s.setEditingGroup(null);
+      }
       gesture.current = {
         kind: "pan",
         start: { x: e.clientX, y: e.clientY },
@@ -129,11 +133,12 @@ export default function Canvas() {
     if (n.locked) return;
     let ids = s.selected;
     if (!ids.includes(id)) {
-      ids = n.group
-        ? s.doc.nodes
-            .filter((v) => v.group === n.group && !v.locked)
-            .map((v) => v.id)
-        : [id];
+      ids =
+        n.group && s.editingGroup !== n.group
+          ? s.doc.nodes
+              .filter((v) => v.group === n.group && !v.locked)
+              .map((v) => v.id)
+          : [id];
       s.choose(id, e.shiftKey);
     } else if (e.shiftKey) {
       s.choose(id, true);
@@ -240,7 +245,25 @@ export default function Canvas() {
       }),
     });
   }
+  const lastTap = useRef<{ id: string; time: number } | null>(null);
   function end(e: React.PointerEvent) {
+    const g = gesture.current;
+    if (e.pointerType === "touch" && g?.kind === "move" && g.id) {
+      const q = point(e.clientX, e.clientY);
+      if (Math.hypot(q.x - g.start.x, q.y - g.start.y) * scale < 8) {
+        const now = Date.now();
+        if (lastTap.current?.id === g.id && now - lastTap.current.time < 350) {
+          const n = s.doc.nodes.find((n) => n.id === g.id);
+          if (n && !n.locked) {
+            s.setEditingGroup(n.group || null);
+            s.setSelected([n.id]);
+            if (n.kind === "text") s.setTextEditing(n.id);
+          }
+          lastTap.current = null;
+        } else lastTap.current = { id: g.id, time: now };
+      }
+    }
+
     cancelHold();
     pointers.current.delete(e.pointerId);
     if (gesture.current?.kind === "move" || gesture.current?.kind === "resize")
@@ -254,6 +277,22 @@ export default function Canvas() {
       className="ld-canvas-workspace"
       aria-label={s.t("لوحة التصميم", "Design canvas")}
     >
+      {s.editingGroup && (
+        <div className="ld-group-edit-banner">
+          <span>{s.t("تعديل داخل المجموعة", "Editing inside group")}</span>
+          <button
+            onClick={() => {
+              const ids = s.doc.nodes
+                .filter((n) => n.group === s.editingGroup && !n.locked)
+                .map((n) => n.id);
+              s.setSelected(ids);
+              s.setEditingGroup(null);
+            }}
+          >
+            {s.t("إنهاء تعديل المجموعة", "Finish group editing")}
+          </button>
+        </div>
+      )}
       <div className="ld-canvas-bar">
         <span>
           {s.doc.width} × {s.doc.height}
@@ -309,6 +348,10 @@ export default function Canvas() {
             );
           }
         }}
+        onDoubleClick={(e) => {
+          const target = (e.target as HTMLElement).closest("[data-node-id]");
+          if (!target) s.setEditingGroup(null);
+        }}
         onPointerDown={(e) => start(e)}
         onPointerMove={move}
         onPointerUp={end}
@@ -336,7 +379,7 @@ export default function Canvas() {
             aria-label={s.t("مساحة رسم الشعار", "Logo artboard")}
           >
             <ProjectGraphic project={s.doc} />
-            {s.grid && (
+            {s.grid && !s.previewOnly && (
               <>
                 <defs>
                   <pattern
@@ -362,7 +405,7 @@ export default function Canvas() {
                 />
               </>
             )}
-            {s.guides && (
+            {s.guides && !s.previewOnly && (
               <g
                 stroke="#a598e9"
                 strokeWidth={1 / scale}
@@ -375,57 +418,69 @@ export default function Canvas() {
                 />
               </g>
             )}
-            {visible.map((n) => (
-              <g
-                key={n.id}
-                transform={`translate(${n.x} ${n.y}) rotate(${n.rotation})`}
-              >
-                <rect
-                  data-node-id={n.id}
-                  tabIndex={n.locked ? -1 : 0}
-                  role="button"
-                  aria-label={s.t("اختيار ", "Select ") + n.name}
-                  x={-n.w / 2}
-                  y={-n.h / 2}
-                  width={n.w}
-                  height={n.h}
-                  fill="transparent"
-                  stroke={s.selected.includes(n.id) ? "#8a74ff" : "none"}
-                  strokeWidth={2 / scale}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    start(e, n.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      s.choose(n.id, e.shiftKey);
-                    }
-                  }}
-                  style={{
-                    cursor: n.locked ? "not-allowed" : s.hand ? "grab" : "move",
-                  }}
-                />
-                {s.selected.includes(n.id) &&
-                  !n.locked &&
-                  s.selected.length === 1 && (
-                    <rect
-                      x={n.w / 2 - 6 / scale}
-                      y={n.h / 2 - 6 / scale}
-                      width={12 / scale}
-                      height={12 / scale}
-                      fill="#fff"
-                      stroke="#8a74ff"
-                      strokeWidth={2 / scale}
-                      onPointerDown={(e) => {
-                        e.stopPropagation();
-                        start(e, n.id, true);
-                      }}
-                      style={{ cursor: "nwse-resize" }}
-                    />
-                  )}
-              </g>
-            ))}
+            {!s.previewOnly &&
+              visible.map((n) => (
+                <g
+                  key={n.id}
+                  transform={`translate(${n.x} ${n.y}) rotate(${n.rotation})`}
+                >
+                  <rect
+                    data-node-id={n.id}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      if (n.locked) return;
+                      s.setEditingGroup(n.group || null);
+                      s.setSelected([n.id]);
+                      if (n.kind === "text") s.setTextEditing(n.id);
+                    }}
+                    tabIndex={n.locked ? -1 : 0}
+                    role="button"
+                    aria-label={s.t("اختيار ", "Select ") + n.name}
+                    x={-n.w / 2}
+                    y={-n.h / 2}
+                    width={n.w}
+                    height={n.h}
+                    fill="transparent"
+                    stroke={s.selected.includes(n.id) ? "#8a74ff" : "none"}
+                    strokeWidth={2 / scale}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      start(e, n.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        s.choose(n.id, e.shiftKey);
+                      }
+                    }}
+                    style={{
+                      cursor: n.locked
+                        ? "not-allowed"
+                        : s.hand
+                          ? "grab"
+                          : "move",
+                    }}
+                  />
+                  {s.selected.includes(n.id) &&
+                    !n.locked &&
+                    s.selected.length === 1 && (
+                      <rect
+                        x={n.w / 2 - 6 / scale}
+                        y={n.h / 2 - 6 / scale}
+                        width={12 / scale}
+                        height={12 / scale}
+                        fill="#fff"
+                        stroke="#8a74ff"
+                        strokeWidth={2 / scale}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          start(e, n.id, true);
+                        }}
+                        style={{ cursor: "nwse-resize" }}
+                      />
+                    )}
+                </g>
+              ))}
             {(snapped.x !== null || snapped.y !== null) && (
               <path
                 d={`${snapped.x !== null ? `M${snapped.x} 0V${s.doc.height}` : ""}${snapped.y !== null ? `M0 ${snapped.y}H${s.doc.width}` : ""}`}
@@ -435,6 +490,7 @@ export default function Canvas() {
               />
             )}
           </svg>
+          {s.textEditing && <InlineTextEditor key={s.textEditing} />}
           {!visible.length && (
             <div className="ld-canvas-empty">
               {s.t(

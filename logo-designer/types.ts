@@ -1,3 +1,4 @@
+import type { DesignVariant } from "./variants";
 /** نموذج مستقل: وحدات التصميم منطقية ولا تتأثر بتكبير اللوحة. */
 export type Lang = "ar" | "en";
 export type Element = {
@@ -37,6 +38,8 @@ export type Element = {
   recolor?: boolean;
 };
 export type Project = {
+  variants?: DesignVariant[];
+  activeVariant?: string;
   version: 1;
   id: string;
   name: string;

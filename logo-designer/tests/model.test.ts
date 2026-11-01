@@ -222,3 +222,92 @@ test("new symbol collection adds more than fifty unique registered icons", async
   assert.equal(new Set(symbols.map((n) => n.id)).size, symbols.length);
   for (const n of moreSymbols) assert.ok(symbolMap.has(n.id));
 });
+
+test("Boolean union, intersection and subtraction produce actual geometry", async () => {
+  const { booleanNodes, convertPath, readPoints, changePoint } = await import(
+    "../path-engine"
+  );
+  const { default: paper } = await import("paper");
+  const a = node({
+      asset: "square",
+      x: 100,
+      y: 100,
+      w: 100,
+      h: 100,
+      radius: 0,
+    }),
+    b = node({ asset: "square", x: 150, y: 100, w: 100, h: 100, radius: 0 });
+  for (const [op, area] of [
+    ["unite", 15000],
+    ["intersect", 5000],
+    ["subtract", 5000],
+  ] as const) {
+    const result = booleanNodes([a, b], op);
+    const path = new paper.CompoundPath({
+      pathData: result.paths![0].d,
+      insert: false,
+    });
+    assert.ok(
+      Math.abs(
+        (Math.abs(path.area) * result.w * result.h) / (128 * 128) - area,
+      ) < 1,
+    );
+    path.remove();
+    assert.doesNotThrow(() => validateProject({ ...blank(), nodes: [result] }));
+  }
+  assert.throws(() => booleanNodes([a, { ...b, x: 1000 }], "intersect"));
+  assert.throws(() => booleanNodes([a, node({ kind: "icon" })], "unite"));
+  const converted = convertPath(a),
+    points = readPoints(converted.paths![0].d);
+  assert.equal(points.length, 4);
+  const moved = changePoint(converted.paths![0].d, 0, 0, {
+    x: 12,
+    outX: 20,
+    outY: 10,
+  });
+  assert.equal(readPoints(moved)[0].x, 12);
+  assert.equal(readPoints(moved)[0].outY, 10);
+  assert.equal(readPoints(changePoint(moved, 0, 0, "delete")).length, 3);
+});
+test("variants preserve edits across switches, persist and undo independently", async () => {
+  const { addVariant, switchVariant } = await import("../variants");
+  let p = blank();
+  p.nodes = [node({ kind: "text", text: "Original" })];
+  p = addVariant(p, "dark");
+  const original = p.variants![0].id,
+    dark = p.activeVariant!;
+  p.nodes[0] = { ...p.nodes[0], text: "Changed dark" };
+  p = switchVariant(p, original);
+  assert.equal(p.nodes[0].text, "Original");
+  p = switchVariant(p, dark);
+  assert.equal(p.nodes[0].text, "Changed dark");
+  assert.doesNotThrow(() => validateProject(p));
+  await saveProject(p);
+  assert.equal(
+    (await allProjects()).find((v) => v.id === p.id)!.variants!.length,
+    2,
+  );
+  await deleteProject(p.id);
+  assert.throws(() => validateProject({ ...p, activeVariant: "unknown" }));
+});
+test("personal library stores editable selected nodes and supports delete", async () => {
+  const { selectionAsset, saveAsset, listAssets, removeAsset } = await import(
+    "../personal-assets"
+  );
+  const p = blank();
+  p.nodes = [
+    node({ kind: "text", text: "My mark" }),
+    node({ asset: "circle" }),
+  ];
+  const asset = selectionAsset(
+    p,
+    p.nodes.map((n) => n.id),
+    "My reusable mark",
+  );
+  assert.equal(asset.project.nodes.length, 2);
+  assert.notEqual(asset.project.nodes[0].id, p.nodes[0].id);
+  await saveAsset(asset);
+  assert.equal((await listAssets())[0].project.nodes[0].text, "My mark");
+  await removeAsset(asset.id);
+  assert.equal((await listAssets()).length, 0);
+});

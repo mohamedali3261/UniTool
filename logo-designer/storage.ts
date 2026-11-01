@@ -58,6 +58,31 @@ export function validateProject(value: unknown): Project {
     p.nodes.length > 500
   )
     throw new Error("Invalid project");
+  if (p.variants !== undefined) {
+    if (
+      !Array.isArray(p.variants) ||
+      !p.variants.length ||
+      p.variants.length > 8 ||
+      new Set(p.variants.map((v) => v.id)).size !== p.variants.length ||
+      !p.variants.some((v) => v.id === p.activeVariant)
+    )
+      throw new Error("Invalid variants");
+    for (const v of p.variants) {
+      if (
+        typeof v.id !== "string" ||
+        typeof v.name !== "string" ||
+        v.name.length > 80
+      )
+        throw new Error("Invalid variant");
+      validateProject({
+        ...p,
+        variants: undefined,
+        activeVariant: undefined,
+        background: v.background,
+        nodes: v.nodes,
+      });
+    }
+  }
   const ids = new Set();
   for (const n of p.nodes) {
     if (
