@@ -37,6 +37,8 @@ export interface TextRun {
   end: boolean;
 }
 export interface PageText {
+  rawSource: string;
+  encodingIssues: import("./textEncoding").EncodingIssue[];
   runs: TextRun[];
   source: string;
   lines: string;

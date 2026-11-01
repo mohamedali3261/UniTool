@@ -1,3 +1,4 @@
+import { EncodingNotice } from "./EncodingNotice";
 import { useEffect, useRef, useState } from "react";
 import {
   Search,
@@ -42,7 +43,7 @@ export function TextPanel({
   t: Translate;
   notice: (s: string) => void;
 }) {
-  const [mode, setMode] = useState<"source" | "lines">("lines"),
+  const [mode, setMode] = useState<"source" | "lines" | "rawSource">("lines"),
     [ocrResults, setOcrResults] = useState<Record<string, OCRResult>>({}),
     [showOCR, setShowOCR] = useState(false),
     [layout, setLayout] = useState<"auto" | "block" | "sparse">("auto"),
@@ -238,7 +239,9 @@ export function TextPanel({
           {showOCR && ocr
             ? "OCR"
             : extracted?.characters
-              ? t("نص أصلي مستخرج", "Native PDF text")
+              ? extracted.encodingIssues.length
+                ? t("نص يحتاج مراجعة", "Text needs review")
+                : t("نص أصلي مستخرج", "Native PDF text")
               : t("لا توجد طبقة نص مقروءة", "No readable text layer")}
         </span>
         <small>
@@ -253,7 +256,13 @@ export function TextPanel({
             onChange={(e) => setMode(e.target.value as typeof mode)}
           >
             <option value="source">
-              {t("ترتيب الملف (الأصل)", "File order (original)")}
+              {t("ترتيب الملف (حروف عادية)", "File order (readable letters)")}
+            </option>
+            <option value="rawSource">
+              {t(
+                "النص الخام للتشخيص (بدون إصلاح)",
+                "Raw extraction for diagnosis (unchanged)",
+              )}
             </option>
             <option value="lines">
               {t("ترتيب السطور بالموقع", "Position-based lines")}
@@ -261,7 +270,15 @@ export function TextPanel({
           </select>
         </label>
       )}
-      {extracted?.warnings.length > 0 && (
+      {extracted && (
+        <EncodingNotice
+          issues={extracted.encodingIssues}
+          onOCR={start}
+          busy={progress !== null}
+          t={t}
+        />
+      )}
+      {extracted?.warnings.some((w) => w !== "encoding") && (
         <div className="ps-warning">
           <AlertTriangle size={14} />
           <span>

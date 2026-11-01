@@ -146,3 +146,52 @@ test("search tolerates bidi controls, presentation forms and Arabic/Persian nume
   assert.equal(normalizeSearch("فاتورة \u200f١٢٣۴۵"), "فاتورة 12345");
   assert.ok(fullTextMatch("ﻻختبار   ١٢٣", "لاختبار 123"));
 });
+
+test("display expands Arabic presentation forms while preserving unmodified extraction for diagnostics", () => {
+  const raw = "ﻧﻮع اﻟﺘﺄﺳﻴﺲ / Formation Type",
+    t = buildText([run(raw)]);
+  assert.equal(t.source, "نوع التأسيس / Formation Type");
+  assert.equal(t.lines, "نوع التأسيس / Formation Type");
+  assert.equal(t.rawSource, raw);
+  assert.equal(t.runs[0].str, raw);
+  assert.deepEqual(t.encodingIssues, []);
+});
+test("font-private symbols in the reported pattern are flagged and never guessed as letters", () => {
+  const raw = "ﻧﻮع اﻟ\uE018ﺄﺳﻴﺲ / Formation Type\nﺟﺮ\uE032ﻦ",
+    t = buildText([run(raw)]);
+  assert.equal(t.source, "نوع ال�أسيس / Formation Type\nجر�ن");
+  assert.equal(t.rawSource, raw);
+  assert.deepEqual(t.encodingIssues, [
+    { code: "U+E018", count: 1 },
+    { code: "U+E032", count: 1 },
+  ]);
+  assert.ok(t.warnings.includes("encoding"));
+  assert.ok(!t.source.includes("التأسيس"));
+});
+test("unknown code accounting includes supplementary private-use planes and replacement glyphs", () => {
+  const t = buildText([run("\uE018\uE018\u{F0018}\u{100018}\uFFFD\u0000")]);
+  assert.equal(t.source, "������");
+  assert.deepEqual(t.encodingIssues, [
+    { code: "U+E018", count: 2 },
+    { code: "U+F0018", count: 1 },
+    { code: "U+100018", count: 1 },
+    { code: "U+FFFD", count: 1 },
+    { code: "U+0000", count: 1 },
+  ]);
+});
+test("display cleanup preserves legal-document dates, identifiers, digits and ordinary marks", () => {
+  const text =
+    "04-Apr-2027 / 05-Apr-2025\nرقم 001.02 / ١٢٣۴۵\nالعَرَبِيَّةُ ① Å https://example.invalid/?d=ABC%2B";
+  assert.equal(buildText([run(text)]).source, text);
+});
+test("presentation-form vowel placeholders do not add spaces inside Arabic words", () => {
+  assert.equal(buildText([run("ﺑﹶﺎﺏ")]).source, "بَاب");
+  assert.equal(buildText([run("بـاب")]).source, "بـاب");
+});
+test("search retains original run coordinates after presentation forms expand", () => {
+  const r = run("ﻻختبار", 24, 30);
+  const t = buildText([r]);
+  assert.equal(t.lines, "لاختبار");
+  assert.equal(hits(t, "لاختبار")[0], r);
+  assert.equal(r.x, 24);
+});
