@@ -17,8 +17,8 @@ test("custom preview downloads actual physical SVG and PDF files", async ({
     "262 × 234 mm",
   );
   for (const [name, value] of [
-    ["عرض الوجه", "100"],
-    ["ارتفاع العلبة", "150"],
+    ["عرض العلبة", "100"],
+    ["طول العلبة", "150"],
     ["عمق العلبة", "40"],
   ])
     await page
@@ -65,13 +65,16 @@ test("native carton metadata survives reopening the designer", async ({
     .getByRole("heading", { name: "علبة تجريبية", exact: true })
     .click();
   await expect(page.locator(".carton-editor-bar")).toContainText(
-    "80 × 120 × 35 mm",
+    "120 × 80 × 35 mm",
   );
   await page
     .getByRole("button", { name: "مقاسات وقالب العلبة", exact: true })
     .click();
   await expect(
-    page.getByRole("spinbutton", { name: "عرض الوجه بالملليمتر", exact: true }),
+    page.getByRole("spinbutton", {
+      name: "عرض العلبة بالملليمتر",
+      exact: true,
+    }),
   ).toHaveValue("80");
 });
 for (const width of [390, 768])
@@ -175,7 +178,7 @@ test("English controls retain physical units", async ({ page }) => {
     .getByRole("button", { name: "Carton templates & dimensions", exact: true })
     .click();
   await page
-    .getByRole("spinbutton", { name: "Face width in millimetres", exact: true })
+    .getByRole("spinbutton", { name: "Box width in millimetres", exact: true })
     .fill("70");
   await expect(page.getByTestId("carton-sheet-size")).toHaveText(
     "242 × 234 mm",
@@ -300,4 +303,84 @@ test("print downloads preserve full artwork, silhouette, DPI and actual physical
   expect(high.readUInt32BE(16)).toBe(6189);
   expect(high.readUInt32BE(20)).toBe(5528);
   expect(high.readUInt32BE(high.indexOf("pHYs") + 4)).toBe(23622);
+});
+test("perfume starter sizes remain editable and measured-bottle sizing persists", async ({
+  page,
+}) => {
+  await open(page);
+  for (const [ml, length, width, depth] of [
+    [30, 95, 40, 30],
+    [50, 115, 50, 35],
+    [100, 140, 60, 45],
+  ]) {
+    await page
+      .getByRole("button", { name: new RegExp(`عطر ${ml} مل`) })
+      .click();
+    await expect(
+      page.getByRole("spinbutton", {
+        name: "طول العلبة بالملليمتر",
+        exact: true,
+      }),
+    ).toHaveValue(String(length));
+    await expect(
+      page.getByRole("spinbutton", {
+        name: "عرض العلبة بالملليمتر",
+        exact: true,
+      }),
+    ).toHaveValue(String(width));
+    await expect(
+      page.getByRole("spinbutton", {
+        name: "عمق العلبة بالملليمتر",
+        exact: true,
+      }),
+    ).toHaveValue(String(depth));
+  }
+  await page
+    .getByText("ضبط العلبة حسب زجاجتك الفعلية", { exact: true })
+    .click();
+  await page
+    .getByRole("spinbutton", { name: "طول الزجاجة بالغطاء · mm", exact: true })
+    .fill("110");
+  await page
+    .getByRole("spinbutton", { name: "عرض الزجاجة · mm", exact: true })
+    .fill("48");
+  await page
+    .getByRole("spinbutton", { name: "عمق الزجاجة · mm", exact: true })
+    .fill("33");
+  await page
+    .getByRole("button", { name: "تطبيق المقاسات المحسوبة", exact: true })
+    .click();
+  await expect(
+    page.getByRole("spinbutton", {
+      name: "طول العلبة بالملليمتر",
+      exact: true,
+    }),
+  ).toHaveValue("114");
+  await expect(
+    page.getByRole("spinbutton", {
+      name: "عرض العلبة بالملليمتر",
+      exact: true,
+    }),
+  ).toHaveValue("52");
+  await expect(
+    page.getByRole("spinbutton", {
+      name: "عمق العلبة بالملليمتر",
+      exact: true,
+    }),
+  ).toHaveValue("37");
+  await page
+    .getByRole("spinbutton", { name: "طول العلبة بالملليمتر", exact: true })
+    .fill("116");
+  await page
+    .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
+    .click();
+  await expect(page.locator("#editor-layout")).toBeVisible();
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
+      (p: any) => p.title === "علبة عطر 100 مل",
+    ),
+  );
+  expect(saved.packaging.size.height).toBe(116);
+  expect(saved.packaging.size.width).toBe(52);
+  expect(saved.packaging.size.depth).toBe(37);
 });

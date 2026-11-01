@@ -23,8 +23,8 @@ export function PackagingEntry({
           </h2>
           <p>
             {ar
-              ? "عرض × ارتفاع × عمق. قالب قصّ وطيّ بألسنة قفل ولصق، جاهز لتصميمك."
-              : "Width × height × depth. A cut-and-fold template, ready for your artwork."}
+              ? "طول × عرض × عمق. قالب قصّ وطيّ بألسنة قفل ولصق، جاهز لتصميمك."
+              : "Length × width × depth. A cut-and-fold template, ready for your artwork."}
           </p>
           <button type="button" onClick={() => setOpen(true)}>
             {ar ? "قوالب العلب والمقاسات" : "Carton templates & dimensions"}
