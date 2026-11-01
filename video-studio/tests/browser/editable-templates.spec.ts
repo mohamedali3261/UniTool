@@ -82,13 +82,11 @@ for (const mobile of [false, true])
       ).toEqual(
         original.project.texts.filter((t: { id: string }) => t.id !== layer.id),
       );
-      await page
-        .locator('input[type=file][accept=".json"]')
-        .setInputFiles({
-          name: `${id}.json`,
-          mimeType: "application/json",
-          buffer: Buffer.from(JSON.stringify(updated)),
-        });
+      await page.locator('input[type=file][accept=".json"]').setInputFiles({
+        name: `${id}.json`,
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(updated)),
+      });
       await expect(page.locator(".timeline-clip")).toHaveCount(scenes);
       expect(
         (await save(page)).project.texts.find(
@@ -108,11 +106,17 @@ for (const mobile of [false, true])
       const a = await page
         .locator(".playhead")
         .evaluate((el) => el.getBoundingClientRect().x);
-      await page.waitForTimeout(90);
-      const b = await page
-        .locator(".playhead")
-        .evaluate((el) => el.getBoundingClientRect().x);
-      expect(b).toBeGreaterThan(a);
+      // Software rendering/parallel encoders can delay one presentation tick.
+      // Wait for actual progress rather than assuming a frame within 90ms.
+      await expect
+        .poll(
+          () =>
+            page
+              .locator(".playhead")
+              .evaluate((el) => el.getBoundingClientRect().x),
+          { timeout: 2000 },
+        )
+        .toBeGreaterThan(a);
       await page.getByRole("button", { name: "إيقاف", exact: true }).click();
       expect(
         await page.evaluate(
@@ -145,13 +149,11 @@ test("edited vector color and geometry survive real MP4 encoding", async ({
       ...(t.name === "لوحة الشعار" ? { background: "#125fa0" } : {}),
     }));
   await page.goto(`${base}/video-studio.html`);
-  await page
-    .locator('input[type=file][accept=".json"]')
-    .setInputFiles({
-      name: "editable-export.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(data)),
-    });
+  await page.locator('input[type=file][accept=".json"]').setInputFiles({
+    name: "editable-export.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(data)),
+  });
   await expect(page.locator(".timeline-clip")).toHaveCount(1);
   await page.getByRole("button", { name: /تصدير/ }).first().click();
   await page

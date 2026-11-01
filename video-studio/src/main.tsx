@@ -1,3 +1,7 @@
+import { prepareCreativeFonts } from "./creative/fonts";
+void prepareCreativeFonts().catch(() =>
+  console.warn("Variable font unavailable; weight morph uses fallback font."),
+);
 import { StudioSettings } from "./settings/StudioSettings";
 import { createRoot } from "react-dom/client";
 import App from "./App";

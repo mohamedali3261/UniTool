@@ -98,7 +98,7 @@ test("new ready kits are distinct editable layers, grouped in one insertion and 
   });
   try {
     const kits = items.filter((i) => i.kind === "group");
-    assert.equal(kits.length, 20);
+    assert.equal(kits.length, 32);
     for (const kit of kits) {
       const before = JSON.stringify(kit),
         result = insertElement(p, kit, 2, undefined, 6);
@@ -179,4 +179,22 @@ test("shared preview/export compositor paints legacy background, new SVG backgro
     ]),
   );
   assert.deepEqual(painted, ["BASE", "LEGACY-BG", "SVG-BG", "TITLE", "LOGO"]);
+});
+
+test("new video icons are foreground overlays rather than scene backgrounds", () => {
+  const icons = items.filter((item) => item.id.startsWith("video-icon-"));
+  assert.equal(icons.length, 24);
+  for (const icon of icons) {
+    const result = insertElement(p, icon, 2, undefined, 4);
+    assert.equal(result.project.clips[0].id, p.clips[0].id);
+    assert.equal(
+      result.project.overlays?.length,
+      (p.overlays?.length || 0) + 1,
+    );
+    const overlay = result.project.overlays!.at(-1)!;
+    assert.notEqual(overlay.backgroundLayer, true);
+    assert.equal(overlay.at, 2);
+    assert.equal(overlay.start, 0);
+    assert.equal(overlay.width, 20);
+  }
 });

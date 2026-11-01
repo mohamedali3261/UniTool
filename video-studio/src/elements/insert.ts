@@ -147,7 +147,9 @@ export function insertElement(
         end: seconds,
         x: 50,
         y: 50,
-        width: background ? 100 : 65,
+        width: background
+          ? 100
+          : Math.min(100, Math.max(5, item.defaultWidth ?? 65)),
         rotation: 0,
         opacity: 1,
         volume: 0,

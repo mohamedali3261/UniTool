@@ -15,6 +15,7 @@ export type SceneEntry = {
   scale: number;
   playing: boolean;
   overlay?: OverlayLayer;
+  reveal?: { kind: string; progress: number };
 };
 export function layerClip(layer: OverlayLayer): Clip {
   return {
@@ -106,6 +107,20 @@ export function sceneAt(
     if (kind === "zoom") {
       before.scale = 1 + 0.25 * p;
       after.scale = 1.25 - 0.25 * p;
+    }
+    if (["circle-reveal", "shared-card", "liquid-wipe"].includes(kind)) {
+      after.alpha = 1;
+      after.reveal = { kind, progress: p };
+    }
+    if (kind === "page-flip") {
+      before.alpha = p < 0.5 ? 1 : 0;
+      after.alpha = p < 0.5 ? 0 : 1;
+      before.reveal = { kind, progress: p };
+      after.reveal = { kind, progress: p };
+    }
+    if (kind === "zoom-through") {
+      before.scale = 1 + p * 8;
+      after.scale = 0.5 + p * 0.5;
     }
     if (kind === "light") flash = Math.sin(Math.PI * p) * 0.9;
     entries = [before, after];

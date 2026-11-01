@@ -17,6 +17,7 @@ export type LibraryElement = {
   kind: "layer" | "svg" | "scene" | "group";
   layers?: TextLayer[];
   placement?: "background" | "content";
+  defaultWidth?: number;
   layer?: TextLayer;
   svg?: string;
   scene?: InterfaceScene;

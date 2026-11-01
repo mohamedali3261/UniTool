@@ -1,50 +1,27 @@
-# العناصر / Elements
+# Shared element registry — Video Studio section
 
-Standalone Arabic RTL page at `/elements.html`. The library reads the **actual nine video-studio template sources plus original UniTool ready-to-use designs**, rather than maintaining a second set of example graphics. Currently 482 entries in seven categories; counts are derived, never hardcoded in the UI.
+The elements library is now a first-class **العناصر** tab inside Video Studio, alongside media, audio, text and effects. `/video-studio.html#elements` opens the editor's elements section directly with an empty project; saved drafts remain available from the normal studio home. `/elements.html` is a compatibility redirect, not a standalone landing/catalogue page. The old “العناصر اللي ورا أفكارك الكبيرة” hero has been removed.
 
-## Maintenance map
+## Source layout
+- `registry.ts`: seven category loaders; totals are derived at runtime.
+- `categories/*`: independent category definitions and loaders.
+- `sources/editable.ts`, `sources/vector.ts`: original editable video-template layers and artwork.
+- `sources/ready/*`: original ready-to-use shapes, labels, compositions, motion and the new video pack.
+- `components/ElementPreview.tsx`, `lib/render.ts`: real previews of the same layers used in insertion.
+- `lib/export.ts`: portable project/source generation shared by the insertion pipeline.
+- `lib/preferences.ts`: favorites storage with safe failure handling.
+- `main.tsx`: old-entry redirect only.
 
-- `types.ts`: discriminators, source metadata and category identifiers.
-- `registry.ts`: category metadata and loaders, kept in one explicit order.
-- `categories/<category>/index.ts`: Arabic category name, description and symbol.
-- `categories/<category>/load.ts`: that category's own loader. Add files alongside these for category-specific features; don't grow one monolithic catalog.
-- `categories/classify.ts`: disjoint classification rules. Rich keyframe/counter layers are grouped as motion; basic entrance animations remain in their semantic category.
-- `sources/editable.ts`: ORBIT/PAPER layers, Cloudflare layers and the shared original text generators for the other templates. Stable source/index IDs and deduplication keep favorites usable between visits.
-- `sources/vector.ts`: NOVA artwork, generic template backgrounds, Cloudflare embedded SVG assets and the seven Interface Flow code scenes.
-- `components/`: lazy Canvas previews, cards and native modal inspector.
-- `lib/render.ts`: actual studio renderers, centered/fitted single-layer previews without changing source data.
-- `lib/export.ts`: PNG helper, original SVG/code and portable project JSON with embedded local assets.
-- `lib/preferences.ts`: guarded, device-local favorites (not an account sync feature).
-- `index.tsx`, `main.tsx`, `elements.css`: page composition, isolated entry and responsive presentation.
+## New video pack
+566 total elements, including **48 additions** in `sources/ready/video-pack.ts`:
+- 24 original SVG overlay icons for cameras, microphones, playback, audience actions, publishing and commerce. These are foreground `shapes`, not backgrounds.
+- 12 four-layer lower-third compositions with editable title/subtitle and independent panel/accent layers.
+- 12 editable video-title presets.
 
-Shared template generators live in `video-studio/src/templates/{background,text}.ts`, `nova/text.ts` and `interface-flow/text.ts`. Both the editor and library call them. Edit those originals to update both; do not copy their SVG/text into the library. The original template timings and artwork are preserved by the extraction.
+No remote assets or external icon requests. Existing template art and the 50 persisted motion presets remain available. The integrated panel supports search, category/source filters, favorites, a “الجديد” filter, pagination, preview pause, and duration selection. Adding goes through `video-studio/src/elements/insert.ts`, preserving project contents and grouped undo. Text and shapes stay editable; SVG source and overlay position/scale remain editable through the video inspector.
 
-## What each export means
+## Validation
+`npm run test:elements`, `npm run test:video-studio`, and `npm run test:home` cover catalogue identity, portable projects, icon foreground placement, grouped insertion, text editing and undo, desktop/mobile layout, legacy redirects, filters and persisted favorites. `HOME_QA_URL` can target a production preview; `STUDIO_CHROMIUM_PATH` supplies a custom Chromium binary. Keep QA screenshots/downloads in ignored folders.
 
-- **Layer**: real editable text/vector box; fitted to the library preview and a standalone 8-second project. Color changes affect this copy only. Canvas PNG has transparency.
-- **SVG**: original composite vector source, not a promise that every shape is already an independent editor layer. Download the SVG, copy its code, take a PNG snapshot, or open its self-contained project.
-- **Code scene**: procedural Interface Flow composition. The inspector supports play/pause, scrubbing and accent color. Code snippets reference this repository's scene renderer; they are not dependency-free HTML. Its project preserves the `designScene` identifier.
-
-JSON is the editor's existing `{version:1,project,assets}` format and opens using **فتح مشروع**. It is a new project, not automatic insertion into a currently open project. Audio, transitions between entire scenes and full editor effects are not individually catalogued visual elements. A procedural scene is not misrepresented as an editable layer collection.
-
-## Checks
-
-```sh
-npm run test:elements       # source coverage, provenance, all project payloads, storage guards
-npm run test:home           # original homepage checks + browser library/hero/import checks
-npm run test:video-studio   # existing editor and template regression suite
-npm run lint
-npm run build
-```
-
-The browser suite is in `../Home/tests/elements.spec.ts` to share the existing Playwright configuration. `HOME_QA_URL` can target a production preview; `STUDIO_CHROMIUM_PATH` can supply a Chromium executable. Screenshots and generated files should stay in ignored QA folders, not source control.
-
-## Add to an existing timeline
-
-Inside the editor, open **وسائط → العناصر**, choose a duration and press **إضافة للتايم لاين**. This is a non-destructive, undoable insertion. The standalone inspector also has a handoff link: choose a project in the opened studio tab before insertion. Text/shapes stay editable layers; SVG supports overlay controls and source editing; procedural scenes append as native clips with scene/accent controls. See `video-studio/src/elements/README.md` for implementation details.
-
-## Ready-to-use expansion
-
-`sources/ready/` contains 20 vector shape designs, 20 typography styles, 20 animated multi-layer compositions and 50 motion elements. Each kit inserts as a group of independently editable layers in one undo step. The fifty new trajectories also live in the editor Motion Gallery (106 total including the previous 56). Live element previews use visibility-gated 20fps Canvas drawing, stop offscreen/when hidden, respect reduced motion and have an explicit pause control.
-
-Background insertion records a persistent background-plane flag and fills the frame. The shared preview/snapshot/export compositor draws base clips, legacy background layers, SVG backgrounds, normal overlays, ordinary text/shapes, and finally foreground overlays. Hit testing uses the same order. An image layer can be corrected manually with **خلفية تحت العناصر** in layer properties.
+## Creative motion pack
+36 additional native layers in `sources/ready/creative.ts`, with shared canvas preview/export, real Three.js and local variable fonts. See `video-studio/src/creative/README.md` for settings, actual clip transitions, UI-scene limitations and verification.

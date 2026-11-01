@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { readFile } from "node:fs/promises";
-import { toolCategories, totalToolCount } from "../../ToolsHome/data";
+import { toolCategories } from "../../ToolsHome/data";
 const base = process.env.HOME_QA_URL || "http://localhost:3000";
-const library = async (page: import("@playwright/test").Page) => {
-  await page.goto(`${base}/elements.html`);
-  await expect(page.locator(".element-card")).toHaveCount(24);
-};
+async function library(page: import("@playwright/test").Page) {
+  await page.goto(`${base}/video-studio.html#elements`);
+  await expect(page.locator(".editor-shell")).toBeVisible();
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(12);
+}
 test("motion hero cycles through every real tool and studio and respects pause", async ({
   page,
 }) => {
@@ -28,7 +28,7 @@ test("motion hero cycles through every real tool and studio and respects pause",
   }
   for (const tool of toolCategories.flatMap((c) => c.tools))
     expect(links.has(tool.href || `/app.html#${tool.id}`)).toBeTruthy();
-  expect(links.has("/elements.html")).toBeTruthy();
+  expect(links.has("/video-studio.html#elements")).toBeTruthy();
   await page.getByRole("button", { name: "إيقاف الحركة", exact: true }).click();
   await expect(hero).toHaveClass(/is-still/);
   await page.keyboard.press("Control+k");
@@ -36,160 +36,6 @@ test("motion hero cycles through every real tool and studio and respects pause",
     page.getByRole("searchbox", { name: "ابحث عن أداة أو استوديو" }),
   ).toBeFocused();
 });
-test("library search, source/category filters, pagination, empty state and saved favorites", async ({
-  page,
-}) => {
-  await library(page);
-  await page.locator(".elements-load-more").click();
-  await expect(page.locator(".element-card")).toHaveCount(48);
-  const first = page.locator(".element-favorite").first();
-  await first.click();
-  await expect(first).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
-  await expect(page.locator(".element-card")).toHaveCount(1);
-  await page.reload();
-  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
-  await expect(page.locator(".element-card")).toHaveCount(1);
-  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
-  await page
-    .getByRole("combobox", { name: "قالب المصدر" })
-    .selectOption("nova");
-  await expect(page.locator(".element-card")).toHaveCount(18);
-  await page
-    .getByRole("searchbox", { name: "بحث في العناصر" })
-    .fill("unlikely-not-a-real-element");
-  await expect(page.locator(".elements-empty")).toBeVisible();
-  await page.getByRole("button", { name: "مسح الفلاتر", exact: true }).click();
-  await expect(page.locator(".element-card")).toHaveCount(24);
-  await page
-    .locator(".element-category-grid")
-    .getByRole("button", { name: /مشاهد بالكود/ })
-    .click();
-  await expect(page.locator(".element-card")).toHaveCount(7);
-  await expect(page.locator(".element-card-info>small").first()).toContainText(
-    "Interface Flow",
-  );
-});
-test("inspector color/source, PNG/project downloads, actual editor import and Escape focus return", async ({
-  page,
-}) => {
-  await library(page);
-  await page
-    .locator(".element-category-grid")
-    .getByRole("button", { name: /نصوص وعناوين/ })
-    .click();
-  const opener = page.locator(".element-inspect").first();
-  await opener.click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await dialog.getByLabel("لون العنصر").fill("#22aa88");
-  await expect(dialog.locator("textarea")).toContainText("#22aa88");
-  const pngPromise = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "حفظ PNG", exact: true }).click();
-  const png = await pngPromise;
-  const image = await readFile((await png.path())!);
-  expect(image.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
-  const projectPromise = page.waitForEvent("download");
-  await dialog
-    .getByRole("button", { name: "تنزيل مشروع قابل للفتح", exact: true })
-    .click();
-  const download = await projectPromise;
-  const json = await readFile((await download.path())!);
-  const data = JSON.parse(json.toString());
-  expect(data.version).toBe(1);
-  expect(data.project.texts[0].color).toBe("#22aa88");
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(opener).toBeFocused();
-  await page.goto(`${base}/video-studio.html`);
-  await page.locator('input[accept=".json"]').setInputFiles({
-    name: "element.unitool.json",
-    mimeType: "application/json",
-    buffer: json,
-  });
-  await expect(page.locator(".editor-shell")).toBeVisible();
-  await expect(
-    page.getByRole("textbox", { name: "اسم المشروع", exact: true }),
-  ).toHaveValue(data.project.name);
-});
-test("SVG original export and procedural playback/scrubbing work without page errors", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await library(page);
-  await page
-    .getByRole("combobox", { name: "قالب المصدر" })
-    .selectOption("nova");
-  await page
-    .locator(".element-category-grid")
-    .getByRole("button", { name: /خلفيات وSVG/ })
-    .click();
-  await page.locator(".element-inspect").first().click();
-  let dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("لون العنصر")).toBeDisabled();
-  const dlPromise = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "تنزيل SVG", exact: true }).click();
-  const dl = await dlPromise;
-  expect(
-    (await readFile((await dl.path())!, "utf8")).startsWith("<svg"),
-  ).toBeTruthy();
-  await page.keyboard.press("Escape");
-  await page.getByRole("combobox", { name: "قالب المصدر" }).selectOption("all");
-  await page
-    .locator(".element-category-grid")
-    .getByRole("button", { name: /مشاهد بالكود/ })
-    .click();
-  await page.locator(".element-inspect").first().click();
-  dialog = page.getByRole("dialog");
-  await expect(dialog.locator("textarea")).toContainText("drawInterfaceScene");
-  await dialog
-    .getByRole("button", { name: "تشغيل الحركة", exact: true })
-    .click();
-  await expect(dialog.locator("output")).not.toHaveText("1.2s");
-  await dialog.getByRole("slider").fill("4");
-  await expect(dialog.locator("output")).toHaveText("4.0s");
-  await expect(
-    dialog.getByRole("button", { name: "تشغيل الحركة", exact: true }),
-  ).toBeVisible();
-  expect(errors).toEqual([]);
-});
-for (const width of [320, 390, 768, 1440])
-  test(`elements and inspector fit ${width}px with keyboard-safe mobile navigation`, async ({
-    browser,
-  }) => {
-    const context = await browser.newContext({
-      viewport: { width, height: 900 },
-      reducedMotion: "reduce",
-    });
-    const page = await context.newPage();
-    const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(e.message));
-    await library(page);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth),
-    ).toBeLessThanOrEqual(width);
-    await page.locator(".element-inspect").first().click();
-    const dialog = page.getByRole("dialog");
-    const bounds = (await dialog.boundingBox())!;
-    expect(bounds.x).toBeGreaterThanOrEqual(0);
-    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
-    expect(
-      await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
-    ).toBeTruthy();
-    await expect(
-      dialog.getByRole("button", { name: "حفظ PNG", exact: true }),
-    ).toBeEnabled();
-    await page.keyboard.press("Escape");
-    if (width < 700) {
-      await page.locator(".elements-mobile-menu summary").click();
-      await expect(
-        page.locator('.elements-mobile-menu a[href="/video-studio.html"]'),
-      ).toBeVisible();
-    }
-    expect(errors).toEqual([]);
-    await context.close();
-  });
 test("motion hero advances automatically, but reduced motion disables autoplay", async ({
   page,
 }) => {
@@ -201,27 +47,6 @@ test("motion hero advances automatically, but reduced motion disables autoplay",
   });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".hero-motion")).toHaveClass(/is-still/);
-});
-test("fifty new live motions really repaint and can be paused", async ({
-  page,
-}) => {
-  await library(page);
-  await page
-    .getByRole("combobox", { name: "قالب المصدر" })
-    .selectOption("unitool-motion");
-  await expect(page.locator(".element-results-heading")).toContainText(
-    "50 عنصر",
-  );
-  const canvas = page.locator(".element-card canvas").first();
-  await canvas.scrollIntoViewIfNeeded();
-  await expect(canvas).toHaveAttribute("data-live", "true");
-  await expect
-    .poll(() => canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()))
-    .not.toBe(await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()));
-  await page
-    .getByRole("button", { name: "إيقاف المعاينات الحية", exact: true })
-    .click();
-  await expect(canvas).toHaveAttribute("data-live", "false");
 });
 test("hero cursor clicks, opens each tool in order, then advances, with useful previews", async ({
   page,
@@ -259,4 +84,89 @@ test("hero cursor clicks, opens each tool in order, then advances, with useful p
     "data-tool",
     current!,
   );
+});
+
+test("elements is an editor section with search, filters, pagination and persisted favorites", async ({
+  page,
+}) => {
+  await library(page);
+  await expect(
+    page.getByRole("button", { name: "العناصر", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page
+    .getByRole("button", { name: "عرض عناصر أكتر", exact: true })
+    .click();
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(24);
+  await page.locator(".studio-element-favorite").first().click();
+  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(1);
+  await page.reload();
+  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(1);
+  await page.getByRole("button", { name: "المفضلة (1)", exact: true }).click();
+  await page
+    .getByRole("button", { name: "الجديد · 48 عنصر", exact: true })
+    .click();
+  await expect(page.locator(".studio-elements > small")).toContainText(
+    "48 عنصر",
+  );
+  await page
+    .getByRole("combobox", { name: "القسم", exact: true })
+    .selectOption("shapes");
+  await expect(page.locator(".studio-elements > small")).toContainText(
+    "24 عنصر",
+  );
+  await page
+    .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
+    .fill("كاميرا فيديو");
+  await expect(page.locator(".studio-elements-grid article")).toHaveCount(1);
+  await page
+    .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
+    .fill("no-matching-element");
+  await expect(page.locator(".studio-elements")).toContainText(
+    "مفيش عناصر مطابقة",
+  );
+});
+for (const width of [320, 390, 768, 1440])
+  test(`integrated elements fits ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await library(page);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await expect(
+      page.getByText("أفكارك الكبيرة.", { exact: true }),
+    ).toHaveCount(0);
+  });
+test("new SVG overlays insert on top and new compositions retain editable text", async ({
+  page,
+}) => {
+  await library(page);
+  await page
+    .getByRole("button", { name: "الجديد · 48 عنصر", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "القسم", exact: true })
+    .selectOption("shapes");
+  await page
+    .getByRole("button", {
+      name: "إضافة كاميرا فيديو للتايم لاين",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator("#studio-inspector")).toContainText(
+    "video-icon-0.svg",
+  );
+  await page.getByRole("button", { name: "العناصر", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "القسم", exact: true })
+    .selectOption("kits");
+  await page
+    .getByRole("searchbox", { name: "بحث في عناصر القوالب", exact: true })
+    .fill("شريط فيديو");
+  await page
+    .locator('.studio-elements-grid button[aria-label$="للتايم لاين"]')
+    .first()
+    .click();
+  await expect(page.locator("#studio-inspector")).toBeVisible();
 });

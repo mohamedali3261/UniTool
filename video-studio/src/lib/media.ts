@@ -1,3 +1,4 @@
+import { clipTransitionMask } from "../creative/clipTransitions";
 import { isBackgroundText } from "../composition/stacking";
 import { drawInterfaceScene } from "../templates/interface-flow/render";
 import { classifyMedia, localMediaURL, releaseMediaURL } from "../media/files";
@@ -333,6 +334,7 @@ export function drawFrame(
       );
       ctx.save();
       ctx.globalAlpha = entry.alpha;
+      clipTransitionMask(ctx, entry, w, h);
       ctx.translate(w / 2 + entry.shift * w, h / 2);
       ctx.scale(entry.scale, entry.scale);
       ctx.drawImage(surface, -w / 2, -h / 2);

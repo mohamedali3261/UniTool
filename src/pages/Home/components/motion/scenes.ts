@@ -34,7 +34,7 @@ const studioScene = {
       ar: "مكتبة العناصر",
       en: "Elements library",
       icon: Layers3,
-      href: "/elements.html",
+      href: "/video-studio.html#elements",
     },
   ],
 };

@@ -1,3 +1,4 @@
+import { prepareCreativeFonts } from "../creative/fonts";
 import { cueTime } from "../sound/timing";
 import { sceneAt, layerClip } from "../composition/scene";
 import { musicTime, clipOpacity } from "./timeline";
@@ -91,6 +92,7 @@ export async function exportVideo(
     onStage = () => {},
   } = options;
   signal.throwIfAborted();
+  if (p.texts.some(t => t.creative?.id === "weight")) await prepareCreativeFonts();
   if (!window.MediaRecorder)
     throw new Error("المتصفح لا يدعم تصدير الفيديو. استخدم Chrome أو Edge.");
   const nativeMp4 =
