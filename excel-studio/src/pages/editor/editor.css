@@ -726,3 +726,148 @@
     max-width: none;
   }
 }
+.xs-table-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e6ebe2;
+  background: #f7faf4;
+}
+.xs-table-tools .xs-button {
+  font-size: 10px;
+  padding: 6px 9px;
+  min-height: 30px;
+}
+.xs-table-tools button[aria-pressed="true"] {
+  background: #e2efda;
+  border-color: #a8c493;
+}
+.xs-table-tools small {
+  font-size: 9px;
+  color: #879c79;
+  margin-inline-start: auto;
+}
+.xs-grid {
+  table-layout: fixed;
+  min-width: 0;
+  width: auto;
+}
+.xs-grid thead th,
+.xs-grid td {
+  min-width: 0;
+  width: auto;
+  position: relative;
+  max-width: none;
+}
+.xs-grid td > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+.xs-grid.xs-wrap td > span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.xs-column-resize {
+  position: absolute;
+  inset: 0 -5px 0 auto;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 3;
+}
+.xs-column-resize:hover,
+.xs-column-resize:focus {
+  background: #91b08077;
+  outline: none;
+}
+.xs-tools-checks {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.xs-tools-checks label,
+.xs-tools-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.xs-tools-checks input,
+.xs-tools-checkbox input {
+  width: 16px;
+}
+.xs-replace-preview {
+  max-height: 230px;
+  overflow: auto;
+  margin: 15px 0;
+  font-size: 12px;
+}
+.xs-replace-preview > div {
+  display: flex;
+  gap: 15px;
+  border-bottom: 1px solid #edf1e8;
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+.xs-replace-preview del {
+  color: #a67c6a;
+}
+.xs-replace-preview span {
+  color: #46805b;
+}
+.xs-rule-column {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.xs-rule-column select {
+  flex: 1;
+  min-width: 0;
+}
+.xs-rule-list {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 20px;
+  max-height: 160px;
+  overflow: auto;
+}
+.xs-rule-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+.xs-rule-list span {
+  padding: 5px 9px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.xs-rule-list button {
+  font-size: 10px;
+  padding: 5px 10px;
+}
+.xs-modal hr {
+  border: 0;
+  border-top: 1px solid #e5ecdd;
+  margin: 20px 0;
+}
+.xs-modal h3 {
+  font-size: 15px;
+  margin: 10px 0;
+}
+@media print {
+  .xs-table-tools,
+  .xs-column-resize {
+    display: none !important;
+  }
+}

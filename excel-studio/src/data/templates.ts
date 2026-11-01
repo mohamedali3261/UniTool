@@ -1,3 +1,4 @@
+import { extraTemplates, extraTemplateData } from "./extraTemplates";
 import { newBook, newSheet } from "../core/workbook";
 import { address } from "../core/address";
 import type { Workbook, Lang } from "../core/types";
@@ -57,6 +58,7 @@ export const templates = [
     enTag: "EDUCATION",
     theme: "rose",
   },
+  ...extraTemplates,
   {
     id: "blank",
     icon: "+",
@@ -192,6 +194,8 @@ export function templateBook(id: string, lang: Lang = "ar"): Workbook {
       ],
     ];
   }
+  if (extraTemplates.some((t) => t.id === id))
+    data = extraTemplateData(id, lang);
   if (id === "blank") {
     s.cols = 8;
     s.header = false;
@@ -205,5 +209,34 @@ export function templateBook(id: string, lang: Lang = "ar"): Workbook {
           ? { format: "percent" as const }
           : {}),
       };
+  if (["marketing", "projects"].includes(id))
+    for (let r = 1; r < data.length; r++)
+      s.cells[address(r, 4)].format = "percent";
+  if (id === "projects") {
+    s.validation = [
+      { column: 4, type: "number", min: 0, max: 1, required: false },
+    ];
+    s.conditional = [
+      {
+        id: "complete",
+        column: 4,
+        op: "gt",
+        value: "0.99",
+        fill: "#e0f1e4",
+        color: "#28653b",
+      },
+    ];
+  }
+  if (id === "subscriptions")
+    s.validation = [
+      {
+        column: 4,
+        type: "list",
+        options: ["Active", "Canceled"],
+        required: true,
+      },
+    ];
+  if (id === "travel")
+    s.validation = [{ column: 1, type: "date", required: false }];
   return b;
 }

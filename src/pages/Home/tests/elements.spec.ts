@@ -27,7 +27,7 @@ test("motion hero cycles through every real tool and studio and respects pause",
       links.add(href);
   }
   for (const tool of toolCategories.flatMap((c) => c.tools))
-    expect(links.has(`/app.html#${tool.id}`)).toBeTruthy();
+    expect(links.has(tool.href || `/app.html#${tool.id}`)).toBeTruthy();
   expect(links.has("/elements.html")).toBeTruthy();
   await page.getByRole("button", { name: "إيقاف الحركة", exact: true }).click();
   await expect(hero).toHaveClass(/is-still/);
@@ -222,4 +222,37 @@ test("fifty new live motions really repaint and can be paused", async ({
     .getByRole("button", { name: "إيقاف المعاينات الحية", exact: true })
     .click();
   await expect(canvas).toHaveAttribute("data-live", "false");
+});
+test("hero cursor clicks, opens each tool in order, then advances, with useful previews", async ({
+  page,
+}) => {
+  await page.goto(base);
+  await expect(
+    page.locator('.film-preview[data-tool="excelStudio"]'),
+  ).toBeVisible({ timeout: 5000 });
+  await expect(page.locator(".film-preview")).toContainText("معاينة توضيحية");
+  await page.screenshot({ path: ".cache/hero-open-desktop.png" });
+  await expect(page.locator(".film-scene")).toHaveAttribute(
+    "data-scene",
+    "pdf-0",
+    { timeout: 5000 },
+  );
+  const ids = await page
+    .locator(".film-tool")
+    .evaluateAll((nodes) =>
+      nodes.map((n) => n.getAttribute("href")!.split("#")[1]),
+    );
+  for (const id of ids.slice(0, 3)) {
+    await expect(page.locator(`.film-preview[data-tool="${id}"]`)).toBeVisible({
+      timeout: 7000,
+    });
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".hero-motion")).toHaveClass(/is-still/);
+  const current = await page.locator(".film-preview").getAttribute("data-tool");
+  await page.waitForTimeout(3700);
+  await expect(page.locator(".film-preview")).toHaveAttribute(
+    "data-tool",
+    current!,
+  );
 });

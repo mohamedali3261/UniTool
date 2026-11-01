@@ -115,7 +115,7 @@ test("templates are genuinely editable with live calculations", async ({
 }) => {
   await boot(page);
   await page.getByRole("button", { name: "قوالب جاهزة", exact: true }).click();
-  await expect(page.locator(".xs-template-card")).toHaveCount(6);
+  await expect(page.locator(".xs-template-card")).toHaveCount(11);
   await page
     .locator(".xs-template-card")
     .filter({
@@ -219,7 +219,7 @@ test("mobile and English layouts remain within viewport", async ({ page }) => {
   await page
     .getByRole("button", { name: "Ready-made templates", exact: true })
     .click();
-  await expect(page.locator(".xs-template-card")).toHaveCount(6);
+  await expect(page.locator(".xs-template-card")).toHaveCount(11);
   await page.screenshot({ path: ".cache/excel-mobile.png", fullPage: true });
 });
 

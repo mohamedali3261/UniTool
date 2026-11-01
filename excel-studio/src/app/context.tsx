@@ -11,7 +11,7 @@ export interface StudioContext {
   ) => boolean;
   notice: (message: string) => void;
   openTemplate: (book: Workbook) => void;
-  page: "editor" | "functions" | "templates";
+  page: "editor" | "functions" | "templates" | "analytics";
   navigate: (page: StudioContext["page"]) => void;
   insertFormula: (formula: string) => void;
 }

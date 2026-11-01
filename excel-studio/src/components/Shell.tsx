@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   ArrowUpRight,
   BookOpen,
   Table2,
@@ -73,6 +74,12 @@ export function Shell({
           <nav>
             {(
               [
+                {
+                  id: "analytics",
+                  icon: BarChart3,
+                  ar: "التحليل ولوحات المؤشرات",
+                  en: "Analytics & dashboards",
+                },
                 {
                   id: "editor",
                   icon: Table2,
