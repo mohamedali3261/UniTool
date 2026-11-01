@@ -99,3 +99,41 @@ test("editing a shared stream only changes the selected page", async () => {
   assert.equal((await inspectNativeText(edited, 0))[0].text, "New");
   assert.equal((await inspectNativeText(edited, 1))[0].text, "Original 123");
 });
+
+test("native isolation keeps only the exact requested block and page geometry", async () => {
+  const { isolateNativeText } = await import("../src/core/nativeText");
+  const doc = await PDFDocument.load(await fixture());
+  doc.getPage(0).setCropBox(10, 30, 400, 700);
+  doc
+    .getPage(0)
+    .drawText("Second block", {
+      x: 70,
+      y: 500,
+      size: 18,
+      font: await doc.embedFont(StandardFonts.Helvetica),
+    });
+  const bytes = await doc.save(),
+    items = await inspectNativeText(bytes, 0);
+  assert.equal(items.length, 2);
+  const isolated = await isolateNativeText(bytes, 0, items[1]);
+  assert.equal((await PDFDocument.load(isolated)).getPageCount(), 1);
+  assert.deepEqual((await PDFDocument.load(isolated)).getPage(0).getCropBox(), {
+    x: 10,
+    y: 30,
+    width: 400,
+    height: 700,
+  });
+  const isolatedItems = await inspectNativeText(isolated, 0);
+  assert.equal(isolatedItems.length, 1);
+  assert.equal(isolatedItems[0].text, "Second block");
+});
+test("unknown inherited transforms are refused rather than shown at incorrect positions", async () => {
+  const doc = await PDFDocument.load(await fixture()),
+    page = doc.getPage(0);
+  const contents = page.node.lookup(PDFName.of("Contents"), PDFArray);
+  contents.insert(
+    0,
+    doc.context.register(doc.context.flateStream("2 0 0 2 10 20 cm")),
+  );
+  assert.equal((await inspectNativeText(await doc.save(), 0)).length, 0);
+});

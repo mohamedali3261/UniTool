@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NativeTextCanvas } from "./NativeTextCanvas";
 import { Modal } from "../../components/Modal";
 import {
   editNativeText,
@@ -30,7 +31,28 @@ export function NativeTextEditor({
     [remove, setRemove] = useState(false),
     [busy, setBusy] = useState(true),
     [error, setError] = useState(""),
-    [result, setResult] = useState<Uint8Array | null>(null);
+    [result, setResult] = useState<Uint8Array | null>(null),
+    [past, setPast] = useState<{ x: number; y: number }[]>([]),
+    [future, setFuture] = useState<{ x: number; y: number }[]>([]);
+  const selectBlock = (i: number) => {
+    setIndex(i);
+    setText(items[i].text);
+    setRemove(false);
+    setDx("0");
+    setDy("0");
+    setPast([]);
+    setFuture([]);
+  };
+  const move = (x: number, y: number) => {
+    if (![x, y].every((n) => Number.isFinite(n) && Math.abs(n) <= 5000)) return;
+    if (x === Number(dx) && y === Number(dy)) return;
+    setPast((v) =>
+      [...v, { x: Number(dx) || 0, y: Number(dy) || 0 }].slice(-100),
+    );
+    setFuture([]);
+    setDx(String(x));
+    setDy(String(y));
+  };
   useEffect(() => {
     let dead = false;
     inspectNativeText(bytes, pageIndex)
@@ -60,18 +82,26 @@ export function NativeTextEditor({
       )}
       onClose={close}
     >
-      <p>
-        {t(
-          "هذا المسار يغيّر محتوى PDF نفسه، دون غطاء أبيض أو تحويل الصفحة لصورة. يدعم حاليًا كتل نصية مستقلة بسيطة فقط؛ ليس محررًا شاملًا للنصوص والصور.",
-          "This edits PDF content itself, without white covers or rasterizing the page. Currently supports simple isolated text blocks only, not arbitrary text and images.",
-        )}
-      </p>
-      <p>
-        {t(
-          "التعديل الحرفي متاح فقط للنص الإنجليزي البسيط بخط قياسي وترميز معروف. العربي والخطوط الخاصة لا يُعاد تخمينها؛ يمكن تحريك أو حذف الكتل المستقلة المدعومة فقط. الحركة الموجبة: يمين/أعلى بوحدات PDF قبل تدوير الصفحة. احفظ نسخة وراجعها؛ التصدير قد يُبطل التوقيعات أو خصائص تفاعلية.",
-          "Replacement is limited to plain ASCII with a known standard font. Arabic/custom encodings are never guessed; only supported isolated blocks can be moved/deleted. Positive movement is right/up in unrotated PDF units. Save and review a copy; export may invalidate signatures or interactive features.",
-        )}
-      </p>
+      <details className="ps-native-limitations">
+        <summary>
+          {t(
+            "الدعم والقيود — تعديل محافظ للعناصر المدعومة فقط",
+            "Support and limitations — conservative editing of supported blocks only",
+          )}
+        </summary>
+        <p>
+          {t(
+            "هذا المسار يغيّر محتوى PDF نفسه، دون غطاء أبيض أو تحويل الصفحة لصورة. يدعم حاليًا كتل نصية مستقلة بسيطة فقط؛ ليس محررًا شاملًا للنصوص والصور.",
+            "This edits PDF content itself, without white covers or rasterizing the page. Currently supports simple isolated text blocks only, not arbitrary text and images.",
+          )}
+        </p>
+        <p>
+          {t(
+            "التعديل الحرفي متاح فقط للنص الإنجليزي البسيط بخط قياسي وترميز معروف. العربي والخطوط الخاصة لا يُعاد تخمينها؛ يمكن تحريك أو حذف الكتل المستقلة المدعومة فقط. الحركة الموجبة: يمين/أعلى بوحدات PDF قبل تدوير الصفحة. احفظ نسخة وراجعها؛ التصدير قد يُبطل التوقيعات أو خصائص تفاعلية.",
+            "Replacement is limited to plain ASCII with a known standard font. Arabic/custom encodings are never guessed; only supported isolated blocks can be moved/deleted. Positive movement is right/up in unrotated PDF units. Save and review a copy; export may invalidate signatures or interactive features.",
+          )}
+        </p>
+      </details>
       {error && <p role="alert">{error}</p>}
       {busy ? (
         <p role="status">{t("جاري الفحص…", "Inspecting…")}</p>
@@ -84,16 +114,72 @@ export function NativeTextEditor({
         </p>
       ) : (
         <fieldset disabled={busy || !!result}>
+          <NativeTextCanvas
+            bytes={bytes}
+            pageIndex={pageIndex}
+            items={items}
+            selected={index}
+            text={text}
+            setText={setText}
+            dx={Number(dx) || 0}
+            dy={Number(dy) || 0}
+            disabled={busy || !!result || remove}
+            select={selectBlock}
+            move={move}
+            t={t}
+          />
+          <div className="ps-native-move-actions">
+            <button
+              type="button"
+              disabled={!past.length}
+              onClick={() => {
+                const previous = past[past.length - 1];
+                if (!previous) return;
+                setFuture((v) => [
+                  ...v,
+                  { x: Number(dx) || 0, y: Number(dy) || 0 },
+                ]);
+                setPast((v) => v.slice(0, -1));
+                setDx(String(previous.x));
+                setDy(String(previous.y));
+              }}
+            >
+              {t("تراجع عن الحركة", "Undo movement")}
+            </button>
+            <button
+              type="button"
+              disabled={!future.length}
+              onClick={() => {
+                const next = future[future.length - 1];
+                if (!next) return;
+                setPast((v) => [
+                  ...v,
+                  { x: Number(dx) || 0, y: Number(dy) || 0 },
+                ]);
+                setFuture((v) => v.slice(0, -1));
+                setDx(String(next.x));
+                setDy(String(next.y));
+              }}
+            >
+              {t("إعادة الحركة", "Redo movement")}
+            </button>
+            <button type="button" onClick={() => move(0, 0)}>
+              {t("إعادة الموضع الأصلي", "Reset original position")}
+            </button>
+          </div>
+          <p>
+            {t(
+              "المعاينة تعرض تحريك النص الأصلي. تغيير الحروف يظهر بعد إنشاء النسخة وفتحها. يتم تطبيق العملية على الكتلة المحددة فقط؛ احفظها قبل اختيار كتلة أخرى.",
+              "Preview shows original text movement. Replacement text appears after creating and opening the copy. Only the selected block is applied; save it before choosing another block.",
+            )}
+          </p>
           <label>
             {t("كتلة النص الأصلية", "Original text block")}
             <select
               aria-label={t("كتلة النص الأصلية", "Original text block")}
               value={index}
               onChange={(e) => {
-                const i = Number(e.target.value);
-                setIndex(i);
-                setText(items[i].text);
-                setRemove(false);
+                selectBlock(Number(e.target.value));
               }}
             >
               {items.map((a, i) => (

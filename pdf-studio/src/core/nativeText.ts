@@ -59,17 +59,30 @@ export async function inspectNativeText(
 ): Promise<NativeTextItem[]> {
   const doc = await PDFDocument.load(bytes, { updateMetadata: false });
   const items: NativeTextItem[] = [];
+  let inheritedStateKnown = true;
   streams(doc, pageIndex).forEach((stream, index) => {
-    if (!stream) return;
+    if (!stream) {
+      inheritedStateKnown = false;
+      return;
+    }
     let source: string;
     try {
       source = new TextDecoder("latin1").decode(
         decodePDFRawStream(stream).decode(),
       );
     } catch {
+      inheritedStateKnown = false;
       return;
     }
-    blocks(source).forEach((match, block) => {
+    // Never isolate a block after unknown cross-stream transforms/clipping.
+    // Page-copy q/Q wrappers are harmless; arbitrary earlier operators are not.
+    const parsed = blocks(source);
+    if (source.trim() && !parsed.length && !/^[qQ]$/.test(source.trim())) {
+      inheritedStateKnown = false;
+      return;
+    }
+    if (!inheritedStateKnown) return;
+    parsed.forEach((match, block) => {
       const hex = match[3],
         ascii =
           hex.length % 2 === 0 &&
@@ -143,4 +156,30 @@ export async function editNativeText(
   if (all.some((s) => !s)) throw Error("Unsupported content stream");
   doc.getPage(pageIndex).node.set(PDFName.of("Contents"), doc.context.obj(all));
   return doc.save();
+}
+
+/** Copy only the selected block to a one-page PDF for exact PDF.js layout/hit testing.
+ * Never infer text ownership from matching strings or nearest coordinates.
+ */
+export async function isolateNativeText(
+  bytes: Uint8Array,
+  pageIndex: number,
+  target: NativeTextItem,
+) {
+  const source = await PDFDocument.load(bytes, { updateMetadata: false });
+  const stream = streams(source, pageIndex)[target.stream];
+  if (!stream) throw Error("Unsupported text block");
+  const content = new TextDecoder("latin1").decode(
+    decodePDFRawStream(stream).decode(),
+  );
+  const match = blocks(content)[target.block];
+  if (!match) throw Error("Unsupported text block");
+  const output = await PDFDocument.create();
+  const [page] = await output.copyPages(source, [pageIndex]);
+  output.addPage(page);
+  page.node.set(
+    PDFName.of("Contents"),
+    output.context.register(output.context.flateStream(match[0])),
+  );
+  return output.save();
 }
