@@ -1,3 +1,4 @@
+import {validatePrint} from '../advanced/core/faces';
 import type { fabric } from "fabric";
 import type { ProjectItem } from "../types";
 import { cartonError } from "../packaging/geometry";
@@ -120,6 +121,7 @@ export function parseProjectFile(raw: unknown): ProjectItem {
     category:
       typeof p.category === "string" ? p.category.slice(0, 80) : "custom",
     packaging,
+    studio:p.studio?validatePrint(p.studio):undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -162,6 +164,7 @@ export async function portableProject(
       height: project.height,
       category: project.category,
       packaging: project.packaging,
+      studio:project.studio,
       canvasData: data,
     },
   };

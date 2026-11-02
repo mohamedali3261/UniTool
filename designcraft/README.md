@@ -28,3 +28,27 @@ npm run test:designcraft:browser
 ```
 
 For an existing preview, set `DESIGN_QA_URL=http://localhost:4173`; sandbox browser binaries can be selected through `STUDIO_CHROMIUM_PATH` and `LD_LIBRARY_PATH`. Browser checks exercise real drag alignment, full text deletion/retyping, project download/import including raster filters and carton metadata, unsafe imports, actual hidden-guide PNG pixels and SVG omission, physical print exports, and responsive dialogs.
+
+## Advanced designer tools
+
+Open **Advanced designer tools / أدوات المصمم المتقدمة** in the editor:
+
+1. Distribute three or more objects with equal horizontal or vertical gaps.
+2. Align edges and centers relative to the canvas or the selected objects.
+3. Group, ungroup, and ungroup/edit/regroup individual members; operations support undo.
+4. Set X/Y, bounding width/height and rotation numerically, with aspect locking and carton mm units. Unsupported skewed or mathematically ambiguous resizes are rejected rather than silently distorted.
+5. Select and focus the six named carton faces.
+6. Configure safe and bleed guides (0–8 mm). These overlays never appear in artwork exports. Physical print export has an explicit, initially unchecked bleed option; artwork must already extend into the bleed region.
+7. Inspect a rotatable assembled-box preview textured with current artwork. This is a visual aid, not material, collision or fold certification.
+8. Run preflight for hidden/outside objects, estimated image DPI, text safety near cuts/folds and text overflow. Findings are advisory, not print-shop certification.
+9. Copy/paste text formatting without replacing words.
+10. Clear formatting without deleting text.
+11. Choose shrink-font, grow-box or overflow-warning text containment.
+12. Reuse browser-local brand colors, available fonts and a raster logo across projects.
+13. Browse automatic IndexedDB recovery snapshots (five per project, twenty overall, at most 8 MB each), restore or delete them. Recovery is debounced and storage can fail or be cleared; download editable projects for durable backups.
+14. See dirty/saved/recovery status and receive unsaved-change navigation/exit warnings where supported by the browser. Failed saves do not clear the warning.
+15. Download background/transparent PNG variants or 1–10 saved designs as a ZIP. Batch limits: 16 MP per design, 40 MB image data. Batch exports omit manufacturing guides.
+
+The brand kit and recovery history are local to this browser/profile, not a cloud sync service. Fonts are referenced by family, not embedded. Text fitting is bounded (8–300 px), and overflow warnings should still be reviewed before print.
+
+Verified for this expansion: **34 unit tests, 27 production-browser tests**, TypeScript checking and production build. Browser coverage includes mobile Arabic tools, grouping/undo, numeric sizing, text formatting/fitting, persisted brand assets, preflight including a tiny low-DPI raster, real ZIP downloads, recovery restore, failed-save warnings, textured box faces and print exports, alongside the prior editor/packaging regressions.

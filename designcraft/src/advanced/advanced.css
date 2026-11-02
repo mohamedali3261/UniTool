@@ -1,0 +1,228 @@
+.adv-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: #0b1727;
+  border-bottom: 1px solid #24354c;
+  color: #94a3b8;
+  font-size: 10px;
+}
+.adv-toolbar button,
+.adv-dialog button {
+  border: 1px solid #315070;
+  border-radius: 8px;
+  background: #152841;
+  color: #dbeafe;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.adv-toolbar button:hover,
+.adv-dialog button:hover {
+  background: #254666;
+}
+.adv-dialog button:disabled {
+  opacity: 0.4;
+  cursor: wait;
+}
+.adv-dialog {
+  width: min(920px, calc(100vw - 24px));
+  max-height: 88dvh;
+  padding: 0;
+  border: 1px solid #375675;
+  border-radius: 16px;
+  background: #0d1728;
+  color: #e2e8f0;
+  box-shadow: 0 30px 100px #0009;
+  font-family: inherit;
+}
+.adv-dialog::backdrop {
+  background: #020617b8;
+  backdrop-filter: blur(4px);
+}
+.adv-dialog header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #29415c;
+  position: sticky;
+  top: 0;
+  background: #0d1728;
+  z-index: 2;
+}
+.adv-dialog h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.adv-dialog h3 {
+  font-size: 14px;
+  margin: 20px 0 12px;
+  color: #7dd3fc;
+}
+.adv-dialog nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-bottom: 1px solid #29415c;
+}
+.adv-dialog nav button {
+  font-size: 11px;
+}
+.adv-dialog nav button[aria-pressed="true"] {
+  background: #075985;
+  border-color: #38bdf8;
+}
+.adv-content {
+  padding: 20px;
+}
+.adv-content fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.adv-content button {
+  margin: 4px;
+}
+.adv-content label {
+  font-size: 12px;
+  line-height: 1.8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adv-field {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  margin: 12px 0;
+  gap: 6px;
+}
+.adv-field input:not([type="range"]),
+.adv-field select {
+  min-width: 0;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #3a5068;
+  background: #081321;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font: inherit;
+}
+.adv-field input[type="range"] {
+  width: 100%;
+  accent-color: #38bdf8;
+}
+.adv-field input[type="file"] {
+  max-width: 100%;
+}
+.adv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.adv-grid button {
+  margin: 0;
+}
+.adv-note {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #9aacc2;
+  margin: 12px 0;
+}
+.adv-dialog input[type="checkbox"] {
+  accent-color: #38bdf8;
+}
+.adv-message {
+  font-size: 12px;
+  padding: 12px;
+  border: 1px solid #4b6380;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.adv-dialog li {
+  font-size: 12px;
+  margin: 8px 0;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.adv-projects {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  margin: 16px 0;
+}
+.adv-swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adv-swatch input {
+  width: 38px;
+  height: 32px;
+  border: 0;
+  background: none;
+}
+.adv-logo {
+  width: 90px;
+  height: 70px;
+  object-fit: contain;
+  background: #e2e8f0;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+.adv-box-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 900px;
+  min-height: 360px;
+  overflow: hidden;
+  background: radial-gradient(ellipse, #284259, #081321);
+  border-radius: 12px;
+  margin: 18px 0;
+}
+.adv-dialog :focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .adv-dialog nav {
+    gap: 4px;
+  }
+  .adv-dialog nav button {
+    padding: 7px;
+    font-size: 10px;
+  }
+  .adv-content {
+    padding: 14px;
+  }
+  .adv-grid {
+    gap: 6px;
+  }
+  .adv-dialog button {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .adv-toolbar {
+    gap: 6px;
+    font-size: 9px;
+  }
+  .adv-toolbar span {
+    max-width: 100%;
+  }
+  .adv-box-stage {
+    min-height: 340px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adv-dialog * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

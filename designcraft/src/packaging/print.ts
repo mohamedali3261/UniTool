@@ -113,7 +113,7 @@ async function pixels(
     surface.dispose();
   }
 }
-export async function packagingPrint(
+async function renderPackagingPrint(
   canvas: fabric.Canvas,
   size: CartonSize,
   width: number,
@@ -121,9 +121,10 @@ export async function packagingPrint(
   format: "pdf" | "png" | "svg",
   dpi: PrintDpi,
   guides: boolean,
+  bleedMm: number,
 ): Promise<Blob> {
   assertPhysicalCanvas(size, width, height);
-  applyCartonBoundary(canvas, size);
+  applyCartonBoundary(canvas, size, bleedMm);
   const g = cartonGeometry(size);
   if (format === "svg") {
     // Always derive manufacturing guides from dimensions, never from movable artwork objects.
@@ -187,4 +188,34 @@ export async function packagingPrint(
   return new Blob([new Uint8Array(await doc.save())], {
     type: "application/pdf",
   });
+}
+
+export async function packagingPrint(
+  canvas: fabric.Canvas,
+  size: CartonSize,
+  width: number,
+  height: number,
+  format: "pdf" | "png" | "svg",
+  dpi: PrintDpi,
+  guides: boolean,
+  bleedMm = 0,
+) {
+  if (!Number.isFinite(bleedMm) || bleedMm < 0 || bleedMm > 8)
+    throw Error("BLEED");
+  const original = canvas.clipPath;
+  try {
+    return await renderPackagingPrint(
+      canvas,
+      size,
+      width,
+      height,
+      format,
+      dpi,
+      guides,
+      bleedMm,
+    );
+  } finally {
+    canvas.clipPath = original;
+    canvas.requestRenderAll();
+  }
 }

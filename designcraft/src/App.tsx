@@ -61,6 +61,7 @@ export default function App() {
 
   // Open a design in its own tab (or focus its existing tab) and enter the editor.
   const openProjectInTab = (project: ProjectItem) => {
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
     const saved = getSavedProjects();
     setOpenTabs((prev) => {
       // Drop tabs whose projects were removed from the dashboard in the meantime.
@@ -136,6 +137,7 @@ export default function App() {
   // 4. Switch Between Open Design Tabs (save the current canvas first)
   const handleSelectTab = (id: string) => {
     if (id === activeTabId) return;
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
 
     const saved = flushActiveTab();
     const target = getSavedProjects().find((p) => p.id === id);
@@ -151,6 +153,7 @@ export default function App() {
   // 5. Close a Tab (the design stays saved in "My Projects")
   const handleCloseTab = (id: string) => {
     const isActive = id === activeTabId;
+    if(isActive&&editorRef.current&&!editorRef.current.confirmLeave())return;
     const saved = isActive ? flushActiveTab() : undefined;
     const closingIndex = openTabs.findIndex((p) => p.id === id);
     if (closingIndex === -1) return;
@@ -174,11 +177,13 @@ export default function App() {
 
   // 6. Back to Dashboard / New Tab (both keep the current design saved)
   const handleBackToDashboard = () => {
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
     flushActiveTab();
     setCurrentView('dashboard');
   };
 
   const handleNewTab = () => {
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
     flushActiveTab();
     setCurrentView('dashboard');
   };

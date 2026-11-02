@@ -1,3 +1,7 @@
+import {AdvancedTools} from '../../advanced/AdvancedTools';
+import {CanvasOverlays} from '../../advanced/CanvasOverlays';
+import {DEFAULT_PRINT,faces,facePixels} from '../../advanced/core/faces';
+import {applyTextFit} from '../../advanced/core/text';
 import {resetEmptyText,normalTextFill} from '../../utils/textReset';
 import {withoutGuides} from '../../packaging/print';
 import {portableProject} from '../../utils/projectFile';
@@ -72,6 +76,7 @@ import {
   applyTextGradient,
   applyTextCurve,
   saveProjectToStorage,
+  getSavedProjects,
   applyImageClipPathAndEdges,
   applyImageEdgeFade,
   setCanvasPatternBackground,
@@ -97,6 +102,7 @@ interface EditorLayoutProps {
 export interface EditorLayoutHandle {
   // Persists the live canvas synchronously; used before switching/closing tabs.
   flushSave: () => ProjectItem | undefined;
+  confirmLeave:()=>boolean;
 }
 
 export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutProps>(function EditorLayout({
@@ -112,6 +118,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   onOpenPackagingProject
 }, ref) {
   const { t, lang } = useDcLang();
+  const [liveCanvas,setLiveCanvas]=useState<fabric.Canvas|null>(null);
+  const [studioSettings,setStudioSettings]=useState(initialProject.studio||DEFAULT_PRINT);
+  const [activeFace,setActiveFace]=useState<number|null>(null);
   const [isPackagingOpen,setIsPackagingOpen]=useState(false);
   const [isPrintOpen,setIsPrintOpen]=useState(false);
 
@@ -168,6 +177,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
     const json = withCartonPrecision(()=>JSON.stringify(
       canvas.toJSON([
+        'textFitMode','textFitHeight','textFitMaxSize',
         'id',
         'name',
         'locked',
@@ -202,6 +212,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     if (newStack.length > 30) newStack.shift();
     historyStackRef.current = newStack;
     historyIndexRef.current = newStack.length - 1;
+    canvas.fire('studio:changed' as any);
   }, [initialProject.packaging]);
 
   // Update Layers helper
@@ -259,6 +270,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
+      canvas.fire('studio:changed' as any);
       onShowToast(t.elUndoTitle, t.elUndoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
@@ -278,6 +290,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
+      canvas.fire('studio:changed' as any);
       onShowToast(t.elRedoTitle, t.elRedoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
@@ -342,6 +355,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   // Global Keyboard Shortcuts (Copy/Paste/Cut/Delete)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if(document.querySelector('dialog[open]'))return;
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA' ||
@@ -420,6 +434,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const handleCanvasReady = useCallback(
     (canvas: fabric.Canvas) => {
       fabricCanvasRef.current = canvas;
+      (canvas as any).__studioInitializing=true;
+      setLiveCanvas(canvas);
       if(initialProject.packaging){
         canvas.on('object:removed',event=>{if(!isHistoryLockedRef.current&&event.target&&isCartonGuide(event.target)){canvas.add(event.target);canvas.requestRenderAll();}});
       }
@@ -431,9 +447,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           canvas.renderAll();
           updateLayersList();
           isHistoryLockedRef.current = false;
+          (canvas as any).__studioInitializing=false;
+          canvas.fire('studio:loaded' as any);
           recordHistory();
         });
       } else {
+        (canvas as any).__studioInitializing=false;
+        canvas.fire('studio:loaded' as any);
         recordHistory();
       }
     },
@@ -533,7 +553,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         }
       } else {
         (active as any).set(key, value);
-        if(key==='text')resetEmptyText(active,normalTextFill(canvas.backgroundColor));
+        if(key==='text'){resetEmptyText(active,normalTextFill(canvas.backgroundColor));applyTextFit(active);}
       }
 
       active.setCoords();
@@ -553,7 +573,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     if (!canvas) return undefined;
 
     const canvasJson = withCartonPrecision(()=>canvas.toJSON([
-      'id',
+      'textFitMode','textFitHeight','textFitMaxSize',
+        'id',
       'name',
       'locked',
       'lockRotation',
@@ -586,6 +607,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const updated: ProjectItem = {
       ...initialProject,
       title: projectTitle,
+      studio:studioSettings,
       width: canvasWidth,
       height: canvasHeight,
       thumbnail: thumb,
@@ -597,16 +619,20 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     };
 
     saveProjectToStorage(updated);
+    const stored=getSavedProjects().find(p=>p.id===updated.id);
+    const ok=!!stored&&JSON.stringify(stored.canvasData)===JSON.stringify(updated.canvasData)&&stored.title===updated.title&&JSON.stringify(stored.studio)===JSON.stringify(updated.studio);
+    window.dispatchEvent(new CustomEvent('designcraft:saved',{detail:{id:updated.id,ok}}));
+    if(!ok)throw Error('تعذر الحفظ المحلي / Local save failed');
     onProjectUpdated?.(updated);
     return updated;
-  }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, onProjectUpdated]);
+  }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, studioSettings,onProjectUpdated]);
 
   // Save Project Action
   const handleSaveProject = useCallback(() => {
     if (!fabricCanvasRef.current) return;
 
     setIsSaving(true);
-    persistProject();
+    try{persistProject();}catch{setIsSaving(false);onShowToast(lang==='ar'?'تعذر الحفظ؛ نزّل ملف المشروع':'Save failed; download project',undefined,'error');return;}
 
     setTimeout(() => {
       setIsSaving(false);
@@ -615,7 +641,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   }, [persistProject, onShowToast]);
 
   useImperativeHandle(ref, () => ({
-    flushSave: () => persistProject()
+    flushSave: () => {try{return persistProject();}catch{return undefined;}},
+    confirmLeave:()=>{try{persistProject();return true;}catch{return window.confirm(lang==='ar'?'تعذر حفظ آخر التعديلات. هل تريد المغادرة وفقدها؟':'Latest changes could not be saved. Leave and lose them?');}}
   }), [persistProject]);
 
   // Open Export Modal
@@ -1387,6 +1414,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       />
 
       {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · {initialProject.packaging.size.height} × {initialProject.packaging.size.width} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
+      <AdvancedTools onEditStart={()=>{isHistoryLockedRef.current=true;}} onEditEnd={()=>{isHistoryLockedRef.current=false;}} canvas={liveCanvas} project={{...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}}} settings={studioSettings} onSettings={value=>setStudioSettings(value)} onChanged={()=>{updateLayersList();recordHistory();}} onSave={handleSaveProject} onRestore={async project=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('Canvas');isHistoryLockedRef.current=true;try{canvas.discardActiveObject();await new Promise<void>(resolve=>canvas.loadFromJSON(project.canvasData,()=>resolve()));setCanvasWidth(project.width);setCanvasHeight(project.height);setBackgroundColor(project.canvasData.background||'#FFFFFF');setProjectTitle(project.title);setStudioSettings(project.studio||DEFAULT_PRINT);canvas.setDimensions({width:project.width*zoom,height:project.height*zoom});canvas.setZoom(zoom);canvas.renderAll();}finally{isHistoryLockedRef.current=false;}updateLayersList();recordHistory();canvas.fire('studio:changed' as any);}} onFace={index=>{if(!initialProject.packaging)return;setActiveFace(index);const canvas=fabricCanvasRef.current,area=document.getElementById('canvas-area-container');if(!canvas||!area)return;const face=facePixels(faces(initialProject.packaging.size)[index]);const z=Math.max(.15,Math.min(3,(area.clientWidth-70)/face.width,(area.clientHeight-100)/face.height));setZoom(z);requestAnimationFrame(()=>requestAnimationFrame(()=>{const rect=canvas.upperCanvasEl.getBoundingClientRect(),outer=area.getBoundingClientRect();area.scrollTo({left:area.scrollLeft+rect.left-outer.left+(face.left+face.width/2)*z-area.clientWidth/2,top:area.scrollTop+rect.top-outer.top+(face.top+face.height/2)*z-area.clientHeight/2,behavior:'auto'});}));}}/>
       {/* 2. Open Design Tabs */}
       <DesignTabs
         tabs={tabs}
@@ -1481,6 +1509,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             }}
           />
           <CanvasArea
+            overlays={initialProject.packaging?<CanvasOverlays size={initialProject.packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
             width={canvasWidth}
             height={canvasHeight}
             backgroundColor={backgroundColor}
@@ -1591,13 +1620,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       )}
 
       {/* Modals */}
-      {isPrintOpen && initialProject.packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} onClose={()=>setIsPrintOpen(false)}/>}
+      {isPrintOpen && initialProject.packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} bleedMm={studioSettings.bleedMm} onClose={()=>setIsPrintOpen(false)}/>}
       {isPackagingOpen && initialProject.packaging && <PackagingDialog initial={initialProject.packaging.size} onClose={()=>setIsPackagingOpen(false)} onCreate={p=>{persistProject();setIsPackagingOpen(false);onOpenPackagingProject?.(p);}}/>}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         isPackaging={!!initialProject.packaging}
-        onExportProject={async()=>{const project=persistProject();if(!project||!fabricCanvasRef.current)throw Error('NO_CANVAS');return portableProject(project,fabricCanvasRef.current);}}
+        onExportProject={async()=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('NO_CANVAS');return portableProject({...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:withCartonPrecision(()=>canvas.toJSON(['id','name','locked','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','selectable','evented','_originalSrc','textFitMode','textFitHeight','textFitMaxSize','cropTop','cropBottom','cropLeft','cropRight','fadeTop','fadeBottom','fadeLeft','fadeRight','fadeRadial','clipCornerTL','clipCornerTR','clipCornerBL','clipCornerBR']))},canvas);}}
         onExport={(format, quality, multiplier, guides=true) => {
           if (!fabricCanvasRef.current) return '';
           return withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>exportCanvasImage(fabricCanvasRef.current!,format,quality,multiplier,canvasWidth,canvasHeight));
