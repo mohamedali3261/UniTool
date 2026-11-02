@@ -1,0 +1,127 @@
+import type { Design } from "../../core/model";
+export const templates: {
+  id: string;
+  ar: string;
+  en: string;
+  patch: Partial<Design>;
+}[] = [
+  {
+    id: "editorial",
+    ar: "كلمة ومعنى",
+    en: "Editorial",
+    patch: {
+      font: "cairo",
+      bg: "#172d29",
+      bg2: "#132b45",
+      color: "#f5e8cf",
+      color2: "#b3f1dd",
+      background: "solid",
+      decoration: "orbit",
+      effect: "none",
+      textGradient: false,
+    },
+  },
+  {
+    id: "poetry",
+    ar: "ديوان",
+    en: "Poetry",
+    patch: {
+      font: "amiri",
+      bg: "#eee7d8",
+      color: "#3d3028",
+      background: "solid",
+      decoration: "frame",
+      effect: "none",
+      textGradient: false,
+    },
+  },
+  {
+    id: "neon",
+    ar: "نبض النيون",
+    en: "Neon",
+    patch: {
+      font: "changa",
+      bg: "#101326",
+      bg2: "#2a1449",
+      color: "#a8ffed",
+      color2: "#c3a5ff",
+      background: "gradient",
+      decoration: "none",
+      effect: "glow",
+      textGradient: true,
+    },
+  },
+  {
+    id: "sunset",
+    ar: "آخر ضوء",
+    en: "Sunset",
+    patch: {
+      font: "cairo",
+      bg: "#7c2d48",
+      bg2: "#df9560",
+      color: "#fff3de",
+      background: "gradient",
+      decoration: "orbit",
+      effect: "shadow",
+      textGradient: false,
+    },
+  },
+  {
+    id: "mono",
+    ar: "ببساطة",
+    en: "Minimal",
+    patch: {
+      font: "noto",
+      bg: "#f3f2ef",
+      color: "#1c2423",
+      background: "solid",
+      decoration: "none",
+      effect: "none",
+      textGradient: false,
+    },
+  },
+  {
+    id: "ink",
+    ar: "حبر وورق",
+    en: "Ink",
+    patch: {
+      font: "amiri",
+      bg: "#202121",
+      color: "#e8c388",
+      background: "solid",
+      decoration: "frame",
+      effect: "none",
+      textGradient: false,
+    },
+  },
+  {
+    id: "pop",
+    ar: "ألوان صريحة",
+    en: "Pop",
+    patch: {
+      font: "changa",
+      bg: "#e9c2ff",
+      color: "#3b225d",
+      background: "solid",
+      decoration: "dots",
+      effect: "outline",
+      textGradient: false,
+    },
+  },
+  {
+    id: "ocean",
+    ar: "موج هادئ",
+    en: "Ocean",
+    patch: {
+      font: "noto",
+      bg: "#0b3046",
+      bg2: "#157a78",
+      color: "#d9fff3",
+      color2: "#b8d9ff",
+      background: "gradient",
+      decoration: "dots",
+      effect: "none",
+      textGradient: true,
+    },
+  },
+];

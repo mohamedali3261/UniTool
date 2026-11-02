@@ -3411,3 +3411,5 @@ html[dir="ltr"] .studio-open > span > svg {
 .home-privacy-note {
   color: #97a78a;
 }
+
+.tone-typography { --tool-color: #cce7a3; }

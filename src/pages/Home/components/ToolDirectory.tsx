@@ -45,6 +45,7 @@ export function ToolDirectory({
         )
       : [];
   const featuredIds = [
+    "textStudio",
     "excelStudio",
     "pdfMerger",
     "imageCropper",

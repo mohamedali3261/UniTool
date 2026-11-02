@@ -35,6 +35,8 @@
     "designcraft/src/**/*",
     "video-studio/src/**/*",
     "pdf-studio/**/*.ts",
-    "pdf-studio/**/*.tsx"
+    "pdf-studio/**/*.tsx",
+    "text-studio/**/*.ts",
+    "text-studio/**/*.tsx"
   ]
 }
