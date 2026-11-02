@@ -257,7 +257,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Handle Undo
   const handleUndo = useCallback(() => {
-    if (historyIndexRef.current <= 0) return;
+    if (isHistoryLockedRef.current || historyIndexRef.current <= 0) return;
 
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -267,6 +267,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
     canvas.loadFromJSON(jsonState, () => {
+      if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
@@ -277,7 +278,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Handle Redo
   const handleRedo = useCallback(() => {
-    if (historyIndexRef.current >= historyStackRef.current.length - 1) return;
+    if (isHistoryLockedRef.current || historyIndexRef.current >= historyStackRef.current.length - 1) return;
 
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -287,6 +288,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
     canvas.loadFromJSON(jsonState, () => {
+      if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
@@ -312,6 +314,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     if (!canvas || !clipboardRef.current) return;
     
     clipboardRef.current.clone((clonedObj: fabric.Object) => {
+      if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
       canvas.discardActiveObject();
       
       clonedObj.set({
@@ -355,7 +358,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   // Global Keyboard Shortcuts (Copy/Paste/Cut/Delete)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if(document.querySelector('dialog[open]'))return;
+      if(document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'))return;
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA' ||
@@ -443,6 +446,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       if (initialProject.canvasData) {
         isHistoryLockedRef.current = true;
         canvas.loadFromJSON(initialProject.canvasData, () => {
+          if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
           if(initialProject.packaging) applyCartonBoundary(canvas,initialProject.packaging.size);
           canvas.renderAll();
           updateLayersList();
@@ -1414,7 +1418,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       />
 
       {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · {initialProject.packaging.size.height} × {initialProject.packaging.size.width} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
-      <AdvancedTools onEditStart={()=>{isHistoryLockedRef.current=true;}} onEditEnd={()=>{isHistoryLockedRef.current=false;}} canvas={liveCanvas} project={{...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}}} settings={studioSettings} onSettings={value=>setStudioSettings(value)} onChanged={()=>{updateLayersList();recordHistory();}} onSave={handleSaveProject} onRestore={async project=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('Canvas');isHistoryLockedRef.current=true;try{canvas.discardActiveObject();await new Promise<void>(resolve=>canvas.loadFromJSON(project.canvasData,()=>resolve()));setCanvasWidth(project.width);setCanvasHeight(project.height);setBackgroundColor(project.canvasData.background||'#FFFFFF');setProjectTitle(project.title);setStudioSettings(project.studio||DEFAULT_PRINT);canvas.setDimensions({width:project.width*zoom,height:project.height*zoom});canvas.setZoom(zoom);canvas.renderAll();}finally{isHistoryLockedRef.current=false;}updateLayersList();recordHistory();canvas.fire('studio:changed' as any);}} onFace={index=>{if(!initialProject.packaging)return;setActiveFace(index);const canvas=fabricCanvasRef.current,area=document.getElementById('canvas-area-container');if(!canvas||!area)return;const face=facePixels(faces(initialProject.packaging.size)[index]);const z=Math.max(.15,Math.min(3,(area.clientWidth-70)/face.width,(area.clientHeight-100)/face.height));setZoom(z);requestAnimationFrame(()=>requestAnimationFrame(()=>{const rect=canvas.upperCanvasEl.getBoundingClientRect(),outer=area.getBoundingClientRect();area.scrollTo({left:area.scrollLeft+rect.left-outer.left+(face.left+face.width/2)*z-area.clientWidth/2,top:area.scrollTop+rect.top-outer.top+(face.top+face.height/2)*z-area.clientHeight/2,behavior:'auto'});}));}}/>
+      <AdvancedTools onEditStart={()=>{isHistoryLockedRef.current=true;}} onEditEnd={()=>{isHistoryLockedRef.current=false;}} canvas={liveCanvas} project={{...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}}} settings={studioSettings} onSettings={value=>setStudioSettings(value)} onChanged={()=>{updateLayersList();recordHistory();}} onSave={handleSaveProject} onRestore={async project=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('Canvas');isHistoryLockedRef.current=true;try{canvas.discardActiveObject();await new Promise<void>(resolve=>canvas.loadFromJSON(project.canvasData,()=>resolve()));setCanvasWidth(project.width);setCanvasHeight(project.height);setBackgroundColor(project.canvasData.background||'#FFFFFF');setProjectTitle(project.title);setStudioSettings(project.studio||DEFAULT_PRINT);canvas.setDimensions({width:project.width*zoom,height:project.height*zoom});canvas.setZoom(zoom);canvas.renderAll();}finally{isHistoryLockedRef.current=false;}updateLayersList();recordHistory();canvas.fire('studio:changed' as any);}} onFace={index=>{if(!initialProject.packaging)return;setActiveFace(index);const canvas=fabricCanvasRef.current,area=document.getElementById('canvas-area-container');if(!canvas||!area)return;const face=facePixels(faces(initialProject.packaging.size)[index]);const z=Math.max(.15,Math.min(3,(area.clientWidth-70)/face.width,(area.clientHeight-100)/face.height));setZoom(z);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!canvas.upperCanvasEl || fabricCanvasRef.current!==canvas)return;const rect=canvas.upperCanvasEl.getBoundingClientRect(),outer=area.getBoundingClientRect();area.scrollTo({left:area.scrollLeft+rect.left-outer.left+(face.left+face.width/2)*z-area.clientWidth/2,top:area.scrollTop+rect.top-outer.top+(face.top+face.height/2)*z-area.clientHeight/2,behavior:'auto'});}));}}/>
       {/* 2. Open Design Tabs */}
       <DesignTabs
         tabs={tabs}

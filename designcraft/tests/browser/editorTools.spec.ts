@@ -33,6 +33,7 @@ async function saved(page: Page) {
   );
 }
 async function exportFile(page: Page, name: RegExp) {
+  await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
   await page
     .getByRole("button", { name: "تصدير", exact: true })
     .first()
@@ -186,6 +187,7 @@ test("ordinary carton export can hide manufacturing guides without deleting them
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
+  await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
   await page
     .getByRole("button", { name: "تصدير", exact: true })
     .first()
@@ -202,6 +204,7 @@ test("ordinary carton export can hide manufacturing guides without deleting them
     .click();
   const svg = (await fs.readFile((await (await pending).path())!)).toString();
   expect(svg).not.toContain('id="packaging-');
+  await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
   await page
     .getByRole("button", { name: "تصدير", exact: true })
     .first()
@@ -270,6 +273,7 @@ test("hiding carton lines removes their actual raster pixels and project metadat
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
+  await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
   await page
     .getByRole("button", { name: "تصدير", exact: true })
     .first()

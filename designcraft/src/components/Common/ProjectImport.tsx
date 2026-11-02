@@ -3,9 +3,10 @@ import type { ProjectItem } from "../../types";
 import { parseProjectFile } from "../../utils/projectFile";
 import { useDcLang } from "../../hooks/useDcLang";
 export function ProjectImport({
-  onImport,
+  onImport, hideButton = false,
 }: {
   onImport: (p: ProjectItem) => void;
+  hideButton?: boolean;
 }) {
   const { lang } = useDcLang(),
     ar = lang === "ar",
@@ -22,7 +23,7 @@ export function ProjectImport({
         maxWidth: 310,
       }}
     >
-      <button
+      {!hideButton && <button
         type="button"
         disabled={busy}
         onClick={() => ref.current?.click()}
@@ -35,8 +36,9 @@ export function ProjectImport({
           : ar
             ? "استيراد مشروع قابل للتعديل"
             : "Import editable project"}
-      </button>
+      </button>}
       <input
+        id="designer-project-input"
         type="file"
         ref={ref}
         hidden

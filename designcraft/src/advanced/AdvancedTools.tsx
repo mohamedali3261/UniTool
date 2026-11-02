@@ -60,7 +60,7 @@ export function AdvancedTools({
       if(edit)onEditStart();
       await fn();
       if(edit)onEditEnd();
-      if (edit && canvas) {
+      if (edit && canvas?.contextContainer) {
         canvas.requestRenderAll();
         onChanged();
         canvas.fire("studio:changed" as any);

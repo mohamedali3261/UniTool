@@ -139,6 +139,7 @@ test("artwork exports as physical SVG with locked native guides", async ({
       .slice(1)
       .every((o: any) => o.lockScalingX && o.selectable === false),
   ).toBe(true);
+  await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
   await page
     .getByRole("button", { name: "تصدير", exact: true })
     .first()

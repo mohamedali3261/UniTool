@@ -218,7 +218,7 @@ export default function App() {
         />
       )}
 
-      <ProjectImport onImport={project=>{flushActiveTab();saveProjectToStorage(project);if(!getSavedProjects().some(p=>p.id===project.id))throw Error('STORAGE');openProjectInTab(project);showToast(lang==='ar'?'تم فتح المشروع':'Project imported');}}/>
+      <ProjectImport hideButton={!!activeProject} onImport={project=>{flushActiveTab();saveProjectToStorage(project);if(!getSavedProjects().some(p=>p.id===project.id))throw Error('STORAGE');openProjectInTab(project);showToast(lang==='ar'?'تم فتح المشروع':'Project imported');}}/>
       {/* Global Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </main>
