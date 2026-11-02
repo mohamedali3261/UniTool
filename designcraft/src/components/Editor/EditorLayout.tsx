@@ -1,3 +1,6 @@
+import { deviceRasterBudget, rasterWithinBudget } from '../../utils/rasterBudget';
+import { downloadFile } from '../../utils/download';
+import { boundedHistory } from '../../utils/mobilePerformance';
 import { clearFormatting } from '../../advanced/core/text';
 import { shortcutKey } from '../../utils/keyboard';
 import {AdvancedTools} from '../../advanced/AdvancedTools';
@@ -73,6 +76,7 @@ import {
   duplicateActiveObject,
   deleteActiveObject,
   exportCanvasImage,
+  exportCanvasBlob,
   exportCanvasSvg,
   exportCanvasPdf,
   applyTextGradient,
@@ -209,9 +213,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         'clipPath'
       ])
     ));
-    const newStack = historyStackRef.current.slice(0, historyIndexRef.current + 1);
-    newStack.push(json);
-    if (newStack.length > 30) newStack.shift();
+    const newStack = boundedHistory(historyStackRef.current, historyIndexRef.current, json);
     historyStackRef.current = newStack;
     historyIndexRef.current = newStack.length - 1;
     canvas.fire('studio:changed' as any);
@@ -618,7 +620,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
     // Render the thumbnail from the full design, not the zoomed viewport,
     // otherwise saved design cards look pixelated.
-    const thumb = exportCanvasImage(canvas, 'png', 1, 0.3, canvasWidth, canvasHeight);
+    const thumb = exportCanvasImage(canvas, 'png', 1, Math.min(.3, 320 / Math.max(canvasWidth, canvasHeight)), canvasWidth, canvasHeight);
 
     const updated: ProjectItem = {
       ...initialProject,
@@ -671,7 +673,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const handleOpenPreview = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    const url = exportCanvasImage(canvas, 'png', 1, 1, canvasWidth, canvasHeight);
+    const url = exportCanvasImage(canvas, 'png', 1, Math.min(1, 1200 / Math.max(canvasWidth, canvasHeight)), canvasWidth, canvasHeight);
     setPreviewUrl(url);
     setIsPreviewModalOpen(true);
   }, [canvasWidth, canvasHeight]);
@@ -1005,22 +1007,21 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // ---- Quick PNG download straight from the top bar ----
   // Always exports at 2× the full design size, regardless of the current zoom.
-  const handleQuickExportPng = useCallback(() => {
+  const quickExportBusy = useRef(false);
+  const handleQuickExportPng = useCallback(async () => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    handleSaveProject();
-    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2, canvasWidth, canvasHeight);
-    if (!dataUrl) {
-      onShowToast(t.quickExportErrorTitle, t.quickExportErrorMsg, 'error');
+    if (!canvas || quickExportBusy.current || (canvas as any).__studioInitializing) return;
+    if (!rasterWithinBudget(canvasWidth, canvasHeight, 2, deviceRasterBudget())) {
+      setIsExportModalOpen(true);
       return;
     }
-    const link = document.createElement('a');
-    link.download = `${(projectTitle || 'design').trim()}.png`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    onShowToast(t.quickExportTitle, `${t.quickExportMsg} PNG · 2×`, 'success');
+    quickExportBusy.current = true;
+    try {
+      const blob = await exportCanvasBlob(canvas, 'png', 1, 2, canvasWidth, canvasHeight);
+      downloadFile(blob, `${(projectTitle || 'design').trim()}.png`);
+      onShowToast(t.quickExportTitle, `${t.quickExportMsg} PNG · 2×`, 'success');
+    } catch { onShowToast(t.quickExportErrorTitle, t.quickExportErrorMsg, 'error'); }
+    finally { quickExportBusy.current = false; }
   }, [onShowToast, projectTitle, canvasWidth, canvasHeight]);
 
   // Sidebar Tab Select
@@ -1698,6 +1699,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onClose={() => setIsExportModalOpen(false)}
         isPackaging={!!initialProject.packaging}
         onExportProject={async()=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('NO_CANVAS');return portableProject({...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:withCartonPrecision(()=>canvas.toJSON(['id','name','locked','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','selectable','evented','_originalSrc','textFitMode','textFitHeight','textFitMaxSize','cropTop','cropBottom','cropLeft','cropRight','fadeTop','fadeBottom','fadeLeft','fadeRight','fadeRadial','clipCornerTL','clipCornerTR','clipCornerBL','clipCornerBR']))},canvas);}}
+        onExportBlob={(format, quality, multiplier, guides=true) => {
+          const canvas = fabricCanvasRef.current;
+          if (!canvas) return Promise.reject(Error('NO_CANVAS'));
+          return withoutGuides(canvas, !!initialProject.packaging && !guides, () => exportCanvasBlob(canvas, format, quality, multiplier, canvasWidth, canvasHeight));
+        }}
         onExport={(format, quality, multiplier, guides=true) => {
           if (!fabricCanvasRef.current) return '';
           return withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>exportCanvasImage(fabricCanvasRef.current!,format,quality,multiplier,canvasWidth,canvasHeight));

@@ -1,3 +1,4 @@
+import { deviceRasterBudget } from '../utils/rasterBudget';
 import { withCartonPrecision } from "./precision";
 import { fabric } from "fabric";
 import { exportCanvasSvg } from "../utils/fabricHelpers";
@@ -66,6 +67,7 @@ async function pixels(
 ) {
   const spec = printSpec(size, dpi),
     g = cartonGeometry(size);
+  if (spec.width * spec.height > deviceRasterBudget()) throw Error('RASTER_SIZE_LIMIT: reduce print DPI or use SVG');
   // A fresh, explicitly sized surface avoids viewport zoom/pan and backing-store rounding.
   const json = withCartonPrecision(() => canvas.toJSON(["id"]));
   if (!guides)

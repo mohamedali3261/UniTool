@@ -1,4 +1,5 @@
-import { rasterWithinBudget } from '../../../utils/rasterBudget';
+import { downloadFile } from '../../../utils/download';
+import { deviceRasterBudget, rasterWithinBudget } from '../../../utils/rasterBudget';
 import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
@@ -17,6 +18,7 @@ interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExport: (format: 'png' | 'jpeg' | 'webp', quality: number, multiplier: number, guides?:boolean) => string;
+  onExportBlob?: (format: 'png' | 'jpeg' | 'webp', quality: number, multiplier: number, guides?: boolean) => Promise<Blob>;
   onExportSvg?: (guides?:boolean) => string;
   onExportPdf?: (title: string,guides?:boolean) => void | Promise<void>;
   isPackaging?:boolean;
@@ -31,7 +33,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   isOpen,
   onClose,
   onExport,
-  onExportSvg,
+  onExportSvg, onExportBlob,
   onExportPdf,
   isPackaging,onExportProject,
   defaultTitle,
@@ -74,7 +76,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   if (!isOpen) return null;
 
   const raster = ['png', 'jpeg', 'webp'].includes(format);
-  const tooLarge = raster && !rasterWithinBudget(canvasWidth, canvasHeight, multiplier);
+  const tooLarge = raster && !rasterWithinBudget(canvasWidth, canvasHeight, multiplier, deviceRasterBudget());
   const finalWidth = canvasWidth * multiplier;
   const finalHeight = canvasHeight * multiplier;
 
@@ -82,41 +84,31 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     if(exporting || tooLarge)return;setExporting(true);
     try {
       if(format==='project'){
-        if(!onExportProject)throw Error('PROJECT');const json=await onExportProject();const url=URL.createObjectURL(new Blob([json],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`${fileName.trim()||'design'}.unitool.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+        if (!onExportProject) throw Error('PROJECT');
+        downloadFile(new Blob([await onExportProject()], { type: 'application/json' }), `${fileName.trim() || 'design'}.unitool.json`);
       }else if (format === 'svg') {
         const svgContent = onExportSvg ? onExportSvg(guides) : '';
         if (!svgContent) {
           onShowToast(t.exSvgError, t.exSvgErrorHint, 'error');
           return;
         }
-        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `${fileName.trim() || 'my-design'}.svg`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadFile(new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' }), `${fileName.trim() || 'my-design'}.svg`);
       } else if (format === 'pdf') {
         if (onExportPdf) {
           await onExportPdf(fileName.trim() || 'my-design',guides);
         }
       } else {
-        const dataUrl = onExport(format, quality, multiplier,guides);
-        if (!dataUrl) throw Error('RASTER_EXPORT_FAILED');
-        const link = document.createElement('a');
-        const ext = format === 'jpeg' ? 'jpg' : format;
-        link.download = `${fileName.trim() || 'my-design'}.${ext}`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const blob = onExportBlob ? await onExportBlob(format, quality, multiplier, guides) : await (async () => {
+          const data = onExport(format, quality, multiplier, guides);
+          if (!data) throw Error('RASTER_EXPORT_FAILED');
+          return (await fetch(data)).blob();
+        })();
+        downloadFile(blob, `${fileName.trim() || 'my-design'}.${format === 'jpeg' ? 'jpg' : format}`);
       }
 
       // Trigger Confetti!
       try {
-        confetti({
+        if (deviceRasterBudget() > 12_000_000) confetti({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 }
@@ -230,6 +222,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
             <div className="grid grid-cols-3 gap-2">
               {[
+                { m: .25, label: '0.25×', desc: lang === 'ar' ? 'حجم خفيف' : 'Small file' },
+                { m: .5, label: '0.5×', desc: lang === 'ar' ? 'نصف الحجم' : 'Half size' },
                 { m: 1, label: t.exRes1x, desc: t.exRes1xHint },
                 { m: 2, label: t.exRes2x, desc: t.exRes2xHint },
                 { m: 3, label: t.exRes3x, desc: t.exRes3xHint }
@@ -251,7 +245,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
-          {tooLarge && <p role="alert" className="text-xs text-amber-300">{lang === 'ar' ? 'حجم الصورة كبير جدًا. قلّل الدقة أو استخدم SVG/PDF. الحد 40 مليون بكسل و16384 بكسل لكل ضلع.' : 'Image too large. Reduce resolution or use SVG/PDF. Limit: 40 MP and 16384 px per side.'}</p>}
+          {tooLarge && <p role="alert" className="text-xs text-amber-300">{lang === 'ar' ? 'حجم الصورة كبير جدًا. قلّل الدقة أو استخدم SVG/PDF. الحد على الموبايل 12 مليون بكسل، وعلى الكمبيوتر 40 مليونًا.' : 'Image too large. Reduce resolution or use SVG/PDF. Limit: 12 MP on mobile, 40 MP on desktop.'}</p>}
           {/* Quality Slider for JPG/WebP */}
           {(format === 'jpeg' || format === 'webp') && (
             <div className="space-y-1 pt-1">
