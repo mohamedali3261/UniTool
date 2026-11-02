@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { TEXT_PRESETS, POPULAR_FONTS, COLOR_PALETTES } from '../../../data/presets';
 import { TextPreset, ActiveObjectProperties } from '../../../types';
 import { useDcLang } from '../../../hooks/useDcLang';
@@ -90,6 +90,8 @@ export const TextTab: React.FC<TextTabProps> = ({
     activeProperties.type === 'i-text'
   );
 
+  useEffect(()=>{if(!isTextSelected){setSelectedFont('Cairo');setSelectedColor('#FFFFFF');setPresetScale(100);setOverridePresetColor(null);}},[!!isTextSelected]);
+
   const safeAddText = (options: {
     text: string;
     fontSize: number;
@@ -127,7 +129,7 @@ export const TextTab: React.FC<TextTabProps> = ({
     safeAddText({
       text: textToAdd,
       fontSize: Math.round(36 * (presetScale / 100)),
-      fontWeight: 700,
+      fontWeight: 400,
       fontFamily: selectedFont,
       fill: selectedColor
     });

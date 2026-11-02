@@ -40,9 +40,10 @@ export function PackagingPrintDialog({
   } catch {}
   useEffect(() => {
     const old = document.activeElement as HTMLElement;
-    ref.current?.showModal();
+    const dialog=ref.current;
+    dialog?.showModal();
     return () => {
-      ref.current?.close();
+      dialog?.close();
       if (old?.isConnected) old.focus();
     };
   }, []);

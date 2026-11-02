@@ -1,3 +1,4 @@
+import {ProjectImport} from './components/Common/ProjectImport';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProjectItem, DimensionPreset, ToastMessage } from './types';
 import { NewDesignScreen } from './components/Dashboard/NewDesignScreen';
@@ -212,6 +213,7 @@ export default function App() {
         />
       )}
 
+      <ProjectImport onImport={project=>{flushActiveTab();saveProjectToStorage(project);if(!getSavedProjects().some(p=>p.id===project.id))throw Error('STORAGE');openProjectInTab(project);showToast(lang==='ar'?'تم فتح المشروع':'Project imported');}}/>
       {/* Global Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </main>

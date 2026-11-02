@@ -1,3 +1,5 @@
+import {installAlignmentGuides} from '../../utils/alignmentGuides';
+import {resetEmptyText,normalTextFill} from '../../utils/textReset';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
@@ -108,6 +110,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     canvas.setZoom(zoom);
     fabricCanvasRef.current = canvas;
+    const removeGuides=installAlignmentGuides(canvas);
+    canvas.on('text:changed',(event:any)=>{if(resetEmptyText(event.target,normalTextFill(canvas.backgroundColor))){canvas.requestRenderAll();onLayersUpdate();onRecordHistory();}});
     onCanvasReady(canvas);
 
     // Re-render once webfonts finish loading so canvas text uses real glyph metrics
@@ -229,6 +233,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     }, 80);
 
     return () => {
+      removeGuides();
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
@@ -559,6 +564,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     <div
       ref={containerRef}
       id="canvas-area-container"
+      title={lang==='ar'?'اسحب لمحاذاة الحواف والمنتصف. المسطرة بالبكسل؛ اضغط Alt لتجاهل الالتقاط.':'Drag to align edges and centers. Ruler units are pixels; hold Alt to bypass snapping.'}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
