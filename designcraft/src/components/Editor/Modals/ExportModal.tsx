@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { rasterWithinBudget } from '../../../utils/rasterBudget';
+import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -39,6 +40,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onShowToast
 }) => {
   const { t,lang } = useDcLang();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement;
+    dialogRef.current?.focus();
+    return () => { if (previous?.isConnected) previous.focus(); };
+  }, [isOpen]);
   const [guides,setGuides]=useState(true);
   const [format, setFormat] = useState<'png' | 'jpeg' | 'webp' | 'svg' | 'pdf' | 'project'>('png');
   const [quality, setQuality] = useState(0.95);
@@ -51,6 +59,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !exporting) onClose();
+      if (e.key === 'Tab') {
+        const controls = dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), [tabindex="0"]');
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) { e.preventDefault(); first.focus(); }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -58,11 +73,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   if (!isOpen) return null;
 
+  const raster = ['png', 'jpeg', 'webp'].includes(format);
+  const tooLarge = raster && !rasterWithinBudget(canvasWidth, canvasHeight, multiplier);
   const finalWidth = canvasWidth * multiplier;
   const finalHeight = canvasHeight * multiplier;
 
   const handleDownload = async () => {
-    if(exporting)return;setExporting(true);
+    if(exporting || tooLarge)return;setExporting(true);
     try {
       if(format==='project'){
         if(!onExportProject)throw Error('PROJECT');const json=await onExportProject();const url=URL.createObjectURL(new Blob([json],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`${fileName.trim()||'design'}.unitool.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -87,6 +104,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         }
       } else {
         const dataUrl = onExport(format, quality, multiplier,guides);
+        if (!dataUrl) throw Error('RASTER_EXPORT_FAILED');
         const link = document.createElement('a');
         const ext = format === 'jpeg' ? 'jpg' : format;
         link.download = `${fileName.trim() || 'my-design'}.${ext}`;
@@ -116,6 +134,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const handleCopyToClipboard = async () => {
     try {
       const dataUrl = onExport('png', 1, 1,guides);
+      if (!dataUrl) throw Error('RASTER_EXPORT_FAILED');
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       await navigator.clipboard.write([
@@ -132,15 +151,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        id="export-modal"
-        className="relative w-full max-w-lg bg-[#1C2541] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        id="export-modal" ref={dialogRef} tabIndex={-1}
+        role="dialog" aria-modal="true" aria-label={t.exTitle}
+        className="relative w-full max-w-sm max-h-[90dvh] bg-[#1C2541] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/60 bg-[#0B132B]">
+        <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-slate-700/60 bg-[#0B132B]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
               <Download className="w-5 h-5" />
             </div>
             <div>
@@ -159,7 +179,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5">
+        <div className="p-4 space-y-3 overflow-y-auto min-h-0">
           {/* File Name */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-300">{t.exFileName}</label>
@@ -174,7 +194,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* Format Tabs */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-300">{t.exFormat}</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { id: 'png', label: 'PNG Image', desc: t.exFormatPngHint },
                 { id: 'jpeg', label: 'JPG Image', desc: t.exFormatJpgHint },
@@ -187,7 +207,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   key={f.id}
                   type="button"
                   onClick={() => setFormat(f.id as any)}
-                  className={`p-3 rounded-2xl border text-right transition flex flex-col justify-between gap-1 ${
+                  className={`p-2 rounded-xl border text-right transition flex flex-col justify-between gap-1 ${
                     format === f.id
                       ? 'bg-[#0B132B] border-sky-400 text-white shadow-md ring-1 ring-sky-500/40'
                       : 'bg-[#0B132B]/60 border-slate-800 text-slate-300 hover:border-slate-700'
@@ -218,7 +238,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   key={item.m}
                   type="button"
                   onClick={() => setMultiplier(item.m)}
-                  className={`p-2.5 rounded-xl border text-center transition ${
+                  className={`p-2 rounded-xl border text-center transition ${
                     multiplier === item.m
                       ? 'bg-sky-600 border-sky-400 text-white font-bold shadow-md'
                       : 'bg-[#0B132B] border-slate-800 text-slate-400 hover:text-white'
@@ -231,6 +251,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
+          {tooLarge && <p role="alert" className="text-xs text-amber-300">{lang === 'ar' ? 'حجم الصورة كبير جدًا. قلّل الدقة أو استخدم SVG/PDF. الحد 40 مليون بكسل و16384 بكسل لكل ضلع.' : 'Image too large. Reduce resolution or use SVG/PDF. Limit: 40 MP and 16384 px per side.'}</p>}
           {/* Quality Slider for JPG/WebP */}
           {(format === 'jpeg' || format === 'webp') && (
             <div className="space-y-1 pt-1">
@@ -264,7 +285,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           <button
             type="button"
-            disabled={exporting}
+            disabled={exporting || tooLarge}
             onClick={handleDownload}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-500 hover:to-cyan-400 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-sky-500/25 transition transform active:scale-95"
           >

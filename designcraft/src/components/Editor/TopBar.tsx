@@ -1,3 +1,4 @@
+import { FileMenu } from './FileMenu';
 import React, { useState } from 'react';
 import {
   ArrowRight,
@@ -384,6 +385,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={onOpenPreview}
           title={t.previewDesign}
+          aria-label={t.preview}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
@@ -403,6 +405,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={onSave}
           disabled={isSaving}
           title={t.saveProject}
+          aria-label={t.save}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
@@ -417,47 +420,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           <span className="hidden sm:inline">{isSaving ? '...' : t.save}</span>
         </button>
 
-        {/* Quick PNG download — one click, no dialog */}
-        {onQuickDownload && (
-          <>
-            <div style={{ width: 1, height: 14, background: '#262b36' }} />
-            <button
-              type="button"
-              onClick={onQuickDownload}
-              title={t.quickExportTitle}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                border: 'none', background: 'transparent',
-                color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <Zap style={{ width: 14, height: 14, color: '#fbbf24' }} />
-              <span className="hidden sm:inline">PNG</span>
-            </button>
-          </>
-        )}
         </div>
-
-        {/* Export CTA */}
-        <button
-          type="button"
-          onClick={onOpenExport}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-            border: 'none', background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
-            color: '#fff', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-            boxShadow: '0 4px 14px rgba(79,70,229,.35)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          <Download style={{ width: 14, height: 14 }} />
-          <span className="hidden sm:inline">{t.export}</span>
-        </button>
+        <FileMenu onExport={onOpenExport} onQuickDownload={onQuickDownload} />
       </div>
       </div>
     </nav>

@@ -124,7 +124,7 @@ export function BrandSection({ canvas, ar, run }: Props) {
               () =>
                 new Promise<void>((resolve, reject) =>
                   fabric.Image.fromURL(brand.logo!, (image) => {
-                    if (!image?.width) {
+                    if (!image?.width || !canvas.contextContainer) {
                       reject(Error("LOGO"));
                       return;
                     }

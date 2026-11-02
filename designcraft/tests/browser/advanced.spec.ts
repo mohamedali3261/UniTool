@@ -75,7 +75,7 @@ async function importDesign(
     await expect
       .poll(
         async () =>
-          (await page.locator("canvas.upper-canvas").boundingBox())!.width,
+          (await page.locator("canvas.upper-canvas").boundingBox())?.width,
       )
       .toBe(720);
 }
@@ -122,6 +122,7 @@ async function download(page: Page, button: string) {
   return fs.readFile((await (await pending).path())!);
 }
 async function projectFile(page: Page) {
+  await page.getByRole('button', { name: 'Import / Export', exact: true }).click();
   await page
     .getByRole("button", { name: "Export", exact: true })
     .first()
@@ -471,3 +472,126 @@ async function closeIfOpen(page: Page) {
   const b = page.getByRole("button", { name: "Close tools", exact: true });
   if (await b.count()) await b.click();
 }
+
+test("curved text survives idle recovery, undo, cloning, grouping and reopening", async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.stack || error.message));
+  const path = {
+    type: 'path', path: [['M', 0, 0], ['Q', 130, 55, 260, 0]],
+    fill: '', stroke: '', strokeWidth: 0, visible: false,
+  };
+  await load(page, ['textbox', 'i-text', 'text'].map((type, i) => ({
+    type, text: `Curved ${type}`, left: 80, top: 70 + i * 140,
+    width: 260, fontFamily: 'Arial', fontSize: 28, fill: '#223344', path,
+  })));
+  await select(page, 700, 500);
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('ArrowRight');
+  // Wait for the real debounced automatic snapshot, not just a manual save.
+  await expect(page.getByText('Recovery: Local version saved', { exact: true })).toBeVisible({ timeout: 15000 });
+  const recovery = await openTools(page, 'Recovery');
+  page.once('dialog', d => d.accept());
+  await recovery.getByRole('button', { name: 'Restore version', exact: true }).first().click();
+  await expect(recovery.locator('.adv-message')).toHaveText('Done.');
+  await close(page);
+  await page.getByRole('button', { name: 'Undo', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Redo', exact: true }).first().click();
+  await select(page, 700, 500);
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Control+c');
+  await page.keyboard.press('Control+v');
+  await expect.poll(async () => (await saved(page)).canvasData.objects.length).toBe(6);
+  await select(page, 700, 500);
+  await page.keyboard.press('Control+a');
+  await openTools(page, 'Arrange & dimensions');
+  await action(page, 'Group objects');
+  await close(page);
+  const grouped = await saved(page);
+  expect(grouped.canvasData.objects[0].objects).toHaveLength(6);
+  const raw = await projectFile(page);
+  await importDesign(page, raw.project.canvasData.objects, 'Curved reopened');
+  const reopened = await saved(page, 'Curved reopened');
+  const members = reopened.canvasData.objects[0].objects;
+  expect(members).toHaveLength(6);
+  for (const text of members) {
+    expect(text.path.type).toBe('path');
+    expect(text.path.path).toEqual(path.path);
+    expect(text.path.visible).toBe(false);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('file dropdown combines import/export and compact dialog fits mobile and keyboard', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await load(page);
+  const trigger = page.getByRole('button', { name: 'Import / Export', exact: true });
+  await trigger.click();
+  await expect(page.getByRole('button', { name: 'Import editable project', exact: true })).toBeVisible();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Import editable project', exact: true }).click();
+  expect((await chooser).isMultiple()).toBe(false);
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await trigger.click();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  const modal = page.locator('#export-modal');
+  for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 640 }]) {
+    await page.setViewportSize(size);
+    const box = (await modal.boundingBox())!;
+    expect(box.width).toBeLessThanOrEqual(384);
+    expect(box.height).toBeLessThanOrEqual(size.height * .9 + 1);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(await modal.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+  }
+  // Arrow/delete shortcuts must not change the artwork behind an export dialog.
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Delete');
+  await page.keyboard.press('Tab');
+  expect(await modal.evaluate(el => el.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(modal).toBeHidden();
+  const triggerBox = (await trigger.boundingBox())!;
+  expect(triggerBox.x).toBeGreaterThanOrEqual(0);
+  expect(triggerBox.x + triggerBox.width).toBeLessThanOrEqual(390);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  expect((await saved(page)).canvasData.objects).toHaveLength(3);
+  expect(errors).toEqual([]);
+});
+
+test('repeated mixed-artwork edits and rapid undo redo remain renderable after idle snapshots', async ({ page }) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  let navigations = 0;
+  await load(page, [...rects, {
+    type: 'group', left: 350, top: 330, objects: [
+      { type: 'textbox', text: 'Mixed artwork', fontFamily: 'Arial', fontSize: 24, width: 200,
+        shadow: { color: '#333333', blur: 3, offsetX: 1, offsetY: 2 },
+        fill: { type: 'linear', coords: { x1: 0, y1: 0, x2: 200, y2: 0 }, colorStops: [{ offset: 0, color: '#ff0000' }, { offset: 1, color: '#0000ff' }] } },
+      { type: 'image', left: 0, top: 60, width: 1, height: 1, scaleX: 60, scaleY: 60,
+        src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+        clipPath: { type: 'circle', radius: .5, originX: 'center', originY: 'center' } },
+    ],
+  }]);
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations++; });
+  await select(page, 100, 100);
+  for (let round = 0; round < 6; round++) {
+    for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowRight');
+    for (let i = 0; i < 4; i++) await page.keyboard.press('Control+z');
+    for (let i = 0; i < 3; i++) await page.keyboard.press('Control+y');
+    // Intentional idle interval: let the real 2-second debounce finish every cycle.
+    await page.waitForTimeout(2400);
+    await expect(page.getByText('Recovery: Local version saved', { exact: true })).toBeVisible({ timeout: 10000 });
+    const p = await saved(page);
+    expect(p.canvasData.objects).toHaveLength(4);
+    expect(p.canvasData.objects[3].objects[1].clipPath.type).toBe('circle');
+    await select(page, 100 + round * 8, 100);
+  }
+  const raw = await projectFile(page);
+  expect(raw.project.canvasData.objects[3].objects[0].fill.type).toBe('linear');
+  expect(navigations).toBe(0);
+  expect(errors).toEqual([]);
+});

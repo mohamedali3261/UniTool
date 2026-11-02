@@ -110,6 +110,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       imageSmoothingEnabled: true
     });
 
+    let alive = true;
     canvas.setZoom(zoom);
     fabricCanvasRef.current = canvas;
     const removeGuides=installAlignmentGuides(canvas);
@@ -118,7 +119,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     // Re-render once webfonts finish loading so canvas text uses real glyph metrics
     document.fonts?.ready.then(() => {
-      canvas.requestRenderAll();
+      if (alive) canvas.requestRenderAll();
     }).catch(() => { /* ignore */ });
 
     const updateSelection = () => {
@@ -223,8 +224,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     });
 
     // Auto-fit initial zoom calculation
-    setTimeout(() => {
-      if (containerRef.current) {
+    const fitTimer = setTimeout(() => {
+      if (alive && containerRef.current) {
         const cWidth = containerRef.current.clientWidth - 40;
         const cHeight = containerRef.current.clientHeight - 80;
         const scaleX = cWidth / width;
@@ -235,6 +236,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     }, 80);
 
     return () => {
+      alive = false;
+      clearTimeout(fitTimer);
       removeGuides();
       canvas.dispose();
       fabricCanvasRef.current = null;
@@ -322,7 +325,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // them here as well made every Ctrl+Z undo two steps and Ctrl+D duplicate twice.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if(document.querySelector('dialog[open]'))return;
+      if(document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'))return;
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;

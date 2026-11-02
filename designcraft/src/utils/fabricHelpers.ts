@@ -1,7 +1,10 @@
+import { rasterWithinBudget } from './rasterBudget';
 import { fabric } from 'fabric';
 import { SVG_ICON_STRINGS, getFallbackSvgForIcon } from './svgIcons';
 import { ProjectItem } from '../types';
 import { INITIAL_MOCK_PROJECTS } from '../data/presets';
+
+let styleHandlersInstalled = false;
 
 // Configure Fabric default control styling and safe text style handlers
 export const initFabricDefaults = () => {
@@ -27,6 +30,10 @@ export const initFabricDefaults = () => {
   if (fabric.Textbox) {
     (fabric.Textbox.prototype as any).styles = {};
   }
+
+  // Canvas mounts call this too; never build a growing chain of wrappers.
+  if (styleHandlersInstalled) return;
+  styleHandlersInstalled = true;
 
   // Patch fabric.util.stylesToArray to prevent TypeError: undefined is not an object (evaluating 'styles[i]')
   if (fabric.util && typeof (fabric.util as any).stylesToArray === 'function') {
@@ -491,6 +498,7 @@ export const addImageToCanvas = (
   }
 
   imgElement.onload = () => {
+    if (!canvas.contextContainer) return;
     try {
       const {
         width: canvasWidth,
@@ -654,6 +662,7 @@ export const duplicateActiveObject = (canvas: fabric.Canvas) => {
   if (!active) return;
 
   active.clone((cloned: fabric.Object) => {
+    if (!canvas.contextContainer) return;
     canvas.discardActiveObject();
     cloned.set({
       left: (cloned.left || 0) + 30,
@@ -983,7 +992,8 @@ export const exportCanvasImage = (
   designHeight?: number
 ): string => {
   try {
-    const { zoom, width } = resolveExportSize(canvas, designWidth, designHeight);
+    const { zoom, width, height } = resolveExportSize(canvas, designWidth, designHeight);
+    if (!rasterWithinBudget(width, height, multiplier)) throw Error('RASTER_SIZE_LIMIT');
     const safeMultiplier = Math.max(0.01, multiplier);
     // toCanvasElement() scales the viewport by `multiplier`, so dividing by the
     // on-screen zoom renders objects at 1 design unit = safeMultiplier pixels.
@@ -1288,6 +1298,7 @@ export const setCanvasPatternBackground = (
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
+    if (!canvas.contextContainer) return;
     try {
       const pattern = new fabric.Pattern({
         source: img,
@@ -1319,7 +1330,7 @@ export const setCanvasWallpaperBackground = (
     fabric.Image.fromURL(
       imageUrl,
       (img) => {
-        if (!img) return;
+        if (!img || !canvas.contextContainer) return;
 
         const { width: canvasW, height: canvasH } = getDesignMetrics(canvas);
         const imgW = img.width || 800;
