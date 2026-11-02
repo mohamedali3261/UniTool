@@ -15,9 +15,11 @@ import { useDcLang } from '../../../hooks/useDcLang';
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (format: 'png' | 'jpeg' | 'webp', quality: number, multiplier: number) => string;
-  onExportSvg?: () => string;
-  onExportPdf?: (title: string) => void | Promise<void>;
+  onExport: (format: 'png' | 'jpeg' | 'webp', quality: number, multiplier: number, guides?:boolean) => string;
+  onExportSvg?: (guides?:boolean) => string;
+  onExportPdf?: (title: string,guides?:boolean) => void | Promise<void>;
+  isPackaging?:boolean;
+  onExportProject?:()=>Promise<string>;
   defaultTitle: string;
   canvasWidth: number;
   canvasHeight: number;
@@ -30,13 +32,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onExport,
   onExportSvg,
   onExportPdf,
+  isPackaging,onExportProject,
   defaultTitle,
   canvasWidth,
   canvasHeight,
   onShowToast
 }) => {
-  const { t } = useDcLang();
-  const [format, setFormat] = useState<'png' | 'jpeg' | 'webp' | 'svg' | 'pdf'>('png');
+  const { t,lang } = useDcLang();
+  const [guides,setGuides]=useState(true);
+  const [format, setFormat] = useState<'png' | 'jpeg' | 'webp' | 'svg' | 'pdf' | 'project'>('png');
   const [quality, setQuality] = useState(0.95);
   const [multiplier, setMultiplier] = useState(1);
   const [fileName, setFileName] = useState(defaultTitle || 'design');
@@ -60,8 +64,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const handleDownload = async () => {
     if(exporting)return;setExporting(true);
     try {
-      if (format === 'svg') {
-        const svgContent = onExportSvg ? onExportSvg() : '';
+      if(format==='project'){
+        if(!onExportProject)throw Error('PROJECT');const json=await onExportProject();const url=URL.createObjectURL(new Blob([json],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`${fileName.trim()||'design'}.unitool.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      }else if (format === 'svg') {
+        const svgContent = onExportSvg ? onExportSvg(guides) : '';
         if (!svgContent) {
           onShowToast(t.exSvgError, t.exSvgErrorHint, 'error');
           return;
@@ -77,10 +83,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         URL.revokeObjectURL(url);
       } else if (format === 'pdf') {
         if (onExportPdf) {
-          await onExportPdf(fileName.trim() || 'my-design');
+          await onExportPdf(fileName.trim() || 'my-design',guides);
         }
       } else {
-        const dataUrl = onExport(format, quality, multiplier);
+        const dataUrl = onExport(format, quality, multiplier,guides);
         const link = document.createElement('a');
         const ext = format === 'jpeg' ? 'jpg' : format;
         link.download = `${fileName.trim() || 'my-design'}.${ext}`;
@@ -99,7 +105,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         });
       } catch (e) {}
 
-      onShowToast(t.exSuccess, `${t.exSuccessFile} ${fileName}.${format === 'jpeg' ? 'jpg' : format}`, 'success');
+      onShowToast(t.exSuccess, `${t.exSuccessFile} ${fileName}.${format === 'project' ? 'unitool.json' : format === 'jpeg' ? 'jpg' : format}`, 'success');
       onClose();
     } catch (err) {
       console.error(err);
@@ -109,7 +115,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const handleCopyToClipboard = async () => {
     try {
-      const dataUrl = onExport('png', 1, 1);
+      const dataUrl = onExport('png', 1, 1,guides);
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       await navigator.clipboard.write([
@@ -174,7 +180,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 { id: 'jpeg', label: 'JPG Image', desc: t.exFormatJpgHint },
                 { id: 'webp', label: 'WebP', desc: t.exFormatWebpHint },
                 { id: 'svg', label: 'SVG Vector', desc: t.exFormatSvgHint },
-                { id: 'pdf', label: 'PDF Document', desc: t.exFormatPdfHint }
+                { id: 'pdf', label: 'PDF Document', desc: t.exFormatPdfHint },
+                ...(onExportProject?[{id:'project',label:lang==='ar'?'مشروع قابل للتعديل':'Editable project',desc:'UniTool JSON'}]:[])
               ].map((f) => (
                 <button
                   key={f.id}
@@ -193,6 +200,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
+          {isPackaging&&format!=='project'&&<label className="flex items-center gap-2 text-xs text-slate-200"><input type="checkbox" checked={guides} onChange={e=>setGuides(e.target.checked)}/>{lang==='ar'?'تضمين خطوط القص والطي':'Include cut and crease lines'}</label>}
+          {format==='project'&&<p className="text-xs text-slate-300">{lang==='ar'?'يحفظ العناصر والنصوص والمقاسات لإعادة الاستيراد والتعديل. ليس ملف طباعة.':'Keeps editable objects, text and dimensions for re-import. Not a print file.'}</p>}
           {/* Resolution Multiplier */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-slate-300">

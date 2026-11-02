@@ -1,3 +1,6 @@
+import {resetEmptyText,normalTextFill} from '../../utils/textReset';
+import {withoutGuides} from '../../packaging/print';
+import {portableProject} from '../../utils/projectFile';
 import {withCartonPrecision} from '../../packaging/precision';
 import {PackagingPrintDialog} from '../../packaging/PackagingPrintDialog';
 import {applyCartonBoundary,isCartonGuide} from '../../packaging/boundary';
@@ -530,6 +533,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         }
       } else {
         (active as any).set(key, value);
+        if(key==='text')resetEmptyText(active,normalTextFill(canvas.backgroundColor));
       }
 
       active.setCoords();
@@ -1592,27 +1596,22 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        onExport={(format, quality, multiplier) => {
+        isPackaging={!!initialProject.packaging}
+        onExportProject={async()=>{const project=persistProject();if(!project||!fabricCanvasRef.current)throw Error('NO_CANVAS');return portableProject(project,fabricCanvasRef.current);}}
+        onExport={(format, quality, multiplier, guides=true) => {
           if (!fabricCanvasRef.current) return '';
-          return exportCanvasImage(
-            fabricCanvasRef.current,
-            format,
-            quality,
-            multiplier,
-            canvasWidth,
-            canvasHeight
-          );
+          return withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>exportCanvasImage(fabricCanvasRef.current!,format,quality,multiplier,canvasWidth,canvasHeight));
         }}
-        onExportSvg={() => {
+        onExportSvg={(guides=true) => {
           if (!fabricCanvasRef.current) return '';
-          const svg=withCartonPrecision(()=>exportCanvasSvg(fabricCanvasRef.current!, canvasWidth, canvasHeight));
+          const svg=withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>withCartonPrecision(()=>exportCanvasSvg(fabricCanvasRef.current!, canvasWidth, canvasHeight)));
           return initialProject.packaging ? physicalCartonSvg(svg,initialProject.packaging.size,canvasWidth,canvasHeight):svg;
         }}
-        onExportPdf={async (filename) => {
+        onExportPdf={async (filename,guides=true) => {
           if (!fabricCanvasRef.current) return;
           if(initialProject.packaging){
             await document.fonts.ready;
-            const blob=await packagingPrint(fabricCanvasRef.current,initialProject.packaging.size,canvasWidth,canvasHeight,'pdf',300,true),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${filename}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+            const blob=await packagingPrint(fabricCanvasRef.current,initialProject.packaging.size,canvasWidth,canvasHeight,'pdf',300,guides),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${filename}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
           }else await exportCanvasPdf(fabricCanvasRef.current, filename, canvasWidth, canvasHeight);
         }}
         defaultTitle={projectTitle}

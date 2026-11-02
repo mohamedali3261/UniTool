@@ -65,9 +65,10 @@ export function PackagingDialog({
     g = issue ? null : cartonGeometry(size);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
-    ref.current?.showModal();
+    const dialog=ref.current;
+    dialog?.showModal();
     return () => {
-      ref.current?.close();
+      dialog?.close();
       if (previous?.isConnected) previous.focus();
     };
   }, []);

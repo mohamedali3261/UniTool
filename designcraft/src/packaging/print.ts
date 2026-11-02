@@ -35,18 +35,26 @@ export function imagePreflight(canvas: fabric.Canvas, target = 300) {
   visit(canvas.getObjects());
   return { images, low: images.filter((o) => o.dpi < target) };
 }
-function withoutGuides<T>(
+export function withoutGuides<T>(
   canvas: fabric.Canvas,
   hide: boolean,
   render: () => T,
 ): T {
   const guides = canvas.getObjects().filter(isCartonGuide),
-    visibility = guides.map((o) => o.visible);
-  if (hide) guides.forEach((o) => (o.visible = false));
+    visibility = guides.map((o) => o.visible),
+    excluded = guides.map((o) => o.excludeFromExport);
+  if (hide)
+    guides.forEach((o) => {
+      o.visible = false;
+      o.excludeFromExport = true;
+    });
   try {
     return render();
   } finally {
-    guides.forEach((o, i) => (o.visible = visibility[i]));
+    guides.forEach((o, i) => {
+      o.visible = visibility[i];
+      o.excludeFromExport = excluded[i];
+    });
     canvas.requestRenderAll();
   }
 }
