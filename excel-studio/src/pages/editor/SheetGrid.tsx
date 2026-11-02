@@ -1,3 +1,4 @@
+import { wholeSelection } from "../../core/selectionTools";
 import { conditionalStyle } from "../../core/tableFeatures";
 import { useEffect, useRef, useState } from "react";
 import { address, colName, position, bounds } from "../../core/address";
@@ -18,6 +19,7 @@ export function SheetGrid({
   onPaste,
   filter,
   onResize,
+  onClearSelection,
 }: {
   sheet: Sheet;
   selection: Selection;
@@ -27,6 +29,7 @@ export function SheetGrid({
   onPaste: (text: string) => void;
   filter: string;
   onResize: (col: number, width: number) => void;
+  onClearSelection: () => void;
 }) {
   const { lang, t } = useStudio(),
     [editing, setEditing] = useState<string | null>(null),
@@ -38,6 +41,49 @@ export function SheetGrid({
     width: number;
     current: number;
   } | null>(null);
+  const drag = useRef<{
+    anchor: string;
+    end: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const frame = useRef<number>(0);
+  const stopDrag = () => {
+    drag.current = null;
+    cancelAnimationFrame(frame.current);
+  };
+  useEffect(
+    () => () => {
+      drag.current = null;
+      cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    stopDrag();
+  }, [sheet.id]);
+  const tickDrag = () => {
+    const d = drag.current,
+      el = root.current;
+    if (!d || !el) return;
+    const rect = el.getBoundingClientRect();
+    if (d.x < rect.left + 30) el.scrollLeft -= 16;
+    else if (d.x > rect.right - 30) el.scrollLeft += 16;
+    if (d.y < rect.top + 36) el.scrollTop -= 14;
+    else if (d.y > rect.bottom - 30) el.scrollTop += 14;
+    const target = document
+      .elementFromPoint(
+        Math.max(rect.left + 40, Math.min(rect.right - 3, d.x)),
+        Math.max(rect.top + 34, Math.min(rect.bottom - 3, d.y)),
+      )
+      ?.closest<HTMLElement>("[data-ref]");
+    const ref = target?.dataset.ref;
+    if (ref && el.contains(target) && ref !== d.end) {
+      d.end = ref;
+      setSelection({ anchor: d.anchor, end: ref });
+    }
+    frame.current = requestAnimationFrame(tickDrag);
+  };
   const counts = new Map<string, number>();
   if (sheet.conditional?.some((r) => r.op === "duplicates"))
     for (let r = sheet.header ? 1 : 0; r < sheet.rows; r++)
@@ -80,6 +126,53 @@ export function SheetGrid({
     <div
       className={"xs-grid-scroll " + (sheet.freeze ? "frozen" : "")}
       ref={root}
+      onPointerMove={(e) => {
+        if (drag.current) {
+          drag.current.x = e.clientX;
+          drag.current.y = e.clientY;
+          cancelAnimationFrame(frame.current);
+          tickDrag();
+        }
+      }}
+      onPointerUp={(e) => {
+        if (drag.current) {
+          drag.current.x = e.clientX;
+          drag.current.y = e.clientY;
+          cancelAnimationFrame(frame.current);
+          tickDrag();
+          const end = drag.current?.end;
+          stopDrag();
+          if (end)
+            root.current
+              ?.querySelector<HTMLElement>(`[data-ref="${end}"]`)
+              ?.focus({ preventScroll: true });
+        }
+      }}
+      onPointerCancel={stopDrag}
+      onLostPointerCapture={stopDrag}
+      onKeyDown={(e) => {
+        if (editing || (e.target as HTMLElement).closest("td")) return;
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          onClearSelection();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+          e.preventDefault();
+          setSelection(wholeSelection(sheet));
+        }
+      }}
+      onCopy={(e) => {
+        if (editing) return;
+        e.preventDefault();
+        const rows = [];
+        for (let r = b.r1; r <= b.r2; r++) {
+          const values = [];
+          for (let c = b.c1; c <= b.c2; c++)
+            values.push(sheet.cells[address(r, c)]?.raw || "");
+          rows.push(values.join("\t"));
+        }
+        e.clipboardData.setData("text/plain", rows.join("\n"));
+      }}
       onPaste={(e) => {
         if (editing) return;
         e.preventDefault();
@@ -89,6 +182,7 @@ export function SheetGrid({
       <table
         className={"xs-grid " + (sheet.wrap ? "xs-wrap" : "")}
         role="grid"
+        aria-multiselectable="true"
         aria-label={t("جدول البيانات", "Spreadsheet")}
         aria-rowcount={sheet.rows + 1}
         aria-colcount={sheet.cols + 1}
@@ -110,7 +204,15 @@ export function SheetGrid({
         </colgroup>
         <thead>
           <tr>
-            <th className="xs-corner">▦</th>
+            <th className="xs-corner">
+              <button
+                type="button"
+                aria-label={t("تحديد كل الخلايا", "Select all cells")}
+                onClick={() => setSelection(wholeSelection(sheet))}
+              >
+                ▦
+              </button>
+            </th>
             {Array.from({ length: sheet.cols }, (_, c) => (
               <th
                 key={c}
@@ -122,7 +224,21 @@ export function SheetGrid({
                       : sheet.columnWidths?.[c] || 125,
                 }}
               >
-                {colName(c)}
+                <button
+                  type="button"
+                  className={c >= b.c1 && c <= b.c2 ? "xs-header-selected" : ""}
+                  aria-label={t("تحديد العمود ", "Select column ") + colName(c)}
+                  onClick={(e) =>
+                    setSelection({
+                      anchor: e.shiftKey
+                        ? address(0, position(selection.anchor).col)
+                        : address(0, c),
+                      end: address(sheet.rows - 1, c),
+                    })
+                  }
+                >
+                  {colName(c)}
+                </button>
                 <span
                   className="xs-column-resize"
                   role="separator"
@@ -198,7 +314,25 @@ export function SheetGrid({
               return null;
             return (
               <tr key={r}>
-                <th scope="row">{r + 1}</th>
+                <th scope="row">
+                  <button
+                    type="button"
+                    className={
+                      r >= b.r1 && r <= b.r2 ? "xs-header-selected" : ""
+                    }
+                    aria-label={t("تحديد الصف ", "Select row ") + (r + 1)}
+                    onClick={(e) =>
+                      setSelection({
+                        anchor: e.shiftKey
+                          ? address(position(selection.anchor).row, 0)
+                          : address(r, 0),
+                        end: address(r, sheet.cols - 1),
+                      })
+                    }
+                  >
+                    {r + 1}
+                  </button>
+                </th>
                 {Array.from({ length: sheet.cols }, (_, c) => {
                   const ref = address(r, c),
                     cell = sheet.cells[ref],
@@ -224,6 +358,10 @@ export function SheetGrid({
                       aria-label={`${ref}: ${display(res.value, cell, sheet, lang)}`}
                       className={
                         (selected ? "selected " : "") +
+                        (selected && r === b.r1 ? "xs-range-top " : "") +
+                        (selected && r === b.r2 ? "xs-range-bottom " : "") +
+                        (selected && c === b.c1 ? "xs-range-left " : "") +
+                        (selected && c === b.c2 ? "xs-range-right " : "") +
                         (active ? "active " : "") +
                         (res.error ? "cell-error " : "") +
                         (header ? "data-header" : "")
@@ -255,17 +393,115 @@ export function SheetGrid({
                           cell?.align ||
                           (typeof res.value === "number" ? "right" : "start"),
                       }}
-                      onClick={(e) => {
-                        if (editing === ref) return;
-                        setSelection({
-                          anchor: e.shiftKey ? selection.anchor : ref,
-                          end: ref,
-                        });
+                      onPointerDown={(e) => {
+                        if (editing === ref || e.button !== 0) return;
+                        if (editing) finish();
+                        const anchor = e.shiftKey ? selection.anchor : ref;
+                        setSelection({ anchor, end: ref });
+                        if (e.pointerType !== "touch") {
+                          e.preventDefault();
+                          e.currentTarget.focus({ preventScroll: true });
+                          e.currentTarget.setPointerCapture(e.pointerId);
+                          stopDrag();
+                          drag.current = {
+                            anchor,
+                            end: ref,
+                            x: e.clientX,
+                            y: e.clientY,
+                          };
+                          frame.current = requestAnimationFrame(tickDrag);
+                        }
                       }}
                       onDoubleClick={() => begin(ref)}
                       onKeyDown={(e) => {
                         if (editing) return;
-                        if (e.ctrlKey || e.metaKey) return;
+                        if (
+                          e.key === " " &&
+                          (e.shiftKey || e.ctrlKey || e.metaKey)
+                        ) {
+                          e.preventDefault();
+                          const p = position(selection.end);
+                          setSelection(
+                            e.shiftKey && (e.ctrlKey || e.metaKey)
+                              ? wholeSelection(sheet)
+                              : e.shiftKey
+                                ? {
+                                    anchor: address(p.row, 0),
+                                    end: address(p.row, sheet.cols - 1),
+                                  }
+                                : {
+                                    anchor: address(0, p.col),
+                                    end: address(sheet.rows - 1, p.col),
+                                  },
+                          );
+                          return;
+                        }
+                        if (e.ctrlKey || e.metaKey) {
+                          if (e.key.toLowerCase() === "a") {
+                            e.preventDefault();
+                            setSelection(wholeSelection(sheet));
+                          } else if (e.key === "Home" || e.key === "End") {
+                            e.preventDefault();
+                            const populated = Object.entries(sheet.cells)
+                              .filter(([, cell]) => cell.raw !== "")
+                              .map(([ref]) => position(ref));
+                            const end =
+                              e.key === "Home"
+                                ? "A1"
+                                : address(
+                                    Math.min(
+                                      sheet.rows - 1,
+                                      Math.max(
+                                        0,
+                                        ...populated.map((p) => p.row),
+                                      ),
+                                    ),
+                                    Math.min(
+                                      sheet.cols - 1,
+                                      Math.max(
+                                        0,
+                                        ...populated.map((p) => p.col),
+                                      ),
+                                    ),
+                                  );
+                            setSelection({
+                              anchor: e.shiftKey ? selection.anchor : end,
+                              end,
+                            });
+                            requestAnimationFrame(() =>
+                              root.current
+                                ?.querySelector<HTMLElement>(
+                                  `[data-ref="${end}"]`,
+                                )
+                                ?.focus(),
+                            );
+                          }
+                          return;
+                        }
+                        if (e.key === "Home") {
+                          e.preventDefault();
+                          const end = address(position(selection.end).row, 0);
+                          setSelection({
+                            anchor: e.shiftKey ? selection.anchor : end,
+                            end,
+                          });
+                          requestAnimationFrame(() =>
+                            root.current
+                              ?.querySelector<HTMLElement>(
+                                `[data-ref="${end}"]`,
+                              )
+                              ?.focus(),
+                          );
+                          return;
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          setSelection({
+                            anchor: selection.end,
+                            end: selection.end,
+                          });
+                          return;
+                        }
                         if (
                           [
                             "ArrowDown",
@@ -279,7 +515,9 @@ export function SheetGrid({
                           e.preventDefault();
                           move(
                             e.key === "ArrowDown" || e.key === "Enter"
-                              ? 1
+                              ? e.key === "Enter" && e.shiftKey
+                                ? -1
+                                : 1
                               : e.key === "ArrowUp"
                                 ? -1
                                 : 0,
@@ -292,14 +530,14 @@ export function SheetGrid({
                                     ? -1
                                     : 1
                                   : 0,
-                            e.shiftKey && e.key !== "Tab",
+                            e.shiftKey && !["Tab", "Enter"].includes(e.key),
                           );
                         } else if (
                           e.key === "Delete" ||
                           e.key === "Backspace"
                         ) {
                           e.preventDefault();
-                          onCommit("", ref);
+                          onClearSelection();
                         } else if (e.key === "F2") {
                           e.preventDefault();
                           begin(ref);
