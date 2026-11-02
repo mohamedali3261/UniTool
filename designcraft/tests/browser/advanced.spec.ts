@@ -700,3 +700,43 @@ test('oversized artboard remains scrollable and wheel scroll is distinct from zo
   await page.mouse.up();
   expect(await area.evaluate(el => el.scrollLeft)).toBeLessThan(before);
 });
+
+test('all 16 print templates apply as editable artwork at their suggested dimensions', async ({ page }) => {
+  test.setTimeout(120000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const { PRINT_TEMPLATES } = await import('../../src/data/templates/print');
+  await load(page);
+  page.on('dialog', dialog => dialog.accept());
+  for (const template of PRINT_TEMPLATES) {
+    await page.locator(`[data-template-id="${template.id}"] > button`).first().click();
+    await expect.poll(async () => {
+      const p = await saved(page);
+      return [p.width, p.height, p.canvasData.objects.length];
+    }).toEqual([template.baseW, template.baseH, template.objects.length]);
+    const p = await saved(page);
+    expect(p.canvasData.objects.filter((o: any) => o.type === 'textbox').map((o: any) => o.text)).toEqual(template.objects.filter(o => o.type === 'text').map(o => o.text));
+    expect(p.canvasData.objects.every((o: any) => ['textbox', 'rect', 'circle'].includes(o.type))).toBe(true);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('template favorites persist and orientation/reset filters work without applying a design', async ({ page }) => {
+  await load(page);
+  const favorite = page.getByRole('button', { name: 'Favorite Round bakery sticker', exact: true });
+  await favorite.click();
+  await expect(favorite).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Favorites', exact: true }).click();
+  await expect(page.locator('[data-template-id]:visible')).toHaveCount(1);
+  await page.getByRole('combobox', { name: 'Template orientation', exact: true }).selectOption('landscape');
+  await expect(page.locator('[data-template-id]:visible')).toHaveCount(0);
+  await page.getByRole('button', { name: /reset/i }).click();
+  await expect(page.locator('[data-template-id]:visible')).toHaveCount(59);
+  await page.reload();
+  await importDesign(page, rects, 'Favorite QA');
+  await expect(favorite).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Favorites', exact: true }).click();
+  await expect(page.locator('[data-template-id]:visible')).toHaveCount(1);
+  await favorite.click();
+  await expect(page.locator('[data-template-id]:visible')).toHaveCount(0);
+});
