@@ -792,5 +792,414 @@
     "result": 4,
     "status": "tested",
     "common": true
+  },
+  {
+    "name": "COLUMN",
+    "title": "رقم العمود",
+    "ar": "يعيد رقم عمود مرجع أو موضع المعادلة.",
+    "description": "Returns the column number of a reference.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "reference",
+        "description": "the value or range of values for which you want to return the column number."
+      },
+      {
+        "name": "index",
+        "description": "@returns"
+      }
+    ],
+    "signature": "COLUMN(reference, index)",
+    "example": "=COLUMN(B1)",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COLUMNS",
+    "title": "عدد الأعمدة",
+    "ar": "يحسب عدد الأعمدة في نطاق.",
+    "description": "Returns the number of columns in a reference.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "array",
+        "description": "An array or array formula, or a reference to a range of values for which you want the number of columns."
+      }
+    ],
+    "signature": "COLUMNS(array)",
+    "example": "=COLUMNS(A1:B3)",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "EVEN",
+    "title": "EVEN",
+    "ar": "",
+    "description": "Rounds a number up to the nearest even integer.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The value to round."
+      }
+    ],
+    "signature": "EVEN(number)",
+    "example": "=EVEN(1.5)",
+    "result": 2,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "EXACT",
+    "title": "EXACT",
+    "ar": "",
+    "description": "Checks to see if two text values are identical.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text1",
+        "description": "The first text string."
+      },
+      {
+        "name": "text2",
+        "description": "The second text string."
+      }
+    ],
+    "signature": "EXACT(text1, text2)",
+    "example": "=EXACT(\"hello\", \"hElLo\")",
+    "result": false,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "FIND",
+    "title": "البحث عن نص بدقة",
+    "ar": "يبحث عن موضع نص مع التمييز بين الحروف الكبيرة والصغيرة.",
+    "description": "Locate one text string within a second text string, and return the number of the starting position of the first text string from the first character of the second text string.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "find_text",
+        "description": "The text you want to find."
+      },
+      {
+        "name": "within_text",
+        "description": "The text containing the text you want to find."
+      },
+      {
+        "name": "[start_num]",
+        "description": "Optional. Specifies the character at which to start the search. The first character in within_text is character number 1. If you omit start_num, it is assumed to be 1."
+      }
+    ],
+    "signature": "FIND(find_text, within_text, [start_num])",
+    "example": "=FIND(\"Tool\",\"UniTool\")",
+    "result": 4,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "IFNA",
+    "title": "بديل للقيمة المفقودة",
+    "ar": "يعالج خطأ #N/A فقط، وليس جميع الأخطاء.",
+    "description": "Returns the value you specify if the expression resolves to #N/A, otherwise returns the result of the expression.",
+    "category": "Logical",
+    "params": [],
+    "signature": "IFNA(…)",
+    "example": "=IFNA(NA(),\"غير موجود\")",
+    "result": "غير موجود",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "INDEX",
+    "title": "قيمة حسب موقعها",
+    "ar": "يعيد قيمة الصف والعمود المحددين داخل نطاق.",
+    "description": "Uses an index to choose a value from a reference or array.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "array",
+        "description": "A range of values or an array constant."
+      },
+      {
+        "name": "row_num",
+        "description": "Required, unless column_num is present. Selects the row in array from which to return a value. If row_num is omitted, column_num is required."
+      },
+      {
+        "name": "[column_num]",
+        "description": "Optional. Selects the column in array from which to return a value. If column_num is omitted, row_num is required."
+      }
+    ],
+    "signature": "INDEX(array, row_num, [column_num])",
+    "example": "=INDEX(A1:B3,2,2)",
+    "result": 4,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "NOT",
+    "title": "عكس الشرط",
+    "ar": "يعكس القيمة المنطقية من صحيح إلى خطأ والعكس.",
+    "description": "Reverses the logic of its argument.",
+    "category": "Logical",
+    "params": [],
+    "signature": "NOT(…)",
+    "example": "=NOT(A1>5)",
+    "result": false,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "ODD",
+    "title": "ODD",
+    "ar": "",
+    "description": "Rounds a number up to the nearest odd integer.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number:",
+        "description": "The value to round."
+      }
+    ],
+    "signature": "ODD(number:)",
+    "example": "=ODD(0)",
+    "result": 1,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "QUOTIENT",
+    "title": "QUOTIENT",
+    "ar": "",
+    "description": "Returns the integer portion of a division.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "numerator",
+        "description": "The dividend."
+      },
+      {
+        "name": "denominator",
+        "description": "The divisor."
+      }
+    ],
+    "signature": "QUOTIENT(numerator, denominator)",
+    "example": "=QUOTIENT(5, 2)",
+    "result": 2,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "REPLACE",
+    "title": "استبدال حسب الموضع",
+    "ar": "يستبدل عددًا من الحروف بداية من موقع محدد.",
+    "description": "Replaces characters within text",
+    "category": "Text",
+    "params": [
+      {
+        "name": "old_text",
+        "description": "Text in which you want to replace some characters."
+      },
+      {
+        "name": "num_chars",
+        "description": "The number of characters in old_text that you want REPLACE to replace with new_text."
+      },
+      {
+        "name": "length",
+        "description": "he number of characters in old_text that you want REPLACEB to replace with new_text."
+      },
+      {
+        "name": "new_text",
+        "description": "he text that will replace characters in old_text."
+      }
+    ],
+    "signature": "REPLACE(old_text, num_chars, length, new_text)",
+    "example": "=REPLACE(\"abcdef\",2,3,\"X\")",
+    "result": "aXef",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "REPT",
+    "title": "REPT",
+    "ar": "",
+    "description": "Repeats text a given number of times.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text you want to repeat."
+      },
+      {
+        "name": "number_times",
+        "description": "A positive number specifying the number of times to repeat text."
+      }
+    ],
+    "signature": "REPT(text, number_times)",
+    "example": "=REPT(\"*_\",4)",
+    "result": "*_*_*_*_",
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "ROW",
+    "title": "رقم الصف",
+    "ar": "يعيد رقم صف مرجع أو موضع المعادلة.",
+    "description": "Returns the row number of a reference.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "reference",
+        "description": "the value or range of values for which you want the row number."
+      },
+      {
+        "name": "index",
+        "description": "@returns"
+      }
+    ],
+    "signature": "ROW(reference, index)",
+    "example": "=ROW(A3)",
+    "result": 3,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "ROWS",
+    "title": "عدد الصفوف",
+    "ar": "يحسب عدد الصفوف في نطاق.",
+    "description": "Returns the number of rows in a reference.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "array",
+        "description": "An array, an array formula, or a reference to a range of values for which you want the number of rows."
+      }
+    ],
+    "signature": "ROWS(array)",
+    "example": "=ROWS(A1:B3)",
+    "result": 3,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SEARCH",
+    "title": "البحث داخل نص",
+    "ar": "يبحث عن الموضع دون التمييز بين الحروف اللاتينية الكبيرة والصغيرة.",
+    "description": "Finds one text value within another (not case-sensitive)",
+    "category": "Text",
+    "params": [
+      {
+        "name": "find_text",
+        "description": "The text that you want to find."
+      },
+      {
+        "name": "within_text",
+        "description": "The text in which you want to search for the value of the find_text argument."
+      },
+      {
+        "name": "[start_num]",
+        "description": "Optional. The character number in the within_text argument at which you want to start searching."
+      }
+    ],
+    "signature": "SEARCH(find_text, within_text, [start_num])",
+    "example": "=SEARCH(\"b\", \"abcdef\")",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SIGN",
+    "title": "SIGN",
+    "ar": "",
+    "description": "Returns the sign of a number.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "Any real number."
+      }
+    ],
+    "signature": "SIGN(number)",
+    "example": "=SIGN(10)",
+    "result": 1,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "SUMPRODUCT",
+    "title": "جمع حاصل الضرب",
+    "ar": "يضرب العناصر المتناظرة في النطاقات ثم يجمع النتائج.",
+    "description": "Returns the sum of the products of corresponding array components.",
+    "category": "Math and trigonometry",
+    "params": [],
+    "signature": "SUMPRODUCT(…)",
+    "example": "=SUMPRODUCT(A1:A3,B1:B3)",
+    "result": 280,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "TEXT",
+    "title": "تحويل رقم لنص منسق",
+    "ar": "يحوّل الرقم لنص بقالب تنسيق Excel، فيصبح الناتج نصًا وليس رقمًا.",
+    "description": "Formats a number and converts it to text.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "value",
+        "description": "A numeric value that you want to be converted into text."
+      },
+      {
+        "name": "format_text",
+        "description": "A text string that defines the formatting that you want to be applied to the supplied value."
+      }
+    ],
+    "signature": "TEXT(value, format_text)",
+    "example": "=TEXT(1234.5,\"0.00\")",
+    "result": "1234.50",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "TRUNC",
+    "title": "TRUNC",
+    "ar": "",
+    "description": "Truncates a number to an integer.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The number you want to truncate."
+      },
+      {
+        "name": "[num_digits]",
+        "description": "Optional. A number specifying the precision of the truncation. The default value for num_digits is 0 (zero)."
+      }
+    ],
+    "signature": "TRUNC(number, [num_digits])",
+    "example": "=TRUNC(8.9)",
+    "result": 8,
+    "status": "tested",
+    "common": false
+  },
+  {
+    "name": "VALUE",
+    "title": "تحويل نص لرقم",
+    "ar": "يحوّل النص الرقمي القابل للفهم إلى رقم صالح للحساب.",
+    "description": "Converts a text argument to a number.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text enclosed in quotation marks or a reference to a value containing the text you want to convert."
+      }
+    ],
+    "signature": "VALUE(text)",
+    "example": "=VALUE(\"125\")",
+    "result": 125,
+    "status": "tested",
+    "common": true
   }
 ]

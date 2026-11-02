@@ -4,7 +4,7 @@ import { formulaLessons } from "../src/pages/functions/animations";
 import { exampleRows } from "../src/pages/functions/animations/types";
 import { exampleBook } from "../src/pages/functions/catalog";
 import { calculator } from "../src/core/calculate";
-test("forty independently authored lessons are registered", () => {
+test("sixty independently authored lessons are registered", () => {
   assert.deepEqual(
     Object.keys(formulaLessons).sort(),
     [
@@ -48,6 +48,26 @@ test("forty independently authored lessons are registered", () => {
       "TRIM",
       "SUBSTITUTE",
       "MATCH",
+      "SUMPRODUCT",
+      "QUOTIENT",
+      "TRUNC",
+      "SIGN",
+      "EVEN",
+      "ODD",
+      "INDEX",
+      "ROW",
+      "COLUMN",
+      "ROWS",
+      "COLUMNS",
+      "NOT",
+      "IFNA",
+      "FIND",
+      "SEARCH",
+      "REPLACE",
+      "EXACT",
+      "REPT",
+      "VALUE",
+      "TEXT",
     ].sort(),
   );
 });
