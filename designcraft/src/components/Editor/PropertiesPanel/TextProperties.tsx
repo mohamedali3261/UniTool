@@ -73,7 +73,7 @@ const SliderRow: React.FC<{
 );
 
 export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUpdate }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
   const currentFontSize = properties.fontSize || 40;
   const isBold =
     properties.fontWeight === 'bold' ||
@@ -95,6 +95,10 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
 
   return (
     <div className="space-y-2.5">
+      <label className="block text-xs text-slate-200">
+        {lang === 'ar' ? 'محتوى النص' : 'Text content'}
+        <textarea aria-label={lang === 'ar' ? 'محتوى النص' : 'Text content'} value={properties.text ?? ''} onChange={e => onUpdate('text', e.target.value)} rows={3} dir="auto" className="mt-1 w-full resize-y rounded-lg border border-slate-600 bg-slate-900 p-2 text-sm text-white" />
+      </label>
       {/* 1. Font family */}
       <PropCard
         title={t.tpFontFamily}

@@ -1,3 +1,4 @@
+import { shortcutKey } from '../../utils/keyboard';
 import {AdvancedTools} from '../../advanced/AdvancedTools';
 import {CanvasOverlays} from '../../advanced/CanvasOverlays';
 import {DEFAULT_PRINT,faces,facePixels} from '../../advanced/core/faces';
@@ -367,28 +368,33 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         return;
       }
       
+      if (e.isComposing || (document.activeElement as HTMLElement)?.isContentEditable) return;
+      const key = shortcutKey(e);
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'c' || e.key === 'C') {
+        if (key === 'c') {
+          e.preventDefault();
           handleCopy();
-        } else if (e.key === 'v' || e.key === 'V') {
+        } else if (key === 'v') {
+          e.preventDefault();
           handlePaste();
-        } else if (e.key === 'x' || e.key === 'X') {
+        } else if (key === 'x') {
+          e.preventDefault();
           handleCut();
-        } else if (e.key === 'd' || e.key === 'D') {
+        } else if (key === 'd') {
           e.preventDefault();
           if (fabricCanvasRef.current) {
             duplicateActiveObject(fabricCanvasRef.current);
             updateLayersList();
             recordHistory();
           }
-        } else if (e.key === 'z' || e.key === 'Z') {
+        } else if (key === 'z') {
           e.preventDefault();
           if (e.shiftKey) {
             handleRedo();
           } else {
             handleUndo();
           }
-        } else if (e.key === 'y' || e.key === 'Y') {
+        } else if (key === 'y') {
           e.preventDefault();
           handleRedo();
         }
@@ -398,13 +404,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           updateLayersList();
           recordHistory();
         }
-      } else if (e.key === ']') {
+      } else if (key === ']') {
         if (fabricCanvasRef.current) {
           bringToFront(fabricCanvasRef.current);
           updateLayersList();
           recordHistory();
         }
-      } else if (e.key === '[') {
+      } else if (key === '[') {
         if (fabricCanvasRef.current) {
           sendToBack(fabricCanvasRef.current);
           updateLayersList();
@@ -1521,6 +1527,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             setZoom={setZoom}
             showGrid={showGrid}
             isPanMode={isPanMode}
+            onPanModeChange={setIsPanMode}
             onCanvasReady={handleCanvasReady}
             onSelectionChange={handleSelectionChange}
             onLayersUpdate={updateLayersList}

@@ -16,7 +16,7 @@ export const initFabricDefaults = () => {
   fabric.Object.prototype.cornerStyle = 'circle';
   fabric.Object.prototype.borderScaleFactor = 2;
   fabric.Object.prototype.borderDashArray = [4, 4];
-  fabric.Object.prototype.padding = 6;
+  fabric.Object.prototype.padding = 0;
   fabric.Object.prototype.hasBorders = true;
   fabric.Object.prototype.hasControls = true;
 
@@ -79,13 +79,7 @@ export const initFabricDefaults = () => {
 initFabricDefaults();
 
 // Helper to determine good contrast color based on canvas background
-const getDefaultContrastingColor = (canvas: fabric.Canvas) => {
-  const bg = canvas.backgroundColor;
-  if (!bg || bg === '#FFFFFF' || bg === 'white' || bg === '#fff' || bg === '#F8FAFC' || bg === '#F1F5F9') {
-    return '#0F172A';
-  }
-  return '#FFFFFF';
-};
+const getDefaultContrastingColor = (_canvas: fabric.Canvas) => '#000000';
 
 // The canvas is sized to designSize × zoom, so canvas.getWidth()/getCenter()
 // return VIEWPORT units. Fabric object coordinates live in DESIGN space, so
@@ -358,7 +352,7 @@ export const addTextToCanvas = (
     textString = textOrOptions;
     opts = secondaryOptions || {};
   } else if (typeof textOrOptions === 'object' && textOrOptions !== null) {
-    textString = textOrOptions.text || 'اكتب نصك هنا';
+    textString = textOrOptions.text ?? 'اكتب نصك هنا';
     opts = textOrOptions;
   }
 
@@ -370,7 +364,7 @@ export const addTextToCanvas = (
     textColor.toLowerCase() === '#ffffff' &&
     (canvas.backgroundColor === '#FFFFFF' || canvas.backgroundColor === 'white' || !canvas.backgroundColor)
   ) {
-    textColor = '#0F172A';
+    textColor = '#000000';
   }
 
   const fontSize = opts.fontSize || Math.min(Math.round(cWidth * 0.05), 48);

@@ -595,3 +595,108 @@ test('repeated mixed-artwork edits and rapid undo redo remain renderable after i
   expect(navigations).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('Arabic-layout shortcuts and safe hand dragging never transform artwork', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await load(page);
+  await select(page, 100, 100);
+  const physical = async (code: string, key: string, ctrlKey = true) => {
+    await page.evaluate(({ code, key, ctrlKey }) => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code, key, ctrlKey, bubbles: true, cancelable: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup', { code, key, ctrlKey, bubbles: true }));
+    }, { code, key, ctrlKey });
+  };
+  await physical('KeyD', 'ي');
+  expect((await saved(page)).canvasData.objects).toHaveLength(4);
+  await physical('KeyZ', 'ئ');
+  expect((await saved(page)).canvasData.objects).toHaveLength(3);
+  await physical('KeyY', 'غ');
+  expect((await saved(page)).canvasData.objects).toHaveLength(4);
+  await physical('KeyA', 'ش');
+  await physical('KeyC', 'ؤ');
+  await physical('KeyV', 'ر');
+  expect((await saved(page)).canvasData.objects).toHaveLength(8);
+  await physical('KeyX', 'ء');
+  expect((await saved(page)).canvasData.objects).toHaveLength(4);
+  await physical('KeyS', 'س');
+  await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
+  const before = (await saved(page)).canvasData.objects;
+  const box = (await page.locator('canvas.upper-canvas').boundingBox())!;
+  const drag = async () => {
+    await page.mouse.move(box.x + 100 * .9, box.y + 100 * .9);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 190 * .9, box.y + 160 * .9, { steps: 8 });
+    await page.mouse.up();
+  };
+  await physical('KeyH', 'ا', false);
+  await expect(page.getByRole('button', { name: 'Pan', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await drag();
+  expect((await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top])).toEqual(before.map((o: any) => [o.left, o.top]));
+  await physical('KeyV', 'ر', false);
+  await page.keyboard.down('Space');
+  await drag();
+  await page.keyboard.up('Space');
+  expect((await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top])).toEqual(before.map((o: any) => [o.left, o.top]));
+  expect(errors).toEqual([]);
+});
+
+test('text content may stay empty and retype Arabic without placeholder replacement', async ({ page }) => {
+  await load(page, [{ type: 'textbox', text: 'Original', left: 100, top: 100, width: 250, fontSize: 32, fill: '#ff0000', fontFamily: 'Arial' }]);
+  await select(page, 120, 120);
+  const content = page.getByRole('textbox', { name: 'Text content', exact: true });
+  await expect(content).toHaveValue('Original');
+  await content.fill('');
+  expect((await saved(page)).canvasData.objects[0].text).toBe('');
+  await content.fill('نص جديد بدون نص افتراضي');
+  let p = await saved(page);
+  expect(p.canvasData.objects[0].text).toBe('نص جديد بدون نص افتراضي');
+  expect(p.canvasData.objects[0].fill).toBe('#000000');
+  expect(p.canvasData.objects[0].padding || 0).toBe(0);
+  await content.fill('');
+  await content.fill('Second');
+  p = await saved(page);
+  expect(p.canvasData.objects[0].text).toBe('Second');
+});
+
+test('touch hand and two-finger gestures leave artwork coordinates unchanged', async ({ page }) => {
+  await load(page);
+  const before = (await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top, o.scaleX, o.scaleY]);
+  await page.getByRole('button', { name: 'Pan', exact: true }).click();
+  const box = (await page.locator('canvas.upper-canvas').boundingBox())!;
+  const session = await page.context().newCDPSession(page);
+  const point = (x: number, y: number, id: number) => ({ x: box.x + x, y: box.y + y, id });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(100, 100, 1)] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(180, 160, 1)] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(150, 150, 1), point(250, 150, 2)] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(130, 130, 1), point(280, 180, 2)] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const after = (await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top, o.scaleX, o.scaleY]);
+  expect(after).toEqual(before);
+  await session.detach();
+});
+
+test('oversized artboard remains scrollable and wheel scroll is distinct from zoom', async ({ page }) => {
+  await load(page);
+  await page.locator('#floating-zoom-pill').getByRole('button', { name: '100%', exact: true }).click();
+  for (let i = 0; i < 12; i++) await page.locator('#floating-zoom-pill button').nth(1).click();
+  const area = page.locator('#canvas-area-container');
+  const info = await area.evaluate(el => { el.scrollLeft = 0; el.scrollTop = 0; return { width: el.clientWidth, scrollWidth: el.scrollWidth }; });
+  expect(info.scrollWidth).toBeGreaterThan(info.width);
+  const rect = (await area.boundingBox())!;
+  await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  const zoomBefore = await page.locator('#floating-zoom-pill').innerText();
+  await page.mouse.wheel(0, 200);
+  await expect.poll(() => area.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.locator('#floating-zoom-pill').innerText()).toBe(zoomBefore);
+  await page.getByRole('button', { name: 'Pan', exact: true }).click();
+  await area.evaluate(el => { el.scrollLeft = 150; el.scrollTop = 150; });
+  const before = await area.evaluate(el => el.scrollLeft);
+  await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(rect.x + rect.width / 2 + 50, rect.y + rect.height / 2 + 30, { steps: 5 });
+  await page.mouse.up();
+  expect(await area.evaluate(el => el.scrollLeft)).toBeLessThan(before);
+});
