@@ -590,6 +590,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!active) return;
     const next = !active.lockMovementX;
     active.set({
+      locked: next,
       lockMovementX: next,
       lockMovementY: next,
       lockRotation: next,

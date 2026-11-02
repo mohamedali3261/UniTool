@@ -60,12 +60,12 @@ export default function App() {
   const flushActiveTab = () => editorRef.current?.flushSave();
 
   // Open a design in its own tab (or focus its existing tab) and enter the editor.
-  const openProjectInTab = (project: ProjectItem) => {
-    if(editorRef.current&&!editorRef.current.confirmLeave())return;
+  const openProjectInTab = (project: ProjectItem, skipLeaveCheck = false) => {
+    if(!skipLeaveCheck && editorRef.current&&!editorRef.current.confirmLeave())return;
     const saved = getSavedProjects();
     setOpenTabs((prev) => {
       // Drop tabs whose projects were removed from the dashboard in the meantime.
-      const alive = prev.filter((p) => saved.some((s) => s.id === p.id));
+      const alive = prev.filter((p) => p.sessionOnly || saved.some((s) => s.id === p.id));
       return alive.some((p) => p.id === project.id)
         ? alive.map((p) => (p.id === project.id ? project : p))
         : [...alive, project];
@@ -218,7 +218,15 @@ export default function App() {
         />
       )}
 
-      <ProjectImport hideButton={!!activeProject} onImport={project=>{flushActiveTab();saveProjectToStorage(project);if(!getSavedProjects().some(p=>p.id===project.id))throw Error('STORAGE');openProjectInTab(project);showToast(lang==='ar'?'تم فتح المشروع':'Project imported');}}/>
+      <ProjectImport hideButton onImport={project=>{
+        if(editorRef.current && !editorRef.current.confirmLeave()) return null;
+        flushActiveTab();
+        saveProjectToStorage(project);
+        const stored = getSavedProjects().some(p=>p.id===project.id);
+        openProjectInTab({...project, sessionOnly: !stored}, true);
+        showToast(stored ? (lang==='ar'?'تم فتح المشروع':'Project imported') : (lang==='ar'?'تم فتح المشروع بدون حفظ دائم':'Project opened without a durable save'), undefined, stored ? 'success' : 'warning');
+        return stored;
+      }}/>
       {/* Global Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </main>

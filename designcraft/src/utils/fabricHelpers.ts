@@ -682,12 +682,14 @@ export const deleteActiveObject = (canvas: fabric.Canvas) => {
   const active = canvas.getActiveObject();
   if (!active) return;
 
+  const canRemove = (object: any) => !object.locked && !object.lockMovementX && !object.lockMovementY && !String(object.id || '').startsWith('packaging-');
   if (active.type === 'activeSelection') {
     (active as any).forEachObject((obj: fabric.Object) => {
-      canvas.remove(obj);
+      if (canRemove(obj)) canvas.remove(obj);
     });
     canvas.discardActiveObject();
   } else {
+    if (!canRemove(active)) return;
     canvas.remove(active);
   }
   canvas.renderAll();

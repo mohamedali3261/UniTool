@@ -23,7 +23,8 @@ import {
   Sliders,
   Plus,
   X,
-  Globe
+  Globe,
+  Upload
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
@@ -424,6 +425,10 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  <button type="button" data-testid="dimensions-import" onClick={() => document.getElementById('designer-project-input')?.click()} className="mb-4 flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm font-semibold text-sky-200 hover:bg-sky-500/20">
+                    <Upload className="h-4 w-4" />{lang === 'ar' ? 'استيراد مشروع من ملف' : 'Import project from file'}
+                  </button>
 
                   {/* Form & Live Proportional Canvas Preview Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">

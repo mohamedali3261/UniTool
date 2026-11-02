@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { FloatingPopover } from './FloatingPopover';
+import React, { useEffect, useRef, useState } from 'react';
 import { COLOR_PALETTES } from '../../data/presets';
 import { useDcLang } from '../../hooks/useDcLang';
 import { Check, Pipette } from 'lucide-react';
@@ -25,6 +26,15 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
   onApplyGradient
 }) => {
   const { lang, t } = useDcLang();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [recent, setRecent] = useState<string[]>([]);
+  const readRecent = () => { try { const values = JSON.parse(localStorage.getItem('designcraft-recent-colors') || '[]'); return Array.isArray(values) ? values.filter((c: unknown) => typeof c === 'string' && HEX_RE.test(c)).slice(0, 8) : []; } catch { return []; } };
+  const remember = (value: string) => {
+    if (!HEX_RE.test(value)) return;
+    const next = [value, ...readRecent().filter(c => c.toLowerCase() !== value.toLowerCase())].slice(0, 8);
+    setRecent(next);
+    try { localStorage.setItem('designcraft-recent-colors', JSON.stringify(next)); } catch { /* editing still works without storage */ }
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(color || '');
   const [invalid, setInvalid] = useState(false);
@@ -49,6 +59,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
   }, [isOpen, color]);
 
   const open = () => {
+    setRecent(readRecent());
     setDraft(color || '');
     setInvalid(false);
     setIsOpen((prev) => !prev);
@@ -62,17 +73,21 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 
   const commitDraft = () => {
     const next = draft.trim();
-    if (!isValidColor(next)) {
+    if (!isValidColor(next) || (next === 'transparent' && !allowTransparent)) {
       setInvalid(true);
       return;
     }
+    remember(next);
     onChange(next);
     setIsOpen(false);
+    trigger.current?.focus();
   };
 
   const pick = (nextColor: string) => {
+    remember(nextColor);
     onChange(nextColor);
     close();
+    trigger.current?.focus();
   };
 
   const applyGradient = (stops: string[]) => {
@@ -81,13 +96,15 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
     } else {
       onChange(stops[0]);
     }
+    stops.forEach(remember);
     close();
+    trigger.current?.focus();
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <div className="flex items-center justify-between text-xs text-slate-300 mb-1.5 font-medium">
-        <span>{label}</span>
+        <span className="min-w-0 truncate">{label}</span>
         <span className="font-mono uppercase text-[11px] text-slate-400">
           {isTransparent ? t.colorTransparent : color}
         </span>
@@ -96,10 +113,11 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       <div className="flex items-center gap-2">
         <button
           type="button"
+          ref={trigger}
           onClick={open}
           aria-expanded={isOpen}
           aria-label={label}
-          className="flex-1 flex items-center gap-2.5 p-2 bg-[#0B132B] border border-slate-700/80 hover:border-sky-500 rounded-xl transition text-left text-xs"
+          className="min-w-0 flex-1 flex items-center gap-2.5 p-2 bg-[#0B132B] border border-slate-700/80 hover:border-sky-500 rounded-xl transition text-left text-xs"
         >
           <div
             className="w-6 h-6 rounded-lg border border-white/20 shadow-inner shrink-0"
@@ -122,18 +140,19 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           <Pipette className="w-4 h-4" />
           <input
             type="color"
-            aria-label={label}
-            value={!isTransparent && color.startsWith('#') ? color : '#38BDF8'}
-            onChange={(e) => onChange(e.target.value)}
+            aria-label={`${label} — ${lang === 'ar' ? 'منتقي النظام' : 'System picker'}`}
+            value={/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(color) ? color.slice(0, 7) : /^#[0-9a-f]{3}$/i.test(color) ? '#' + color.slice(1).split('').map(c => c + c).join('') : '#38BDF8'}
+            onChange={(e) => { remember(e.target.value); onChange(e.target.value); }}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
           />
         </label>
       </div>
 
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={close} />
-          <div className="absolute top-full mt-2 left-0 right-0 z-50 p-3 bg-[#1C2541] border border-slate-700 rounded-2xl shadow-2xl space-y-3">
+        <FloatingPopover anchor={trigger} label={`${lang === 'ar' ? 'اختيار اللون' : 'Choose color'}: ${label}`} onClose={close} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-600 pb-2"><h4 className="min-w-0 truncate text-sm font-semibold">{label}</h4><button type="button" onClick={() => { close(); trigger.current?.focus(); }} className="rounded-lg bg-slate-800 px-2 py-1 text-xs">{lang === 'ar' ? 'إغلاق' : 'Close'}</button></div>
+            {recent.length > 0 && <div><p className="mb-2 text-xs text-slate-300">{lang === 'ar' ? 'ألوان استخدمتها مؤخرًا' : 'Recently used colors'}</p><div className="flex flex-wrap gap-2">{recent.map(c => <button type="button" key={c} title={c} aria-label={`${lang === 'ar' ? 'لون سابق' : 'Recent color'} ${c}`} onClick={() => pick(c)} style={{ backgroundColor: c }} className="h-6 w-6 rounded-md border border-white/30" />)}</div></div>}
             <div className="text-xs font-semibold text-slate-300">{t.colorPaletteQuick}</div>
 
             <div className="grid grid-cols-8 gap-1.5 max-h-36 overflow-y-auto pr-1 no-scrollbar">
@@ -202,7 +221,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
                   );
                 })}
               </div>
-              <p className="text-[9px] text-slate-500">{t.colorGradientHint}</p>
+              <p className="text-[9px] text-slate-500">{onApplyGradient ? (lang === 'ar' ? 'اختر تدرجًا لتطبيق جميع ألوانه.' : 'Choose a gradient to apply all of its colors.') : t.colorGradientHint}</p>
             </div>
 
             <div className="pt-2 border-t border-slate-700 space-y-1.5">
@@ -223,7 +242,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
                   }
                 }}
                 placeholder="#000000"
-                aria-label={label}
+                aria-label={`${label} HEX`}
                 aria-invalid={invalid}
                 className={`w-full bg-[#0B132B] border rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono text-left focus:outline-none transition ${
                   invalid
@@ -233,7 +252,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               />
               <div className="flex items-center gap-2">
                 {invalid && (
-                  <span className="flex-1 text-[10px] text-rose-400">{t.colorInvalid}</span>
+                  <span role="alert" className="min-w-0 flex-1 text-[11px] text-rose-300">{t.colorInvalid}</span>
                 )}
                 <button
                   type="button"
@@ -245,7 +264,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               </div>
             </div>
           </div>
-        </>
+        </FloatingPopover>
       )}
     </div>
   );
