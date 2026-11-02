@@ -125,7 +125,9 @@ test("copy includes the logo and size control updates the rendered QR", async ({
   });
   await open(page);
   await upload(page);
-  await page.getByRole("slider", { name: /حجم اللوجو/ }).press("End");
+  await page.getByRole("slider", { name: /حجم اللوجو/ }).press("Home");
+  for (let i = 0; i < 10; i++)
+    await page.getByRole("slider", { name: /حجم اللوجو/ }).press("ArrowRight");
   await expect(
     page.getByRole("button", { name: "تحميل PNG", exact: true }),
   ).toBeEnabled();
@@ -136,4 +138,73 @@ test("copy includes the logo and size control updates the rendered QR", async ({
   ).toBeVisible();
   const data = await page.evaluate(() => (window as any).__qrCopied);
   expect(decode(Buffer.from(data, "base64")).result).toBe(payload);
+});
+test("transparent holes retain QR modules and transparent margins do not waste logo size", async ({
+  page,
+}) => {
+  await open(page);
+  const baseline = decode(await download(page, "تحميل PNG")).png;
+  const logo = new PNG({ width: 100, height: 100 });
+  logo.data.fill(0);
+  for (let y = 20; y < 80; y++)
+    for (let x = 20; x < 80; x++)
+      if (x < 32 || x >= 68 || y < 32 || y >= 68) {
+        const i = (y * 100 + x) * 4;
+        logo.data[i] = 0;
+        logo.data[i + 1] = 100;
+        logo.data[i + 2] = 255;
+        logo.data[i + 3] = 255;
+      }
+  await page
+    .locator("input[type=file]")
+    .setInputFiles({
+      name: "transparent.png",
+      mimeType: "image/png",
+      buffer: PNG.sync.write(logo),
+    });
+  const preview = page.getByRole("img", {
+    name: "اللوجو المختار",
+    exact: true,
+  });
+  await expect(preview).toBeVisible();
+  expect(await preview.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBe(
+    60,
+  );
+  await expect(
+    page.getByRole("button", { name: "تحميل PNG", exact: true }),
+  ).toBeEnabled();
+  const rendered = decode(await download(page, "تحميل PNG")).png,
+    center = rendered.width / 2;
+  let dark = 0;
+  for (let y = center - 7; y < center + 7; y++)
+    for (let x = center - 7; x < center + 7; x++) {
+      const i = (y * rendered.width + x) * 4;
+      expect(Array.from(rendered.data.slice(i, i + 4))).toEqual(
+        Array.from(baseline.data.slice(i, i + 4)),
+      );
+      if (baseline.data[i] === 0) dark++;
+    }
+  expect(dark).toBeGreaterThan(0);
+  const svg = (await download(page, "SVG")).toString();
+  expect(
+    await page.evaluate((s) => {
+      const d = new DOMParser().parseFromString(s, "image/svg+xml");
+      return d.querySelector("g")?.querySelectorAll(":scope > rect").length;
+    }, svg),
+  ).toBe(0);
+});
+test("enlarging to 30 percent grows the actual logo and shows a scan warning", async ({
+  page,
+}) => {
+  await open(page);
+  await upload(page);
+  await page.getByRole("slider", { name: /حجم اللوجو/ }).press("End");
+  await expect(page.getByRole("status")).toContainText("اللوجو الكبير");
+  await expect(
+    page.getByRole("button", { name: "تحميل PNG", exact: true }),
+  ).toBeEnabled();
+  const { png } = decode(await download(page, "تحميل PNG")),
+    center = png.width / 2,
+    i = (center * png.width + center + 30) * 4;
+  expect(Array.from(png.data.slice(i, i + 4))).toEqual([0, 100, 255, 255]);
 });
