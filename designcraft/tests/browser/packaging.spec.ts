@@ -384,3 +384,83 @@ test("perfume starter sizes remain editable and measured-bottle sizing persists"
   expect(saved.packaging.size.width).toBe(52);
   expect(saved.packaging.size.depth).toBe(37);
 });
+test("designed perfume templates preview, customize and save editable artwork", async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole("button", { name: /عطر 50 مل/ }).click();
+  await expect(
+    page.getByRole("button", { name: /حديقة الزمرد/ }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page
+    .getByRole("textbox", { name: "اسم العلامة التجارية", exact: true })
+    .fill("MY MAISON");
+  await page
+    .getByRole("textbox", { name: "اسم العطر", exact: true })
+    .fill("NIGHT BLOOM");
+  await page
+    .getByRole("checkbox", {
+      name: "منطقة أمان إرشادية 3 مم (معاينة التصميم فقط)",
+      exact: true,
+    })
+    .check();
+  await expect(page.locator(".carton-preview svg")).toContainText("MY MAISON");
+  await expect(page.locator("#suggested-safe-area")).toBeAttached();
+  await page.getByRole("button", { name: "القص والطي", exact: true }).click();
+  await expect(page.locator(".carton-preview svg")).not.toContainText(
+    "MY MAISON",
+  );
+  await page.getByRole("button", { name: "التصميم", exact: true }).click();
+  await page
+    .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
+    .click();
+  await expect(page.locator("#editor-layout")).toBeVisible();
+  const p = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
+      (p: any) => p.title === "علبة عطر 50 مل",
+    ),
+  );
+  expect(
+    p.canvasData.objects.filter((o: any) => o.id.startsWith("art-")).length,
+  ).toBeGreaterThan(20);
+  expect(
+    p.canvasData.objects.some(
+      (o: any) => o.text === "NIGHT BLOOM" && o.selectable !== false,
+    ),
+  ).toBe(true);
+  expect(
+    p.canvasData.objects.filter((o: any) => o.id.startsWith("packaging-"))
+      .length,
+  ).toBe(13);
+  expect(
+    p.canvasData.objects.some((o: any) => o.id === "suggested-safe-area"),
+  ).toBe(false);
+  await page
+    .getByRole("button", { name: "تصدير للطباعة", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "صيغة ملف الطباعة", exact: true })
+    .selectOption("svg");
+  const pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "تنزيل ملف الطباعة", exact: true })
+    .click();
+  const svg = await fs.readFile((await (await pending).path())!, "utf8");
+  expect(svg).toContain("NIGHT BLOOM");
+  expect(svg).toContain("MY MAISON");
+  expect(svg).toContain("clipPath");
+  expect(svg).toContain('width="202mm"');
+});
+test("reset restores a blank template without discarding existing projects", async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole("button", { name: /عطر 30 مل/ }).click();
+  await page.getByRole("button", { name: "إعادة الضبط", exact: true }).click();
+  await expect(page.getByTestId("carton-sheet-size")).toHaveText(
+    "262 × 234 mm",
+  );
+  await expect(
+    page.getByRole("button", { name: /بدء بقالب فارغ/ }),
+  ).toHaveAttribute("aria-pressed", "true");
+});

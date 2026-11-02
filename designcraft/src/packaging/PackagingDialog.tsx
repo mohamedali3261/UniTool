@@ -14,6 +14,14 @@ import { createCartonProject } from "./project";
 import { getSavedProjects, saveProjectToStorage } from "../utils/fabricHelpers";
 import type { ProjectItem } from "../types";
 import { PerfumeTemplates } from "./PerfumeTemplates";
+import { ArtworkControls } from "./ArtworkControls";
+import {
+  DEFAULT_ARTWORK,
+  ART_STYLES,
+  artworkPreview,
+  cartonArtwork,
+  type ArtworkOptions,
+} from "./artwork";
 import { BoxPreview } from "./BoxPreview";
 import "./packaging.css";
 const fields = [
@@ -42,6 +50,10 @@ export function PackagingDialog({
           fields.map(([k]) => [k, String(initial[k])]),
         ) as Record<keyof CartonSize, string>,
     ),
+    [artwork, setArtwork] = useState<ArtworkOptions>({ ...DEFAULT_ARTWORK }),
+    [resetKey, setResetKey] = useState(0),
+    [safeArea, setSafeArea] = useState(false),
+    [previewMode, setPreviewMode] = useState<"art" | "cut">("art"),
     [dimensions, setDimensions] = useState(true),
     [exportDimensions, setExportDimensions] = useState(false),
     [busy, setBusy] = useState(false),
@@ -77,6 +89,10 @@ export function PackagingDialog({
     if (issue) return;
     try {
       const p = createCartonProject(size, title);
+      p.canvasData.objects = [
+        ...cartonArtwork(size, artwork),
+        ...p.canvasData.objects,
+      ];
       saveProjectToStorage(p);
       if (!getSavedProjects().some((v) => v.id === p.id))
         throw Error("Storage");
@@ -102,11 +118,16 @@ export function PackagingDialog({
     >
       <header>
         <div>
-          <small>PACKAGING / REVERSE TUCK</small>
+          <small>UNITOOL / PACKAGING ATELIER</small>
           <h2 id="carton-title">
             <Box />
             {ar ? "مقاسات وقالب العلبة" : "Carton dimensions & dieline"}
           </h2>
+          <p className="carton-header-caption">
+            {ar
+              ? "من المقاس إلى الهوية… علبة بتفاصيلك."
+              : "From precise dimensions to a signature design."}
+          </p>
         </div>
         <button
           type="button"
@@ -116,8 +137,49 @@ export function PackagingDialog({
           <X />
         </button>
       </header>
+      <nav
+        className="carton-jumpbar"
+        aria-label={ar ? "أقسام إعداد العلبة" : "Carton setup sections"}
+      >
+        {(
+          [
+            [".carton-settings", "المقاسات", "Dimensions"],
+            [".carton-art-controls", "هوية التصميم", "Brand identity"],
+            [".carton-preview-column", "المعاينة", "Preview"],
+          ] as const
+        ).map(([selector, arabic, en]) => (
+          <button
+            type="button"
+            key={selector}
+            onClick={() => {
+              const section = ref.current?.querySelector<HTMLElement>(selector);
+              section?.scrollIntoView({
+                block: "start",
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                  .matches
+                  ? "auto"
+                  : "smooth",
+              });
+              section?.focus({ preventScroll: true });
+            }}
+          >
+            {ar ? arabic : en}
+          </button>
+        ))}
+      </nav>
       <div className="carton-body">
-        <div className="carton-settings">
+        <div className="carton-settings" tabIndex={-1}>
+          <div className="carton-section-title">
+            <span>01</span>
+            <div>
+              <h3>{ar ? "ابدأ بالعلبة المناسبة" : "Find your perfect fit"}</h3>
+              <p>
+                {ar
+                  ? "قالب جاهز أو مقاساتك الخاصة"
+                  : "A starter template or your own dimensions"}
+              </p>
+            </div>
+          </div>
           <p>
             {ar
               ? "علبة مستطيلة بغطاء علوي وقفل سفلي متعاكس، مثل المرجع. كل القياسات بالملّيمتر."
@@ -138,9 +200,21 @@ export function PackagingDialog({
               : "Length × width × depth — assembled box dimensions in millimetres, not the unfolded sheet size."}
           </p>
           <PerfumeTemplates
+            key={resetKey}
             ar={ar}
             size={size}
-            onApply={(next, name) => {
+            onApply={(next, name, ml) => {
+              if (ml) {
+                const style =
+                  ml === 30 ? "rose" : ml === 50 ? "emerald" : "noir";
+                setArtwork({
+                  ...artwork,
+                  ml,
+                  style,
+                  accent: ART_STYLES[style].accent,
+                  product: ART_STYLES[style].product,
+                });
+              }
               setDraft(
                 Object.fromEntries(
                   fields.map(([key]) => [key, String(next[key])]),
@@ -243,6 +317,7 @@ export function PackagingDialog({
                 : "Dimensions are nominal between fold lines. Board thickness, scoring and gluing affect internal space. Capacity or a preview cannot certify fit: validate a paper prototype, then a sample in production stock."}
             </p>
           </details>
+          <ArtworkControls ar={ar} value={artwork} onChange={setArtwork} />
           {issue && (
             <p role="alert" className="carton-error">
               {messages[issue]}
@@ -272,7 +347,31 @@ export function PackagingDialog({
               : "Nominal geometry, without material-caliper or machine allowances. Print a 100% prototype and confirm with your printer before production."}
           </p>
         </div>
-        <div>
+        <div className="carton-preview-column" tabIndex={-1}>
+          <div className="carton-preview-toolbar">
+            <div>
+              <small>LIVE PREVIEW</small>
+              <h3>{ar ? "شاهد فكرتك تتشكّل" : "Watch your idea unfold"}</h3>
+            </div>
+            <div className="carton-view-toggle">
+              {(["art", "cut"] as const).map((mode) => (
+                <button
+                  type="button"
+                  key={mode}
+                  aria-pressed={previewMode === mode}
+                  onClick={() => setPreviewMode(mode)}
+                >
+                  {mode === "art"
+                    ? ar
+                      ? "التصميم"
+                      : "Artwork"
+                    : ar
+                      ? "القص والطي"
+                      : "Dieline"}
+                </button>
+              ))}
+            </div>
+          </div>
           <div
             className="carton-preview"
             aria-label={ar ? "معاينة قالب القص والطي" : "Cut and fold preview"}
@@ -280,7 +379,10 @@ export function PackagingDialog({
             {g ? (
               <div
                 dangerouslySetInnerHTML={{
-                  __html: cartonSvg(size, dimensions),
+                  __html:
+                    previewMode === "cut"
+                      ? cartonSvg(size, dimensions)
+                      : artworkPreview(size, artwork, dimensions, safeArea),
                 }}
               />
             ) : (
@@ -291,6 +393,21 @@ export function PackagingDialog({
               </p>
             )}
           </div>
+          <label className="carton-check">
+            <input
+              type="checkbox"
+              checked={safeArea}
+              onChange={(e) => setSafeArea(e.target.checked)}
+            />
+            {ar
+              ? "منطقة أمان إرشادية 3 مم (معاينة التصميم فقط)"
+              : "Suggested 3 mm safe area (artwork preview only)"}
+          </label>
+          <p className="carton-new-note">
+            {ar
+              ? "أبقِ النصوص المهمة داخل المنطقة الإرشادية. ليست سماحات نزف أو تعويضًا لمتطلبات المطبعة."
+              : "Keep important text inside the suggested area. This is not bleed or a substitute for printer specifications."}
+          </p>
           {g && (
             <div className="carton-preview-bottom">
               <div>
@@ -311,7 +428,7 @@ export function PackagingDialog({
                 </small>
               </div>
               <figure>
-                <BoxPreview size={size} />
+                <BoxPreview size={size} artwork={artwork} />
                 <figcaption>
                   {ar
                     ? "تصوّر نسبي — ليس محاكاة تجميع"
@@ -338,10 +455,31 @@ export function PackagingDialog({
         </label>
         <small>
           {ar
-            ? "PDF مسارات القص والطي فقط. اطبع بالحجم الفعلي 100%، وليس ملاءمة الصفحة."
-            : "PDF: cut/crease guides only. Print at actual size (100%), not fit-to-page."}
+            ? "تنزيل SVG وPDF هنا لخطوط القص والطي فقط. لتصدير التصميم الكامل، افتحه في المصمم ثم اختر «تصدير للطباعة». اطبع بنسبة 100%."
+            : "SVG/PDF here contain dielines only. For complete artwork, open in the editor and choose Print export. Print at 100%."}
         </small>
         <div className="carton-actions">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setDraft(
+                Object.fromEntries(
+                  fields.map(([k]) => [k, String(initial[k])]),
+                ) as Record<keyof CartonSize, string>,
+              );
+              setResetKey((k) => k + 1);
+              setExportDimensions(false);
+              setArtwork({ ...DEFAULT_ARTWORK });
+              setTitle(ar ? "قالب علبة جديد" : "New carton template");
+              setSafeArea(false);
+              setPreviewMode("art");
+              setDimensions(true);
+              setError("");
+            }}
+          >
+            {ar ? "إعادة الضبط" : "Reset settings"}
+          </button>
           <button
             type="button"
             disabled={!!issue || busy}

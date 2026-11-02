@@ -350,4 +350,388 @@
     font-size: 12px;
   }
 }
-.carton-print{max-width:700px}.carton-print-body{padding:24px;line-height:1.9}.carton-print-body>strong{display:block;color:#c3bcff;font-size:24px}.carton-print-body p{font-size:13px;color:#b9c7dd}.carton-print-body select{display:block;width:100%;padding:12px;background:#162238;border:1px solid #46597a;color:#fff;border-radius:8px;margin-top:6px}.carton-print-body [role=alert]{color:#ffadbb}.carton-print-body ul{font-size:12px;direction:ltr}
+.carton-print {
+  max-width: 700px;
+}
+.carton-print-body {
+  padding: 24px;
+  line-height: 1.9;
+}
+.carton-print-body > strong {
+  display: block;
+  color: #c3bcff;
+  font-size: 24px;
+}
+.carton-print-body p {
+  font-size: 13px;
+  color: #b9c7dd;
+}
+.carton-print-body select {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #162238;
+  border: 1px solid #46597a;
+  color: #fff;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+.carton-print-body [role="alert"] {
+  color: #ffadbb;
+}
+.carton-print-body ul {
+  font-size: 12px;
+  direction: ltr;
+}
+
+/* Packaging atelier: scoped to the dimensions dialog, not print export. */
+.carton-dialog:not(.carton-print) {
+  width: min(1320px, calc(100vw - 32px));
+  border-color: #394555;
+  background: #101722;
+  border-radius: 24px;
+}
+.carton-dialog:not(.carton-print) > header {
+  background: linear-gradient(110deg, #172d32, #1a2031 65%);
+  padding: 24px 30px;
+}
+.carton-header-caption {
+  font-size: 13px;
+  color: #acbfc7;
+  margin: 6px 0 0;
+}
+.carton-dialog:not(.carton-print) .carton-body {
+  grid-template-columns: minmax(340px, 0.95fr) minmax(0, 1.25fr);
+  align-items: start;
+  gap: 32px;
+  padding: 28px;
+}
+.carton-section-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 8px 0 20px;
+}
+.carton-section-title > span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #9dcac51a;
+  color: #a8d7cf;
+  font: 14px monospace;
+  border: 1px solid #a8d7cf33;
+  flex-shrink: 0;
+}
+.carton-section-title h3 {
+  margin: 0;
+  color: #eef6f4;
+  font-size: 18px;
+}
+.carton-section-title p {
+  margin: 4px 0 0 !important;
+  font-size: 12px !important;
+  color: #879caa !important;
+}
+.carton-settings {
+  min-width: 0;
+}
+.carton-settings > p:first-of-type {
+  font-size: 12px;
+}
+.carton-perfume-section > h3 {
+  font-size: 14px;
+  margin-top: 20px;
+}
+.carton-dialog .carton-note {
+  background: #a4bfc009;
+  border-color: #a4bfc027;
+  color: #9eafb9;
+  font-size: 12px;
+}
+.carton-capacity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+.carton-dialog .carton-capacity-card {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  padding: 16px 6px;
+  border-color: #354655;
+  background: linear-gradient(160deg, #1b2b36, #15212d);
+  gap: 8px;
+  min-width: 0;
+}
+.carton-capacity-card > span[dir] {
+  font-size: 9px;
+  white-space: normal;
+  color: #9fb1bc;
+}
+.carton-dialog [aria-pressed="true"] {
+  border-color: #a9d6c9;
+  box-shadow: 0 0 0 1px #a9d6c933;
+  background-color: #25413e;
+}
+.carton-bottle-icon {
+  font-size: 26px;
+  color: #bbd7ca;
+  line-height: 1;
+}
+.carton-dialog details {
+  border: 1px solid #ffffff12;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 14px 0;
+  background: #ffffff03;
+}
+.carton-dialog summary {
+  cursor: pointer;
+  color: #afc6d0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.carton-dialog summary:focus-visible {
+  outline: 2px solid #b4b0ff;
+  outline-offset: 4px;
+}
+.carton-settings details p,
+.carton-settings details li {
+  font-size: 12px;
+  line-height: 1.95;
+  color: #9fb1c4;
+}
+.carton-settings ol {
+  padding-inline-start: 20px;
+}
+.carton-art-controls {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid #ffffff15;
+}
+.carton-style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.carton-dialog .carton-style-card {
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 7px;
+  background: #17232e;
+  min-width: 0;
+  font-size: 11px;
+}
+.carton-style-card > small {
+  font-size: 9px;
+  color: #a0b2c0;
+}
+.carton-style-card > strong {
+  font-size: 11px;
+}
+.carton-mini-box {
+  position: relative;
+  width: 74%;
+  aspect-ratio: 0.54;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12%;
+  border: 1px solid;
+  outline: 6px solid #ffffff04;
+  box-shadow: 10px 10px 15px #0005;
+  margin: 10px 0 14px;
+  transform: perspective(400px) rotateY(-12deg);
+}
+.carton-mini-box:before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid currentColor;
+  opacity: 0.5;
+}
+.carton-mini-box i {
+  font-size: 22px;
+  font-style: normal;
+}
+.carton-mini-box b {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.carton-mini-box em {
+  font:
+    7px Georgia,
+    serif;
+}
+.carton-mini-box small {
+  font-size: 5px;
+  letter-spacing: 1px;
+}
+.carton-dialog .carton-blank {
+  width: 100%;
+  margin-top: 12px;
+  background: transparent;
+  color: #b9c8d2;
+  border-style: dashed;
+}
+.carton-brand-fields {
+  margin-top: 14px;
+}
+.carton-dialog input[type="color"] {
+  height: 40px;
+  padding: 5px;
+  cursor: pointer;
+}
+.carton-dialog select {
+  width: 100%;
+  min-width: 0;
+  background: #0b1323;
+  border: 1px solid #3b4e6b;
+  border-radius: 9px;
+  color: #fff;
+  padding: 10px;
+  margin-top: 6px;
+  font: inherit;
+  box-sizing: border-box;
+}
+.carton-dialog select:focus-visible {
+  outline: 2px solid #b4b0ff;
+  outline-offset: 3px;
+}
+.carton-preview-column {
+  position: sticky;
+  top: 20px;
+  min-width: 0;
+}
+.carton-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.carton-preview-toolbar small {
+  font: 9px monospace;
+  letter-spacing: 2px;
+  color: #84b4a6;
+}
+.carton-preview-toolbar h3 {
+  font-size: 17px;
+  margin: 6px 0;
+  color: #e8f1f3;
+}
+.carton-view-toggle {
+  display: flex;
+  padding: 4px;
+  border-radius: 10px;
+  background: #080e18;
+  gap: 3px;
+}
+.carton-dialog .carton-view-toggle button {
+  font-size: 11px;
+  padding: 8px;
+  border-color: transparent;
+  background: transparent;
+}
+.carton-dialog .carton-view-toggle button[aria-pressed="true"] {
+  background: #263c3d;
+  color: #b8e2d5;
+  box-shadow: none;
+}
+.carton-dialog:not(.carton-print) .carton-preview {
+  background-color: #e9ede9;
+  background-image: radial-gradient(#9eaaa54d 0.7px, transparent 0.7px);
+  background-size: 14px 14px;
+  min-height: 380px;
+  border-color: #b3c6bf;
+  border-radius: 18px;
+  padding: 20px;
+}
+.carton-dialog:not(.carton-print) .carton-preview > div {
+  filter: drop-shadow(0 8px 9px #10271f22);
+}
+.carton-dialog:not(.carton-print) .carton-preview-bottom > div {
+  background: #18272f;
+  border: 1px solid #ffffff0d;
+}
+.carton-dialog:not(.carton-print) .carton-preview-bottom strong {
+  color: #bce0ce;
+}
+.carton-dialog:not(.carton-print) footer {
+  background: #131f29;
+}
+.carton-dialog:not(.carton-print) .carton-primary {
+  background: #b8deca;
+  border-color: #b8deca;
+  color: #132a25;
+  font-weight: 700;
+}
+.carton-dialog button {
+  transition:
+    border-color 0.18s,
+    background-color 0.18s,
+    transform 0.18s;
+}
+.carton-dialog button:not(:disabled):hover {
+  border-color: #a9d6c9;
+}
+@media (min-width: 1000px) {
+  .carton-dialog:not(.carton-print) .carton-settings {
+    padding-inline-end: 24px;
+    border-inline-end: 1px solid #ffffff10;
+  }
+}
+@media (max-width: 850px) {
+  .carton-dialog:not(.carton-print) .carton-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px;
+    gap: 24px;
+  }
+  .carton-preview-column {
+    position: static;
+  }
+  .carton-dialog:not(.carton-print) > header {
+    padding: 20px;
+  }
+  .carton-mini-box {
+    max-width: 100px;
+  }
+  .carton-dialog:not(.carton-print) .carton-preview {
+    min-height: 220px;
+    padding: 8px;
+  }
+  .carton-preview-toolbar {
+    flex-wrap: wrap;
+  }
+  .carton-style-card > strong {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carton-dialog button {
+    transition: none;
+  }
+}
+.carton-jumpbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 28px;
+  border-bottom: 1px solid #ffffff10;
+  background: #13202a;
+}
+.carton-dialog .carton-jumpbar button {
+  padding: 7px 12px;
+  background: transparent;
+  font-size: 11px;
+  color: #c1d4d1;
+  border-color: #a8d7cf22;
+}
+.carton-settings,
+.carton-art-controls,
+.carton-preview-column {
+  scroll-margin-top: 18px;
+}

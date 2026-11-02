@@ -8,7 +8,7 @@ export function PerfumeTemplates({
 }: {
   ar: boolean;
   size: CartonSize;
-  onApply: (s: CartonSize, title?: string) => void;
+  onApply: (s: CartonSize, title?: string, ml?: number) => void;
 }) {
   const [bottle, setBottle] = useState({
     length: "",
@@ -19,27 +19,53 @@ export function PerfumeTemplates({
   const [error, setError] = useState("");
   const [applied, setApplied] = useState(false);
   return (
-    <section aria-label={ar ? "قوالب علب العطور" : "Perfume carton templates"}>
+    <section
+      className="carton-perfume-section"
+      aria-label={ar ? "قوالب علب العطور" : "Perfume carton templates"}
+    >
       <h3>{ar ? "قوالب علب العطور" : "Perfume carton templates"}</h3>
       <p className="carton-note">
         {ar
           ? "30 و50 و100 مل هي سعة الزجاجة وليست مقاسها. هذه علب خارجية بمقاسات مبدئية، وليست قوالب لتصنيع الزجاج. قِس زجاجتك بالغطاء قبل الاعتماد؛ جميع المقاسات والألسنة قابلة للتعديل."
           : "30, 50 and 100 ml describe capacity, not bottle dimensions. These are editable starter outer cartons, not glass-manufacturing molds. Measure the actual bottle including its cap before use."}
       </p>
-      <div className="carton-fields">
+      <div className="carton-capacity-grid">
         {PERFUME_PRESETS.map((p) => (
           <button
             key={p.ml}
             type="button"
+            className="carton-capacity-card"
+            aria-pressed={
+              size.height === p.size.height &&
+              size.width === p.size.width &&
+              size.depth === p.size.depth
+            }
             onClick={() => {
               onApply(
                 { ...p.size },
                 ar ? `علبة عطر ${p.ml} مل` : `${p.ml} ml perfume carton`,
+                p.ml,
               );
               setApplied(false);
               setError("");
             }}
           >
+            <span className="carton-bottle-icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 48 52"
+                width="28"
+                height="34"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <rect x="19" y="3" width="10" height="9" rx="2" />
+                <path d="M20 12v5h8v-5" />
+                <rect x="11" y="17" width="26" height="31" rx="5" />
+                <rect x="16" y="26" width="16" height="13" rx="1" />
+                <path d="M21 30h6m-6 4h6" />
+              </svg>
+            </span>
             {ar ? `عطر ${p.ml} مل` : `${p.ml} ml perfume`}
             <br />
             <span dir="ltr">
