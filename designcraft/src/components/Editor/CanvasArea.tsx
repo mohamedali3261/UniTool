@@ -1,3 +1,4 @@
+import { fittedInitialZoom } from '../../utils/mobilePerformance';
 import { shortcutKey } from '../../utils/keyboard';
 import {applyTextFit} from '../../advanced/core/text';
 import {installAlignmentGuides} from '../../utils/alignmentGuides';
@@ -69,6 +70,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const initialZoomPending = useRef<number | null>(null);
 
   const [hasSelection, setHasSelection] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('');
@@ -100,9 +102,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     initFabricDefaults();
 
+    const initialZoom = fittedInitialZoom(width, height, Math.max(40, (containerRef.current?.clientWidth || 400) - 40), Math.max(40, (containerRef.current?.clientHeight || 500) - 80));
+    initialZoomPending.current = initialZoom;
     const canvas = new fabric.Canvas(canvasRef.current, {
-      width: width * zoom,
-      height: height * zoom,
+      width: Math.round(width * initialZoom),
+      height: Math.round(height * initialZoom),
       backgroundColor: backgroundColor || '#FFFFFF',
       preserveObjectStacking: true,
       selection: true,
@@ -114,7 +118,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     });
 
     let alive = true;
-    canvas.setZoom(zoom);
+    canvas.setZoom(initialZoom);
+    setZoom(initialZoom);
     fabricCanvasRef.current = canvas;
     const removeGuides=installAlignmentGuides(canvas);
     canvas.on('text:changed',(event:any)=>{applyTextFit(event.target);if(resetEmptyText(event.target,normalTextFill(canvas.backgroundColor))){canvas.requestRenderAll();onLayersUpdate();onRecordHistory();}});
@@ -210,9 +215,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     canvas.on('object:added', (event) => {
       if (event.target) event.target.padding = 0;
       if (event.target?.type === 'image') event.target.perPixelTargetFind = true;
-      onLayersUpdate();
+      if (!(canvas as any).__studioInitializing) onLayersUpdate();
     });
     canvas.on('object:removed', () => {
+      if ((canvas as any).__studioInitializing) return;
       onLayersUpdate();
       onRecordHistory();
     });
@@ -230,21 +236,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       }
     });
 
-    // Auto-fit initial zoom calculation
-    const fitTimer = setTimeout(() => {
-      if (alive && containerRef.current) {
-        const cWidth = containerRef.current.clientWidth - 40;
-        const cHeight = containerRef.current.clientHeight - 80;
-        const scaleX = cWidth / width;
-        const scaleY = cHeight / height;
-        const autoZoom = Math.min(scaleX, scaleY, 0.90);
-        setZoom(Math.max(0.15, Math.min(+autoZoom.toFixed(2), 1)));
-      }
-    }, 80);
-
     return () => {
       alive = false;
-      clearTimeout(fitTimer);
       removeGuides();
       canvas.dispose();
       fabricCanvasRef.current = null;
@@ -292,6 +285,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
+    if (initialZoomPending.current !== null) {
+      if (zoom !== initialZoomPending.current) return;
+      initialZoomPending.current = null;
+    }
     canvas.setDimensions({
       width: Math.round(width * zoom),
       height: Math.round(height * zoom)

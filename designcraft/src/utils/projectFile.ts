@@ -142,13 +142,19 @@ export async function portableProject(
         const w = image.naturalWidth || image.width,
           h = image.naturalHeight || image.height;
         if (!w || !h || w * h > 16_000_000) throw Error("IMAGE_SIZE");
-        const temp = document.createElement("canvas");
-        temp.width = w;
-        temp.height = h;
-        const ctx = temp.getContext("2d");
-        if (!ctx) throw Error("CANVAS");
-        ctx.drawImage(image, 0, 0);
-        o.src = temp.toDataURL("image/png");
+        const embedded = image.src || '';
+        if (/^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(embedded)) {
+          o.src = embedded; // Preserve compressed originals instead of re-encoding every recovery point as PNG.
+        } else {
+          const temp = document.createElement("canvas");
+          temp.width = w; temp.height = h;
+          try {
+            const ctx = temp.getContext("2d");
+            if (!ctx) throw Error("CANVAS");
+            ctx.drawImage(image, 0, 0);
+            o.src = temp.toDataURL("image/png");
+          } finally { temp.width = temp.height = 1; }
+        }
         if ("_originalSrc" in o) o._originalSrc = o.src;
       }
       if (o.objects) embed(o.objects, source.getObjects());

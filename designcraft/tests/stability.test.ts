@@ -54,3 +54,15 @@ test('floating controls clamp to viewport edges including small and offset viewp
     }
   }
 });
+
+test('initial fit and history budgets avoid full-size mobile allocations and repeated image snapshots', async () => {
+  const { fittedInitialZoom, boundedHistory } = await import('../src/utils/mobilePerformance');
+  const zoom = fittedInitialZoom(8000, 5000, 350, 600);
+  assert.ok(8000 * zoom <= 350);
+  assert.ok(5000 * zoom <= 600);
+  assert.equal(fittedInitialZoom(800, 600, 1000, 800), .9);
+  assert.deepEqual(boundedHistory(['same'], 0, 'same'), ['same']);
+  assert.deepEqual(boundedHistory(['aa', 'bb', 'cc'], 2, 'dd', 8), ['cc', 'dd']);
+  assert.deepEqual(boundedHistory(['aa', 'bb', 'cc'], 0, 'new'), ['aa', 'new']);
+  assert.deepEqual(boundedHistory(['old'], 0, 'large', 2), ['large']);
+});

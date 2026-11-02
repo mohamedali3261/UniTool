@@ -1,4 +1,5 @@
-import { rasterWithinBudget } from './rasterBudget';
+import { downloadFile } from './download';
+import { deviceRasterBudget, rasterWithinBudget } from './rasterBudget';
 import { fabric } from 'fabric';
 import { SVG_ICON_STRINGS, getFallbackSvgForIcon } from './svgIcons';
 import { ProjectItem } from '../types';
@@ -989,13 +990,11 @@ export const exportCanvasImage = (
 ): string => {
   try {
     const { zoom, width, height } = resolveExportSize(canvas, designWidth, designHeight);
-    if (!rasterWithinBudget(width, height, multiplier)) throw Error('RASTER_SIZE_LIMIT');
+    if (!rasterWithinBudget(width, height, multiplier, deviceRasterBudget())) throw Error('RASTER_SIZE_LIMIT');
     const safeMultiplier = Math.max(0.01, multiplier);
     // toCanvasElement() scales the viewport by `multiplier`, so dividing by the
     // on-screen zoom renders objects at 1 design unit = safeMultiplier pixels.
-    const exportScale = designWidth && designWidth > 0
-      ? (width * safeMultiplier) / canvas.getWidth()
-      : safeMultiplier / zoom;
+    const exportScale = safeMultiplier / zoom;
 
     const vpt = (canvas.viewportTransform as number[]).slice();
     canvas.viewportTransform[4] = 0;
@@ -1007,6 +1006,8 @@ export const exportCanvasImage = (
         format: (format as any) === 'jpg' ? 'jpeg' : format,
         quality,
         multiplier: exportScale,
+        width: width * zoom,
+        height: height * zoom,
         enableRetinaScaling: false
       });
     } finally {
@@ -1018,6 +1019,22 @@ export const exportCanvasImage = (
     return '';
   }
 };
+
+export async function exportCanvasBlob(canvas: fabric.Canvas, format: 'png' | 'jpeg' | 'webp', quality = .95, multiplier = 1, designWidth?: number, designHeight?: number): Promise<Blob> {
+  const { zoom, width, height } = resolveExportSize(canvas, designWidth, designHeight);
+  if (!rasterWithinBudget(width, height, multiplier, deviceRasterBudget())) throw Error('RASTER_SIZE_LIMIT');
+  const scale = multiplier / zoom;
+  const original = canvas.viewportTransform!.slice();
+  let surface: HTMLCanvasElement;
+  try {
+    canvas.viewportTransform![4] = canvas.viewportTransform![5] = 0;
+    canvas.calcViewportBoundaries();
+    surface = canvas.toCanvasElement(scale, { width: width * zoom, height: height * zoom });
+  } finally { canvas.viewportTransform = original; canvas.calcViewportBoundaries(); }
+  try {
+    return await new Promise<Blob>((resolve, reject) => surface.toBlob(blob => blob ? resolve(blob) : reject(Error('RASTER_ENCODING_FAILED')), 'image/' + format, quality));
+  } finally { surface.width = surface.height = 1; }
+}
 
 // Export Canvas as Clean SVG
 export const exportCanvasSvg = (
@@ -1055,57 +1072,17 @@ export const exportCanvasSvg = (
 };
 
 // Export Canvas as PDF Document
-export const exportCanvasPdf = (
-  canvas: fabric.Canvas,
-  title: string = 'design',
-  designWidth?: number,
-  designHeight?: number
-): void => {
-  try {
-    const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
-    // 2x for print-quality output, independent of the on-screen zoom
-    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2, width, height);
-    if (!dataUrl) return;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${title} - PDF</title>
-            <style>
-              @page {
-                size: ${width}px ${height}px;
-                margin: 0;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #ffffff;
-                width: ${width}px;
-                height: ${height}px;
-              }
-              img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${dataUrl}" onload="window.print();" />
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
-  } catch (err) {
-    console.error('Error creating PDF preview:', err);
-  }
+export const exportCanvasPdf = async (canvas: fabric.Canvas, title = 'design', designWidth?: number, designHeight?: number): Promise<void> => {
+  const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
+  const multiplier = Math.min(2, Math.sqrt(deviceRasterBudget() * .95 / (width * height)), 16384 / Math.max(width, height));
+  const blob = await exportCanvasBlob(canvas, 'png', 1, multiplier, width, height);
+  const { PDFDocument } = await import('pdf-lib');
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(title);
+  const image = await pdf.embedPng(await blob.arrayBuffer());
+  const page = pdf.addPage([width * .75, height * .75]);
+  page.drawImage(image, { x: 0, y: 0, width: width * .75, height: height * .75 });
+  downloadFile(new Blob([new Uint8Array(await pdf.save()).buffer], { type: 'application/pdf' }), `${title}.pdf`);
 };
 
 // Apply Modern Text Gradients
