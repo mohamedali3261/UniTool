@@ -79,3 +79,23 @@ Ordinary wheel/trackpad input scrolls the workspace; Ctrl/Cmd+wheel zooms. Overs
 Text properties include an explicit **Text content** textarea with empty-string preservation and Arabic typing. Blank custom-add submissions do nothing rather than create placeholder text. Plain new/fully cleared text defaults to **#000000 on every background**; existing intentional colors and styled presets remain editable. Fully clearing a styled text still resets formatting without inserting content, moving the object or changing font size.
 
 Verification for these interaction changes: **38 unit tests and 34 production-browser tests**, TypeScript checking and production build passed. New browser checks cover Arabic-key shortcut dispatch, copy/cut/paste/undo/redo, permanent and temporary mouse pan, touch pan/pinch without artwork transforms, text clearing/retyping, and scrollable oversized artboards. Touch coverage uses Chromium emulation, not physical-device certification.
+
+## Editable print-template collection
+
+The Templates sidebar adds **16 templates**, each in its own file under `src/data/templates/print/`:
+
+| Category | Count | Suggested trim sizes |
+| --- | ---: | --- |
+| Stickers / labels | 4 | 50×50, 60×60, 70×45, 45×70 mm |
+| Business cards | 6 | 90×50, 85×55, 50×90 mm |
+| Thank-you inserts | 2 | 100×70 mm |
+| Product / gift tags | 2 | 50×90, 55×85 mm |
+| Flyers | 2 | A5 (148×210 mm) |
+
+All text, circles and rectangles become ordinary editable Fabric objects, not flattened preview images. Each template uses exact pixel dimensions calculated from its suggested trim size at 300 DPI; those dimensions appear alongside its mm size. Applying a template asks before replacing existing artwork, clears stale selection and batches object replacement into one history record. Carton dimension guards remain in place. Card fronts and backs are separate templates/projects, not automatic duplex pages.
+
+Template favorites are saved locally in `designcraft-template-favorites`, synchronized between desktop/mobile sidebar instances, and remain usable temporarily with a visible warning if storage fails. Orientation filtering supports landscape, portrait and square; reset clears search/category/orientation/favorites-only filters without deleting favorite selections. Existing Arabic/English text search and categorized previews remain available.
+
+**Printing limitations:** mm sizes are suggestions corresponding to the base pixels at 300 DPI, not embedded print-job instructions. Ask the printer to use the displayed physical dimensions. Ordinary raster exports do not guarantee 300-DPI metadata. These templates do not automatically add bleed, safe-area guides, die-cut paths, punched holes, color-profile conversion or CMYK output. Round stickers still have a square canvas with a round visual design; tag dots are artwork, not manufacturing commands. Replace sample contact details, prices, dates and product claims, then obtain a proof before production.
+
+Verified: **40 unit tests and 36 production-browser tests**, TypeScript checking and production build passed. Browser coverage applies every new template, checks exact canvas dimensions and editable text/shape content, and verifies favorite persistence and orientation/reset behavior alongside prior regressions.

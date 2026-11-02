@@ -1,3 +1,4 @@
+import { PRINT_TEMPLATES } from './print';
 import type { DesignTemplate } from './types';
 
 import { promoDiscount50 } from './promoDiscount50';
@@ -56,6 +57,7 @@ import { gpTab10Feature } from './gpTab10Feature';
 export * from './types';
 
 export const TEMPLATE_CATALOG: DesignTemplate[] = [
+  ...PRINT_TEMPLATES,
   promoDiscount50,
   promoPriceTag,
   promoNeonFlash,

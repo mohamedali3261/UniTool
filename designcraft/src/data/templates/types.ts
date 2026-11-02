@@ -8,6 +8,11 @@
  */
 
 export type TemplateCategory =
+  | 'sticker'
+  | 'business-card'
+  | 'thank-you'
+  | 'product-tag'
+  | 'flyer'
   | 'promo'
   | 'social'
   | 'quote'
@@ -60,12 +65,18 @@ export interface DesignTemplate {
   bg2?: string; // optional gradient second stop (linear diagonal)
   baseW: number;
   baseH: number;
+  print?: { widthMm: number; heightMm: number; dpi: 300; shape: 'rectangle' | 'circle' };
   exactSize?: boolean; // resize the canvas to baseW×baseH when applied
   objects: TemplateObjectDef[];
 }
 
 export const TEMPLATE_CATEGORIES: { id: 'all' | TemplateCategory; nameAr: string; nameEn: string }[] = [
   { id: 'all', nameAr: 'الكل', nameEn: 'All' },
+  { id: 'sticker', nameAr: 'استيكرات وملصقات', nameEn: 'Stickers & Labels' },
+  { id: 'business-card', nameAr: 'كروت شخصية', nameEn: 'Business Cards' },
+  { id: 'thank-you', nameAr: 'كروت شكر', nameEn: 'Thank-you Cards' },
+  { id: 'product-tag', nameAr: 'تاجات منتجات', nameEn: 'Product Tags' },
+  { id: 'flyer', nameAr: 'فلايرات', nameEn: 'Flyers' },
   { id: 'promo', nameAr: 'عروض وتخفيضات', nameEn: 'Promo & Sale' },
   { id: 'social', nameAr: 'سوشيال ميديا', nameEn: 'Social' },
   { id: 'quote', nameAr: 'اقتباسات', nameEn: 'Quotes' },

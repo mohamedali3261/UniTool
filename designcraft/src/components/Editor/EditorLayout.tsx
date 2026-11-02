@@ -850,10 +850,16 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         : t.tplOverlayConfirm;
       const ok = window.confirm(message);
       if (!ok) return;
-      canvas.remove(...existing.filter((o:any)=>!initialProject.packaging || !String(o.id||'').startsWith('packaging-')));
+
     }
 
-    // Google Play asset templates carry their official size and adopt it
+    isHistoryLockedRef.current = true;
+    try {
+    canvas.discardActiveObject();
+    canvas.remove(...existing.filter((o:any)=>!initialProject.packaging || !String(o.id||'').startsWith('packaging-')));
+
+    // Exact-size templates adopt their design dimensions.
+
     if (tpl.exactSize) {
       cW = tpl.baseW;
       cH = tpl.baseH;
@@ -978,6 +984,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
     canvas.renderAll();
     updateLayersList();
+    } finally {
+      isHistoryLockedRef.current = false;
+    }
     recordHistory();
     onShowToast(t.tplToastTitle, `${lang === 'ar' ? tpl.nameAr : tpl.nameEn} · ${cW} × ${cH}`, 'success');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
