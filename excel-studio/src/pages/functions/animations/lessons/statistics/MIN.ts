@@ -1,13 +1,16 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
-  name: "SUM",
-  formula: "=SUM(A1:A3)",
-  goal: ["اجمع 3 أرقام خطوة بخطوة.", "Add three numbers step by step."],
-  tip: [
-    "النقطتان : تعنيان كل الخلايا من A1 إلى A3، وليس الخليتين فقط.",
-    "The colon includes every cell from A1 through A3, not just the endpoints.",
+  name: "MIN",
+  formula: "=MIN(A1:A3)",
+  goal: [
+    "احتفظ بأصغر رقم أثناء المرور على الخلايا.",
+    "Keep the smallest number as you scan the cells.",
   ],
-  result: 60,
+  tip: [
+    "الدالة تعيد القيمة الأصغر. الصفر رقم ويشارك في المقارنة؛ الخلية الفارغة ليست صفرًا.",
+    "Returns the smallest value. Zero participates; an empty cell is not zero.",
+  ],
+  result: 10,
   demo: [
     {
       kind: "click",
@@ -19,8 +22,8 @@ const lesson: FormulaLesson = {
     },
     {
       kind: "type",
-      caption: ["اكتب =SUM( داخل D1.", "Type =SUM( inside D1."],
-      text: "=SUM(",
+      caption: ["اكتب =MIN( داخل D1.", "Type =MIN( inside D1."],
+      text: "=MIN(",
     },
     {
       kind: "select",
@@ -55,40 +58,40 @@ const lesson: FormulaLesson = {
         "نقرأ A1 ثم A2 ثم A3 بالترتيب.",
         "Read A1, A2 and A3 in order.",
       ],
-      calculation: "SUM(A1:A3)",
+      calculation: "MIN(A1:A3)",
       active: ["A1", "A2", "A3"],
       matched: [],
       skipped: [],
     },
     {
-      title: ["اقرأ A1 = 10", "Read A1 = 10"],
+      title: ["قارن A1 = 10", "Compare A1 = 10"],
       explanation: [
-        "نضيف 10 إلى المجموع السابق 0. أصبح العدد 1.",
-        "Add 10 to the previous sum 0. We have read 1 numbers.",
+        "نقارن الرقم الحالي بأفضل قيمة حتى الآن؛ الأصغر الآن 10.",
+        "Compare the current number with the running minimum. It is now 10.",
       ],
-      calculation: "0 + 10 = 10",
+      calculation: "MIN(10) = 10",
       active: ["A1"],
       matched: [],
       skipped: [],
     },
     {
-      title: ["اقرأ A2 = 20", "Read A2 = 20"],
+      title: ["قارن A2 = 20", "Compare A2 = 20"],
       explanation: [
-        "نضيف 20 إلى المجموع السابق 10. أصبح العدد 2.",
-        "Add 20 to the previous sum 10. We have read 2 numbers.",
+        "نقارن الرقم الحالي بأفضل قيمة حتى الآن؛ الأصغر الآن 10.",
+        "Compare the current number with the running minimum. It is now 10.",
       ],
-      calculation: "10 + 20 = 30",
+      calculation: "MIN(10, 20) = 10",
       active: ["A2"],
       matched: ["A1"],
       skipped: [],
     },
     {
-      title: ["اقرأ A3 = 30", "Read A3 = 30"],
+      title: ["قارن A3 = 30", "Compare A3 = 30"],
       explanation: [
-        "نضيف 30 إلى المجموع السابق 30. أصبح العدد 3.",
-        "Add 30 to the previous sum 30. We have read 3 numbers.",
+        "نقارن الرقم الحالي بأفضل قيمة حتى الآن؛ الأصغر الآن 10.",
+        "Compare the current number with the running minimum. It is now 10.",
       ],
-      calculation: "30 + 30 = 60",
+      calculation: "MIN(10, 20, 30) = 10",
       active: ["A3"],
       matched: ["A1", "A2"],
       skipped: [],
@@ -96,10 +99,10 @@ const lesson: FormulaLesson = {
     {
       title: ["النتيجة النهائية", "Final result"],
       explanation: [
-        "انتهينا من النطاق. نتيجة SUM هي 60.",
-        "The whole range has been processed. SUM returns 60.",
+        "انتهينا من النطاق. نتيجة MIN هي 10.",
+        "The whole range has been processed. MIN returns 10.",
       ],
-      calculation: "= 60",
+      calculation: "= 10",
       active: [],
       matched: ["A1", "A2", "A3"],
       skipped: [],

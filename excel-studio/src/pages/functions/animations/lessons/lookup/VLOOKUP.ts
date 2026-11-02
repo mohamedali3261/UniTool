@@ -1,4 +1,4 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
   name: "VLOOKUP",
   formula: "=VLOOKUP(20,A1:B3,2,FALSE)",

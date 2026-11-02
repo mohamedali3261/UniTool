@@ -98,7 +98,7 @@ test("library searches every function, explains and runs examples, favorites per
   await card.locator(".xs-function-open").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("جمع بعدة شروط");
-  await expect(dialog.locator(".xs-example-result b")).toHaveText("10");
+  await expect(dialog.locator(".xs-example-result b")).toHaveText("6");
   await dialog
     .getByRole("textbox", { name: "تجربة المعادلة" })
     .fill("=SUM(A1:A3)*2");

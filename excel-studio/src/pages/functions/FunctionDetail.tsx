@@ -65,46 +65,11 @@ export function FunctionDetail({
         <div className="xs-example-layout">
           <div>
             <h3>{t("بيانات المثال", "Example data")}</h3>
-            {formulaLessons[entry.name] ? (
-              <FormulaAnimation
-                key={entry.name}
-                lesson={formulaLessons[entry.name]}
-                onUseExample={setDraft}
-              />
-            ) : (
-              <>
-                <table className="xs-example-table" dir="ltr">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>A</th>
-                      <th>B</th>
-                      <th>C</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      [10, 2, "Apple"],
-                      [20, 4, "Pear"],
-                      [30, 6, "Apple"],
-                    ].map((r, i) => (
-                      <tr key={i}>
-                        <th>{i + 1}</th>
-                        {r.map((v, j) => (
-                          <td key={j}>{v}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <small>
-                  {t(
-                    "كل الخلايا الأخرى فارغة. التجربة مستقلة عن ملفك.",
-                    "All other cells are blank. This playground does not change your file.",
-                  )}
-                </small>
-              </>
-            )}
+            <FormulaAnimation
+              key={entry.name}
+              lesson={formulaLessons[entry.name]}
+              onUseExample={setDraft}
+            />
           </div>
           <div>
             <h3>{t("جرّبها بإيدك", "Try it yourself")}</h3>
@@ -139,14 +104,6 @@ export function FunctionDetail({
             </div>
           </div>
         </div>
-        {entry.status === "reference" && (
-          <p className="xs-callout">
-            {t(
-              "هذا مثال مرجعي، ولم نعتمد تشغيله داخل المحرر. قد يحتاج Excel أو مدخلات إضافية. يمكنك نسخ الصيغة واستخدامها في Excel.",
-              "This is a reference example, not certified for in-app calculation. It may need Excel or additional inputs. Copy it for use in Excel.",
-            )}
-          </p>
-        )}
         <p className="xs-hint">
           {t(
             "الأمثلة تعليمية وليست نصيحة مالية. الدوال العشوائية والتاريخية قد تتغير عند إعادة الحساب. نتائج المصفوفات المتدفقة غير مدعومة.",

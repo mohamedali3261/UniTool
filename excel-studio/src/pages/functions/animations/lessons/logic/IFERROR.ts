@@ -1,4 +1,4 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
   name: "IFERROR",
   formula: "=IFERROR(A1/0,0)",

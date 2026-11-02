@@ -1,4 +1,4 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
   name: "SUMIFS",
   formula: '=SUMIFS(B1:B3,A1:A3,">15",C1:C3,"Apple")',

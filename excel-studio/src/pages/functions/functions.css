@@ -407,3 +407,57 @@
     gap: 5px;
   }
 }
+.xs-lesson-sections {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.xs-lesson-sections button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 1px solid #d9e4ce;
+  border-radius: 12px;
+  background: #f7faf3;
+  color: #506246;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: start;
+}
+.xs-lesson-sections b {
+  display: grid;
+  place-items: center;
+  min-width: 27px;
+  height: 27px;
+  background: #e4edda;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.xs-lesson-sections button[aria-pressed="true"] {
+  background: #e7f0dd;
+  border-color: #6c9257;
+  color: #304d26;
+}
+.xs-lesson-sections button:focus-visible {
+  outline: 2px solid #547545;
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .xs-lesson-sections {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .xs-lesson-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .xs-lesson-sections button {
+    font-size: 11px;
+    padding: 12px 9px;
+  }
+}

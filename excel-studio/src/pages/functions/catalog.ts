@@ -1,6 +1,20 @@
-import source from "../../data/catalog.json";
+import source from "./lessonMetadata.json";
+import { formulaLessons, lessonSections } from "./animations";
 import { newBook } from "../../core/workbook";
-export const catalog = source;
+const sectionCategories: Record<string, string> = {
+  math: "Math and trigonometry",
+  statistics: "Statistical",
+  logic: "Logical",
+  text: "Text",
+  lookup: "Lookup and reference",
+};
+export const catalog = source.map((entry) => ({
+  ...entry,
+  category: sectionCategories[lessonSections[entry.name]],
+  example: formulaLessons[entry.name].formula,
+  status: "tested",
+  common: true,
+}));
 export type FormulaEntry = (typeof catalog)[number];
 export function exampleBook() {
   const book = newBook("Formula playground");

@@ -4,7 +4,7 @@ import { formulaLessons } from "../src/pages/functions/animations";
 import { exampleRows } from "../src/pages/functions/animations/types";
 import { exampleBook } from "../src/pages/functions/catalog";
 import { calculator } from "../src/core/calculate";
-test("twenty independently authored lessons are registered", () => {
+test("forty independently authored lessons are registered", () => {
   assert.deepEqual(
     Object.keys(formulaLessons).sort(),
     [
@@ -28,6 +28,26 @@ test("twenty independently authored lessons are registered", () => {
       "LEN",
       "LEFT",
       "CONCATENATE",
+      "PRODUCT",
+      "ABS",
+      "ROUNDUP",
+      "ROUNDDOWN",
+      "INT",
+      "MOD",
+      "POWER",
+      "SQRT",
+      "MEDIAN",
+      "LARGE",
+      "SMALL",
+      "COUNTBLANK",
+      "AVERAGEIFS",
+      "RIGHT",
+      "MID",
+      "UPPER",
+      "LOWER",
+      "TRIM",
+      "SUBSTITUTE",
+      "MATCH",
     ].sort(),
   );
 });
@@ -50,7 +70,7 @@ for (const lesson of Object.values(formulaLessons))
         ...(s.matched || []),
         ...(s.skipped || []),
       ])
-        assert.match(r, /^[ABC][123]$/);
+        assert.match(r, /^(?:[ABC][123]|D[23])$/);
       assert.ok(!(s.matched || []).some((r) => (s.skipped || []).includes(r)));
     }
     for (let i = 0; i < 3; i++)
