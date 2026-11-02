@@ -1,3 +1,4 @@
+import { SelectionTools } from "./SelectionTools";
 import { TableTools } from "./TableTools";
 import { useMemo, useState } from "react";
 import {
@@ -195,7 +196,7 @@ export default function EditorPage({
               if (selection.anchor === selection.end) {
                 notice(
                   t(
-                    "حدد نطاقًا من عدة صفوف بـ Shift+نقرة ثم استخدم التعبئة.",
+                    "حدد نطاقًا من عدة صفوف بالسحب أو Shift+نقرة ثم استخدم التعبئة.",
                     "Select multiple rows with Shift+click, then fill down.",
                   ),
                 );
@@ -217,6 +218,13 @@ export default function EditorPage({
             onAssistant={() => setAssistant(true)}
           />
           <TableTools sheet={sheet} selection={selection} patch={patchSheet} />
+          <SelectionTools
+            sheet={sheet}
+            selection={selection}
+            setSelection={setSelection}
+            patch={patchSheet}
+            result={result}
+          />
           <SheetGrid
             sheet={sheet}
             onResize={(col, width) =>
@@ -228,6 +236,20 @@ export default function EditorPage({
             setSelection={setSelection}
             result={result}
             onCommit={commit}
+            onClearSelection={() =>
+              update((b) =>
+                applyCells(
+                  b,
+                  sheet.id,
+                  Object.fromEntries(
+                    refs(selection.anchor, selection.end).map((ref) => [
+                      ref,
+                      { raw: "" },
+                    ]),
+                  ),
+                ),
+              )
+            }
             filter={filter}
             onPaste={(text) => {
               try {
@@ -292,6 +314,27 @@ export default function EditorPage({
                   maximumFractionDigits: 2,
                 })}
               </span>
+            )}
+            <span>
+              {t("غير فارغ", "Nonempty")}:{" "}
+              {
+                selectedResults.filter(
+                  (r) =>
+                    r.value !== null && r.value !== undefined && r.value !== "",
+                ).length
+              }
+            </span>
+            {numeric.length > 0 && (
+              <>
+                <span>
+                  {t("الأصغر", "Min")}:{" "}
+                  {Math.min(...numeric).toLocaleString(lang)}
+                </span>
+                <span>
+                  {t("الأكبر", "Max")}:{" "}
+                  {Math.max(...numeric).toLocaleString(lang)}
+                </span>
+              </>
             )}
             <span className="xs-status-end">
               {errors
