@@ -1,3 +1,23 @@
+import SUMPRODUCT from "./lessons/math/SUMPRODUCT";
+import QUOTIENT from "./lessons/math/QUOTIENT";
+import TRUNC from "./lessons/math/TRUNC";
+import SIGN from "./lessons/math/SIGN";
+import EVEN from "./lessons/math/EVEN";
+import ODD from "./lessons/math/ODD";
+import INDEX from "./lessons/lookup/INDEX";
+import ROW from "./lessons/lookup/ROW";
+import COLUMN from "./lessons/lookup/COLUMN";
+import ROWS from "./lessons/lookup/ROWS";
+import COLUMNS from "./lessons/lookup/COLUMNS";
+import NOT from "./lessons/logic/NOT";
+import IFNA from "./lessons/logic/IFNA";
+import FIND from "./lessons/text/FIND";
+import SEARCH from "./lessons/text/SEARCH";
+import REPLACE from "./lessons/text/REPLACE";
+import EXACT from "./lessons/text/EXACT";
+import REPT from "./lessons/text/REPT";
+import VALUE from "./lessons/text/VALUE";
+import TEXT from "./lessons/text/TEXT";
 import SUM from "./lessons/math/SUM";
 import SUMIF from "./lessons/math/SUMIF";
 import SUMIFS from "./lessons/math/SUMIFS";
@@ -40,6 +60,27 @@ import SUBSTITUTE from "./lessons/text/SUBSTITUTE";
 import MATCH from "./lessons/lookup/MATCH";
 import type { FormulaLesson } from "./types";
 export const formulaLessons: Record<string, FormulaLesson> = {
+  SUMPRODUCT,
+  QUOTIENT,
+  TRUNC,
+  SIGN,
+  EVEN,
+  ODD,
+  INDEX,
+  ROW,
+  COLUMN,
+  ROWS,
+  COLUMNS,
+  NOT,
+  IFNA,
+  FIND,
+  SEARCH,
+  REPLACE,
+  EXACT,
+  REPT,
+  VALUE,
+  TEXT,
+
   SUM,
   SUMIF,
   SUMIFS,
@@ -82,6 +123,27 @@ export const formulaLessons: Record<string, FormulaLesson> = {
   MATCH,
 };
 export const lessonSections: Record<string, string> = {
+  SUMPRODUCT: "math",
+  QUOTIENT: "math",
+  TRUNC: "math",
+  SIGN: "math",
+  EVEN: "math",
+  ODD: "math",
+  INDEX: "lookup",
+  ROW: "lookup",
+  COLUMN: "lookup",
+  ROWS: "lookup",
+  COLUMNS: "lookup",
+  NOT: "logic",
+  IFNA: "logic",
+  FIND: "text",
+  SEARCH: "text",
+  REPLACE: "text",
+  EXACT: "text",
+  REPT: "text",
+  VALUE: "text",
+  TEXT: "text",
+
   SUM: "math",
   SUMIF: "math",
   SUMIFS: "math",

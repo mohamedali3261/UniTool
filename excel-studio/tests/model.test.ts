@@ -173,7 +173,7 @@ test("invalid projects and oversized files are rejected", async () => {
   );
 });
 test("catalog has documentation and examples for every listed function", () => {
-  assert.equal(catalog.length, 40);
+  assert.equal(catalog.length, 60);
   for (const f of catalog) {
     assert.ok(f.description.length > 10, f.name);
     assert.ok(

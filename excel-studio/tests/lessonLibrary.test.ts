@@ -6,8 +6,8 @@ import {
   formulaLessons,
   lessonSections,
 } from "../src/pages/functions/animations";
-test("public catalogue contains exactly the forty animated lessons, no reference-only functions", () => {
-  assert.equal(catalog.length, 40);
+test("public catalogue contains exactly the sixty animated lessons, no reference-only functions", () => {
+  assert.equal(catalog.length, 60);
   assert.deepEqual(
     catalog.map((e) => e.name).sort(),
     Object.keys(formulaLessons).sort(),
