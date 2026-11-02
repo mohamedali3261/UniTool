@@ -1,3 +1,4 @@
+import { shortcutKey } from '../../utils/keyboard';
 import {applyTextFit} from '../../advanced/core/text';
 import {installAlignmentGuides} from '../../utils/alignmentGuides';
 import {resetEmptyText,normalTextFill} from '../../utils/textReset';
@@ -28,6 +29,7 @@ interface CanvasAreaProps {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   showGrid: boolean;
   isPanMode?: boolean;
+  onPanModeChange?: (pan: boolean) => void;
   overlays?:React.ReactNode;
   onCanvasReady: (canvas: fabric.Canvas) => void;
   onSelectionChange: (props: ActiveObjectProperties | null) => void;
@@ -49,7 +51,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   zoom,
   setZoom,
   showGrid,
-  isPanMode,
+  isPanMode, onPanModeChange,
   onCanvasReady,overlays,
   onSelectionChange,
   onLayersUpdate,
@@ -104,6 +106,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       backgroundColor: backgroundColor || '#FFFFFF',
       preserveObjectStacking: true,
       selection: true,
+      targetFindTolerance: 2,
       stopContextMenu: true,
       fireRightClick: true,
       enableRetinaScaling: true, // Crisp rendering on high-DPI/Retina screens without pixelation
@@ -159,6 +162,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         lockRotation: active.lockRotation,
         lockScalingX: active.lockScalingX,
         lockScalingY: active.lockScalingY,
+        text: textObj?.text ?? undefined,
         fontSize: textObj ? textObj.fontSize : undefined,
         fontFamily: textObj ? textObj.fontFamily : undefined,
         fontWeight: textObj ? textObj.fontWeight : undefined,
@@ -191,6 +195,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       onSelectionChange(props);
     };
 
+    canvas.on('text:changed', updateSelection);
     canvas.on('selection:created', updateSelection);
     canvas.on('selection:updated', updateSelection);
     canvas.on('selection:cleared', () => {
@@ -202,7 +207,9 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       onLayersUpdate();
       onRecordHistory();
     });
-    canvas.on('object:added', () => {
+    canvas.on('object:added', (event) => {
+      if (event.target) event.target.padding = 0;
+      if (event.target?.type === 'image') event.target.perPixelTargetFind = true;
       onLayersUpdate();
     });
     canvas.on('object:removed', () => {
@@ -248,6 +255,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   useEffect(() => {
     const handleGlobalRelease = (e: MouseEvent | TouchEvent | PointerEvent) => {
       setIsPanning(false);
+      if (e.type === 'blur') setIsSpacePressed(false);
       const canvas = fabricCanvasRef.current;
       if (!canvas) return;
 
@@ -308,6 +316,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return; // Normal wheel/trackpad scrolls; Ctrl+wheel zooms.
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.05 : -0.05;
       setZoom((prev) => {
@@ -331,14 +340,21 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         return;
       }
 
-      if (e.code === 'Space' && !isSpacePressed) {
-        setIsSpacePressed(true);
+      if (e.isComposing) return;
+      const key = shortcutKey(e);
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+        if (key === 'h') onPanModeChange?.(true);
+        if (key === 'v') onPanModeChange?.(false);
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      if (e.code === 'Space' && target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        if (!isSpacePressed) setIsSpacePressed(true);
+      }
+      if ((e.ctrlKey || e.metaKey) && key === 's') {
         e.preventDefault();
         onSave();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+      if ((e.ctrlKey || e.metaKey) && key === 'a') {
         const canvas = fabricCanvasRef.current;
         if (!canvas) return;
         const objects = canvas.getObjects().filter((obj:any) => obj.visible !== false&&obj.selectable!==false&&!obj.locked);
@@ -388,7 +404,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isSpacePressed, onSave, onRecordHistory]);
+  }, [isSpacePressed, onSave, onRecordHistory, onPanModeChange]);
 
   // 7. Touch Pinch-to-Zoom & Touch Pan
   useEffect(() => {
@@ -396,7 +412,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!container) return;
 
     const handleTouchStart = (e: TouchEvent) => {
+      if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
       if (e.touches.length === 2) {
+        e.preventDefault();
+        e.stopPropagation();
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
@@ -412,6 +431,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           scrollTop: container.scrollTop
         };
       } else if (e.touches.length === 1 && (isPanMode || isSpacePressed)) {
+        e.preventDefault();
+        e.stopPropagation();
         const touch = e.touches[0];
         touchPanStartRef.current = {
           x: touch.clientX,
@@ -426,6 +447,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2 && initialPinchDistRef.current !== null) {
         e.preventDefault();
+        e.stopPropagation();
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
@@ -441,6 +463,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         container.scrollTop = touchPanStartRef.current.scrollTop - dy;
       } else if (e.touches.length === 1 && (isPanning || isPanMode || isSpacePressed)) {
         e.preventDefault();
+        e.stopPropagation();
         const touch = e.touches[0];
         const dx = touch.clientX - touchPanStartRef.current.x;
         const dy = touch.clientY - touchPanStartRef.current.y;
@@ -454,23 +477,36 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       setIsPanning(false);
     };
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
     container.addEventListener('touchend', handleTouchEnd);
     container.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchstart', handleTouchStart, true);
+      container.removeEventListener('touchmove', handleTouchMove, true);
       container.removeEventListener('touchend', handleTouchEnd);
       container.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [zoom, isPanMode, isSpacePressed, isPanning, setZoom]);
 
+  // Panning must never hit-test or transform artwork underneath the hand.
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    const pan = !!(isPanMode || isSpacePressed);
+    canvas.skipTargetFind = pan;
+    canvas.selection = !pan;
+    canvas.defaultCursor = pan ? 'grab' : 'default';
+    canvas.hoverCursor = pan ? 'grab' : 'move';
+  }, [isPanMode, isSpacePressed]);
+
   // 8. Mouse Pan dragging
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isPanMode || isSpacePressed || e.button === 1) {
+      if ((e.target as HTMLElement).closest('button, input, select, textarea')) return;
       e.preventDefault();
+      e.stopPropagation();
       setIsPanning(true);
       if (containerRef.current) {
         panStartRef.current = {
@@ -570,11 +606,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     <div
       ref={containerRef}
       id="canvas-area-container"
-      title={lang==='ar'?'اسحب لمحاذاة الحواف والمنتصف. المسطرة بالبكسل؛ اضغط Alt لتجاهل الالتقاط.':'Drag to align edges and centers. Ruler units are pixels; hold Alt to bypass snapping.'}
-      onMouseDown={handleMouseDown}
+      title={lang==='ar'?'H لتحريك اللوحة، V للتحديد، مسافة مع السحب للتحريك مؤقتًا. Ctrl مع عجلة الماوس للتكبير؛ Alt لتجاهل الالتقاط.':'H: pan; V: select; Space + drag: temporary pan. Ctrl + wheel: zoom; Alt: bypass snapping.'}
+      onMouseDownCapture={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      className={`flex-1 h-full overflow-auto bg-[#070D1E] flex items-center justify-center p-3 sm:p-8 pb-20 md:pb-8 relative select-none ${
+      className={`flex-1 h-full overflow-auto bg-[#070D1E] flex items-start justify-start p-3 sm:p-8 pb-20 md:pb-8 relative select-none ${
         isPanMode || isSpacePressed || isPanning ? 'cursor-grab active:cursor-grabbing' : ''
       }`}
       style={{
@@ -584,6 +620,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         backgroundSize: '20px 20px'
       }}
     >
+      <div className="absolute bottom-3 start-3 z-30 flex items-center gap-1 rounded-xl border border-slate-600 bg-slate-900 p-1 text-xs text-white" role="group" aria-label={lang === 'ar' ? 'أدوات التحريك والتحديد' : 'Canvas tools'}>
+        <button type="button" aria-pressed={!isPanMode} onClick={() => onPanModeChange?.(false)} className={`rounded-lg px-2 py-2 ${!isPanMode ? 'bg-sky-600' : ''}`} title={lang === 'ar' ? 'تحديد العناصر (V)' : 'Select objects (V)'}>{lang === 'ar' ? 'تحديد' : 'Select'}</button>
+        <button type="button" aria-pressed={!!isPanMode} onClick={() => onPanModeChange?.(true)} className={`rounded-lg px-2 py-2 ${isPanMode ? 'bg-sky-600' : ''}`} title={lang === 'ar' ? 'سحب اللوحة (H) أو اضغط مسافة مؤقتًا' : 'Pan canvas (H), or hold Space temporarily'}>{lang === 'ar' ? 'تحريك اللوحة' : 'Pan'}</button>
+      </div>
       {/* Floating Smart Action Bar for Selected Object */}
       {hasSelection && (
         <div
@@ -678,7 +718,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       )}
 
       {/* Artboard Frame & Canvas Container */}
-      <div className="flex flex-col items-center justify-center">
+      <div className="m-auto shrink-0 flex flex-col items-center justify-center">
         <div className="text-[10px] font-mono text-slate-400 mb-1 tracking-wider">
           {t.caCanvasLabel} ({width} × {height} px)
         </div>

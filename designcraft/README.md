@@ -16,7 +16,7 @@ While dragging objects, a screen-only ruler displays **design-space pixels** (no
 
 ## Independent text formatting
 
-A new ordinary text object has an independent style map and no inherited shadow, outline, italic, underline or character-spacing state. Explicit heading/preset choices can still be bold/styled intentionally. Clearing **all characters** in an editable text box (or its properties editor) resets its formatting to ordinary Cairo, regular weight and a contrasting fill, removing per-character styles, effects and text curves. The box's position and font size are preserved, and unrelated text objects are unchanged. Partial edits preserve the existing formatting. Deleting a selected text object also resets the custom-text panel's previous font/color override choices before inserting the next ordinary text.
+A new ordinary text object has an independent style map and no inherited shadow, outline, italic, underline or character-spacing state. Explicit heading/preset choices can still be bold/styled intentionally. Clearing **all characters** in an editable text box (or its properties editor) resets its formatting to ordinary Cairo, regular weight and a black fill, removing per-character styles, effects and text curves. The box's position and font size are preserved, and unrelated text objects are unchanged. Partial edits preserve the existing formatting. Deleting a selected text object also resets the custom-text panel's previous font/color override choices before inserting the next ordinary text.
 
 ## Checks
 
@@ -68,3 +68,14 @@ The export dialog is capped at 384 px wide and 90% of viewport height with a scr
 Additional hardening prevents repeated canvas mounts from stacking style-serializer wrappers, ignores late image/clone callbacks after disposal, blocks overlapping undo/redo loads and guards deferred face-focus callbacks. The mixed-artwork browser test repeatedly edits and undoes/redoes a document containing grouped gradient text, shadows and a clipped raster; it waits for the real recovery debounce in six idle cycles and asserts no page error or navigation. It is a short repeatability test, not an hours-long memory endurance measurement.
 
 Latest verification: **37 unit tests, 30 production-browser tests**, TypeScript checking and production build passed. Production build still reports the existing large-chunk advisory.
+
+
+## Arabic shortcuts and safer canvas interaction
+
+Editor commands use physical `KeyboardEvent.code` letters (with a key fallback), so Ctrl/Cmd+A/C/X/V/D/S/Z/Y work with Arabic hardware keyboard layouts. Text inputs, editable fields, composition events and modal dialogs keep their native editing behavior. **H** selects the hand tool, **V** returns to selection, **Space + drag** temporarily pans and the middle mouse button pans without grabbing artwork. The canvas has visible Select/Pan buttons, blur releases temporary Space mode, and captured mouse/touch gestures prevent Fabric from moving objects during hand/pinch operations.
+
+Ordinary wheel/trackpad input scrolls the workspace; Ctrl/Cmd+wheel zooms. Oversized artboards use non-shrinking, auto-margin layout so their top/left edges remain reachable. Selection has zero added padding; images use pixel hit-testing so transparent pixels do not capture clicks. Text retains rectangular box hit-testing so double-click editing is reliable (textbox bounds remain the actual editable wrapping box, not a glyph contour).
+
+Text properties include an explicit **Text content** textarea with empty-string preservation and Arabic typing. Blank custom-add submissions do nothing rather than create placeholder text. Plain new/fully cleared text defaults to **#000000 on every background**; existing intentional colors and styled presets remain editable. Fully clearing a styled text still resets formatting without inserting content, moving the object or changing font size.
+
+Verification for these interaction changes: **38 unit tests and 34 production-browser tests**, TypeScript checking and production build passed. New browser checks cover Arabic-key shortcut dispatch, copy/cut/paste/undo/redo, permanent and temporary mouse pan, touch pan/pinch without artwork transforms, text clearing/retyping, and scrollable oversized artboards. Touch coverage uses Chromium emulation, not physical-device certification.

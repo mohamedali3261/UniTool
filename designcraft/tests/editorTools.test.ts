@@ -76,6 +76,6 @@ test("only fully empty text resets formatting and it never changes another text 
   const b = { ...a, text: "Keep my style", fontWeight: 700 };
   assert.equal(resetEmptyText(b), false);
   assert.equal(b.fontWeight, 700);
-  assert.equal(normalTextFill("#111111"), "#FFFFFF");
-  assert.equal(normalTextFill("#fff"), "#0F172A");
+  assert.equal(normalTextFill("#111111"), "#000000");
+  assert.equal(normalTextFill("#fff"), "#000000");
 });

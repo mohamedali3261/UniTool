@@ -32,3 +32,12 @@ test('raster allocations reject oversized, nonfinite and invalid dimensions befo
   assert.equal(fits(NaN, 100), false);
   assert.equal(fits(100, 100, -1), false);
 });
+
+test('physical shortcut keys survive Arabic layout without translating typed text', async () => {
+  const { shortcutKey } = await import('../src/utils/keyboard');
+  assert.equal(shortcutKey({ code: 'KeyS', key: 'س' }), 's');
+  assert.equal(shortcutKey({ code: 'KeyZ', key: 'ئ' }), 'z');
+  assert.equal(shortcutKey({ code: 'KeyC', key: 'ؤ' }), 'c');
+  assert.equal(shortcutKey({ code: 'BracketRight', key: 'د' }), ']');
+  assert.equal(shortcutKey({ code: '', key: 'S' }), 's');
+});
