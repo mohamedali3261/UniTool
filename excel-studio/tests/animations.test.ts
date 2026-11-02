@@ -4,7 +4,7 @@ import { formulaLessons } from "../src/pages/functions/animations";
 import { exampleRows } from "../src/pages/functions/animations/types";
 import { exampleBook } from "../src/pages/functions/catalog";
 import { calculator } from "../src/core/calculate";
-test("first release has ten independently authored lessons", () => {
+test("twenty independently authored lessons are registered", () => {
   assert.deepEqual(
     Object.keys(formulaLessons).sort(),
     [
@@ -18,6 +18,16 @@ test("first release has ten independently authored lessons", () => {
       "SUMIF",
       "COUNTIF",
       "VLOOKUP",
+      "SUMIFS",
+      "COUNTIFS",
+      "AVERAGEIF",
+      "IFERROR",
+      "AND",
+      "OR",
+      "ROUND",
+      "LEN",
+      "LEFT",
+      "CONCATENATE",
     ].sort(),
   );
 });

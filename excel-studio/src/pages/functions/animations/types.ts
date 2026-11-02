@@ -21,7 +21,7 @@ export type FormulaLesson = {
   formula: string;
   goal: Bilingual;
   tip: Bilingual;
-  result: string | number;
+  result: string | number | boolean;
   steps: LessonStep[];
 };
 export const exampleRows = [

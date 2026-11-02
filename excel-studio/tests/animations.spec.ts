@@ -33,6 +33,16 @@ for (const [name, result] of Object.entries({
   SUMIF: "10",
   COUNTIF: "2",
   VLOOKUP: "4",
+  SUMIFS: "6",
+  COUNTIFS: "2",
+  AVERAGEIF: "5",
+  IFERROR: "0",
+  AND: "true",
+  OR: "true",
+  ROUND: "3.33",
+  LEN: "5",
+  LEFT: "App",
+  CONCATENATE: "Apple - Pear",
 }))
   test(`${name}: manual steps agree with the real playground`, async ({
     page,
@@ -122,9 +132,9 @@ test("English explanations and the animated-only library tab stay accessible", a
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Search formulas" }).fill("");
   await page
-    .getByRole("button", { name: "Animated lessons · 10", exact: true })
+    .getByRole("button", { name: "Animated lessons · 20", exact: true })
     .click();
-  await expect(page.locator(".xs-function-card")).toHaveCount(10);
+  await expect(page.locator(".xs-function-card")).toHaveCount(20);
 });
 test("autoplay really types in D1, drags a range and commits with Enter", async ({
   page,
