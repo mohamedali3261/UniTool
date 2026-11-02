@@ -552,7 +552,7 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
               <input
                 type="range"
                 min="10"
-                max="20"
+                max="30"
                 step="1"
                 value={logoSize}
                 onChange={(e) => setLogoSize(Number(e.target.value))}
@@ -560,6 +560,20 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
               />
             </label>
           </>
+        )}
+        {logo && (
+          <p className="text-[10px] leading-relaxed text-gray-400">
+            {lang === "ar"
+              ? "بدون خلفية أو إطار مضاف. التكبير يغيّر حجم اللوجو الفعلي بعد قص الهوامش الشفافة. الخلفية الموجودة داخل الصورة لا تُحذف؛ استخدم PNG شفافًا."
+              : "No added background or frame. Size scales the actual logo after trimming transparent margins. Background baked into your image stays: use a transparent PNG."}
+          </p>
+        )}
+        {logo && logoSize > 20 && (
+          <p role="status" className="text-xs text-amber-300">
+            {lang === "ar"
+              ? "تنبيه: اللوجو الكبير قد يمنع قراءة الكود. جرّب المسح أو قلّل الحجم."
+              : "Warning: a large logo may prevent scanning. Test it or reduce the size."}
+          </p>
         )}
         <p className="text-[10px] leading-relaxed text-gray-400">
           {lang === "ar"
