@@ -11,6 +11,46 @@ const lesson: FormulaLesson = {
     "COUNTA includes text, numbers, logical values, errors and formula-generated empty strings. It differs from COUNT.",
   ],
   result: 9,
+  demo: [
+    {
+      kind: "click",
+      caption: [
+        "اضغط على D1: هنا هنكتب المعادلة.",
+        "Click D1: this is where we will enter the formula.",
+      ],
+      cell: "D1",
+    },
+    {
+      kind: "type",
+      caption: ["اكتب =COUNTA( داخل D1.", "Type =COUNTA( inside D1."],
+      text: "=COUNTA(",
+    },
+    {
+      kind: "select",
+      caption: [
+        "اضغط A1 واسحب حتى C3؛ النطاق هيتكتب تلقائيًا.",
+        "Press A1 and drag to C3; the range is inserted automatically.",
+      ],
+      fromCell: "A1",
+      toCell: "C3",
+      text: "A1:C3",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اقفل القوس؛ كده المعادلة جاهزة.",
+        "Close the bracket; the formula is ready.",
+      ],
+      text: ")",
+    },
+    {
+      kind: "enter",
+      caption: [
+        "اضغط Enter وشوف النتيجة في D1.",
+        "Press Enter and see the result in D1.",
+      ],
+    },
+  ],
   steps: [
     {
       title: ["ابحث عن الخلايا غير الفارغة", "Find nonempty cells"],

@@ -11,6 +11,46 @@ const lesson: FormulaLesson = {
     "Text and blank cells in the range are ignored. Excel dates stored as numbers count.",
   ],
   result: 6,
+  demo: [
+    {
+      kind: "click",
+      caption: [
+        "اضغط على D1: هنا هنكتب المعادلة.",
+        "Click D1: this is where we will enter the formula.",
+      ],
+      cell: "D1",
+    },
+    {
+      kind: "type",
+      caption: ["اكتب =COUNT( داخل D1.", "Type =COUNT( inside D1."],
+      text: "=COUNT(",
+    },
+    {
+      kind: "select",
+      caption: [
+        "اضغط A1 واسحب حتى C3؛ النطاق هيتكتب تلقائيًا.",
+        "Press A1 and drag to C3; the range is inserted automatically.",
+      ],
+      fromCell: "A1",
+      toCell: "C3",
+      text: "A1:C3",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اقفل القوس؛ كده المعادلة جاهزة.",
+        "Close the bracket; the formula is ready.",
+      ],
+      text: ")",
+    },
+    {
+      kind: "enter",
+      caption: [
+        "اضغط Enter وشوف النتيجة في D1.",
+        "Press Enter and see the result in D1.",
+      ],
+    },
+  ],
   steps: [
     {
       title: ["حدد نطاق العد", "Select the count range"],

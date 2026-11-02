@@ -76,15 +76,13 @@ test("play, pause, speed, next and restart are deterministic", async ({
   await page.clock.runFor(6000);
   await expect(a.locator(".xs-animation-step-number")).toContainText("2 /");
   await a.getByRole("button", { name: "الخطوة التالية", exact: true }).click();
-  await expect(a.locator('[data-cell="A2"]')).toHaveAttribute(
-    "data-state",
-    "active",
-  );
+  await expect(a.getByTestId("demo-selection")).toBeVisible();
+  await expect(a.getByTestId("demo-formula-bar")).toHaveText("=SUM(A1:A3");
   await a
     .getByRole("combobox", { name: "سرعة الشرح", exact: true })
     .selectOption("1400");
   await a.getByRole("button", { name: "تشغيل الشرح", exact: true }).click();
-  await page.clock.runFor(1500);
+  await page.clock.runFor(1000);
   await expect(a.locator(".xs-animation-step-number")).toContainText("4 /");
   await a
     .getByRole("button", { name: "إعادة الشرح من البداية", exact: true })
@@ -101,13 +99,15 @@ test("mobile and reduced motion keep a usable manual explanation", async ({
   const a = page.locator(".xs-formula-animation");
   expect(await a.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
   await a.getByRole("button", { name: "الخطوة التالية", exact: true }).click();
-  await expect(a.locator('[data-cell="A1"]')).toHaveAttribute(
-    "data-state",
-    "active",
+  await expect(a.locator('[data-cell="D1"] input')).toHaveValue("=VLOOKUP(20,");
+  await a.getByRole("button", { name: "الخطوة التالية", exact: true }).click();
+  await expect(a.getByTestId("demo-selection")).toBeVisible();
+  await expect(a.getByTestId("demo-formula-bar")).toHaveText(
+    "=VLOOKUP(20,A1:B3",
   );
   expect(
     await a
-      .locator(".xs-animation-math")
+      .locator(".xs-demo-pointer")
       .evaluate((e) => getComputedStyle(e).animationName),
   ).toBe("none");
 });
@@ -125,4 +125,34 @@ test("English explanations and the animated-only library tab stay accessible", a
     .getByRole("button", { name: "Animated lessons · 10", exact: true })
     .click();
   await expect(page.locator(".xs-function-card")).toHaveCount(10);
+});
+test("autoplay really types in D1, drags a range and commits with Enter", async ({
+  page,
+}) => {
+  await openLesson(page, "SUM");
+  await page.clock.install();
+  const a = page.locator(".xs-formula-animation");
+  await a.getByRole("button", { name: "تشغيل الشرح", exact: true }).click();
+  await page.clock.runFor(3000);
+  const typed = await a.locator('[data-cell="D1"] input').inputValue();
+  expect(typed.startsWith("=")).toBe(true);
+  expect(typed.length).toBeLessThan("=SUM(".length);
+  await a.getByRole("button", { name: "إيقاف مؤقت", exact: true }).click();
+  const pausedText = await a.locator('[data-cell="D1"] input').inputValue();
+  await page.clock.runFor(2000);
+  await expect(a.locator('[data-cell="D1"] input')).toHaveValue(pausedText);
+  await a.getByRole("button", { name: "تشغيل الشرح", exact: true }).click();
+  await page.clock.runFor(1800);
+  await expect(a.getByTestId("demo-selection")).toBeVisible();
+  const before = await a.locator(".xs-demo-pointer").getAttribute("style");
+  await page.clock.runFor(400);
+  expect(await a.locator(".xs-demo-pointer").getAttribute("style")).not.toBe(
+    before,
+  );
+  await page.clock.runFor(8000);
+  await expect(a.getByTestId("demo-cell-result")).toHaveText("60");
+  await expect(a.locator(".xs-demo-keyboard kbd")).toHaveClass("pressed");
+  await expect(
+    a.getByRole("button", { name: "تشغيل الشرح", exact: true }),
+  ).toBeVisible();
 });

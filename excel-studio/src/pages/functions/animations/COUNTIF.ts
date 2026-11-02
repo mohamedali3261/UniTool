@@ -11,6 +11,54 @@ const lesson: FormulaLesson = {
     "Quote the comparison criterion. This function counts matches, not their values.",
   ],
   result: 2,
+  demo: [
+    {
+      kind: "click",
+      caption: [
+        "اضغط على D1: هنا هنكتب المعادلة.",
+        "Click D1: this is where we will enter the formula.",
+      ],
+      cell: "D1",
+    },
+    {
+      kind: "type",
+      caption: ["اكتب =COUNTIF( داخل D1.", "Type =COUNTIF( inside D1."],
+      text: "=COUNTIF(",
+    },
+    {
+      kind: "select",
+      caption: [
+        "اضغط A1 واسحب حتى A3؛ النطاق هيتكتب تلقائيًا.",
+        "Press A1 and drag to A3; the range is inserted automatically.",
+      ],
+      fromCell: "A1",
+      toCell: "A3",
+      text: "A1:A3",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اكتب الشرط بين علامتي اقتباس: أكبر من 15.",
+        "Type the criterion in quotes: greater than 15.",
+      ],
+      text: ',">15"',
+    },
+    {
+      kind: "type",
+      caption: [
+        "اقفل القوس؛ كده المعادلة جاهزة.",
+        "Close the bracket; the formula is ready.",
+      ],
+      text: ")",
+    },
+    {
+      kind: "enter",
+      caption: [
+        "اضغط Enter وشوف النتيجة في D1.",
+        "Press Enter and see the result in D1.",
+      ],
+    },
+  ],
   steps: [
     {
       title: ["افهم شرط المطابقة", "Understand the condition"],

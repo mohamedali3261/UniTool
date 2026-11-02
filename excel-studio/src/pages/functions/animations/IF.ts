@@ -11,6 +11,49 @@ const lesson: FormulaLesson = {
     "Argument order: condition, true result, false result. Quote text. If A1 became 3, this formula would return راجع.",
   ],
   result: "ناجح",
+  demo: [
+    {
+      kind: "click",
+      caption: [
+        "اضغط على D1: هنا هنكتب المعادلة.",
+        "Click D1: this is where we will enter the formula.",
+      ],
+      cell: "D1",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اكتب =IF( عشان نبدأ الشرط.",
+        "Type =IF( to start the condition.",
+      ],
+      text: "=IF(",
+    },
+    {
+      kind: "select",
+      caption: [
+        "اضغط A1 لإضافة اسم الخلية بدل كتابته.",
+        "Click A1 to insert its cell reference.",
+      ],
+      fromCell: "A1",
+      toCell: "A1",
+      text: "A1",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اكتب الشرط والاختيارين، ثم اقفل القوس.",
+        "Type the condition and the two choices, then close the bracket.",
+      ],
+      text: '>5,"ناجح","راجع")',
+    },
+    {
+      kind: "enter",
+      caption: [
+        "اضغط Enter وشوف النتيجة في D1.",
+        "Press Enter and see the result in D1.",
+      ],
+    },
+  ],
   steps: [
     {
       title: ["تعرف على الاختيارين", "Identify the two branches"],

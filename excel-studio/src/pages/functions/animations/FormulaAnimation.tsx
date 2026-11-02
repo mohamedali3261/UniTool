@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Play,
   Pause,
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  MousePointer2,
 } from "lucide-react";
 import { useStudio } from "../../../app/context";
 import { exampleRows, type FormulaLesson } from "./types";
+import { demoFrame } from "./demoModel";
 import "./animations.css";
 export function FormulaAnimation({
   lesson,
@@ -19,22 +21,44 @@ export function FormulaAnimation({
   const { lang, t } = useStudio(),
     locale = lang === "ar" ? 0 : 1;
   const [index, setIndex] = useState(0),
+    [progress, setProgress] = useState(0),
     [playing, setPlaying] = useState(false),
-    [delay, setDelay] = useState(2800);
-  const step = lesson.steps[index],
-    last = index === lesson.steps.length - 1;
+    [delay, setDelay] = useState(2800),
+    [reduced, setReduced] = useState(false);
+  const cellInput = useRef<HTMLInputElement>(null),
+    action = lesson.demo[index],
+    last = index === lesson.demo.length - 1;
+  const frame = demoFrame(lesson, index, progress);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     if (!playing) return;
-    if (last) {
-      setPlaying(false);
-      return;
+    if (progress >= 1) {
+      const timer = window.setTimeout(() => {
+        if (last) setPlaying(false);
+        else {
+          setIndex((i) => i + 1);
+          setProgress(0);
+        }
+      }, delay * 0.3);
+      return () => window.clearTimeout(timer);
     }
-    const timer = window.setTimeout(
-      () => setIndex((i) => Math.min(i + 1, lesson.steps.length - 1)),
-      delay,
+    const duration =
+      (action.kind === "type"
+        ? Math.max(1000, (action.text?.length || 1) * 90)
+        : 1600) *
+      (delay / 2800);
+    const timer = window.setInterval(
+      () => setProgress((p) => Math.min(1, p + 40 / duration)),
+      40,
     );
-    return () => window.clearTimeout(timer);
-  }, [playing, index, delay, last, lesson.steps.length]);
+    return () => window.clearInterval(timer);
+  }, [playing, index, progress >= 1, delay, last, action]);
   useEffect(() => {
     const pause = () => {
       if (document.hidden) setPlaying(false);
@@ -42,119 +66,183 @@ export function FormulaAnimation({
     document.addEventListener("visibilitychange", pause);
     return () => document.removeEventListener("visibilitychange", pause);
   }, []);
+  useEffect(() => {
+    if (cellInput.current)
+      cellInput.current.scrollLeft = cellInput.current.scrollWidth;
+  }, [frame.formula]);
   const move = (i: number) => {
     setPlaying(false);
-    setIndex(Math.max(0, Math.min(i, lesson.steps.length - 1)));
+    setIndex(Math.max(0, Math.min(i, lesson.demo.length - 1)));
+    setProgress(1);
   };
+  const visible = demoFrame(lesson, index, reduced ? 1 : progress);
   return (
     <section
-      className="xs-formula-animation"
-      aria-label={t(
-        "شرح متحرك خطوة بخطوة",
-        "Animated step-by-step explanation",
-      )}
+      className="xs-formula-animation xs-cursor-lesson"
+      aria-label={t("شرح بالمؤشر داخل الجدول", "In-cell cursor demonstration")}
     >
       <div className="xs-animation-heading">
         <span className="xs-animation-badge">
-          {t("شاهد وافهم", "WATCH & LEARN")}
+          {t("شوفها كأنك بتعملها بنفسك", "WATCH IT HAPPEN")}
         </span>
         <h4>{lesson.goal[locale]}</h4>
       </div>
       <p className="xs-animation-scope">
         {t(
-          "شرح ثابت للصيغة التالية، مستقل عن تعديلات تجربة المعادلة:",
-          "A guided demonstration of this fixed formula, independent of playground edits:",
+          "المؤشر هيضغط ويكتب ويسحب قدامك. ده جدول تعليمي منفصل، مش ملفك الحقيقي.",
+          "Watch the pointer click, type and drag. This is a separate teaching sheet, not your real workbook.",
         )}
       </p>
-      <code className="xs-animation-formula" dir="ltr">
-        {lesson.formula}
-      </code>
-      <div className="xs-animation-legend">
-        <span>● {t("نقرأ الآن", "Reading now")}</span>
-        <span>✓ {t("مستخدم / مطابق", "Used / matched")}</span>
-        <span>− {t("تم تجاهله", "Skipped")}</span>
+      <div className="xs-demo-formula-bar" dir="ltr">
+        <span>D1</span>
+        <b>ƒx</b>
+        <code data-testid="demo-formula-bar">{visible.formula || " "}</code>
       </div>
-      <table
-        className="xs-example-table xs-animation-table"
-        dir="ltr"
-        aria-label={t("خلايا مثال الشرح المتحرك", "Animated example cells")}
-      >
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            {["A", "B", "C"].map((c) => (
-              <th key={c} scope="col">
-                {c}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {exampleRows.map((row, i) => (
-            <tr key={i}>
-              <th scope="row">{i + 1}</th>
-              {row.map((value, j) => {
-                const ref = String.fromCharCode(65 + j) + (i + 1),
-                  state = step.active?.includes(ref)
-                    ? "active"
-                    : step.matched?.includes(ref)
-                      ? "matched"
-                      : step.skipped?.includes(ref)
-                        ? "skipped"
-                        : "idle";
-                const stateLabel =
-                  state === "active"
-                    ? t("اقرأ", "Read")
-                    : state === "matched"
-                      ? t("مستخدم", "Used")
-                      : state === "skipped"
-                        ? t("تجاهل", "Skip")
-                        : "";
-                return (
-                  <td
-                    key={ref}
-                    data-cell={ref}
-                    data-state={state}
-                    aria-label={`${ref}: ${value}${stateLabel ? ", " + stateLabel : ""}`}
-                  >
-                    <span className="xs-cell-value">{value}</span>
-                    <span className="xs-cell-state" aria-hidden="true">
-                      {state === "active"
-                        ? "↓ "
-                        : state === "matched"
-                          ? "✓ "
-                          : state === "skipped"
-                            ? "− "
-                            : ""}
-                      {stateLabel || "\u00a0"}
-                    </span>
-                  </td>
-                );
-              })}
+      <div className="xs-demo-sheet" dir="ltr">
+        <table
+          className="xs-demo-grid"
+          aria-label={t("جدول الشرح بالمؤشر", "Cursor demonstration sheet")}
+        >
+          <thead>
+            <tr>
+              <th>#</th>
+              {["A", "B", "C", "D"].map((c) => (
+                <th scope="col" key={c}>
+                  {c}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {exampleRows.map((row, i) => (
+              <tr key={i}>
+                <th scope="row">{i + 1}</th>
+                {[...row, ""].map((value, j) => {
+                  const ref = String.fromCharCode(65 + j) + (i + 1),
+                    output = ref === "D1";
+                  return (
+                    <td
+                      key={ref}
+                      data-cell={ref}
+                      className={output ? "xs-demo-output" : ""}
+                    >
+                      {output ? (
+                        visible.done ? (
+                          <strong
+                            className="xs-demo-result"
+                            data-testid="demo-cell-result"
+                          >
+                            {String(lesson.result)}
+                          </strong>
+                        ) : (
+                          <input
+                            ref={cellInput}
+                            value={visible.formula}
+                            readOnly
+                            tabIndex={-1}
+                            aria-label={t(
+                              "كتابة المعادلة داخل D1",
+                              "Formula being typed in D1",
+                            )}
+                            className={
+                              action.kind === "type" ? "is-typing" : ""
+                            }
+                          />
+                        )
+                      ) : (
+                        value
+                      )}
+                      {output && action.kind === "type" && (
+                        <i
+                          aria-hidden="true"
+                          className="xs-demo-caret"
+                          style={{
+                            left: `min(calc(5px + ${visible.formula.length}ch), calc(100% - 6px))`,
+                            animationPlayState: playing ? "running" : "paused",
+                          }}
+                        />
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="xs-demo-overlay" aria-hidden="true">
+          {visible.range && (
+            <div
+              className="xs-demo-selection"
+              data-testid="demo-selection"
+              style={{
+                left: visible.range.left + "%",
+                top: visible.range.top + "%",
+                width: visible.range.width + "%",
+                height: visible.range.height + "%",
+              }}
+            >
+              <i />
+            </div>
+          )}
+          {action.kind !== "enter" && (
+            <div
+              className={
+                "xs-demo-pointer " +
+                (action.kind === "select" ? "is-dragging" : "") +
+                (action.kind === "click" && progress > 0.7
+                  ? " is-clicking"
+                  : "")
+              }
+              style={{
+                left: visible.point.x + "%",
+                top: visible.point.y + "%",
+              }}
+            >
+              <MousePointer2 size={25} fill="currentColor" />
+              <span>
+                {action.kind === "select"
+                  ? t("سحب", "DRAG")
+                  : action.kind === "click"
+                    ? t("اضغط", "CLICK")
+                    : t("اكتب", "TYPE")}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="xs-demo-keyboard" aria-hidden="true">
+        <kbd
+          className={action.kind === "enter" && visible.done ? "pressed" : ""}
+        >
+          Enter ↵
+        </kbd>
+        <span>
+          {action.kind === "type"
+            ? t("الكتابة داخل الخلية", "Typing inside the cell")
+            : action.kind === "select"
+              ? t(
+                  "زر الماوس مضغوط أثناء تحديد النطاق",
+                  "Mouse held down while selecting the range",
+                )
+              : action.kind === "enter"
+                ? t(
+                    "تأكيد المعادلة وإظهار الناتج",
+                    "Confirm formula and show result",
+                  )
+                : t("اختيار خلية النتيجة D1", "Select result cell D1")}
+        </span>
+      </div>
       <div
-        className="xs-animation-narration"
+        className="xs-demo-caption"
         role="status"
         aria-live="polite"
         aria-atomic="true"
       >
         <span className="xs-animation-step-number">
-          {t("خطوة", "Step")} {index + 1} / {lesson.steps.length}
+          {t("خطوة", "Step")} {index + 1} / {lesson.demo.length}
         </span>
-        <h4>{step.title[locale]}</h4>
-        <p>{step.explanation[locale]}</p>
-        <div
-          className="xs-animation-math"
-          key={index}
-          dir="auto"
-          data-testid="animation-calculation"
-        >
-          {step.calculation}
-        </div>
-        {last && (
+        <p>{action.caption[locale]}</p>
+        {visible.done && (
           <strong className="xs-animation-final">
             {t("الناتج النهائي", "Final result")}: {String(lesson.result)}
           </strong>
@@ -165,16 +253,16 @@ export function FormulaAnimation({
         role="group"
         aria-label={t("اختيار خطوة الشرح", "Choose explanation step")}
       >
-        {lesson.steps.map((s, i) => (
+        {lesson.demo.map((s, i) => (
           <button
             type="button"
             key={i}
-            aria-label={`${t("الخطوة", "Step")} ${i + 1}: ${s.title[locale]}`}
+            aria-label={`${t("الخطوة", "Step")} ${i + 1}: ${s.caption[locale]}`}
             aria-current={i === index ? "step" : undefined}
             onClick={() => move(i)}
             className={i <= index ? "done" : ""}
           >
-            <span>{i + 1}</span>
+            {i + 1}
           </button>
         ))}
       </div>
@@ -194,7 +282,10 @@ export function FormulaAnimation({
           onClick={() => {
             if (playing) setPlaying(false);
             else {
-              if (last) setIndex(0);
+              if (last && progress >= 1) {
+                setIndex(0);
+                setProgress(0);
+              }
               setPlaying(true);
             }
           }}
@@ -216,7 +307,11 @@ export function FormulaAnimation({
         <button
           type="button"
           className="xs-button"
-          onClick={() => move(0)}
+          onClick={() => {
+            setPlaying(false);
+            setIndex(0);
+            setProgress(0);
+          }}
           aria-label={t("إعادة الشرح من البداية", "Restart explanation")}
         >
           <RotateCcw size={14} />
@@ -234,10 +329,22 @@ export function FormulaAnimation({
           </select>
         </label>
       </div>
-      <p className="xs-animation-tip">
-        <strong>{t("خد بالك: ", "Remember: ")}</strong>
-        {lesson.tip[locale]}
-      </p>
+      <details className="xs-demo-details">
+        <summary>
+          {t(
+            "ليه الناتج ده؟ شرح الحساب بالتفصيل",
+            "Why this result? Calculation details",
+          )}
+        </summary>
+        {lesson.steps.map((s, i) => (
+          <div key={i}>
+            <strong>{s.title[locale]}</strong>
+            <p>{s.explanation[locale]}</p>
+            <code dir="auto">{s.calculation}</code>
+          </div>
+        ))}
+      </details>
+      <p className="xs-animation-tip">{lesson.tip[locale]}</p>
       <button
         type="button"
         className="xs-button"
@@ -247,8 +354,8 @@ export function FormulaAnimation({
       </button>
       <small>
         {t(
-          "هذه خطوات تعليمية مبسطة، وليست تتبعًا داخليًا لمحرك Excel. لا تغيّر ملفك.",
-          "These are simplified teaching steps, not an internal Excel execution trace. Your workbook is unchanged.",
+          "محاكاة تعليمية لصيغة ثابتة. تعديل التجربة لا يغيّر الشرح أو ملفك.",
+          "A teaching simulation of a fixed formula. Playground edits do not change the demonstration or your file.",
         )}
       </small>
     </section>

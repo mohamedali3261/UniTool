@@ -11,6 +11,49 @@ const lesson: FormulaLesson = {
     "FALSE means exact match; sorting is not required. Column index 2 is relative to A:B. No match returns #N/A; duplicates return the first match.",
   ],
   result: 4,
+  demo: [
+    {
+      kind: "click",
+      caption: [
+        "اضغط على D1: هنا هنكتب المعادلة.",
+        "Click D1: this is where we will enter the formula.",
+      ],
+      cell: "D1",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اكتب VLOOKUP وقيمة البحث 20.",
+        "Type VLOOKUP and the lookup value 20.",
+      ],
+      text: "=VLOOKUP(20,",
+    },
+    {
+      kind: "select",
+      caption: [
+        "اضغط A1 واسحب إلى B3 لتحديد جدول البحث.",
+        "Press A1 and drag to B3 to select the lookup table.",
+      ],
+      fromCell: "A1",
+      toCell: "B3",
+      text: "A1:B3",
+    },
+    {
+      kind: "type",
+      caption: [
+        "اكتب 2 للعمود الثاني وFALSE للمطابقة التامة.",
+        "Type 2 for column two and FALSE for an exact match.",
+      ],
+      text: ",2,FALSE)",
+    },
+    {
+      kind: "enter",
+      caption: [
+        "اضغط Enter وشوف النتيجة في D1.",
+        "Press Enter and see the result in D1.",
+      ],
+    },
+  ],
   steps: [
     {
       title: ["فكّك المعاملات", "Break down the arguments"],
