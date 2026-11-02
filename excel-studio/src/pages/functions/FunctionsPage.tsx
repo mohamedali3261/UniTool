@@ -133,7 +133,11 @@ export default function FunctionsPage() {
       <div className="xs-library-tabs">
         {[
           ["common", "ابدأ بالأساسيات", "Start with the essentials"],
-          ["animated", "شرح بالحركة · 10", "Animated lessons · 10"],
+          [
+            "animated",
+            `شرح بالحركة · ${Object.keys(formulaLessons).length}`,
+            `Animated lessons · ${Object.keys(formulaLessons).length}`,
+          ],
           ["all", "كل الدوال", "All functions"],
           ["favorites", "المفضلة", "Favorites"],
         ].map(([v, ar, en]) => (
