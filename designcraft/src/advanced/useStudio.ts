@@ -16,6 +16,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
     [revision, setRevision] = useState(0),
     [points, setPoints] = useState<RecoveryPoint[]>([]),
     [recoveryStatus, setRecoveryStatus] = useState("idle");
+  const needsSave = useRef(!!project.sessionOnly);
   const baseline = useRef(""),
     lastRecovery = useRef("");
   const changeHandler = useRef<() => void>(() => {});
@@ -72,14 +73,14 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
     };
     const loaded = () => {
       baseline.current = fingerprint();
-      setDirty(false);
+      setDirty(needsSave.current);
       setRevision((n) => n + 1);
     };
     const changed = () => {
       if ((canvas as any).__studioInitializing) return;
       setRevision((n) => n + 1);
       if (!baseline.current) baseline.current = fingerprint();
-      setDirty(fingerprint() !== baseline.current);
+      setDirty(needsSave.current || fingerprint() !== baseline.current);
       clearTimeout(timer);
       timer = setTimeout(() => {
         if (alive) void checkpointRef.current().catch(() => {});
@@ -91,6 +92,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
       const d = (event as CustomEvent).detail;
       if (d?.id !== meta.current.id) return;
       if (d.ok) {
+        needsSave.current = false;
         baseline.current = fingerprint();
         setDirty(false);
       } else setDirty(true);

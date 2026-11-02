@@ -28,6 +28,7 @@ interface PropertiesPanelProps {
   onSetBackgroundGradient: (stops: string[]) => void;
   onDeselect: () => void;
   onClosePanel?: () => void;
+  onResetTextFormatting?: () => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
@@ -49,9 +50,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onSetBackgroundColor,
   onSetBackgroundGradient,
   onDeselect,
-  onClosePanel
+  onClosePanel, onResetTextFormatting
 }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
   const isText =
     activeProperties?.type === 'textbox' ||
     activeProperties?.type === 'text' ||
@@ -86,10 +87,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   return (
     <aside
       id="editor-properties-panel"
-      className="w-full md:w-56 lg:w-60 bg-[#1C2541] md:border-l border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
+      dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      className="w-full max-w-full min-w-0 md:w-64 lg:w-72 bg-[#101a30] md:border-l border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
     >
       {/* Panel Header */}
-      <div className="h-10 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
+      <div className="min-h-14 py-2 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
         <div className="flex items-center gap-2">
           <div className={`p-1 rounded-md ${heading.cls}`}>
             <heading.Icon className="w-3.5 h-3.5" />
@@ -99,7 +101,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               {activeProperties ? t.propsElement : t.propsCanvas}
             </h3>
             <p className="text-[9px] text-slate-400 font-mono leading-none">
-              {activeProperties ? activeProperties.type.toUpperCase() : `${canvasWidth} × ${canvasHeight} PX`}
+              {activeProperties ? (isText ? (lang === 'ar' ? 'نص قابل للتعديل' : 'Editable text') : isImage ? (lang === 'ar' ? 'صورة' : 'Image') : isGroupOrIcon ? (lang === 'ar' ? 'مجموعة عناصر' : 'Object group') : (lang === 'ar' ? 'شكل' : 'Shape')) : `${canvasWidth} × ${canvasHeight} PX`}
             </p>
           </div>
         </div>
@@ -131,7 +133,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       </div>
 
       {/* Panel Body */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+      <div className="properties-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-4">
+        <p className="rounded-xl border border-slate-600/50 bg-slate-900/60 p-2.5 text-xs leading-relaxed text-slate-300">{activeProperties ? (lang === 'ar' ? 'عدّل مظهر العنصر هنا. تغييراتك قابلة للتراجع باستخدام Ctrl + Z.' : 'Style the selected object here. Undo changes with Ctrl + Z.') : (lang === 'ar' ? 'حدد عنصرًا لتعديل مظهره، أو اضبط مقاس اللوحة وخلفيتها أدناه.' : 'Select an object to style it, or adjust the canvas size and background below.')}</p>
+        {activeProperties && <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onDuplicate} className="rounded-lg border border-slate-600 bg-slate-800 px-2 py-2 text-xs text-white">{lang === 'ar' ? 'تكرار العنصر' : 'Duplicate object'}</button>
+          <button type="button" aria-pressed={isLocked} onClick={onToggleLock} className="rounded-lg border border-slate-600 bg-slate-800 px-2 py-2 text-xs text-white">{isLocked ? (lang === 'ar' ? 'إلغاء القفل' : 'Unlock object') : (lang === 'ar' ? 'قفل العنصر' : 'Lock object')}</button>
+        </div>}
         {/* If an active object is selected */}
         {activeProperties ? (
           <>
@@ -140,6 +147,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <TextProperties
                 properties={activeProperties}
                 onUpdate={onUpdateProperty}
+                onResetFormatting={onResetTextFormatting}
               />
             )}
 

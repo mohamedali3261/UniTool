@@ -21,6 +21,8 @@ export interface CanvasPage {
 }
 
 export interface ProjectItem {
+  /** In-memory import when browser project storage refused the write. */
+  sessionOnly?: boolean;
   studio?: import('./advanced/core/faces').PrintSettings;
   id: string;
   title: string;

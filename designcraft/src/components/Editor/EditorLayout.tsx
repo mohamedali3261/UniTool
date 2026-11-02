@@ -1,3 +1,4 @@
+import { clearFormatting } from '../../advanced/core/text';
 import { shortcutKey } from '../../utils/keyboard';
 import {AdvancedTools} from '../../advanced/AdvancedTools';
 import {CanvasOverlays} from '../../advanced/CanvasOverlays';
@@ -222,8 +223,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     if (!canvas) return;
 
     const objects = canvas.getObjects();
+    const seenLayerIds = new Set<string>();
     const list = objects
       .map((obj: any, index: number) => {
+        if (!obj.id || seenLayerIds.has(obj.id)) obj.id = `layer-${crypto.randomUUID()}`;
+        seenLayerIds.add(obj.id);
         let name = t.layerElement;
         const type = obj.type || 'object';
         if (type === 'textbox' || type === 'i-text' || type === 'text') {
@@ -243,11 +247,12 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         }
 
         return {
-          id: obj.id || `obj_${index}_${Date.now()}`,
+          id: obj.id,
           name: obj.name || name,
           type,
           visible: obj.visible !== false,
-          locked: !!obj.lockMovementX,
+          locked: !!(obj.locked || obj.lockMovementX || obj.lockMovementY),
+          protected: isCartonGuide(obj),
           rawObject: obj
         };
       })
@@ -551,6 +556,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         }
       } else if (key === 'lockMovementX' || key === 'lockMovementY') {
         active.set({
+          locked: value,
           lockMovementX: value,
           lockMovementY: value,
           lockRotation: value,
@@ -616,6 +622,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
     const updated: ProjectItem = {
       ...initialProject,
+      sessionOnly: false,
       title: projectTitle,
       studio:studioSettings,
       width: canvasWidth,
@@ -1018,6 +1025,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Sidebar Tab Select
   const handleSelectSidebarTab = (tab: SidebarTabType) => {
+    if (window.innerWidth < 768) setIsPropertiesOpen(false);
     if (activeSidebarTab === tab && isSidebarOpen) {
       setIsSidebarOpen(false);
     } else {
@@ -1232,11 +1240,36 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         return (
           <LayersTab
             layers={layersList}
+            activeLayerId={(fabricCanvasRef.current?.getActiveObject() as any)?.id || null}
+            onRename={(id, name) => {
+              const found = layersList.find(l => l.id === id);
+              if (!found || found.protected || !name.trim()) return;
+              found.rawObject.set('name', name.trim().slice(0, 100));
+              updateLayersList(); recordHistory();
+            }}
+            onDuplicate={(id) => {
+              const canvas = fabricCanvasRef.current, found = layersList.find(l => l.id === id);
+              if (!canvas || !found || found.locked || found.protected) return;
+              found.rawObject.clone((copy: fabric.Object) => {
+                if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
+                copy.set({left:(found.rawObject.left || 0)+20, top:(found.rawObject.top || 0)+20});
+                (copy as any).id = `layer-${crypto.randomUUID()}`;
+                (copy as any).name = `${found.name} ${lang === 'ar' ? 'نسخة' : 'copy'}`;
+                canvas.add(copy); canvas.setActiveObject(copy); copy.setCoords(); canvas.requestRenderAll(); updateLayersList(); recordHistory();
+              });
+            }}
+            onReorder={(source, target) => {
+              const canvas = fabricCanvasRef.current;
+              const from = layersList.find(l => l.id === source), to = layersList.find(l => l.id === target);
+              if (!canvas || !from || !to || from.locked || from.protected || to.protected || from === to) return;
+              canvas.moveTo(from.rawObject, canvas.getObjects().indexOf(to.rawObject));
+              canvas.requestRenderAll(); updateLayersList(); recordHistory();
+            }}
             onSelectLayer={(id) => {
               const canvas = fabricCanvasRef.current;
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
-              if (found && found.rawObject) {
+              if (found && found.rawObject && !found.protected) {
                 canvas.setActiveObject(found.rawObject);
                 canvas.renderAll();
               }
@@ -1258,8 +1291,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
                 if(initialProject.packaging&&isCartonGuide(found.rawObject)){onShowToast(lang==='ar'?'خطوط المقاسات محمية':'Dimension guides are protected',undefined,'info');return;}
-                const next = !found.rawObject.lockMovementX;
+                const next = !found.locked;
                 found.rawObject.set({
+                  locked: next,
                   lockMovementX: next,
                   lockMovementY: next,
                   lockRotation: next,
@@ -1277,7 +1311,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                canvas.remove(found.rawObject);
+                if (found.locked || found.protected) return;
+                isHistoryLockedRef.current = true;
+                try { canvas.remove(found.rawObject); } finally { isHistoryLockedRef.current = false; }
                 canvas.renderAll();
                 updateLayersList();
                 recordHistory();
@@ -1288,7 +1324,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                bringForward(canvas);
+                if (found.locked || found.protected) return;
+                const ordered = layersList.filter(l => !l.protected), neighbor = ordered[ordered.indexOf(found) - 1];
+                if (!neighbor) return;
+                canvas.moveTo(found.rawObject, canvas.getObjects().indexOf(neighbor.rawObject));
                 updateLayersList();
                 recordHistory();
               }
@@ -1298,7 +1337,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                sendBackwards(canvas);
+                if (found.locked || found.protected) return;
+                const ordered = layersList.filter(l => !l.protected), neighbor = ordered[ordered.indexOf(found) + 1];
+                if (!neighbor) return;
+                canvas.moveTo(found.rawObject, canvas.getObjects().indexOf(neighbor.rawObject));
                 updateLayersList();
                 recordHistory();
               }
@@ -1369,6 +1411,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         if (!active) return;
         const next = !active.lockMovementX;
         active.set({
+          locked: next,
           lockMovementX: next,
           lockMovementY: next,
           lockRotation: next,
@@ -1390,6 +1433,14 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           fabricCanvasRef.current.renderAll();
           setActiveProperties(null);
         }
+      }}
+      onResetTextFormatting={() => {
+        const canvas = fabricCanvasRef.current;
+        const active = canvas?.getActiveObject();
+        if (!canvas || !active || !['text', 'textbox', 'i-text'].includes(active.type || '')) return;
+        clearFormatting(active, canvas.backgroundColor);
+        canvas.fire('object:modified', { target: active });
+        canvas.requestRenderAll();
       }}
       onClosePanel={() => setIsPropertiesOpen(false)}
     />
@@ -1583,10 +1634,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
       {/* 4. Mobile Bottom Sheet Drawer for Sidebar Tools */}
       {isSidebarOpen && activeSidebarTab && (
-        <div className="md:hidden fixed inset-0 z-40">
+        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
           />
 
@@ -1621,10 +1672,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
       {/* 5. Mobile Bottom Sheet for Properties Panel */}
       {isPropertiesOpen && (
-        <div className="md:hidden fixed inset-0 z-40">
+        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsPropertiesOpen(false)}
           />
 

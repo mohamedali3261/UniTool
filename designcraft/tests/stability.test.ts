@@ -41,3 +41,16 @@ test('physical shortcut keys survive Arabic layout without translating typed tex
   assert.equal(shortcutKey({ code: 'BracketRight', key: 'د' }), ']');
   assert.equal(shortcutKey({ code: '', key: 'S' }), 's');
 });
+
+test('floating controls clamp to viewport edges including small and offset viewports', async () => {
+  const { popoverBounds } = await import('../src/components/Common/FloatingPopover');
+  for (const view of [{ left: 0, top: 0, width: 320, height: 480 }, { left: 0, top: 0, width: 390, height: 280 }, { left: 12, top: 90, width: 280, height: 220 }]) {
+    for (const left of [-30, 0, 240, 370]) {
+      const p = popoverBounds({ left, right: left + 80, top: 350, bottom: 380 }, view, 500);
+      assert.ok(p.left >= view.left);
+      assert.ok(p.top >= view.top);
+      assert.ok(p.left + p.width <= view.left + view.width);
+      assert.ok(p.top + p.maxHeight <= view.top + view.height);
+    }
+  }
+});
