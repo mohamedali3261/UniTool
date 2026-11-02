@@ -1,5 +1,6 @@
 import { Star, ArrowUpLeft } from "lucide-react";
 import { useStudio } from "../../app/context";
+import { formulaLessons } from "./animations";
 import { categoryAr, type FormulaEntry } from "./catalog";
 export function FunctionCard({
   entry,
@@ -50,7 +51,12 @@ export function FunctionCard({
               ? t("● مثال قابل للتجربة", "● Try live")
               : t("◌ مرجع Excel", "◌ Excel reference")}
           </span>
-          <span>{t("الشرح والمثال", "Learn & try")} ←</span>
+          <span>
+            {formulaLessons[entry.name]
+              ? t("▶ شرح بالحركة", "▶ Animated lesson")
+              : t("الشرح والمثال", "Learn & try")}{" "}
+            ←
+          </span>
         </footer>
       </button>
     </article>
