@@ -7,7 +7,16 @@ export type LessonStep = {
   matched?: string[];
   skipped?: string[];
 };
+export type DemoAction = {
+  kind: "click" | "type" | "select" | "enter";
+  caption: Bilingual;
+  cell?: string;
+  fromCell?: string;
+  toCell?: string;
+  text?: string;
+};
 export type FormulaLesson = {
+  demo: DemoAction[];
   name: string;
   formula: string;
   goal: Bilingual;
