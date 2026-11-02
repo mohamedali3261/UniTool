@@ -1,4 +1,5 @@
 import {
+  Type,
   PenTool,
   Film,
   AudioLines,
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
+ {id:'text',href:'/text-studio/',icon:Type,name:{ar:'استوديو النصوص',en:'Text Studio'},eyebrow:'WORDS, WITH CHARACTER.',description:{ar:'كلماتك، بشكل يشبهك.',en:'Your words. Beautifully yours.'},detail:{ar:'اكتب جملتك، اختار خط وقالب وتأثير، وصدّر تصميمك. كل المعالجة والخطوط محلية.',en:'Type your words, choose a font, template and effect, and export your design. Local processing and bundled fonts.'},tags:{ar:['خطوط عربية','قوالب وتأثيرات','تصدير PNG وSVG'],en:['Arabic fonts','Templates & effects','PNG & SVG export']},action:{ar:'افتح استوديو النصوص',en:'Open Text Studio'},color:'#cce7a3'},
   {
     id: "pdf",
     href: "/pdf-studio/",

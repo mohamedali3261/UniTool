@@ -1,5 +1,6 @@
 /** Shared entry points: the homepage and all workspace headers use the same links. */
 export const sitePages = [
+  { href: "/text-studio/", ar: "استوديو النصوص", en: "Text Studio" },
   { href: "/pdf-studio/", ar: "استوديو PDF", en: "PDF Studio" },
   { href: "/excel-studio/", ar: "استوديو الجداول", en: "Sheet Studio" },
   { href: "/index.html", ar: "الرئيسية", en: "Home" },

@@ -32,7 +32,9 @@
     "test:pdf-studio": "tsx --test pdf-studio/tests/*.test.ts",
     "test:pdf-studio:browser": "playwright test --config pdf-studio/tests/playwright.config.ts",
     "test:designcraft": "tsx --test designcraft/tests/*.test.ts",
-    "test:designcraft:browser": "playwright test --config designcraft/playwright.config.ts"
+    "test:designcraft:browser": "playwright test --config designcraft/playwright.config.ts",
+    "test:text-studio": "tsx --test text-studio/tests/*.test.ts",
+    "test:text-studio:browser": "playwright test --config text-studio/tests/playwright.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

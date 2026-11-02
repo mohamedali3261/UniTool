@@ -315,6 +315,7 @@ export const toolCategories: ToolCategory[] = [
       },
     ],
   },
+ {id:'typography',titleAr:'نصوص وخطوط',titleEn:'Text & typography',taglineAr:'كلماتك بتصميم يشبهك، محليًا',taglineEn:'Local typography, your way',icon:Type,accent:'from-lime-500 to-emerald-600',soft:'bg-lime-500/10 text-lime-300 border-lime-500/20',tools:[{id:'textStudio',href:'/text-studio/',icon:Type,titleAr:'استوديو النصوص',titleEn:'Text Studio',descAr:'خطوط عربية وقوالب وتأثيرات وتصدير PNG وSVG بدون رفع النصوص',descEn:'Arabic fonts, templates, effects and PNG/SVG exports without uploading your text',gradient:'from-lime-500 to-emerald-600',border:'border-lime-500/25 hover:border-lime-400/50',glow:'group-hover:shadow-lime-500/20',badgeAr:'جديد',badgeEn:'New'}]},
 ];
 
 export const totalToolCount = toolCategories.reduce((sum, c) => sum + c.tools.length, 0);
