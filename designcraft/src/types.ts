@@ -21,6 +21,7 @@ export interface CanvasPage {
 }
 
 export interface ProjectItem {
+  studio?: import('./advanced/core/faces').PrintSettings;
   id: string;
   title: string;
   width: number;

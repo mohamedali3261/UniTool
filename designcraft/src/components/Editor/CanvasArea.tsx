@@ -1,3 +1,4 @@
+import {applyTextFit} from '../../advanced/core/text';
 import {installAlignmentGuides} from '../../utils/alignmentGuides';
 import {resetEmptyText,normalTextFill} from '../../utils/textReset';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -27,6 +28,7 @@ interface CanvasAreaProps {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   showGrid: boolean;
   isPanMode?: boolean;
+  overlays?:React.ReactNode;
   onCanvasReady: (canvas: fabric.Canvas) => void;
   onSelectionChange: (props: ActiveObjectProperties | null) => void;
   onLayersUpdate: () => void;
@@ -48,7 +50,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   setZoom,
   showGrid,
   isPanMode,
-  onCanvasReady,
+  onCanvasReady,overlays,
   onSelectionChange,
   onLayersUpdate,
   onRecordHistory,
@@ -111,7 +113,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     canvas.setZoom(zoom);
     fabricCanvasRef.current = canvas;
     const removeGuides=installAlignmentGuides(canvas);
-    canvas.on('text:changed',(event:any)=>{if(resetEmptyText(event.target,normalTextFill(canvas.backgroundColor))){canvas.requestRenderAll();onLayersUpdate();onRecordHistory();}});
+    canvas.on('text:changed',(event:any)=>{applyTextFit(event.target);if(resetEmptyText(event.target,normalTextFill(canvas.backgroundColor))){canvas.requestRenderAll();onLayersUpdate();onRecordHistory();}});
     onCanvasReady(canvas);
 
     // Re-render once webfonts finish loading so canvas text uses real glyph metrics
@@ -320,6 +322,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // them here as well made every Ctrl+Z undo two steps and Ctrl+D duplicate twice.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if(document.querySelector('dialog[open]'))return;
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
@@ -335,7 +338,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
         const canvas = fabricCanvasRef.current;
         if (!canvas) return;
-        const objects = canvas.getObjects().filter((obj) => obj.visible !== false);
+        const objects = canvas.getObjects().filter((obj:any) => obj.visible !== false&&obj.selectable!==false&&!obj.locked);
         if (objects.length === 0) return;
         e.preventDefault();
         const selection = new fabric.ActiveSelection(objects, { canvas });
@@ -348,10 +351,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         if (!canvas || !active) return;
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        if (e.key === 'ArrowLeft') active.left = (active.left || 0) - step;
-        else if (e.key === 'ArrowRight') active.left = (active.left || 0) + step;
-        else if (e.key === 'ArrowUp') active.top = (active.top || 0) - step;
-        else if (e.key === 'ArrowDown') active.top = (active.top || 0) + step;
+        if (e.key === 'ArrowLeft'&&!active.lockMovementX) active.left = (active.left || 0) - step;
+        else if (e.key === 'ArrowRight'&&!active.lockMovementX) active.left = (active.left || 0) + step;
+        else if (e.key === 'ArrowUp'&&!active.lockMovementY) active.top = (active.top || 0) - step;
+        else if (e.key === 'ArrowDown'&&!active.lockMovementY) active.top = (active.top || 0) + step;
         active.setCoords();
         canvas.requestRenderAll();
         nudgedRef.current = true;
@@ -679,9 +682,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
         <div
           id="fabric-canvas-artboard-wrapper"
-          className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.15)] rounded-md overflow-hidden bg-white ring-2 ring-sky-500/20 transition-shadow hover:shadow-[0_30px_70px_-15px_rgba(56,189,248,0.2)] touch-none"
+          className="relative shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.15)] rounded-md overflow-hidden bg-white ring-2 ring-sky-500/20 transition-shadow hover:shadow-[0_30px_70px_-15px_rgba(56,189,248,0.2)] touch-none"
         >
           <canvas ref={canvasRef} />
+          {overlays}
         </div>
       </div>
 

@@ -352,6 +352,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; e.currentTarget.style.color = '#e4e6eb'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7c7f8a'; }}
           title={t.switchLang}
+          aria-label={t.switchLang}
         >
           <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
           <span className="hidden sm:inline">{lang === 'ar' ? 'EN' : 'عربي'}</span>

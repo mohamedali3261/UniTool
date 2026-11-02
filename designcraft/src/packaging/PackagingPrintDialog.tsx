@@ -11,12 +11,14 @@ export function PackagingPrintDialog({
   width,
   height,
   onClose,
+  bleedMm = 0,
 }: {
   canvas: fabric.Canvas;
   size: CartonSize;
   width: number;
   height: number;
   onClose: () => void;
+  bleedMm?: number;
 }) {
   const { lang } = useDcLang(),
     ar = lang === "ar",
@@ -24,6 +26,7 @@ export function PackagingPrintDialog({
     [format, setFormat] = useState<"pdf" | "svg" | "png">("pdf"),
     [dpi, setDpi] = useState<PrintDpi>(300),
     [guides, setGuides] = useState(true),
+    [includeBleed, setIncludeBleed] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const g = cartonGeometry(size),
@@ -40,7 +43,7 @@ export function PackagingPrintDialog({
   } catch {}
   useEffect(() => {
     const old = document.activeElement as HTMLElement;
-    const dialog=ref.current;
+    const dialog = ref.current;
     dialog?.showModal();
     return () => {
       dialog?.close();
@@ -102,6 +105,22 @@ export function PackagingPrintDialog({
             </select>
           </label>
         )}
+        <label className="carton-check">
+          <input
+            type="checkbox"
+            checked={includeBleed}
+            disabled={busy}
+            onChange={(e) => setIncludeBleed(e.target.checked)}
+          />
+          {ar ? "تضمين نزيف الطباعة" : "Include print bleed"}
+        </label>
+        <p>
+          {ar ? "النزيف عند التصدير (mm): " : "Export bleed (mm): "}
+          {bleedMm} ·{" "}
+          {ar
+            ? "يُضبط من أدوات المصمم المتقدمة. النصائح والخطوط الإرشادية لا تصدّر."
+            : "Set in advanced tools. Editor-only guides are not exported."}
+        </p>
         <label className="carton-check">
           <input
             type="checkbox"
@@ -177,6 +196,7 @@ export function PackagingPrintDialog({
                   format,
                   dpi,
                   guides,
+                  includeBleed ? bleedMm : 0,
                 ),
                 url = URL.createObjectURL(blob),
                 a = document.createElement("a");
