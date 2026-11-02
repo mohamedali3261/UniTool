@@ -155,13 +155,11 @@ test("transparent holes retain QR modules and transparent margins do not waste l
         logo.data[i + 2] = 255;
         logo.data[i + 3] = 255;
       }
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "transparent.png",
-      mimeType: "image/png",
-      buffer: PNG.sync.write(logo),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "transparent.png",
+    mimeType: "image/png",
+    buffer: PNG.sync.write(logo),
+  });
   const preview = page.getByRole("img", {
     name: "اللوجو المختار",
     exact: true,
@@ -207,4 +205,108 @@ test("enlarging to 30 percent grows the actual logo and shows a scan warning", a
     center = png.width / 2,
     i = (center * png.width + center + 30) * 4;
   expect(Array.from(png.data.slice(i, i + 4))).toEqual([0, 100, 255, 255]);
+});
+test("upload has an accessible custom chooser and optional background appears in PNG and SVG", async ({
+  page,
+}) => {
+  await open(page);
+  const chooser = page.waitForEvent("filechooser");
+  await page
+    .getByRole("button", { name: "اختيار صورة اللوجو", exact: true })
+    .click();
+  await chooser;
+  await upload(page);
+  await expect(page.getByText("brand.png", { exact: true })).toBeVisible();
+  await page
+    .getByRole("checkbox", { name: "إضافة خلفية خلف اللوجو", exact: true })
+    .check();
+  const color = page.getByLabel("لون خلفية اللوجو", { exact: true });
+  await color.fill("#ffcc00");
+  await expect(
+    page.getByRole("button", { name: "تحميل PNG", exact: true }),
+  ).toBeEnabled();
+  const { png } = decode(await download(page, "تحميل PNG")),
+    c = png.width / 2,
+    i = ((c - 18) * png.width + c) * 4;
+  expect(Array.from(png.data.slice(i, i + 4))).toEqual([255, 204, 0, 255]);
+  const svg = (await download(page, "SVG")).toString();
+  expect(svg).toContain('fill="#ffcc00"');
+  await page
+    .getByRole("checkbox", { name: "إضافة خلفية خلف اللوجو", exact: true })
+    .uncheck();
+  await expect(
+    page.getByRole("button", { name: "تحميل PNG", exact: true }),
+  ).toBeEnabled();
+  expect((await download(page, "SVG")).toString()).not.toContain(
+    'fill="#ffcc00"',
+  );
+});
+for (const [name, position] of [
+  ["فوق QR", "above"],
+  ["تحت QR", "below"],
+] as const)
+  test(`${position} logo adds room and the exported QR remains readable`, async ({
+    page,
+  }) => {
+    await open(page);
+    await upload(page);
+    const baseline = decode(await download(page, "تحميل PNG")).png;
+    await page.getByRole("button", { name, exact: true }).click();
+    await expect(
+      page.getByRole("button", { name, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("button", { name: "تحميل PNG", exact: true }),
+    ).toBeEnabled();
+    const { png, result } = decode(await download(page, "تحميل PNG"));
+    expect(result).toBe(payload);
+    expect(png.width).toBe(baseline.width);
+    expect(png.height).toBeGreaterThan(baseline.height);
+    const svg = (await download(page, "SVG")).toString();
+    const placement = await page.evaluate((s) => {
+      const doc = new DOMParser().parseFromString(s, "image/svg+xml");
+      if (doc.querySelector("parsererror")) throw Error("Invalid SVG");
+      return {
+        logoY: Number(doc.querySelector("image")?.getAttribute("y")),
+        qrY: Number(doc.querySelector("g > svg")?.getAttribute("y")),
+        height: Number(doc.documentElement.getAttribute("height")),
+      };
+    }, svg);
+    expect(placement.height).toBe(png.height);
+    if (position === "above")
+      expect(placement.qrY).toBeGreaterThan(placement.logoY);
+    else expect(placement.logoY).toBeGreaterThan(256);
+  });
+test("English mobile controls expose background and outside positions", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => localStorage.setItem("unitool-lang", "en"));
+  await page.goto("/app.html#qrCode");
+  await page.getByPlaceholder("https://example.com").fill(payload);
+  const png = new PNG({ width: 20, height: 20 });
+  png.data.fill(255);
+  await page
+    .locator("input[type=file]")
+    .setInputFiles({
+      name: "mobile.png",
+      mimeType: "image/png",
+      buffer: PNG.sync.write(png),
+    });
+  await expect(
+    page.getByRole("button", { name: "Change logo image", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Above QR", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Above QR", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page
+    .getByRole("checkbox", { name: "Add logo background", exact: true })
+    .check();
+  await expect(
+    page.getByLabel("Logo background color", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Download PNG", exact: true }),
+  ).toBeEnabled();
 });

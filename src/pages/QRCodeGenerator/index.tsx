@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import QRCode from "qrcode";
-import { readLogo, drawLogo, qrSvg, type QRLogo } from "./logo";
+import {
+  readLogo,
+  drawLogo,
+  qrSvg,
+  type LogoPosition,
+  type QRLogo,
+} from "./logo";
 import {
   Download,
   Link,
@@ -46,6 +52,10 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [logo, setLogo] = useState<QRLogo | null>(null);
   const [logoSize, setLogoSize] = useState(16);
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>("center");
+  const [logoBackground, setLogoBackground] = useState(false);
+  const [logoBackgroundColor, setLogoBackgroundColor] = useState("#ffffff");
+  const logoInput = useRef<HTMLInputElement>(null);
   const [logoError, setLogoError] = useState("");
   const [renderError, setRenderError] = useState("");
   const [readyKey, setReadyKey] = useState("");
@@ -140,6 +150,9 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
     bgColor,
     logo?.src,
     logoSize,
+    logoPosition,
+    logoBackground,
+    logoBackgroundColor,
   ]);
   const canExport = !!getQRValue() && readyKey === renderKey;
   useEffect(() => {
@@ -161,7 +174,10 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
         color: { dark: fgColor, light: bgColor },
         errorCorrectionLevel: "H",
       });
-      await drawLogo(output, logo, logoSize);
+      await drawLogo(output, logo, logoSize, {
+        position: logoPosition,
+        background: logoBackground ? logoBackgroundColor : null,
+      });
       if (cancelled) return;
       visible.width = output.width;
       visible.height = output.height;
@@ -236,7 +252,10 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
       document.body.removeChild(a);
     } else {
       const value = getQRValue();
-      qrSvg(value, qrSize, fgColor, bgColor, logo, logoSize)
+      qrSvg(value, qrSize, fgColor, bgColor, logo, logoSize, {
+        position: logoPosition,
+        background: logoBackground ? logoBackgroundColor : null,
+      })
         .then((finalSvg) => {
           const url = URL.createObjectURL(
               new Blob([finalSvg], { type: "image/svg+xml" }),
@@ -501,12 +520,35 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
       </div>
 
       <div className="p-3 space-y-3 border-t border-[#2D3139] sm:p-4">
-        <label className="block text-xs text-gray-300">
-          {lang === "ar" ? "لوجو في منتصف QR" : "Center logo"}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-gray-200">
+            {lang === "ar" ? "لوجو الكود" : "QR branding"}
+          </h3>
+          <button
+            type="button"
+            onClick={() => logoInput.current?.click()}
+            className="group w-full flex items-center justify-center gap-3 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-500/5 px-4 py-4 text-sm text-cyan-300 hover:bg-cyan-500/15 hover:border-cyan-400 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+          >
+            <span className="text-xl" aria-hidden="true">
+              ＋
+            </span>
+            {logo
+              ? lang === "ar"
+                ? "تغيير صورة اللوجو"
+                : "Change logo image"
+              : lang === "ar"
+                ? "اختيار صورة اللوجو"
+                : "Choose logo image"}
+          </button>
+          <p className="text-[10px] text-gray-500 break-all">
+            {logo ? logo.name : "PNG · JPG · WebP / 5 MB"}
+          </p>
           <input
+            ref={logoInput}
             type="file"
+            aria-label={lang === "ar" ? "ملف صورة اللوجو" : "Logo image file"}
             accept="image/png,image/jpeg,image/webp"
-            className="block w-full mt-2 text-xs text-gray-300"
+            className="hidden"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
@@ -526,7 +568,7 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
               }
             }}
           />
-        </label>
+        </div>
         {logo && (
           <>
             <div className="flex items-center gap-3">
@@ -547,6 +589,59 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
                 {lang === "ar" ? "إزالة اللوجو" : "Remove logo"}
               </button>
             </div>
+            <fieldset className="space-y-2">
+              <legend className="text-xs text-gray-300">
+                {lang === "ar" ? "مكان اللوجو" : "Logo position"}
+              </legend>
+              <div className="grid grid-cols-3 gap-2">
+                {(["above", "center", "below"] as const).map((position) => (
+                  <button
+                    type="button"
+                    key={position}
+                    aria-pressed={logoPosition === position}
+                    onClick={() => setLogoPosition(position)}
+                    className={cn(
+                      "rounded-lg border px-2 py-2.5 text-xs transition-colors",
+                      logoPosition === position
+                        ? "border-cyan-400 bg-cyan-500/15 text-cyan-200"
+                        : "border-gray-700 text-gray-400 hover:border-gray-500",
+                    )}
+                  >
+                    {position === "above"
+                      ? lang === "ar"
+                        ? "فوق QR"
+                        : "Above QR"
+                      : position === "below"
+                        ? lang === "ar"
+                          ? "تحت QR"
+                          : "Below QR"
+                        : lang === "ar"
+                          ? "المنتصف"
+                          : "Center"}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label className="flex items-center gap-2 text-xs text-gray-300">
+              <input
+                type="checkbox"
+                checked={logoBackground}
+                onChange={(e) => setLogoBackground(e.target.checked)}
+                className="accent-cyan-500"
+              />
+              {lang === "ar" ? "إضافة خلفية خلف اللوجو" : "Add logo background"}
+            </label>
+            {logoBackground && (
+              <label className="flex items-center justify-between gap-2 text-xs text-gray-300">
+                {lang === "ar" ? "لون خلفية اللوجو" : "Logo background color"}
+                <input
+                  type="color"
+                  value={logoBackgroundColor}
+                  onChange={(e) => setLogoBackgroundColor(e.target.value)}
+                  className="w-10 h-8 cursor-pointer bg-transparent"
+                />
+              </label>
+            )}
             <label className="block text-xs text-gray-300">
               {lang === "ar" ? "حجم اللوجو" : "Logo size"}: {logoSize}%
               <input
@@ -564,11 +659,11 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
         {logo && (
           <p className="text-[10px] leading-relaxed text-gray-400">
             {lang === "ar"
-              ? "بدون خلفية أو إطار مضاف. التكبير يغيّر حجم اللوجو الفعلي بعد قص الهوامش الشفافة. الخلفية الموجودة داخل الصورة لا تُحذف؛ استخدم PNG شفافًا."
-              : "No added background or frame. Size scales the actual logo after trimming transparent margins. Background baked into your image stays: use a transparent PNG."}
+              ? "الخلفية اختيارية. التكبير يغيّر حجم اللوجو نفسه. فوق وتحت يوضع اللوجو خارج مساحة الكود. الخلفية الموجودة في الصورة الأصلية لا تُحذف."
+              : "Background is optional. Size scales the logo itself. Above/below places it outside the QR area. Background baked into the original image stays."}
           </p>
         )}
-        {logo && logoSize > 20 && (
+        {logo && logoPosition === "center" && logoSize > 20 && (
           <p role="status" className="text-xs text-amber-300">
             {lang === "ar"
               ? "تنبيه: اللوجو الكبير قد يمنع قراءة الكود. جرّب المسح أو قلّل الحجم."

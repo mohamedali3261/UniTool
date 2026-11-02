@@ -86,20 +86,64 @@ export function logoBox(width: number, height: number, percent: number) {
     padding = 0;
   return { size, padding, x: (width - size) / 2, y: (height - size) / 2 };
 }
+export type LogoPosition = "center" | "above" | "below";
+export type LogoOptions = {
+  position?: LogoPosition;
+  background?: string | null;
+};
+export function logoLayout(
+  size: number,
+  percent: number,
+  position: LogoPosition = "center",
+) {
+  const box = logoBox(size, size, percent),
+    gap = Math.max(8, Math.round(size * 0.03));
+  const extra = position === "center" ? 0 : Math.ceil(box.size) + gap;
+  return {
+    width: size,
+    height: size + extra,
+    qrY: position === "above" ? extra : 0,
+    x: box.x,
+    y: position === "above" ? 0 : position === "below" ? size + gap : box.y,
+    size: box.size,
+  };
+}
 export async function drawLogo(
   canvas: HTMLCanvasElement,
   logo: QRLogo | null,
   percent: number,
+  options: LogoOptions = {},
 ) {
   if (!logo) return;
   const image = await loadImage(logo.src),
-    ctx = canvas.getContext("2d");
+    layout = logoLayout(canvas.width, percent, options.position);
+  if (layout.height !== canvas.height) {
+    const original = document.createElement("canvas");
+    original.width = canvas.width;
+    original.height = canvas.height;
+    original.getContext("2d")!.drawImage(canvas, 0, 0);
+    canvas.height = layout.height;
+    canvas.getContext("2d")!.drawImage(original, 0, layout.qrY);
+  }
+  const ctx = canvas.getContext("2d");
   if (!ctx) throw Error("CANVAS");
-  const b = logoBox(canvas.width, canvas.height, percent),
-    scale = Math.min(b.size / image.naturalWidth, b.size / image.naturalHeight),
+  if (options.background && /^#[0-9a-f]{6}$/i.test(options.background)) {
+    ctx.fillStyle = options.background;
+    ctx.fillRect(layout.x, layout.y, layout.size, layout.size);
+  }
+  const scale = Math.min(
+      layout.size / image.naturalWidth,
+      layout.size / image.naturalHeight,
+    ),
     w = image.naturalWidth * scale,
     h = image.naturalHeight * scale;
-  ctx.drawImage(image, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+  ctx.drawImage(
+    image,
+    layout.x + (layout.size - w) / 2,
+    layout.y + (layout.size - h) / 2,
+    w,
+    h,
+  );
 }
 /** QR paths stay vector; only the uploaded logo is embedded as a normalized PNG. */
 export async function qrSvg(
@@ -109,7 +153,9 @@ export async function qrSvg(
   light: string,
   logo: QRLogo | null,
   percent: number,
+  options: LogoOptions = {},
 ) {
+  const layout = logoLayout(size, percent, logo ? options.position : "center");
   const inner = await QRCode.toString(value, {
     type: "svg",
     width: size,
@@ -119,8 +165,12 @@ export async function qrSvg(
   });
   let overlay = "";
   if (logo) {
-    const b = logoBox(size, size, percent);
-    overlay = `<image x="${b.x}" y="${b.y}" width="${b.size}" height="${b.size}" preserveAspectRatio="xMidYMid meet" href="${logo.src}"/>`;
+    const b = layout;
+    overlay =
+      (options.background && /^#[0-9a-f]{6}$/i.test(options.background)
+        ? `<rect x="${b.x}" y="${b.y}" width="${b.size}" height="${b.size}" fill="${options.background}"/>`
+        : "") +
+      `<image x="${b.x}" y="${b.y}" width="${b.size}" height="${b.size}" preserveAspectRatio="xMidYMid meet" href="${logo.src}"/>`;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size + 32}" height="${size + 55}" viewBox="0 0 ${size + 32} ${size + 55}"><rect width="100%" height="100%" fill="#fff"/><g transform="translate(16 16)">${inner.replace(/<svg\b([^>]*)>/, (_, attrs: string) => `<svg x="0" y="0" width="${size}" height="${size}" ${attrs.replace(/\s(?:width|height)="[^"]*"/g, "")}>`)}${overlay}</g><text x="${(size + 32) / 2}" y="${size + 31}" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b5563">Developed by Mohamed Ali</text><text x="${(size + 32) / 2}" y="${size + 43}" text-anchor="middle" font-family="monospace" font-size="8" fill="#6b7280">www.unitool1.vercel.app</text></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size + 32}" height="${layout.height + 55}" viewBox="0 0 ${size + 32} ${layout.height + 55}"><rect width="100%" height="100%" fill="#fff"/><g transform="translate(16 16)">${inner.replace(/<svg\b([^>]*)>/, (_, attrs: string) => `<svg x="0" y="${layout.qrY}" width="${size}" height="${size}" ${attrs.replace(/\s(?:width|height)="[^"]*"/g, "")}>`)}${overlay}</g><text x="${(size + 32) / 2}" y="${layout.height + 31}" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b5563">Developed by Mohamed Ali</text><text x="${(size + 32) / 2}" y="${layout.height + 43}" text-anchor="middle" font-family="monospace" font-size="8" fill="#6b7280">www.unitool1.vercel.app</text></svg>`;
 }

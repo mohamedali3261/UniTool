@@ -41,3 +41,32 @@ test("transparent margins are cropped without erasing opaque white artwork", () 
   d.fill(255);
   assert.deepEqual(alphaBounds(d, 10, 8), { x: 0, y: 0, width: 10, height: 8 });
 });
+test("above and below layouts reserve space without shrinking or covering the QR", async () => {
+  const { logoLayout } = await import("../logo");
+  for (const size of [128, 256, 512])
+    for (const percent of [10, 16, 30]) {
+      const above = logoLayout(size, percent, "above"),
+        below = logoLayout(size, percent, "below");
+      assert.ok(above.y + above.size < above.qrY);
+      assert.equal(below.qrY, 0);
+      assert.ok(below.y > size);
+      assert.ok(below.y + below.size <= below.height);
+      assert.equal(above.height, below.height);
+      assert.equal(above.width, size);
+      assert.equal(above.x + above.size / 2, size / 2);
+    }
+});
+test("SVG applies optional background and outside positioning to both geometry and page height", async () => {
+  const { logoLayout } = await import("../logo");
+  const logo = { src: "data:image/png;base64,AA==", name: "logo" };
+  for (const position of ["above", "center", "below"] as const) {
+    const layout = logoLayout(256, 16, position);
+    const svg = await qrSvg("test", 256, "#000000", "#ffffff", logo, 16, {
+      position,
+      background: "#ffcc00",
+    });
+    assert.ok(svg.includes(`height="${layout.height + 55}"`));
+    assert.ok(svg.includes('fill="#ffcc00"'));
+    assert.ok(svg.includes(`<image x="${layout.x}" y="${layout.y}"`));
+  }
+});
