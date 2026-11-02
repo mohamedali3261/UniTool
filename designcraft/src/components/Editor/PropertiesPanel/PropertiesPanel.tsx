@@ -27,6 +27,10 @@ interface PropertiesPanelProps {
   onSetBackgroundColor: (color: string) => void;
   onSetBackgroundGradient: (stops: string[]) => void;
   onDeselect: () => void;
+  canGroup: boolean;
+  canUngroup: boolean;
+  onGroup: () => void;
+  onUngroup: () => void;
   onClosePanel?: () => void;
 }
 
@@ -49,6 +53,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onSetBackgroundColor,
   onSetBackgroundGradient,
   onDeselect,
+  canGroup,
+  canUngroup,
+  onGroup,
+  onUngroup,
   onClosePanel
 }) => {
   const { t } = useDcLang();
@@ -176,6 +184,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onDelete={onDelete}
               onToggleLock={onToggleLock}
               isLocked={isLocked}
+              canGroup={canGroup}
+              canUngroup={canUngroup}
+              onGroup={onGroup}
+              onUngroup={onUngroup}
             />
           </>
         ) : (

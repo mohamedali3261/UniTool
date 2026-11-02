@@ -88,12 +88,12 @@ export default function App() {
       }
     };
 
-    saveProjectToStorage(newProject);
+    const saved = saveProjectToStorage(newProject);
     openProjectInTab(newProject);
     showToast(
-      t.appWorkspaceTitle,
-      `${preset.width} × ${preset.height} px · ${t.appWorkspaceMsg}`,
-      'info'
+      saved ? t.appWorkspaceTitle : t.saveStorageError,
+      saved ? `${preset.width} × ${preset.height} px · ${t.appWorkspaceMsg}` : t.saveStorageErrorMsg,
+      saved ? 'info' : 'error'
     );
   };
 
@@ -118,12 +118,12 @@ export default function App() {
       }
     };
 
-    saveProjectToStorage(newProject);
+    const saved = saveProjectToStorage(newProject);
     openProjectInTab(newProject);
     showToast(
-      t.appDesignReadyTitle,
-      `${data.width} × ${data.height} px · ${t.appDesignReadyMsg}`,
-      'success'
+      saved ? t.appDesignReadyTitle : t.saveStorageError,
+      saved ? `${data.width} × ${data.height} px · ${t.appDesignReadyMsg}` : t.saveStorageErrorMsg,
+      saved ? 'success' : 'error'
     );
   };
 

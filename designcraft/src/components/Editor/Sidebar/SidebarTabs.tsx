@@ -7,7 +7,8 @@ import {
   Image,
   Palette,
   Layers,
-  Sliders
+  Sliders,
+  SwatchBook
 } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
@@ -45,6 +46,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
     { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
     { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
     { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: true },
+    { id: 'brand', label: t.tabBrand, labelEn: 'Brand colors', icon: <SwatchBook className="w-4 h-4 text-fuchsia-400" /> },
     { id: 'background', label: t.tabBackground, labelEn: 'Background', icon: <Palette className="w-4 h-4 text-amber-400" /> },
     { id: 'layers', label: t.tabLayers, labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
   ];
@@ -53,7 +55,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
     return (
       <nav
         id="mobile-bottom-nav"
-        className="fixed bottom-0 inset-x-0 h-14 bg-[#0B132B]/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around z-30 px-1 select-none md:hidden shadow-[0_-10px_25px_rgba(0,0,0,0.5)]"
+        className="fixed bottom-0 inset-x-0 h-14 overflow-x-auto no-scrollbar bg-[#0B132B]/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around z-30 px-1 select-none md:hidden shadow-[0_-10px_25px_rgba(0,0,0,0.5)]"
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -62,7 +64,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectTab(tab.id)}
-                className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
+                className={`flex-1 min-w-[48px] flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
                   isActive
                     ? 'text-sky-400 font-bold'
                     : 'text-slate-400 hover:text-white'
@@ -83,7 +85,7 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
           <button
             type="button"
             onClick={onToggleProperties}
-            className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
+            className={`flex-1 min-w-[48px] flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
               isPropertiesOpen
                 ? 'text-amber-400 font-bold'
                 : hasSelection

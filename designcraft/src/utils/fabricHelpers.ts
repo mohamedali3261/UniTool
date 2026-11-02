@@ -2,6 +2,7 @@ import { fabric } from 'fabric';
 import { SVG_ICON_STRINGS, getFallbackSvgForIcon } from './svgIcons';
 import { ProjectItem } from '../types';
 import { INITIAL_MOCK_PROJECTS } from '../data/presets';
+import { FABRIC_CUSTOM_PROPERTIES } from './projectFile';
 
 // Configure Fabric default control styling and safe text style handlers
 export const initFabricDefaults = () => {
@@ -1170,14 +1171,16 @@ export const getSavedProjects = (): ProjectItem[] => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MOCK_PROJECTS));
       return INITIAL_MOCK_PROJECTS;
     }
-    return JSON.parse(raw);
+    const projects: unknown = JSON.parse(raw);
+    if (!Array.isArray(projects)) return [];
+    return projects.filter((project): project is ProjectItem => !!project && typeof project.id === 'string' && typeof project.title === 'string' && Number.isFinite(project.width) && Number.isFinite(project.height) && !!project.canvasData);
   } catch (err) {
     console.error('Failed to parse saved projects', err);
     return INITIAL_MOCK_PROJECTS;
   }
 };
 
-export const saveProjectToStorage = (project: ProjectItem): void => {
+export const saveProjectToStorage = (project: ProjectItem): boolean => {
   try {
     const projects = getSavedProjects();
     const index = projects.findIndex((p) => p.id === project.id);
@@ -1187,8 +1190,10 @@ export const saveProjectToStorage = (project: ProjectItem): void => {
       projects.unshift({ ...project, createdAt: Date.now(), updatedAt: Date.now() });
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    return true;
   } catch (err) {
     console.error('Failed to save project', err);
+    return false;
   }
 };
 

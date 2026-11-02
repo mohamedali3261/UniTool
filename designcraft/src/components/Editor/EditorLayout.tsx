@@ -14,7 +14,9 @@ import {
   PanelRightClose,
   PanelRightOpen,
   SlidersHorizontal,
-  X
+  X,
+  Group,
+  Ungroup
 } from 'lucide-react';
 import { TopBar } from './TopBar';
 import { DesignTabs, DesignTabItem } from './DesignTabs';
@@ -28,6 +30,7 @@ import { MediaTab } from './Sidebar/MediaTab';
 import { TemplatesTab } from './Sidebar/TemplatesTab';
 import { BackgroundTab } from './Sidebar/BackgroundTab';
 import { LayersTab } from './Sidebar/LayersTab';
+import { BrandKitTab } from './Sidebar/BrandKitTab';
 import { PropertiesPanel } from './PropertiesPanel/PropertiesPanel';
 import { CanvasArea } from './CanvasArea';
 import { ExportModal } from './Modals/ExportModal';
@@ -71,6 +74,9 @@ import {
 } from '../../utils/fabricHelpers';
 import { BackgroundPatternItem } from '../../data/patternsCatalog';
 import { DesignTemplate, TemplateObjectDef } from '../../data/templates';
+import { FABRIC_CUSTOM_PROPERTIES, downloadProjectFile } from '../../utils/projectFile';
+import { applyBrandColor, backgroundPreviewColor, groupSelection, newObjectId, ungroupSelection } from '../../utils/editorTools';
+import { collectDesignColors } from '../../utils/brandKit';
 
 interface EditorLayoutProps {
   initialProject: ProjectItem;
@@ -107,14 +113,26 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [canvasWidth, setCanvasWidth] = useState(initialProject.width);
   const [canvasHeight, setCanvasHeight] = useState(initialProject.height);
   const [backgroundColor, setBackgroundColor] = useState(
-    initialProject.canvasData?.background || '#FFFFFF'
+    backgroundPreviewColor(initialProject.canvasData?.background)
   );
   const [zoom, setZoom] = useState(0.85);
   const [showGrid, setShowGrid] = useState(false);
+  const [snapEnabled, setSnapEnabled] = useState(() => {
+    try { return localStorage.getItem('designcraft_smart_guides_v1') !== 'false'; } catch { return true; }
+  });
+  const [, setHistoryVersion] = useState(0);
   const [isPanMode, setIsPanMode] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('templates');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => window.matchMedia('(max-width: 767px)').matches);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobileViewport(query.matches);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
   const [activeProperties, setActiveProperties] = useState<ActiveObjectProperties | null>(null);
   const [layersList, setLayersList] = useState<any[]>([]);
 
@@ -151,38 +169,14 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const canvas = fabricCanvasRef.current;
     if (!canvas || isHistoryLockedRef.current) return;
 
-    const json = JSON.stringify(
-      canvas.toJSON([
-        'id',
-        'name',
-        'locked',
-        'lockMovementX',
-        'lockMovementY',
-        'lockRotation',
-        'clipCornerTL',
-        'clipCornerTR',
-        'clipCornerBR',
-        'clipCornerBL',
-        'cropTop',
-        'cropBottom',
-        'cropLeft',
-        'cropRight',
-        'fadeTop',
-        'fadeBottom',
-        'fadeLeft',
-        'fadeRight',
-        'fadeRadial',
-        '_originalSrc',
-        'hasBorders',
-        'hasControls',
-        'clipPath'
-      ])
-    );
+    const json = JSON.stringify(canvas.toJSON(FABRIC_CUSTOM_PROPERTIES));
     const newStack = historyStackRef.current.slice(0, historyIndexRef.current + 1);
+    if (newStack[newStack.length - 1] === json) return;
     newStack.push(json);
     if (newStack.length > 30) newStack.shift();
     historyStackRef.current = newStack;
     historyIndexRef.current = newStack.length - 1;
+    setHistoryVersion(version => version + 1);
   }, []);
 
   // Update Layers helper
@@ -211,8 +205,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           name = t.layerPath;
         }
 
+        obj.id ||= newObjectId();
         return {
-          id: obj.id || `obj_${index}_${Date.now()}`,
+          id: obj.id,
           name: obj.name || name,
           type,
           visible: obj.visible !== false,
@@ -227,12 +222,14 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Handle Undo
   const handleUndo = useCallback(() => {
-    if (historyIndexRef.current <= 0) return;
+    if (historyIndexRef.current <= 0 || isHistoryLockedRef.current) return;
 
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
     isHistoryLockedRef.current = true;
+    canvas.discardActiveObject();
+    setActiveProperties(null);
     historyIndexRef.current -= 1;
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
@@ -240,18 +237,22 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
+      setBackgroundColor(backgroundPreviewColor(canvas.backgroundColor));
+      setHistoryVersion(version => version + 1);
       onShowToast(t.elUndoTitle, t.elUndoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
 
   // Handle Redo
   const handleRedo = useCallback(() => {
-    if (historyIndexRef.current >= historyStackRef.current.length - 1) return;
+    if (historyIndexRef.current >= historyStackRef.current.length - 1 || isHistoryLockedRef.current) return;
 
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
     isHistoryLockedRef.current = true;
+    canvas.discardActiveObject();
+    setActiveProperties(null);
     historyIndexRef.current += 1;
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
@@ -259,9 +260,51 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.renderAll();
       updateLayersList();
       isHistoryLockedRef.current = false;
+      setBackgroundColor(backgroundPreviewColor(canvas.backgroundColor));
+      setHistoryVersion(version => version + 1);
       onShowToast(t.elRedoTitle, t.elRedoMsg, 'info');
     });
   }, [updateLayersList, onShowToast]);
+
+  // Grouping removes/re-adds objects internally. Record one complete snapshot,
+  // not the intermediate empty canvas emitted by Fabric during that operation.
+  const handleGroup = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    isHistoryLockedRef.current = true;
+    try {
+      const result = groupSelection(canvas, t.layerGroup);
+      if (result === 'locked') onShowToast(t.groupLocked, '', 'warning');
+      if (result !== 'grouped') return;
+      updateLayersList();
+      onShowToast(t.groupSuccess, '', 'success');
+    } finally {
+      isHistoryLockedRef.current = false;
+    }
+    recordHistory();
+  }, [t, onShowToast, updateLayersList, recordHistory]);
+
+  const handleUngroup = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    isHistoryLockedRef.current = true;
+    try {
+      if (!ungroupSelection(canvas)) return;
+      updateLayersList();
+      onShowToast(t.ungroupSuccess, '', 'success');
+    } finally {
+      isHistoryLockedRef.current = false;
+    }
+    recordHistory();
+  }, [t, onShowToast, updateLayersList, recordHistory]);
+
+  const handleToggleSnap = useCallback(() => {
+    setSnapEnabled(enabled => {
+      const next = !enabled;
+      try { localStorage.setItem('designcraft_smart_guides_v1', String(next)); } catch { /* session-only preference */ }
+      return next;
+    });
+  }, []);
 
   // Context Menu Handlers
   const handleCopy = useCallback(() => {
@@ -326,7 +369,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA' ||
-        document.activeElement?.tagName === 'SELECT'
+        document.activeElement?.tagName === 'SELECT' ||
+        (document.activeElement as HTMLElement | null)?.isContentEditable
       ) {
         return;
       }
@@ -338,6 +382,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           handlePaste();
         } else if (e.key === 'x' || e.key === 'X') {
           handleCut();
+        } else if (e.key.toLowerCase() === 'g') {
+          e.preventDefault();
+          if (e.shiftKey) handleUngroup(); else handleGroup();
         } else if (e.key === 'd' || e.key === 'D') {
           e.preventDefault();
           if (fabricCanvasRef.current) {
@@ -379,7 +426,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleCopy, handlePaste, handleCut, handleUndo, handleRedo, updateLayersList, recordHistory]);
+  }, [handleCopy, handlePaste, handleCut, handleUndo, handleRedo, handleGroup, handleUngroup, updateLayersList, recordHistory]);
 
   // Handle Right Click for Context Menu
   const handleContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
@@ -391,7 +438,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       x: e.clientX,
       y: e.clientY,
       hasSelection: !!canvas?.getActiveObject(),
-      hasClipboard: !!clipboardRef.current
+      hasClipboard: !!clipboardRef.current,
+      canGroup: canvas?.getActiveObject()?.type === 'activeSelection',
+      canUngroup: canvas?.getActiveObject()?.type === 'group'
     });
   }, []);
 
@@ -401,28 +450,31 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const handleCanvasReady = useCallback(
     (canvas: fabric.Canvas) => {
       fabricCanvasRef.current = canvas;
+      let disposed = false;
 
       if (initialProject.canvasData) {
         isHistoryLockedRef.current = true;
         canvas.loadFromJSON(initialProject.canvasData, () => {
+          if (disposed) return;
           canvas.renderAll();
           updateLayersList();
+          setBackgroundColor(backgroundPreviewColor(canvas.backgroundColor));
           isHistoryLockedRef.current = false;
           recordHistory();
         });
       } else {
         recordHistory();
       }
+      return () => { disposed = true; };
     },
     [initialProject.canvasData, recordHistory, updateLayersList]
   );
 
   // Handle Selection Change
   const handleSelectionChange = useCallback((props: ActiveObjectProperties | null) => {
+    // Opening the inspector during mouse-down changes the canvas width and
+    // makes the active drag jump. CanvasArea opens it after mouse-up instead.
     setActiveProperties(props);
-    if (props && window.innerWidth >= 768) {
-      setIsPropertiesOpen(true);
-    }
   }, []);
 
   // Property Updater
@@ -528,27 +580,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const canvas = fabricCanvasRef.current;
     if (!canvas) return undefined;
 
-    const canvasJson = canvas.toJSON([
-      'id',
-      'name',
-      'locked',
-      'lockMovementX',
-      'lockMovementY',
-      'clipCornerTL',
-      'clipCornerTR',
-      'clipCornerBR',
-      'clipCornerBL',
-      'cropTop',
-      'cropBottom',
-      'cropLeft',
-      'cropRight',
-      'fadeTop',
-      'fadeBottom',
-      'fadeLeft',
-      'fadeRight',
-      'fadeRadial',
-      '_originalSrc'
-    ]);
+    const canvasJson = canvas.toJSON(FABRIC_CUSTOM_PROPERTIES);
 
     // Render the thumbnail from the full design, not the zoomed viewport,
     // otherwise saved design cards look pixelated.
@@ -561,33 +593,45 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       height: canvasHeight,
       thumbnail: thumb,
       updatedAt: Date.now(),
-      canvasData: {
-        ...canvasJson,
-        background: backgroundColor
-      }
+      canvasData: canvasJson
     };
 
-    saveProjectToStorage(updated);
+    if (!saveProjectToStorage(updated)) {
+      onShowToast(t.saveStorageError, t.saveStorageErrorMsg, 'error');
+      return undefined;
+    }
     onProjectUpdated?.(updated);
     return updated;
-  }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, onProjectUpdated]);
+  }, [initialProject, projectTitle, canvasWidth, canvasHeight, onProjectUpdated, onShowToast, t]);
 
   // Save Project Action
   const handleSaveProject = useCallback(() => {
     if (!fabricCanvasRef.current) return;
 
     setIsSaving(true);
-    persistProject();
+    const saved = persistProject();
 
     setTimeout(() => {
       setIsSaving(false);
-      onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
+      if (saved) onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
     }, 400);
   }, [persistProject, onShowToast]);
 
   useImperativeHandle(ref, () => ({
     flushSave: () => persistProject()
   }), [persistProject]);
+
+  const handleDownloadBackup = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    try {
+      downloadProjectFile({ ...initialProject, title: projectTitle, width: canvasWidth, height: canvasHeight, canvasData: canvas.toJSON(FABRIC_CUSTOM_PROPERTIES) });
+      onShowToast(t.backupSuccess, t.backupSuccessMsg, 'success');
+    } catch (error) {
+      console.error('Design backup failed', error);
+      onShowToast(t.backupError, '', 'error');
+    }
+  }, [initialProject, projectTitle, canvasWidth, canvasHeight, onShowToast, t]);
 
   // Open Export Modal
   const handleOpenExport = useCallback(() => {
@@ -629,6 +673,16 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     recordHistory();
     onShowToast(t.elBgTitle, t.elBgMsg, 'success');
   }, [onShowToast, recordHistory]);
+
+  const handleApplyBrandColor = useCallback((color: string) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    if (!canvas.getActiveObject()) { handleSetBackgroundColor(color); return; }
+    if (applyBrandColor(canvas, color)) {
+      recordHistory();
+      onShowToast(t.brandApplied, color, 'success');
+    } else onShowToast(t.brandNoSelectionColor, '', 'info');
+  }, [handleSetBackgroundColor, recordHistory, onShowToast, t]);
 
   const handleSetBackgroundGradient = useCallback((color1OrStops: string | string[], color2?: string) => {
     const canvas = fabricCanvasRef.current;
@@ -957,6 +1011,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       case 'media': return t.titleMedia;
       case 'background': return t.titleBackground;
       case 'layers': return t.titleLayers;
+      case 'brand': return t.brandTitle;
       default: return t.tools;
     }
   };
@@ -1151,10 +1206,18 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             onSelectPattern={handleSetBackgroundPattern}
           />
         );
+      case 'brand':
+        return <BrandKitTab
+          selectedColor={activeProperties?.fill}
+          onApplyColor={handleApplyBrandColor}
+          onCollectColors={() => fabricCanvasRef.current ? collectDesignColors(fabricCanvasRef.current.toJSON(FABRIC_CUSTOM_PROPERTIES)) : []}
+          onNotice={(message, error) => onShowToast(message, '', error ? 'warning' : 'success')}
+        />;
       case 'layers':
         return (
           <LayersTab
             layers={layersList}
+            activeLayerId={activeProperties?.id}
             onSelectLayer={(id) => {
               const canvas = fabricCanvasRef.current;
               if (!canvas) return;
@@ -1209,7 +1272,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                bringForward(canvas);
+                canvas.bringForward(found.rawObject);
+                canvas.renderAll();
                 updateLayersList();
                 recordHistory();
               }
@@ -1219,7 +1283,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                sendBackwards(canvas);
+                canvas.sendBackwards(found.rawObject);
+                canvas.renderAll();
                 updateLayersList();
                 recordHistory();
               }
@@ -1312,6 +1377,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           setActiveProperties(null);
         }
       }}
+      canGroup={activeProperties?.type === 'activeSelection' && (activeProperties.selectionCount || 0) > 1}
+      canUngroup={activeProperties?.type === 'group'}
+      onGroup={handleGroup}
+      onUngroup={handleUngroup}
       onClosePanel={() => setIsPropertiesOpen(false)}
     />
   );
@@ -1337,6 +1406,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onResetZoom={() => setZoom(1)}
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid(!showGrid)}
+        snapEnabled={snapEnabled}
+        onToggleSnap={handleToggleSnap}
+        onDownloadBackup={handleDownloadBackup}
         onOpenPreview={handleOpenPreview}
         onOpenExport={handleOpenExport}
         onSave={handleSaveProject}
@@ -1373,7 +1445,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         />
 
         {/* Desktop Sidebar Expanded Drawer Panel */}
-        {isSidebarOpen && (
+        {!isMobileViewport && isSidebarOpen && (
           <div className="hidden md:flex flex-col w-80 bg-[#1C2541] border-r border-slate-700/60 shrink-0 h-full overflow-hidden shadow-xl">
             <div className="px-4 py-3 bg-[#0B132B] border-b border-slate-700/80 flex items-center justify-between">
               <span className="text-xs font-bold text-white">
@@ -1401,6 +1473,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             options={contextMenu}
             onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
             onCopy={handleCopy}
+            onGroup={handleGroup}
+            onUngroup={handleUngroup}
             onCut={handleCut}
             onPaste={handlePaste}
             onDuplicate={() => {
@@ -1453,6 +1527,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             zoom={zoom}
             setZoom={setZoom}
             showGrid={showGrid}
+            snapEnabled={snapEnabled}
+            onToggleSnap={handleToggleSnap}
+            onGroup={handleGroup}
+            onUngroup={handleUngroup}
             isPanMode={isPanMode}
             onCanvasReady={handleCanvasReady}
             onSelectionChange={handleSelectionChange}
@@ -1481,7 +1559,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         </div>
 
         {/* Desktop Right Properties Panel */}
-        {isPropertiesOpen && (
+        {!isMobileViewport && isPropertiesOpen && (
           <div className="hidden md:flex h-full shrink-0">
             {renderPropertiesPanelContent()}
           </div>
@@ -1499,11 +1577,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       />
 
       {/* 4. Mobile Bottom Sheet Drawer for Sidebar Tools */}
-      {isSidebarOpen && activeSidebarTab && (
-        <div className="md:hidden fixed inset-0 z-40">
+      {isMobileViewport && isSidebarOpen && activeSidebarTab && (
+        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsSidebarOpen(false)}
           />
 
@@ -1537,11 +1615,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       )}
 
       {/* 5. Mobile Bottom Sheet for Properties Panel */}
-      {isPropertiesOpen && (
-        <div className="md:hidden fixed inset-0 z-40">
+      {isMobileViewport && isPropertiesOpen && (
+        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsPropertiesOpen(false)}
           />
 

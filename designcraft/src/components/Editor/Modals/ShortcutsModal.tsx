@@ -22,7 +22,10 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { key: 'Esc', desc: t.scDeselect },
     { key: 'Arrow Keys', desc: t.scMove1 },
     { key: 'Shift + Arrow Keys', desc: t.scMove10 },
-    { key: 'Ctrl + S', desc: t.scSave }
+    { key: 'Ctrl + S', desc: t.scSave },
+    { key: 'Ctrl + G', desc: t.scGroup },
+    { key: 'Ctrl + Shift + G', desc: t.scUngroup },
+    { key: 'Alt + Drag', desc: t.scSnapBypass }
   ];
 
   return (

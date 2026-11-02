@@ -3,6 +3,8 @@ import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
 import { ActiveObjectProperties } from '../../types';
 import { initFabricDefaults } from '../../utils/fabricHelpers';
+import { calculateSnap, paintGuides } from '../../utils/smartGuides';
+import { selectedObjects } from '../../utils/editorTools';
 import {
   ZoomIn,
   ZoomOut,
@@ -14,7 +16,10 @@ import {
   ChevronsUp,
   ChevronsDown,
   AlignCenter,
-  Sliders
+  Sliders,
+  Magnet,
+  Group,
+  Ungroup
 } from 'lucide-react';
 
 interface CanvasAreaProps {
@@ -24,8 +29,12 @@ interface CanvasAreaProps {
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   showGrid: boolean;
+  snapEnabled: boolean;
+  onToggleSnap: () => void;
+  onGroup: () => void;
+  onUngroup: () => void;
   isPanMode?: boolean;
-  onCanvasReady: (canvas: fabric.Canvas) => void;
+  onCanvasReady: (canvas: fabric.Canvas) => void | (() => void);
   onSelectionChange: (props: ActiveObjectProperties | null) => void;
   onLayersUpdate: () => void;
   onRecordHistory: () => void;
@@ -45,6 +54,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   zoom,
   setZoom,
   showGrid,
+  snapEnabled,
+  onToggleSnap,
+  onGroup,
+  onUngroup,
   isPanMode,
   onCanvasReady,
   onSelectionChange,
@@ -61,11 +74,15 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const { t, lang } = useDcLang();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const guideCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const snapEnabledRef = useRef(snapEnabled);
+  snapEnabledRef.current = snapEnabled;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
 
   const [hasSelection, setHasSelection] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('');
+  const [selectionCount, setSelectionCount] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -108,11 +125,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     canvas.setZoom(zoom);
     fabricCanvasRef.current = canvas;
-    onCanvasReady(canvas);
+    const releaseEditor = onCanvasReady(canvas);
+    let disposed = false;
 
     // Re-render once webfonts finish loading so canvas text uses real glyph metrics
     document.fonts?.ready.then(() => {
-      canvas.requestRenderAll();
+      if (!disposed) canvas.requestRenderAll();
     }).catch(() => { /* ignore */ });
 
     const updateSelection = () => {
@@ -120,6 +138,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       if (!active) {
         setHasSelection(false);
         setSelectedType('');
+        setSelectionCount(0);
         setIsLocked(false);
         onSelectionChange(null);
         return;
@@ -128,6 +147,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       setHasSelection(true);
       const rawType = active.type || 'object';
       setSelectedType(rawType);
+      setSelectionCount(selectedObjects(active).length);
       setIsLocked(!!(active.lockMovementX || active.lockMovementY));
 
       const isText = rawType === 'textbox' || rawType === 'text' || rawType === 'i-text';
@@ -135,7 +155,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       const rectObj = rawType === 'rect' ? (active as fabric.Rect) : null;
 
       const props: ActiveObjectProperties = {
+        id: (active as any).id,
+        name: (active as any).name,
+        selectionCount: selectedObjects(active).length,
         type: rawType,
+        text: textObj?.text,
         left: Math.round(active.left || 0),
         top: Math.round(active.top || 0),
         width: Math.round((active.width || 0) * (active.scaleX || 1)),
@@ -188,6 +212,9 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     canvas.on('selection:updated', updateSelection);
     canvas.on('selection:cleared', () => {
       setHasSelection(false);
+      setSelectedType('');
+      setSelectionCount(0);
+      setIsLocked(false);
       onSelectionChange(null);
     });
     canvas.on('object:modified', () => {
@@ -204,6 +231,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     });
     
     // Select object on right click so context menu operates on it
+    canvas.on('mouse:up', () => {
+      if (canvas.getActiveObject() && window.innerWidth >= 768) onOpenProperties?.();
+    });
+
     canvas.on('mouse:down', (opt) => {
       if (opt.button === 3) {
         if (opt.target) {
@@ -217,8 +248,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     });
 
     // Auto-fit initial zoom calculation
-    setTimeout(() => {
-      if (containerRef.current) {
+    const fitTimer = window.setTimeout(() => {
+      if (!disposed && containerRef.current) {
         const cWidth = containerRef.current.clientWidth - 40;
         const cHeight = containerRef.current.clientHeight - 80;
         const scaleX = cWidth / width;
@@ -229,6 +260,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     }, 80);
 
     return () => {
+      disposed = true;
+      window.clearTimeout(fitTimer);
+      if (typeof releaseEditor === 'function') releaseEditor();
+      canvas.cancelRequestedRender();
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
@@ -282,15 +317,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     canvas.renderAll();
   }, [width, height, zoom]);
 
-  // 4. Update Canvas Background Color
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    canvas.setBackgroundColor(backgroundColor || '#FFFFFF', () => {
-      canvas.renderAll();
-    });
-  }, [backgroundColor]);
+  // Background changes are applied by the editor or loadFromJSON. Do not mirror
+  // the preview color back here: that would erase gradient/pattern backgrounds.
 
   // 5. Smooth Pointer-Centered Mouse Wheel Zoom
   useEffect(() => {
@@ -340,7 +368,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       if (e.key.startsWith('Arrow') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const canvas = fabricCanvasRef.current;
         const active = canvas?.getActiveObject();
-        if (!canvas || !active) return;
+        if (!canvas || !active || active.lockMovementX || active.lockMovementY) return;
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
         if (e.key === 'ArrowLeft') active.left = (active.left || 0) - step;
@@ -353,7 +381,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       }
       if (e.key === 'Escape') {
         const canvas = fabricCanvasRef.current;
-        if (canvas && canvas.getActiveObject()) {
+        if (canvas && canvas.getActiveObject() && !(canvas.getActiveObject() as fabric.IText).isEditing) {
           canvas.discardActiveObject();
           canvas.requestRenderAll();
         }
@@ -378,6 +406,48 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [isSpacePressed, onSave, onRecordHistory]);
+
+  // Smart guides operate in design coordinates and stay outside Fabric's export
+  // surface. Alt temporarily bypasses snapping without changing the preference.
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    const overlay = guideCanvasRef.current;
+    if (!canvas || !overlay) return;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    overlay.width = Math.round(width * zoom * ratio);
+    overlay.height = Math.round(height * zoom * ratio);
+    const context = overlay.getContext('2d');
+    const clear = () => { if (context) paintGuides(context, [], width, height, zoom, ratio); };
+    const move = (event: any) => {
+      clear();
+      const object = canvas.getActiveObject();
+      if (!snapEnabledRef.current || event.e?.altKey || !object || object.lockMovementX || object.lockMovementY) {
+        overlay.dataset.activeGuides = '0';
+        return;
+      }
+      const excluded = new Set(selectedObjects(object));
+      const targets = canvas.getObjects().filter(item => item.visible !== false && !excluded.has(item));
+      const snap = calculateSnap(object.getBoundingRect(true, true), targets.map(item => item.getBoundingRect(true, true)), width, height, 6 / zoom);
+      if (snap.dx || snap.dy) {
+        object.set({ left: (object.left || 0) + snap.dx, top: (object.top || 0) + snap.dy });
+        object.setCoords();
+      }
+      if (context) paintGuides(context, snap.guides, width, height, zoom, ratio);
+      overlay.dataset.activeGuides = String(snap.guides.length);
+    };
+    const finish = () => { clear(); overlay.dataset.activeGuides = '0'; };
+    canvas.on('object:moving', move);
+    canvas.on('object:modified', finish);
+    canvas.on('mouse:up', finish);
+    canvas.on('selection:cleared', finish);
+    return () => {
+      canvas.off('object:moving', move);
+      canvas.off('object:modified', finish);
+      canvas.off('mouse:up', finish);
+      canvas.off('selection:cleared', finish);
+      clear();
+    };
+  }, [width, height, zoom, snapEnabled]);
 
   // 7. Touch Pinch-to-Zoom & Touch Pan
   useEffect(() => {
@@ -607,6 +677,9 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
             <Copy className="w-3.5 h-3.5" />
           </button>
 
+          {selectedType === 'activeSelection' && selectionCount > 1 && <button type="button" onClick={onGroup} title={`${t.groupAction} (Ctrl+G)`} aria-label={t.groupAction} className="rounded-lg p-1.5 text-sky-300 hover:bg-slate-800"><Group className="h-3.5 w-3.5" /></button>}
+          {selectedType === 'group' && <button type="button" onClick={onUngroup} title={`${t.ungroupAction} (Ctrl+Shift+G)`} aria-label={t.ungroupAction} className="rounded-lg p-1.5 text-sky-300 hover:bg-slate-800"><Ungroup className="h-3.5 w-3.5" /></button>}
+
           {/* Center */}
           <button
             type="button"
@@ -673,9 +746,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
         <div
           id="fabric-canvas-artboard-wrapper"
-          className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.15)] rounded-md overflow-hidden bg-white ring-2 ring-sky-500/20 transition-shadow hover:shadow-[0_30px_70px_-15px_rgba(56,189,248,0.2)] touch-none"
+          className="relative shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.15)] rounded-md overflow-hidden bg-white ring-2 ring-sky-500/20 transition-shadow hover:shadow-[0_30px_70px_-15px_rgba(56,189,248,0.2)] touch-none"
         >
           <canvas ref={canvasRef} />
+          <canvas ref={guideCanvasRef} aria-hidden="true" data-testid="smart-guides-overlay" className="pointer-events-none absolute inset-0 z-10 h-full w-full" />
         </div>
       </div>
 
@@ -705,6 +779,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
+
+        <button type="button" onClick={onToggleSnap} aria-pressed={snapEnabled} aria-label={snapEnabled ? t.snapDisable : t.snapEnable} title={`${snapEnabled ? t.snapDisable : t.snapEnable} · ${t.snapHint}`} className={`rounded-lg p-1 transition ${snapEnabled ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'text-slate-400 hover:text-white'}`}><Magnet className="h-3.5 w-3.5" /></button>
 
         <div className="h-3.5 w-px bg-slate-700 mx-0.5 sm:mx-1" />
 

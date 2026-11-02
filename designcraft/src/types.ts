@@ -42,7 +42,8 @@ export type SidebarTabType =
   | 'layers'
   | 'templates'
   | 'media'
-  | 'background';
+  | 'background'
+  | 'brand';
 
 export interface StockPhoto {
   id: string;
@@ -72,6 +73,9 @@ export interface TextPreset {
 }
 
 export interface ActiveObjectProperties {
+  id?: string;
+  name?: string;
+  selectionCount?: number;
   type: string;
   left: number;
   top: number;

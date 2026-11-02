@@ -22,10 +22,12 @@ import {
   Sliders,
   Plus,
   X,
-  Globe
+  Globe,
+  Upload
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
+import { MAX_PROJECT_FILE_BYTES, parseProjectFile } from '../../utils/projectFile';
 
 interface NewDesignScreenProps {
   onSelectPreset: (preset: DimensionPreset) => void;
@@ -68,6 +70,8 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectSearch, setProjectSearch] = useState<string>('');
   const [projectSort, setProjectSort] = useState<'newest' | 'oldest' | 'name'>('newest');
+  const [isImporting, setIsImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Direction follows the chosen language (Arabic = RTL) — truncation & alignment stay correct
   const dir: string = lang === 'ar' ? 'rtl' : 'ltr';
@@ -160,6 +164,29 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     setProjects(getSavedProjects());
     if (onShowToast) {
       onShowToast(t.toastDuplicated, duplicated.title, 'success');
+    }
+  };
+
+  const handleImportProject = async (file: File | undefined) => {
+    if (!file || isImporting) return;
+    setIsImporting(true);
+    try {
+      if (file.size > MAX_PROJECT_FILE_BYTES) throw new Error('File too large');
+      const project = parseProjectFile(await file.text());
+      if (!saveProjectToStorage(project)) {
+        onShowToast?.(t.importStorageError, '', 'error');
+        return;
+      }
+      setProjects(getSavedProjects());
+      setProjectSearch('');
+      onOpenProject(project);
+      onShowToast?.(t.importSuccess, project.title, 'success');
+    } catch (error) {
+      console.error('Design import failed', error);
+      onShowToast?.(t.importError, '', 'error');
+    } finally {
+      setIsImporting(false);
+      if (importInputRef.current) importInputRef.current.value = '';
     }
   };
 
@@ -813,7 +840,9 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   </div>
                 </div>
 
+                <input ref={importInputRef} type="file" accept=".json,application/json" aria-label={t.importProject} className="hidden" onChange={event => void handleImportProject(event.target.files?.[0])} />
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <button type="button" disabled={isImporting} onClick={() => importInputRef.current?.click()} title={t.importPrivacy} className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-bold text-sky-300 transition hover:bg-sky-500/20 disabled:opacity-50"><Upload className="h-3.5 w-3.5" />{isImporting ? t.importingProject : t.importProject}</button>
                   {projects.length > 0 && (
                     <div className="relative min-w-[200px]">
                       <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
