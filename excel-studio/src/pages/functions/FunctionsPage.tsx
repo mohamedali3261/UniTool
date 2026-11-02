@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useStudio } from "../../app/context";
 import { catalog, categoryAr, type FormulaEntry } from "./catalog";
+import { formulaLessons } from "./animations";
 import { FunctionCard } from "./FunctionCard";
 import { FunctionDetail } from "./FunctionDetail";
 import "./functions.css";
@@ -31,16 +32,23 @@ export default function FunctionsPage() {
   const categories = [...new Set(catalog.map((f) => f.category))].sort(),
     filtered = useMemo(
       () =>
-        catalog.filter(
-          (f) =>
-            (mode !== "common" || f.common) &&
-            (mode !== "favorites" || favorites.includes(f.name)) &&
-            (category === "all" || f.category === category) &&
-            [f.name, f.title, f.ar, f.description]
-              .join(" ")
-              .toLowerCase()
-              .includes(query.toLowerCase()),
-        ),
+        catalog
+          .filter(
+            (f) =>
+              (mode !== "common" || f.common) &&
+              (mode !== "animated" || !!formulaLessons[f.name]) &&
+              (mode !== "favorites" || favorites.includes(f.name)) &&
+              (category === "all" || f.category === category) &&
+              [f.name, f.title, f.ar, f.description]
+                .join(" ")
+                .toLowerCase()
+                .includes(query.toLowerCase()),
+          )
+          .sort(
+            (a, b) =>
+              Number(b.name.toLowerCase() === query.trim().toLowerCase()) -
+              Number(a.name.toLowerCase() === query.trim().toLowerCase()),
+          ),
       [mode, category, query, favorites],
     );
   return (
@@ -125,6 +133,7 @@ export default function FunctionsPage() {
       <div className="xs-library-tabs">
         {[
           ["common", "ابدأ بالأساسيات", "Start with the essentials"],
+          ["animated", "شرح بالحركة · 10", "Animated lessons · 10"],
           ["all", "كل الدوال", "All functions"],
           ["favorites", "المفضلة", "Favorites"],
         ].map(([v, ar, en]) => (

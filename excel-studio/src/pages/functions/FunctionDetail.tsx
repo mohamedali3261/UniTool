@@ -3,6 +3,8 @@ import { Copy, ArrowUpLeft, Play, ExternalLink } from "lucide-react";
 import { Modal } from "../../components/Modal";
 import { useStudio } from "../../app/context";
 import { calculator, errorHelp } from "../../core/calculate";
+import { FormulaAnimation } from "./animations/FormulaAnimation";
+import { formulaLessons } from "./animations";
 import { exampleBook, type FormulaEntry, categoryAr } from "./catalog";
 export function FunctionDetail({
   entry,
@@ -63,36 +65,46 @@ export function FunctionDetail({
         <div className="xs-example-layout">
           <div>
             <h3>{t("بيانات المثال", "Example data")}</h3>
-            <table className="xs-example-table" dir="ltr">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>A</th>
-                  <th>B</th>
-                  <th>C</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  [10, 2, "Apple"],
-                  [20, 4, "Pear"],
-                  [30, 6, "Apple"],
-                ].map((r, i) => (
-                  <tr key={i}>
-                    <th>{i + 1}</th>
-                    {r.map((v, j) => (
-                      <td key={j}>{v}</td>
+            {formulaLessons[entry.name] ? (
+              <FormulaAnimation
+                key={entry.name}
+                lesson={formulaLessons[entry.name]}
+                onUseExample={setDraft}
+              />
+            ) : (
+              <>
+                <table className="xs-example-table" dir="ltr">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>A</th>
+                      <th>B</th>
+                      <th>C</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      [10, 2, "Apple"],
+                      [20, 4, "Pear"],
+                      [30, 6, "Apple"],
+                    ].map((r, i) => (
+                      <tr key={i}>
+                        <th>{i + 1}</th>
+                        {r.map((v, j) => (
+                          <td key={j}>{v}</td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <small>
-              {t(
-                "كل الخلايا الأخرى فارغة. التجربة مستقلة عن ملفك.",
-                "All other cells are blank. This playground does not change your file.",
-              )}
-            </small>
+                  </tbody>
+                </table>
+                <small>
+                  {t(
+                    "كل الخلايا الأخرى فارغة. التجربة مستقلة عن ملفك.",
+                    "All other cells are blank. This playground does not change your file.",
+                  )}
+                </small>
+              </>
+            )}
           </div>
           <div>
             <h3>{t("جرّبها بإيدك", "Try it yourself")}</h3>

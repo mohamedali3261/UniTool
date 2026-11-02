@@ -1,0 +1,252 @@
+.xs-formula-animation {
+  border: 1px solid #d7e5cd;
+  background: linear-gradient(150deg, #f5f9ef, #fff);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 0;
+  color: #30442b;
+}
+.xs-animation-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.xs-animation-badge {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #577644;
+  font-weight: 700;
+}
+.xs-animation-heading h4 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.xs-formula-animation .xs-animation-scope {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #65765e;
+  margin: 12px 0 8px;
+}
+.xs-animation-formula {
+  display: block;
+  background: #253f30;
+  color: #e4f4d4;
+  padding: 13px 10px;
+  border-radius: 9px;
+  font:
+    12px Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.xs-animation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 13px 0;
+  font-size: 9px;
+  color: #63755c;
+}
+.xs-animation-legend span:first-child {
+  color: #805e13;
+}
+.xs-animation-legend span:nth-child(2) {
+  color: #326243;
+}
+.xs-animation-legend span:last-child {
+  color: #7d5f5c;
+}
+.xs-animation-table {
+  table-layout: fixed;
+}
+.xs-animation-table td {
+  position: relative;
+  transition:
+    background-color 0.35s,
+    box-shadow 0.35s;
+  vertical-align: middle;
+  background: #fff;
+}
+.xs-animation-table td[data-state="active"] {
+  background: #fff1c9;
+  box-shadow: inset 0 0 0 2px #d0a747;
+}
+.xs-animation-table td[data-state="matched"] {
+  background: #e2f2df;
+  box-shadow: inset 0 0 0 1px #b1d3a3;
+}
+.xs-animation-table td[data-state="skipped"] {
+  background: repeating-linear-gradient(
+    135deg,
+    #f1eceb,
+    #f1eceb 5px,
+    #f8f5f4 5px,
+    #f8f5f4 10px
+  );
+  color: #806e6a;
+}
+.xs-animation-table .xs-cell-value {
+  display: block;
+  font-size: 13px;
+  color: inherit;
+}
+.xs-animation-table .xs-cell-state {
+  display: block;
+  min-height: 12px;
+  font-size: 8px;
+  margin-top: 7px;
+  color: #6d734f;
+}
+.xs-animation-table td[data-state="active"] .xs-cell-value {
+  animation: xs-cell-read 0.5s ease both;
+}
+.xs-animation-narration {
+  margin-top: 15px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e0e9d8;
+  border-radius: 11px;
+  min-height: 205px;
+}
+.xs-animation-step-number {
+  font-size: 10px;
+  color: #7a8d6c;
+}
+.xs-animation-narration h4 {
+  font-size: 14px;
+  margin: 9px 0;
+}
+.xs-animation-narration p {
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 8px 0;
+  color: #5a6b52;
+}
+.xs-animation-math {
+  border-radius: 8px;
+  background: #edf4e5;
+  padding: 12px;
+  font:
+    600 14px Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+  animation: xs-math-in 0.4s ease both;
+  unicode-bidi: plaintext;
+}
+.xs-animation-final {
+  display: block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #326243;
+}
+.xs-animation-progress {
+  display: flex;
+  gap: 5px;
+  margin: 12px 0;
+}
+.xs-animation-progress button {
+  flex: 1;
+  min-width: 0;
+  min-height: 28px;
+  border: 1px solid #d5dfca;
+  background: #e7ecdf;
+  cursor: pointer;
+  border-radius: 5px;
+  color: #738065;
+  font: 10px Arial;
+}
+.xs-animation-progress button.done {
+  background: #a7be90;
+  color: #263e25;
+}
+.xs-animation-progress button[aria-current] {
+  outline: 2px solid #547545;
+  outline-offset: 2px;
+}
+.xs-animation-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xs-formula-animation .xs-button {
+  font-size: 10px;
+  padding: 9px 10px;
+}
+.xs-animation-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+.xs-animation-controls select {
+  border: 1px solid #cbd9c0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 7px;
+  color: #42583b;
+  font-size: 10px;
+}
+.xs-animation-tip {
+  font-size: 11px;
+  line-height: 1.9;
+  border-inline-start: 3px solid #b2c794;
+  padding-inline-start: 12px;
+  color: #627456;
+  margin: 16px 0;
+}
+.xs-formula-animation button:focus-visible,
+.xs-formula-animation select:focus-visible {
+  outline: 2px solid #4b7142;
+  outline-offset: 3px;
+}
+.xs-formula-animation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.xs-example-layout > div {
+  min-width: 0;
+}
+@keyframes xs-cell-read {
+  from {
+    transform: translateY(-5px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes xs-math-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 600px) {
+  .xs-formula-animation {
+    padding: 12px;
+  }
+  .xs-animation-table td,
+  .xs-animation-table th {
+    padding: 9px 4px;
+  }
+  .xs-animation-controls .xs-button {
+    padding: 9px;
+  }
+  .xs-animation-narration {
+    min-height: 220px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-animation-table td {
+    transition: none;
+  }
+  .xs-animation-math,
+  .xs-animation-table td[data-state="active"] .xs-cell-value {
+    animation: none;
+  }
+}
