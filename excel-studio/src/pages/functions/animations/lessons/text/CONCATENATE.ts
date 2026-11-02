@@ -1,4 +1,4 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
   name: "CONCATENATE",
   formula: '=CONCATENATE(C1," - ",C2)',

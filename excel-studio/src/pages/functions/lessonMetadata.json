@@ -1,0 +1,796 @@
+[
+  {
+    "name": "ABS",
+    "title": "القيمة المطلقة",
+    "ar": "يعيد الرقم بدون الإشارة السالبة.",
+    "description": "Returns the absolute value of a number.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The real number of which you want the absolute value."
+      }
+    ],
+    "signature": "ABS(number)",
+    "example": "=ABS(-35)",
+    "result": 35,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "AND",
+    "title": "تحقق كل الشروط",
+    "ar": "يعيد TRUE عندما تكون جميع الشروط صحيحة.",
+    "description": "Returns TRUE if all of its arguments are TRUE.",
+    "category": "Logical",
+    "params": [],
+    "signature": "AND(…)",
+    "example": "=AND(A1>5,B1>1)",
+    "result": true,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "AVERAGE",
+    "title": "المتوسط الحسابي",
+    "ar": "يجمع القيم الرقمية ويقسمها على عددها، مع تجاهل الخلايا الفارغة.",
+    "description": "Returns the average of its arguments.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "number1, number2, ...Numbers, value references or ranges for which you want the average."
+      }
+    ],
+    "signature": "AVERAGE(args)",
+    "example": "=AVERAGE(A1:A3)",
+    "result": 20,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "AVERAGEIF",
+    "title": "متوسط بشرط",
+    "ar": "يحسب متوسط القيم المطابقة لشرط واحد.",
+    "description": "Returns the average (arithmetic mean) of all the values in a range that meet a given criteria.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "range",
+        "description": "One or more values to average, including numbers or names, arrays, or references that contain numbers."
+      },
+      {
+        "name": "criteria",
+        "description": "The criteria in the form of a number, expression, value reference, or text that defines which values are averaged."
+      },
+      {
+        "name": "[average_range]",
+        "description": "Optional. The actual set of values to average. If omitted, range is used."
+      }
+    ],
+    "signature": "AVERAGEIF(range, criteria, [average_range])",
+    "example": "=AVERAGEIF(A1:A3,\">15\")",
+    "result": 25,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "AVERAGEIFS",
+    "title": "متوسط بعدة شروط",
+    "ar": "يحسب المتوسط للصفوف المطابقة لكل الشروط.",
+    "description": "Returns the average (arithmetic mean) of all values that meet multiple criteria.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "One or more values to average, including numbers or names, arrays, or references that contain numbers."
+      }
+    ],
+    "signature": "AVERAGEIFS(args)",
+    "example": "=AVERAGEIFS(B1:B3,A1:A3,\">15\")",
+    "result": 5,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "CONCATENATE",
+    "title": "ربط نصوص",
+    "ar": "يجمع عدة نصوص في نص واحد.",
+    "description": "Joins several text items into one text item.",
+    "category": "Text",
+    "params": [],
+    "signature": "CONCATENATE(…)",
+    "example": "=CONCATENATE(\"Hello\",\" \",\"world\")",
+    "result": "Hello world",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COUNT",
+    "title": "عدّ الأرقام",
+    "ar": "يحسب عدد الخلايا التي تحتوي على أرقام فقط.",
+    "description": "Counts how many numbers are in the list of arguments.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "Cell reference, or range within which you want to count numbers.count numbers."
+      }
+    ],
+    "signature": "COUNT(args)",
+    "example": "=COUNT(A1:A3)",
+    "result": 3,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COUNTA",
+    "title": "عدّ الخلايا غير الفارغة",
+    "ar": "يعدّ الأرقام والنصوص والقيم المنطقية في الخلايا غير الفارغة.",
+    "description": "Counts how many values are in the list of arguments.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "Arguments representing the values that you want to count."
+      }
+    ],
+    "signature": "COUNTA(args)",
+    "example": "=COUNTA(A1:C3)",
+    "result": 9,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COUNTBLANK",
+    "title": "عدّ الخلايا الفارغة",
+    "ar": "يعيد عدد الخلايا الفارغة في النطاق.",
+    "description": "Counts the number of blank values within a range.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "The range from which you want to count the blank values."
+      }
+    ],
+    "signature": "COUNTBLANK(args)",
+    "example": "=COUNTBLANK(A1:A5)",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COUNTIF",
+    "title": "عدّ بشرط",
+    "ar": "يعدّ القيم التي تحقق شرطًا واحدًا. اكتب المقارنات النصية بين علامتي اقتباس.",
+    "description": "Counts the number of values within a range that meet the given criteria.",
+    "category": "Statistical",
+    "params": [],
+    "signature": "COUNTIF(…)",
+    "example": "=COUNTIF(A1:A3,\">15\")",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "COUNTIFS",
+    "title": "عدّ بعدة شروط",
+    "ar": "يعدّ الصفوف التي تحقق جميع الشروط معًا. يجب أن تتساوى أحجام النطاقات.",
+    "description": "Counts the number of values within a range that meet multiple criteria.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "Range in which to evaluate the associated criteria."
+      }
+    ],
+    "signature": "COUNTIFS(args)",
+    "example": "=COUNTIFS(A1:A3,\">15\",B1:B3,\">3\")",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "IF",
+    "title": "لو الشرط تحقق",
+    "ar": "يختار نتيجة إذا كان الشرط صحيحًا، ونتيجة أخرى إذا كان خطأ.",
+    "description": "Specifies a logical test to perform.",
+    "category": "Logical",
+    "params": [
+      {
+        "name": "logical_test",
+        "description": "@param {*} value_if_true"
+      },
+      {
+        "name": "value_if_false",
+        "description": "@returns"
+      }
+    ],
+    "signature": "IF(logical_test, value_if_false)",
+    "example": "=IF(A1>5,\"ناجح\",\"راجع\")",
+    "result": "ناجح",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "IFERROR",
+    "title": "معالجة الأخطاء",
+    "ar": "يعرض قيمة بديلة عند حدوث خطأ، بدل ظهور رسالة الخطأ في الجدول.",
+    "description": "Returns a value you specify if a formula evaluates to an error; otherwise, returns the result of the formula.",
+    "category": "Logical",
+    "params": [
+      {
+        "name": "value",
+        "description": "The argument that is checked for an error."
+      },
+      {
+        "name": "value_if_error",
+        "description": "The value to return if the formula evaluates to an error. The following error types are evaluated: #N/A, #VALUE!, #REF!, #DIV/0!, #NUM!, #NAME?, or #NULL!."
+      }
+    ],
+    "signature": "IFERROR(value, value_if_error)",
+    "example": "=IFERROR(10/0,0)",
+    "result": 0,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "INT",
+    "title": "العدد الصحيح الأصغر",
+    "ar": "يقرب إلى العدد الصحيح الأقل؛ INT(-2.3) تساوي -3.",
+    "description": "Rounds a number down to the nearest integer.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The real number you want to round down to an integer."
+      }
+    ],
+    "signature": "INT(number)",
+    "example": "=INT(12.8)",
+    "result": 12,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "LARGE",
+    "title": "أكبر رقم بالترتيب",
+    "ar": "يعيد القيمة في المرتبة k من الأكبر إلى الأصغر.",
+    "description": "Returns the k-th largest value in a data set.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "array",
+        "description": "The array or range of data for which you want to determine the k-th largest value."
+      },
+      {
+        "name": "k",
+        "description": "The position (from the largest) in the array or value range of data to return."
+      }
+    ],
+    "signature": "LARGE(array, k)",
+    "example": "=LARGE(A1:A3,2)",
+    "result": 20,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "LEFT",
+    "title": "أول حروف النص",
+    "ar": "يعيد عددًا من الحروف من بداية النص.",
+    "description": "Returns the leftmost characters from a text value.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text string that contains the characters you want to extract."
+      },
+      {
+        "name": "[num_chars]",
+        "description": "Optional. Specifies the number of characters you want LEFT to extract."
+      }
+    ],
+    "signature": "LEFT(text, [num_chars])",
+    "example": "=LEFT(\"UniTool\",3)",
+    "result": "Uni",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "LEN",
+    "title": "طول النص",
+    "ar": "يحسب عدد الحروف بما فيها المسافات.",
+    "description": "Returns the number of characters in a text string",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text whose length you want to find. Spaces count as characters."
+      }
+    ],
+    "signature": "LEN(text)",
+    "example": "=LEN(\"مرحبا\")",
+    "result": 5,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "LOWER",
+    "title": "حروف إنجليزية صغيرة",
+    "ar": "يحوّل الحروف اللاتينية إلى الشكل الصغير.",
+    "description": "Converts text to lowercase.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text you want to convert to lowercase. LOWER does not change characters in text that are not letters."
+      }
+    ],
+    "signature": "LOWER(text)",
+    "example": "=LOWER(\"UNITOOL\")",
+    "result": "unitool",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MATCH",
+    "title": "موضع قيمة",
+    "ar": "يعيد موضع القيمة داخل نطاق أحادي البعد. الصفر للمطابقة التامة.",
+    "description": "Looks up values in a reference or array.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "lookup_value",
+        "description": "The value that you want to match in lookup_array. For example, when you look up someone's number in a telephone book, you are using the person's name as the lookup value, but the telephone number is the value you want.The lookup_value argument can be a value (number, text, or logical value) or a value reference to a number, text, or logical value."
+      },
+      {
+        "name": "lookup_array",
+        "description": "The range of values being searched."
+      },
+      {
+        "name": "[match_type]",
+        "description": "Optional. The number -1, 0, or 1. The match_type argument specifies how Excel matches lookup_value with values in lookup_array. The default value for this argument is 1."
+      }
+    ],
+    "signature": "MATCH(lookup_value, lookup_array, [match_type])",
+    "example": "=MATCH(20,A1:A3,0)",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MAX",
+    "title": "أكبر قيمة",
+    "ar": "يعيد أكبر رقم داخل المجموعة.",
+    "description": "Returns the maximum value in a list of arguments.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "number1, number2, ... Number1 is required, subsequent numbers are optional. 1 to 255 numbers for which you want to find the maximum value."
+      }
+    ],
+    "signature": "MAX(args)",
+    "example": "=MAX(A1:A3)",
+    "result": 30,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MEDIAN",
+    "title": "القيمة الوسطى",
+    "ar": "يرتب الأرقام ويعيد القيمة الوسطى، أو متوسط الرقمين الأوسطين.",
+    "description": "Returns the median of the given numbers.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "number1, number2, ... Number1 is required, subsequent numbers are optional. 1 to 255 numbers for which you want the median."
+      }
+    ],
+    "signature": "MEDIAN(args)",
+    "example": "=MEDIAN(1,3,100)",
+    "result": 3,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MID",
+    "title": "جزء من وسط النص",
+    "ar": "يستخرج عددًا من الحروف بداية من موضع محدد، والعد يبدأ من 1.",
+    "description": "Returns a specific number of characters from a text string starting at the position you specify",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text string containing the characters you want to extract."
+      },
+      {
+        "name": "start_num",
+        "description": "The position of the first character you want to extract in text. The first character in text has start_num 1, and so on."
+      },
+      {
+        "name": "num_chars",
+        "description": "Specifies the number of characters you want MID to return from text."
+      }
+    ],
+    "signature": "MID(text, start_num, num_chars)",
+    "example": "=MID(\"UniTool\",4,4)",
+    "result": "Tool",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MIN",
+    "title": "أصغر قيمة",
+    "ar": "يعيد أصغر رقم داخل المجموعة.",
+    "description": "Returns the minimum value in a list of arguments.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "args",
+        "description": "number1, number2, ... Number1 is optional, subsequent numbers are optional. 1 to 255 numbers for which you want to find the minimum value."
+      }
+    ],
+    "signature": "MIN(args)",
+    "example": "=MIN(A1:A3)",
+    "result": 10,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "MOD",
+    "title": "باقي القسمة",
+    "ar": "يعيد الباقي بعد قسمة رقم على آخر.",
+    "description": "Returns the remainder from division.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The number for which you want to find the remainder."
+      },
+      {
+        "name": "divisor",
+        "description": "The number by which you want to divide number."
+      }
+    ],
+    "signature": "MOD(number, divisor)",
+    "example": "=MOD(17,5)",
+    "result": 2,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "OR",
+    "title": "تحقق أي شرط",
+    "ar": "يعيد TRUE إذا تحقق شرط واحد على الأقل.",
+    "description": "Returns TRUE if any argument is TRUE.",
+    "category": "Logical",
+    "params": [],
+    "signature": "OR(…)",
+    "example": "=OR(A1>50,B1>1)",
+    "result": true,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "POWER",
+    "title": "رفع لقوة",
+    "ar": "يحسب الرقم مرفوعًا للأس المحدد.",
+    "description": "Returns the result of a number raised to a power.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The base number. It can be any real number."
+      },
+      {
+        "name": "power",
+        "description": "The exponent to which the base number is raised."
+      }
+    ],
+    "signature": "POWER(number, power)",
+    "example": "=POWER(2,3)",
+    "result": 8,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "PRODUCT",
+    "title": "ضرب مجموعة أرقام",
+    "ar": "يضرب جميع الأرقام المحددة معًا.",
+    "description": "Multiplies its arguments.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number1",
+        "description": "The first number or range that you want to multiply."
+      },
+      {
+        "name": "args",
+        "description": "number2, ... Optional. Additional numbers or ranges that you want to multiply, up to a maximum of 255 arguments."
+      }
+    ],
+    "signature": "PRODUCT(number1, args)",
+    "example": "=PRODUCT(2,3,4)",
+    "result": 24,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "RIGHT",
+    "title": "آخر حروف النص",
+    "ar": "يعيد عددًا من الحروف من نهاية النص.",
+    "description": "Returns the rightmost characters from a text value",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text string containing the characters you want to extract."
+      },
+      {
+        "name": "[num_chars]",
+        "description": "Optional. Specifies the number of characters you want RIGHT to extract."
+      }
+    ],
+    "signature": "RIGHT(text, [num_chars])",
+    "example": "=RIGHT(\"UniTool\",4)",
+    "result": "Tool",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "ROUND",
+    "title": "تقريب الرقم",
+    "ar": "يقرب الرقم إلى عدد محدد من المنازل العشرية.",
+    "description": "Rounds a number to a specified number of digits.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The number that you want to round."
+      },
+      {
+        "name": "num_digits",
+        "description": "The number of digits to which you want to round the number argument."
+      }
+    ],
+    "signature": "ROUND(number, num_digits)",
+    "example": "=ROUND(15.678,2)",
+    "result": 15.68,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "ROUNDDOWN",
+    "title": "تقريب باتجاه الصفر",
+    "ar": "يحذف المنازل الزائدة باتجاه الصفر.",
+    "description": "Rounds a number down, toward zero.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "Any real number that you want rounded down."
+      },
+      {
+        "name": "num_digits",
+        "description": "The number of digits to which you want to round number."
+      }
+    ],
+    "signature": "ROUNDDOWN(number, num_digits)",
+    "example": "=ROUNDDOWN(15.678,2)",
+    "result": 15.67,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "ROUNDUP",
+    "title": "تقريب بعيدًا عن الصفر",
+    "ar": "يقرب بعيدًا عن الصفر إلى عدد المنازل المحدد.",
+    "description": "Rounds a number up, away from zero.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "Any real number that you want rounded up."
+      },
+      {
+        "name": "num_digits",
+        "description": "The number of digits to which you want to round number."
+      }
+    ],
+    "signature": "ROUNDUP(number, num_digits)",
+    "example": "=ROUNDUP(15.123,2)",
+    "result": 15.13,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SMALL",
+    "title": "أصغر رقم بالترتيب",
+    "ar": "يعيد القيمة في المرتبة k من الأصغر إلى الأكبر.",
+    "description": "Returns the k-th smallest value in a data set.",
+    "category": "Statistical",
+    "params": [
+      {
+        "name": "array",
+        "description": "An array or range of numerical data for which you want to determine the k-th smallest value."
+      },
+      {
+        "name": "k",
+        "description": "The position (from the smallest) in the array or range of data to return."
+      }
+    ],
+    "signature": "SMALL(array, k)",
+    "example": "=SMALL(A1:A3,2)",
+    "result": 20,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SQRT",
+    "title": "الجذر التربيعي",
+    "ar": "يعيد الجذر التربيعي لرقم غير سالب.",
+    "description": "Returns a positive square root.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "number",
+        "description": "The number for which you want the square root."
+      }
+    ],
+    "signature": "SQRT(number)",
+    "example": "=SQRT(81)",
+    "result": 9,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SUBSTITUTE",
+    "title": "استبدال نص",
+    "ar": "يستبدل نصًا محددًا بنص آخر، ويمكن تحديد ترتيب الظهور.",
+    "description": "Substitutes new text for old text in a text string.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text or the reference to a value containing text for which you want to substitute characters."
+      },
+      {
+        "name": "old_text",
+        "description": "The text you want to replace."
+      },
+      {
+        "name": "new_text",
+        "description": "The text you want to replace old_text with."
+      },
+      {
+        "name": "[instance_num]",
+        "description": "Optional. Specifies which occurrence of old_text you want to replace with new_text. If you specify instance_num, only that instance of old_text is replaced. Otherwise, every occurrence of old_text in text is changed to new_text."
+      }
+    ],
+    "signature": "SUBSTITUTE(text, old_text, new_text, [instance_num])",
+    "example": "=SUBSTITUTE(\"red pen\",\"red\",\"blue\")",
+    "result": "blue pen",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SUM",
+    "title": "جمع الأرقام",
+    "ar": "يجمع الأرقام في نطاق. الخلايا النصية داخل النطاق لا تُضاف.",
+    "description": "Adds its arguments.",
+    "category": "Math and trigonometry",
+    "params": [],
+    "signature": "SUM(…)",
+    "example": "=SUM(A1:A3)",
+    "result": 60,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SUMIF",
+    "title": "جمع بشرط",
+    "ar": "يجمع القيم التي تحقق شرطًا واحدًا، ويمكن اختيار نطاق جمع مختلف.",
+    "description": "Adds the values specified by a given criteria.",
+    "category": "Math and trigonometry",
+    "params": [
+      {
+        "name": "range",
+        "description": "The range of values that you want evaluated by criteria. Cells in each range must be numbers or names, arrays, or references that contain numbers. Blank and text values are ignored."
+      },
+      {
+        "name": "criteria",
+        "description": "The criteria in the form of a number, expression, a value reference, text, or a function that defines which values will be added."
+      },
+      {
+        "name": "[sum_range]",
+        "description": "Optional. The actual values to add, if you want to add values other than those specified in the range argument. If the sum_range argument is omitted, Excel adds the values that are specified in the range argument (the same values to which the criteria is applied). Sum_range should be the same size and shape as range. If it isn't, performance may suffer, and the formula will sum a range of values that starts with the first value in sum_range but has the same dimensions as range."
+      }
+    ],
+    "signature": "SUMIF(range, criteria, [sum_range])",
+    "example": "=SUMIF(A1:A3,\">15\",B1:B3)",
+    "result": 10,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "SUMIFS",
+    "title": "جمع بعدة شروط",
+    "ar": "يأتي نطاق الجمع أولًا، ثم أزواج نطاق الشرط والشرط.",
+    "description": "Adds the values in a range that meet multiple criteria.",
+    "category": "Math and trigonometry",
+    "params": [],
+    "signature": "SUMIFS(…)",
+    "example": "=SUMIFS(B1:B3,A1:A3,\">15\")",
+    "result": 10,
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "TRIM",
+    "title": "تنظيف المسافات",
+    "ar": "يزيل المسافات الزائدة عند الأطراف وبين الكلمات.",
+    "description": "Removes spaces from text.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text from which you want spaces removed."
+      }
+    ],
+    "signature": "TRIM(text)",
+    "example": "=TRIM(\"  hello   world  \")",
+    "result": "hello   world",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "UPPER",
+    "title": "حروف إنجليزية كبيرة",
+    "ar": "يحوّل الحروف اللاتينية إلى الشكل الكبير. العربية لا تتغير.",
+    "description": "Converts text to uppercase.",
+    "category": "Text",
+    "params": [
+      {
+        "name": "text",
+        "description": "The text you want converted to uppercase. Text can be a reference or text string."
+      }
+    ],
+    "signature": "UPPER(text)",
+    "example": "=UPPER(\"unitool\")",
+    "result": "UNITOOL",
+    "status": "tested",
+    "common": true
+  },
+  {
+    "name": "VLOOKUP",
+    "title": "بحث رأسي",
+    "ar": "يبحث في أول عمود من النطاق ويعيد قيمة من عمود آخر. FALSE للمطابقة التامة.",
+    "description": "Looks in the first column of an array and moves across the row to return the value of a value.",
+    "category": "Lookup and reference",
+    "params": [
+      {
+        "name": "lookup_value",
+        "description": "The value to be found in the first row of the table. Lookup_value can be a value, a reference, or a text string."
+      },
+      {
+        "name": "table_array",
+        "description": "A table of information in which data is looked up. Use a reference to a range or a range name."
+      },
+      {
+        "name": "col_index_num",
+        "description": "The row number in table_array from which the matching value will be returned. A row_index_num of 1 returns the first row value in table_array, a row_index_num of 2 returns the second row value in table_array, and so on. If row_index_num is less than 1, HLOOKUP returns the #VALUE! error value; if row_index_num is greater than the number of rows on table_array, HLOOKUP returns the #REF! error value."
+      },
+      {
+        "name": "[range_lookup]",
+        "description": "Optional. A logical value that specifies whether you want HLOOKUP to find an exact match or an approximate match. If TRUE or omitted, an approximate match is returned. In other words, if an exact match is not found, the next largest value that is less than lookup_value is returned. If FALSE, HLOOKUP will find an exact match. If one is not found, the error value #N/A is returned."
+      }
+    ],
+    "signature": "VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])",
+    "example": "=VLOOKUP(20,A1:B3,2,FALSE)",
+    "result": 4,
+    "status": "tested",
+    "common": true
+  }
+]

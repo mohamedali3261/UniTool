@@ -1,4 +1,4 @@
-import type { FormulaLesson } from "./types";
+import type { FormulaLesson } from "../../types";
 const lesson: FormulaLesson = {
   name: "COUNTIF",
   formula: '=COUNTIF(A1:A3,">15")',

@@ -43,6 +43,26 @@ for (const [name, result] of Object.entries({
   LEN: "5",
   LEFT: "App",
   CONCATENATE: "Apple - Pear",
+  PRODUCT: "6000",
+  ABS: "10",
+  ROUNDUP: "3.34",
+  ROUNDDOWN: "3.33",
+  INT: "3",
+  MOD: "2",
+  POWER: "8",
+  SQRT: "2",
+  MEDIAN: "20",
+  LARGE: "20",
+  SMALL: "20",
+  COUNTBLANK: "2",
+  AVERAGEIFS: "6",
+  RIGHT: "le",
+  MID: "ppl",
+  UPPER: "APPLE",
+  LOWER: "apple",
+  TRIM: "Apple",
+  SUBSTITUTE: "Abble",
+  MATCH: "2",
 }))
   test(`${name}: manual steps agree with the real playground`, async ({
     page,
@@ -132,9 +152,9 @@ test("English explanations and the animated-only library tab stay accessible", a
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Search formulas" }).fill("");
   await page
-    .getByRole("button", { name: "Animated lessons · 20", exact: true })
+    .getByRole("button", { name: "All animated lessons", exact: true })
     .click();
-  await expect(page.locator(".xs-function-card")).toHaveCount(20);
+  await expect(page.locator(".xs-function-card")).toHaveCount(24);
 });
 test("autoplay really types in D1, drags a range and commits with Enter", async ({
   page,
@@ -165,4 +185,33 @@ test("autoplay really types in D1, drags a range and commits with Enter", async 
   await expect(
     a.getByRole("button", { name: "تشغيل الشرح", exact: true }),
   ).toBeVisible();
+});
+test("library shows only animated lessons, grouped into five working sections", async ({
+  page,
+}) => {
+  await openLesson(page, "SUM");
+  await page.keyboard.press("Escape");
+  await page.getByRole("textbox", { name: "بحث المعادلات" }).fill("");
+  const sections = page.getByRole("navigation", { name: "أقسام الدروس" });
+  await expect(sections.getByRole("button")).toHaveCount(5);
+  for (const section of await sections.getByRole("button").all()) {
+    await section.click();
+    await expect(section).toHaveAttribute("aria-pressed", "true");
+    const expected = Number(await section.locator("b").innerText());
+    await expect(page.locator(".xs-function-card")).toHaveCount(expected);
+    await expect(
+      page.locator(".xs-function-card").filter({ hasText: "مرجع Excel" }),
+    ).toHaveCount(0);
+  }
+  await page
+    .getByRole("button", { name: "كل الدروس بالحركة", exact: true })
+    .click();
+  await page.getByRole("textbox", { name: "بحث المعادلات" }).fill("XIRR");
+  await expect(page.locator(".xs-function-card")).toHaveCount(0);
+  await page.getByRole("textbox", { name: "بحث المعادلات" }).fill("MATCH");
+  await expect(
+    page.locator(".xs-function-card").filter({
+      has: page.getByRole("heading", { name: "MATCH", exact: true }),
+    }),
+  ).toHaveCount(1);
 });

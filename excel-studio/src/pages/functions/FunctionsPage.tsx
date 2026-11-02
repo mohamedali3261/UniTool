@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useStudio } from "../../app/context";
 import { catalog, categoryAr, type FormulaEntry } from "./catalog";
-import { formulaLessons } from "./animations";
 import { FunctionCard } from "./FunctionCard";
 import { FunctionDetail } from "./FunctionDetail";
 import "./functions.css";
@@ -16,7 +15,7 @@ export default function FunctionsPage() {
   const { t, lang, notice } = useStudio(),
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
-    [mode, setMode] = useState("common"),
+    [mode, setMode] = useState("all"),
     [page, setPage] = useState(0),
     [detail, setDetail] = useState<FormulaEntry | null>(null),
     [favorites, setFavorites] = useState<string[]>(() => {
@@ -29,14 +28,18 @@ export default function FunctionsPage() {
         return [];
       }
     });
-  const categories = [...new Set(catalog.map((f) => f.category))].sort(),
+  const categories = [
+      "Math and trigonometry",
+      "Statistical",
+      "Logical",
+      "Text",
+      "Lookup and reference",
+    ],
     filtered = useMemo(
       () =>
         catalog
           .filter(
             (f) =>
-              (mode !== "common" || f.common) &&
-              (mode !== "animated" || !!formulaLessons[f.name]) &&
               (mode !== "favorites" || favorites.includes(f.name)) &&
               (category === "all" || f.category === category) &&
               [f.name, f.title, f.ar, f.description]
@@ -64,15 +67,15 @@ export default function FunctionsPage() {
           </h1>
           <p>
             {t(
-              "شرح بسيط للشائعة، وتوثيق إنجليزي للمتقدمة، ومثال وتجربة مباشرة.",
-              "Simple guides for everyday formulas, source documentation for advanced functions, and a live playground.",
+              "كل الدوال هنا بشرح بالمؤشر والكتابة والسحب. اختار قسم، واتعلم وجرّب خطوة بخطوة.",
+              "Every function here has a cursor, typing and dragging lesson. Choose a section, then learn and try it step by step.",
             )}
           </p>
         </div>
         <span className="xs-library-count">
           <BookOpen size={19} />
           <b>{catalog.length}</b>
-          {t("دالة ومرجع", "functions & references")}
+          {t("دالة بالحركة", "animated functions")}
         </span>
       </section>
       <div className="xs-library-banner">
@@ -86,8 +89,8 @@ export default function FunctionsPage() {
           </h2>
           <p>
             {t(
-              `${catalog.filter((f) => f.status === "tested").length} دالة لها مثال يعمل هنا. «مرجع Excel» يعني إننا مش بنضمن تشغيلها داخل المحرر. المكتبة ليست كل دوال كل إصدارات Excel.`,
-              `${catalog.filter((f) => f.status === "tested").length} functions have a runnable example here. “Excel reference” is not certified for in-app calculation. This is not every function in every Excel version.`,
+              `${catalog.length} درسًا في ${categories.length} أقسام. كل درس له ملف مستقل ومثال قابل للتجربة، دون تغيير ملفك.`,
+              `${catalog.length} lessons across ${categories.length} sections. Each has its own file and a runnable example, without changing your workbook.`,
             )}
           </p>
         </div>
@@ -96,6 +99,25 @@ export default function FunctionsPage() {
           <code>=IF(you_try, "you_can", "try_again")</code>
         </div>
       </div>
+      <nav
+        className="xs-lesson-sections"
+        aria-label={t("أقسام الدروس", "Lesson sections")}
+      >
+        {categories.map((c) => (
+          <button
+            type="button"
+            key={c}
+            aria-pressed={category === c}
+            onClick={() => {
+              setCategory(category === c ? "all" : c);
+              setPage(0);
+            }}
+          >
+            <span>{lang === "ar" ? categoryAr[c] || c : c}</span>
+            <b>{catalog.filter((f) => f.category === c).length}</b>
+          </button>
+        ))}
+      </nav>
       <div className="xs-library-filters">
         <label className="xs-search">
           <Search size={18} />
@@ -132,19 +154,14 @@ export default function FunctionsPage() {
       </div>
       <div className="xs-library-tabs">
         {[
-          ["common", "ابدأ بالأساسيات", "Start with the essentials"],
-          [
-            "animated",
-            `شرح بالحركة · ${Object.keys(formulaLessons).length}`,
-            `Animated lessons · ${Object.keys(formulaLessons).length}`,
-          ],
-          ["all", "كل الدوال", "All functions"],
+          ["all", "كل الدروس بالحركة", "All animated lessons"],
           ["favorites", "المفضلة", "Favorites"],
         ].map(([v, ar, en]) => (
           <button
             key={v}
             onClick={() => {
               setMode(v);
+              if (v === "all") setCategory("all");
               setPage(0);
             }}
             className={mode === v ? "active" : ""}
