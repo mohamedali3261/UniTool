@@ -1,3 +1,5 @@
+import type { CreativeSettings } from "./creative/catalog";
+import type { InterfaceScene } from "./templates/interface-flow/scenes";
 import { filterPresets } from "./effects/registry";
 export type Asset = {
   size?: number;
@@ -17,7 +19,17 @@ export type Asset = {
     quality: "hd" | "fullhd";
   };
 };
-export type TransitionKind = "none" | "crossfade" | "slide" | "zoom" | "light";
+export type TransitionKind =
+  | "none"
+  | "crossfade"
+  | "slide"
+  | "zoom"
+  | "light"
+  | "shared-card"
+  | "circle-reveal"
+  | "page-flip"
+  | "zoom-through"
+  | "liquid-wipe";
 export type MotionPreset = string;
 export type TextAnimation = "none" | "fade" | "slide" | "pop" | "typewriter";
 export type MotionKeyframe = {
@@ -32,6 +44,8 @@ export type MotionKeyframe = {
   opacity: number;
 };
 export type Clip = {
+  designScene?: InterfaceScene;
+  designAccent?: string;
   gap?: boolean;
   hidden?: boolean;
   groupId?: string;
@@ -63,6 +77,9 @@ export type Clip = {
   keyframes?: MotionKeyframe[];
 };
 export type OverlayLayer = {
+  fit?: "contain" | "cover";
+  backgroundLayer?: boolean;
+  foreground?: boolean;
   groupId?: string;
   locked?: boolean;
   hidden?: boolean;
@@ -78,7 +95,39 @@ export type OverlayLayer = {
   rotation: number;
   volume: number;
 };
+export type LayerFrame = {
+  at: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  opacity: number;
+  blur: number;
+  easing?: "linear" | "smooth" | "spring";
+};
 export type TextLayer = {
+  creative?: CreativeSettings;
+  backgroundLayer?: boolean;
+  frames?: LayerFrame[];
+  counter?: {
+    from: number;
+    to: number;
+    duration: number;
+    decimals: number;
+    suffix: string;
+  };
+  name?: string;
+  /** Editable vector geometry in 960px reference units (same as font size). */
+  box?: {
+    width: number;
+    height: number;
+    radius?: number;
+    borderWidth?: number;
+    borderColor?: string;
+    gradient?: string;
+    points?: { x: number; y: number }[];
+  };
   groupId?: string;
   rotation?: number;
   opacity?: number;
@@ -114,7 +163,16 @@ export type TimelineMarker = {
   label: string;
   color: string;
 };
+export type SoundCue = {
+  id: string;
+  assetId: string;
+  at: number;
+  start: number;
+  end: number;
+  volume: number;
+};
 export type Project = {
+  sounds?: SoundCue[];
   markers?: TimelineMarker[];
   tracks?: Record<string, TrackSettings>;
   audioEnd?: number;
@@ -161,6 +219,7 @@ export function assetIsUsed(p: Project, id: string) {
   return (
     p.clips.some((c) => c.assetId === id) ||
     p.overlays?.some((l) => l.assetId === id) ||
+    p.sounds?.some((c) => c.assetId === id) ||
     p.audioId === id
   );
 }

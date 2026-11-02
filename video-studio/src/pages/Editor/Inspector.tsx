@@ -1,3 +1,5 @@
+import { SVGEditor } from "../../elements/SVGEditor";
+import { interfaceScenes } from "../../templates/interface-flow/scenes";
 import { CreativeTools } from "../../animation/CreativeTools";
 import { LayerEditor } from "../../composition/LayerEditor";
 import { StudioSelect } from "../../components/StudioSelect";
@@ -17,7 +19,9 @@ function InspectorView({
   getTime,
   onImportLayer,
   onPreview,
+  onRegisterAsset,
 }: {
+  onRegisterAsset: (a: Asset) => void;
   mobileExpanded?: boolean;
   onMobileClose?: () => void;
   project: Project;
@@ -259,6 +263,43 @@ function InspectorView({
               />
             </label>
           ))}
+          {clip.designScene && (
+            <section aria-label="تصميم الواجهة المتحركة">
+              <label className="field-label">
+                مشهد الواجهة
+                <StudioSelect
+                  label="مشهد الواجهة"
+                  value={clip.designScene}
+                  options={[
+                    ...interfaceScenes.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    })),
+                    { value: "off", label: "إيقاف رسم الواجهة" },
+                  ]}
+                  onValueChange={(v) =>
+                    onClip({
+                      designScene:
+                        v === "off" ? undefined : (v as Clip["designScene"]),
+                    })
+                  }
+                />
+              </label>
+              <label className="field-label">
+                لون الواجهة
+                <input
+                  type="color"
+                  aria-label="لون الواجهة"
+                  value={clip.designAccent || "#4bdfc5"}
+                  onChange={(e) => onClip({ designAccent: e.target.value })}
+                />
+              </label>
+              <p className="inspector-note">
+                الواجهة رسم توضيحي متحرك؛ العناوين واسم حسابك في قسم النصوص. لا
+                يوجد اتصال MCP فعلي.
+              </p>
+            </section>
+          )}
           <CreativeTools
             clip={clip}
             project={project}
@@ -293,6 +334,12 @@ function InspectorView({
           </p>
         </div>
       )}
+      <SVGEditor
+        project={project}
+        assets={assets}
+        onProject={onProject}
+        onRegisterAsset={onRegisterAsset}
+      />
       <LayerEditor
         project={project}
         assets={assets}

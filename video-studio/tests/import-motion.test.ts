@@ -29,10 +29,10 @@ test("MIME-less and generic files are classified by extension or a bounded conta
     /التعرف/,
   );
 });
-test("56 unique motion trajectories stay finite, bounded and roundtrip in projects", () => {
-  assert.equal(motions.length, 56);
-  assert.equal(new Set(motions.map((m) => m.id)).size, 56);
-  assert.equal(new Set(motions.map((m) => m.name)).size, 56);
+test("106 unique motion trajectories stay finite, bounded and roundtrip in projects", () => {
+  assert.equal(motions.length, 106);
+  assert.equal(new Set(motions.map((m) => m.id)).size, 106);
+  assert.equal(new Set(motions.map((m) => m.name)).size, 106);
   const trajectories = new Set<string>();
   const asset: Asset = {
     id: "a",

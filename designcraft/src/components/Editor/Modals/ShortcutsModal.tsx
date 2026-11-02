@@ -8,10 +8,13 @@ interface ShortcutsModalProps {
 }
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
-  const { t } = useDcLang();
+  const { t, lang } = useDcLang();
   if (!isOpen) return null;
 
   const shortcuts = [
+    { key: 'H / V', desc: lang === 'ar' ? 'تحريك اللوحة / تحديد العناصر (يعمل مع لوحة المفاتيح العربية)' : 'Pan / select (also works with Arabic keyboard)' },
+    { key: 'Space + Drag', desc: lang === 'ar' ? 'تحريك اللوحة مؤقتًا بدون تحريك العناصر' : 'Temporarily pan without moving artwork' },
+    { key: 'Ctrl + Wheel', desc: lang === 'ar' ? 'تكبير وتصغير؛ التمرير العادي لتحريك العرض' : 'Zoom; regular wheel scrolls the workspace' },
     { key: 'Ctrl + Z', desc: t.scUndo },
     { key: 'Ctrl + Y / Ctrl + Shift + Z', desc: t.scRedo },
     { key: 'Delete / Backspace', desc: t.scDelete },
@@ -22,10 +25,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { key: 'Esc', desc: t.scDeselect },
     { key: 'Arrow Keys', desc: t.scMove1 },
     { key: 'Shift + Arrow Keys', desc: t.scMove10 },
-    { key: 'Ctrl + S', desc: t.scSave },
-    { key: 'Ctrl + G', desc: t.scGroup },
-    { key: 'Ctrl + Shift + G', desc: t.scUngroup },
-    { key: 'Alt + Drag', desc: t.scSnapBypass }
+    { key: 'Ctrl + S', desc: t.scSave }
   ];
 
   return (

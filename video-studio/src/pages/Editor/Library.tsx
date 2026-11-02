@@ -1,3 +1,7 @@
+import type { LibraryElement } from "../../../../src/pages/Elements/types";
+
+import { SoundCatalog } from "../../sound/SoundCatalog";
+import type { SoundPreset } from "../../sound/presets";
 import type { TextPresetStyle } from "../../text/presets/types";
 import { TextPanel } from "../../text/TextPanel";
 import { lazy, memo, Suspense, useState } from "react";
@@ -16,10 +20,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { Asset, Project, TextLayer, Clip } from "../../types";
+const ElementsPanel = lazy(() => import("../../elements/ElementsPanel"));
 export type Tab =
-  "media" | "audio" | "text" | "filters" | "effects" | "stickers";
+  "elements" | "media" | "audio" | "text" | "filters" | "effects" | "stickers";
 export const tabs: { id: Tab; label: string; icon: typeof Film }[] = [
   { id: "media", label: "وسائط", icon: Film },
+  { id: "elements", label: "العناصر", icon: Layers },
   { id: "audio", label: "الصوت", icon: Music2 },
   { id: "text", label: "النصوص", icon: Type },
   { id: "filters", label: "الفلاتر", icon: SlidersHorizontal },
@@ -47,7 +53,15 @@ function LibraryView({
   updateText,
   removeText,
   onRemoveAudio,
+  onSoundAdd,
+  onSoundProject,
+  onElementAdd,
 }: {
+  onElementAdd: (
+    item: LibraryElement,
+    color?: string,
+    seconds?: number,
+  ) => void;
   selectedTextId: string | null;
   onSelectText: (id: string) => void;
   onDuplicateText: (id: string) => void;
@@ -68,8 +82,11 @@ function LibraryView({
   updateText: (id: string, patch: Partial<TextLayer>) => void;
   removeText: (id: string) => void;
   onRemoveAudio: () => void;
+  onSoundAdd: (p: SoundPreset) => Promise<void>;
+  onSoundProject: (patch: Partial<Project>) => void;
 }) {
   const [source, setSource] = useState<"local" | "pexels">("local");
+  const FileSection = tab === "audio" ? "details" : "div";
   return (
     <aside
       className={`library-panel ${tab === "text" ? "is-text" : ""} ${tab === "media" && source === "pexels" ? "is-stock" : ""} ${tab === "effects" || tab === "filters" ? "is-catalog" : ""}`}
@@ -105,6 +122,11 @@ function LibraryView({
           </button>
         </div>
       )}
+      {tab === "elements" && (
+        <Suspense fallback={<p role="status">تحميل العناصر…</p>}>
+          <ElementsPanel onAdd={onElementAdd} suspended={suspendPreviews} />
+        </Suspense>
+      )}
       {tab === "media" && source === "pexels" && (
         <Suspense
           fallback={
@@ -121,7 +143,15 @@ function LibraryView({
         </Suspense>
       )}
       {(tab === "audio" || (tab === "media" && source === "local")) && (
-        <>
+        <FileSection
+          className={tab === "audio" ? "sound-local-files" : undefined}
+        >
+          {tab === "audio" && (
+            <summary>
+              ♫ موسيقاي وملفاتي (
+              {assets.filter((a) => a.type === "audio").length})
+            </summary>
+          )}
           <button className="upload-zone" onClick={onImport}>
             <div>
               <Upload size={22} />
@@ -178,7 +208,16 @@ function LibraryView({
               الملف أكثر من مرة.
             </p>
           </div>
-        </>
+        </FileSection>
+      )}
+      {tab === "audio" && (
+        <SoundCatalog
+          project={project}
+          assets={assets}
+          suspended={suspendPreviews}
+          onAdd={onSoundAdd}
+          onProject={onSoundProject}
+        />
       )}
       {(tab === "filters" || tab === "effects") && (
         <EffectsCatalog

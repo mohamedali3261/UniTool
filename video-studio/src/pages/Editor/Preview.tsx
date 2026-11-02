@@ -1,3 +1,8 @@
+import { usePreviewViewport } from "./preview/usePreviewViewport";
+import { PreviewViewControls } from "./preview/PreviewViewControls";
+import { LatestFrameQueue } from "../../performance/LatestFrameQueue";
+import { primeMediaPlayback, playbackMessage } from "../../sound/playback";
+import { CueAudio } from "../../sound/CueAudio";
 import { Interaction } from "../../preview/Interaction";
 import type { Dimensions, Selection } from "../../preview/model";
 import { PreviewMedia } from "../../composition/PreviewMedia";
@@ -5,7 +10,7 @@ import { sceneAt } from "../../composition/scene";
 
 import { useStudioSettings } from "../../settings/StudioSettings";
 import { musicTime } from "../../lib/timeline";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Maximize,
   Pause,
@@ -15,9 +20,16 @@ import {
   Clapperboard,
 } from "lucide-react";
 import { Asset, Project, durationOf, timeLabel } from "../../types";
-import { drawFrame } from "../../lib/media";
+import { download, drawFrame } from "../../lib/media";
 import { IconButton } from "../../components/IconButton";
+export type PreviewPlayback = {
+  play: () => void;
+  toggle: () => void;
+  pause: () => void;
+};
 export function Preview({
+  playbackRef,
+  clockRef,
   mobileHistory,
   project,
   assets,
@@ -32,6 +44,8 @@ export function Preview({
   onTextPanel,
   inlineRequest,
 }: {
+  playbackRef?: React.Ref<PreviewPlayback>;
+  clockRef?: React.MutableRefObject<number>;
   mobileHistory?: React.ReactNode;
   project: Project;
   assets: Asset[];
@@ -46,7 +60,72 @@ export function Preview({
   inlineRequest?: { id: string; nonce: number };
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }) {
+  const [playTime, setPlayTime] = useState(time);
+  const renderTime = playing ? playTime : time;
+  const currentTime = useRef(time);
+  currentTime.current = renderTime;
+  if (clockRef) clockRef.current = renderTime;
   const audio = useRef<HTMLAudioElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const viewport = usePreviewViewport(stage, canvasRef);
+  const [audioError, setAudioError] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const request = useRef(0);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    const a = audio.current;
+    return () => {
+      mounted.current = false;
+      request.current++;
+      a?.pause();
+    };
+  }, []);
+  function reportAudioError(error: unknown) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    if (mounted.current) setAudioError(playbackMessage(error));
+  }
+  function pause() {
+    runtime.current?.suspend();
+    if (playing) setTime(currentTime.current);
+    stage.current
+      ?.querySelectorAll<HTMLAudioElement>("audio")
+      .forEach((a) => a.pause());
+    runtime.current?.playbackElements().forEach((a) => a.pause());
+    request.current++;
+    setPreparing(false);
+    setPlaying(false);
+  }
+  function play() {
+    const token = ++request.current;
+    setAudioError("");
+    setPreparing(true);
+    // Start all play promises within this actual user gesture, not a React effect.
+    const elements = [
+      ...Array.from(
+        stage.current?.querySelectorAll<HTMLAudioElement>("audio[src]") || [],
+      ),
+      ...(runtime.current?.playbackElements() || []),
+    ];
+    void primeMediaPlayback(elements)
+      .then(() => {
+        if (mounted.current && token === request.current) {
+          setPreparing(false);
+          setPlaying(true);
+        }
+      })
+      .catch((error) => {
+        if (mounted.current && token === request.current) {
+          setPreparing(false);
+          reportAudioError(error);
+        }
+      });
+  }
+  function toggle() {
+    if (playing || preparing) pause();
+    else play();
+  }
+  useImperativeHandle(playbackRef, () => ({ play, toggle, pause }));
   const [draft, setDraft] = useState<Project | null>(null);
   const displayProject = draft || project;
   const [dimensions, setDimensions] = useState<Dimensions>(new Map());
@@ -67,19 +146,57 @@ export function Preview({
   const runtime = useRef<PreviewMedia>(null);
   const [mediaError, setMediaError] = useState("");
   useEffect(() => {
-    runtime.current = new PreviewMedia();
-    return () => runtime.current?.dispose();
-  }, []);
+    if (!playing) runtime.current?.suspend();
+  }, [playing]);
+  type FrameRequest = {
+    project: Project;
+    assets: Asset[];
+    time: number;
+    playing: boolean;
+    width: number;
+  };
+  const frameQueue = useRef<LatestFrameQueue<FrameRequest> | null>(null);
+  const latestFrame = useRef<FrameRequest>({
+    project: displayProject,
+    assets,
+    time: renderTime,
+    playing,
+    width: previewWidth,
+  });
+  latestFrame.current = {
+    project: displayProject,
+    assets,
+    time: renderTime,
+    playing,
+    width: previewWidth,
+  };
   useEffect(() => {
-    let cancelled = false;
-    const engine = runtime.current;
-    void engine
-      ?.sync(sceneAt(displayProject, time).entries, assets, playing)
-      .then((sources) => {
-        if (cancelled || !sources) return;
+    const engine = new PreviewMedia();
+    runtime.current = engine;
+    const queue = new LatestFrameQueue<FrameRequest>(
+      async (frame) => {
+        const sources = await engine.sync(
+          sceneAt(frame.project, frame.time).entries,
+          frame.assets,
+          frame.playing,
+          (error) => {
+            if (mounted.current) reportAudioError(error);
+          },
+        );
+        const latest = latestFrame.current;
+        if (
+          !mounted.current ||
+          !sources ||
+          latest.project !== frame.project ||
+          latest.assets !== frame.assets ||
+          latest.playing !== frame.playing ||
+          latest.width !== frame.width
+        )
+          return;
         const ctx = canvasRef.current?.getContext("2d");
-        if (ctx) {
-          drawFrame(ctx, null, displayProject, time, undefined, sources);
+        if (!ctx) return;
+        drawFrame(ctx, null, frame.project, frame.time, undefined, sources);
+        if (!frame.playing) {
           const next: Dimensions = new Map();
           sources.forEach((source, id) => {
             const s = source as HTMLImageElement & HTMLVideoElement;
@@ -93,38 +210,50 @@ export function Preview({
               ? previous
               : next,
           );
-          setMediaError("");
         }
-      })
-      .catch((error) => {
-        if (!cancelled) setMediaError(error.message);
-      });
+        setMediaError("");
+      },
+      (error) => {
+        if (mounted.current) setMediaError((error as Error).message);
+      },
+    );
+    frameQueue.current = queue;
+    queue.request(latestFrame.current);
     return () => {
-      cancelled = true;
+      queue.dispose();
+      engine.dispose();
     };
-  }, [displayProject, assets, time, playing, previewWidth, canvasRef]);
+  }, [canvasRef]);
+  useEffect(() => {
+    frameQueue.current?.request(latestFrame.current);
+  }, [displayProject, assets, renderTime, playing, previewWidth]);
   useEffect(() => {
     const pause = () => {
-      if (document.hidden) setPlaying(false);
+      if (document.hidden) {
+        if (playing) setTime(currentTime.current);
+        request.current++;
+        setPreparing(false);
+        setPlaying(false);
+      }
     };
     document.addEventListener("visibilitychange", pause);
     return () => document.removeEventListener("visibilitychange", pause);
-  }, [setPlaying]);
+  }, [setPlaying, playing]);
   useEffect(() => {
     const a = audio.current;
     if (!a) return;
     a.volume = project.audioVolume;
     a.playbackRate = project.audioSpeed || 1;
-    const local = musicTime(project, music?.duration || 0, time);
+    const local = musicTime(project, music?.duration || 0, renderTime);
     if (local === null) {
       a.pause();
       return;
     }
     if (Math.abs(a.currentTime - local) > 0.15) a.currentTime = local;
-    if (playing) void a.play().catch(() => {});
+    if (playing) void a.play().catch(reportAudioError);
     else a.pause();
   }, [
-    time,
+    renderTime,
     playing,
     music?.id,
     project.audioVolume,
@@ -137,20 +266,32 @@ export function Preview({
   ]);
   useEffect(() => {
     if (!playing) return;
-    let raf: number;
-    let last = performance.now();
+    let raf: number,
+      last = performance.now(),
+      published = last;
     const began = last,
       initial = latest.current.time;
+    setPlayTime(initial);
     const tick = (now: number) => {
       if (now - last >= 1000 / 30) {
         last = now;
-        const next = initial + (now - began) / 1000;
+        const next = Math.min(
+          initial + (now - began) / 1000,
+          durationOf(latest.current.project),
+        );
+        currentTime.current = next;
+        if (clockRef) clockRef.current = next;
+        setPlayTime(next);
         if (next >= durationOf(latest.current.project)) {
-          setTime(durationOf(latest.current.project));
+          setTime(next);
           setPlaying(false);
           return;
         }
-        setTime(next);
+        // Heavy editor panels/timeline rows do not need 30 React renders/second.
+        if (now - published >= 250) {
+          published = now;
+          setTime(next);
+        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -167,7 +308,25 @@ export function Preview({
         </span>
       </div>
       <div ref={setToolbarHost} className="preview-toolbar-host" />
-      <div className="canvas-stage">
+      <div
+        ref={stage}
+        className={`canvas-stage ${viewport.panning && viewport.view.zoom > 1 ? "is-panning" : ""}`}
+        tabIndex={0}
+        aria-label="مساحة المعاينة"
+        {...viewport.handlers}
+        onKeyDown={(e) => {
+          if (
+            (e.target as HTMLElement).closest(
+              "input,textarea,[data-preview-tools]",
+            )
+          )
+            return;
+          if (e.key === "Escape") viewport.finish(true);
+        }}
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) onSelect(null);
+        }}
+      >
         {!project.clips.length && (
           <div className="empty-preview">
             <Clapperboard size={42} />
@@ -180,15 +339,19 @@ export function Preview({
           width={previewWidth}
           height={Math.round((previewWidth * rh) / rw)}
           style={{
+            transform: `translate(${viewport.view.x}px, ${viewport.view.y}px) scale(${viewport.view.zoom})`,
+            transformOrigin: "center",
             aspectRatio: `${rw}/${rh}`,
             display: project.clips.length ? "block" : "none",
           }}
         />
         {!!project.clips.length && (
           <Interaction
+            viewVersion={`${viewport.view.zoom}:${viewport.view.x}:${viewport.view.y}`}
+            compositionGuides={viewport.guides}
             project={project}
             displayProject={displayProject}
-            time={time}
+            time={renderTime}
             playing={playing}
             canvas={canvasRef.current}
             dimensions={dimensions}
@@ -196,37 +359,87 @@ export function Preview({
             onSelect={onSelect}
             onChange={onChange}
             onDraft={setDraft}
-            onPause={() => setPlaying(false)}
+            onPause={pause}
             onTextPanel={onTextPanel}
             inlineRequest={inlineRequest}
             toolbarHost={toolbarHost}
           />
         )}
-        <audio ref={audio} src={music?.url} hidden />
+        <PreviewViewControls
+          viewport={viewport}
+          disabled={!project.clips.length}
+          onStep={(direction) => {
+            pause();
+            setTime(
+              Math.max(
+                0,
+                Math.min(
+                  durationOf(project),
+                  currentTime.current + direction / 30,
+                ),
+              ),
+            );
+          }}
+          onSnapshot={async () => {
+            const canvas = canvasRef.current;
+            if (!canvas || !project.clips.length) throw new Error("No frame");
+            const at = currentTime.current;
+            const blob = await new Promise<Blob>((resolve, reject) =>
+              canvas.toBlob(
+                (b) => (b ? resolve(b) : reject(new Error("Empty frame"))),
+                "image/png",
+              ),
+            );
+            download(blob, `${project.name}-${at.toFixed(2)}s.png`);
+          }}
+        />
+        <CueAudio
+          project={project}
+          assets={assets}
+          time={renderTime}
+          playing={playing}
+          onError={reportAudioError}
+        />
+        <audio
+          ref={audio}
+          src={music?.url}
+          preload="auto"
+          onError={() => reportAudioError(new Error("audio"))}
+          hidden
+        />
       </div>
       {mediaError && (
         <p role="status" className="composition-error">
           {mediaError}
         </p>
       )}
+      {audioError && (
+        <div className="composition-error" role="alert">
+          {audioError} <button onClick={play}>إعادة تفعيل الصوت</button>
+        </div>
+      )}
       <div className="player-controls">
         {mobileHistory}
         <span className="timecode" dir="ltr">
-          {timeLabel(time)} <em>/ {timeLabel(durationOf(project))}</em>
+          {timeLabel(renderTime)} <em>/ {timeLabel(durationOf(project))}</em>
         </span>
         <div>
           <IconButton
             icon={SkipForward}
             label="البداية"
-            onClick={() => setTime(0)}
+            onClick={() => {
+              pause();
+              setTime(0);
+            }}
           />
           <button
             className="play-button"
-            aria-label={playing ? "إيقاف" : "تشغيل"}
+            aria-label={playing || preparing ? "إيقاف" : "تشغيل"}
+            aria-busy={preparing}
             disabled={!project.clips.length}
             onClick={() => {
               if (time >= durationOf(project)) setTime(0);
-              setPlaying(!playing);
+              toggle();
             }}
           >
             {playing ? <Pause size={19} /> : <Play size={19} />}
@@ -235,7 +448,7 @@ export function Preview({
             icon={SkipBack}
             label="النهاية"
             onClick={() => {
-              setPlaying(false);
+              pause();
               setTime(durationOf(project));
             }}
           />

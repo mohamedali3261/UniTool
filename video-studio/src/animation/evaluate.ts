@@ -1,3 +1,4 @@
+import {counterText} from "./layerFrames";
 import { motionById } from "./motions";
 import type { Clip, TextLayer } from "../types";
 export const unit = (n: number) => Math.max(0, Math.min(1, n));
@@ -55,7 +56,7 @@ export function textAt(layer: TextLayer, time: number) {
   let opacity = 1,
     y = 0,
     scale = 1,
-    text = layer.text;
+    text = counterText(layer,time);
   const apply = (kind: string | undefined, p: number) => {
     if (kind && kind !== "none" && kind !== "typewriter") opacity *= p;
     if (kind === "slide") y += (1 - p) * 8;

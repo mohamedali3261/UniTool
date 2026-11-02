@@ -1,8 +1,11 @@
+import { downloadFile } from './download';
+import { deviceRasterBudget, rasterWithinBudget } from './rasterBudget';
 import { fabric } from 'fabric';
 import { SVG_ICON_STRINGS, getFallbackSvgForIcon } from './svgIcons';
 import { ProjectItem } from '../types';
 import { INITIAL_MOCK_PROJECTS } from '../data/presets';
-import { FABRIC_CUSTOM_PROPERTIES } from './projectFile';
+
+let styleHandlersInstalled = false;
 
 // Configure Fabric default control styling and safe text style handlers
 export const initFabricDefaults = () => {
@@ -14,7 +17,7 @@ export const initFabricDefaults = () => {
   fabric.Object.prototype.cornerStyle = 'circle';
   fabric.Object.prototype.borderScaleFactor = 2;
   fabric.Object.prototype.borderDashArray = [4, 4];
-  fabric.Object.prototype.padding = 6;
+  fabric.Object.prototype.padding = 0;
   fabric.Object.prototype.hasBorders = true;
   fabric.Object.prototype.hasControls = true;
 
@@ -28,6 +31,10 @@ export const initFabricDefaults = () => {
   if (fabric.Textbox) {
     (fabric.Textbox.prototype as any).styles = {};
   }
+
+  // Canvas mounts call this too; never build a growing chain of wrappers.
+  if (styleHandlersInstalled) return;
+  styleHandlersInstalled = true;
 
   // Patch fabric.util.stylesToArray to prevent TypeError: undefined is not an object (evaluating 'styles[i]')
   if (fabric.util && typeof (fabric.util as any).stylesToArray === 'function') {
@@ -73,13 +80,7 @@ export const initFabricDefaults = () => {
 initFabricDefaults();
 
 // Helper to determine good contrast color based on canvas background
-const getDefaultContrastingColor = (canvas: fabric.Canvas) => {
-  const bg = canvas.backgroundColor;
-  if (!bg || bg === '#FFFFFF' || bg === 'white' || bg === '#fff' || bg === '#F8FAFC' || bg === '#F1F5F9') {
-    return '#0F172A';
-  }
-  return '#FFFFFF';
-};
+const getDefaultContrastingColor = (_canvas: fabric.Canvas) => '#000000';
 
 // The canvas is sized to designSize × zoom, so canvas.getWidth()/getCenter()
 // return VIEWPORT units. Fabric object coordinates live in DESIGN space, so
@@ -352,7 +353,7 @@ export const addTextToCanvas = (
     textString = textOrOptions;
     opts = secondaryOptions || {};
   } else if (typeof textOrOptions === 'object' && textOrOptions !== null) {
-    textString = textOrOptions.text || 'اكتب نصك هنا';
+    textString = textOrOptions.text ?? 'اكتب نصك هنا';
     opts = textOrOptions;
   }
 
@@ -364,7 +365,7 @@ export const addTextToCanvas = (
     textColor.toLowerCase() === '#ffffff' &&
     (canvas.backgroundColor === '#FFFFFF' || canvas.backgroundColor === 'white' || !canvas.backgroundColor)
   ) {
-    textColor = '#0F172A';
+    textColor = '#000000';
   }
 
   const fontSize = opts.fontSize || Math.min(Math.round(cWidth * 0.05), 48);
@@ -376,11 +377,13 @@ export const addTextToCanvas = (
     originY: 'center',
     fontFamily: opts.fontFamily || 'Cairo',
     fontSize,
-    fontWeight: opts.fontWeight || 700,
+    fontWeight: opts.fontWeight ?? 400,
     fill: textColor,
     textAlign: 'center',
     lineHeight: 1.2,
     styles: {},
+    fontStyle: opts.fontStyle || 'normal',
+    underline: false, overline: false, linethrough: false, stroke: null, strokeWidth: 0, shadow: null, charSpacing: 0,
     textBackgroundColor: opts.backgroundColor || '',
     splitByGrapheme: false,
     width: Math.min(cWidth * 0.8, 600)
@@ -490,6 +493,7 @@ export const addImageToCanvas = (
   }
 
   imgElement.onload = () => {
+    if (!canvas.contextContainer) return;
     try {
       const {
         width: canvasWidth,
@@ -653,6 +657,7 @@ export const duplicateActiveObject = (canvas: fabric.Canvas) => {
   if (!active) return;
 
   active.clone((cloned: fabric.Object) => {
+    if (!canvas.contextContainer) return;
     canvas.discardActiveObject();
     cloned.set({
       left: (cloned.left || 0) + 30,
@@ -678,12 +683,14 @@ export const deleteActiveObject = (canvas: fabric.Canvas) => {
   const active = canvas.getActiveObject();
   if (!active) return;
 
+  const canRemove = (object: any) => !object.locked && !object.lockMovementX && !object.lockMovementY && !String(object.id || '').startsWith('packaging-');
   if (active.type === 'activeSelection') {
     (active as any).forEachObject((obj: fabric.Object) => {
-      canvas.remove(obj);
+      if (canRemove(obj)) canvas.remove(obj);
     });
     canvas.discardActiveObject();
   } else {
+    if (!canRemove(active)) return;
     canvas.remove(active);
   }
   canvas.renderAll();
@@ -982,13 +989,12 @@ export const exportCanvasImage = (
   designHeight?: number
 ): string => {
   try {
-    const { zoom, width } = resolveExportSize(canvas, designWidth, designHeight);
+    const { zoom, width, height } = resolveExportSize(canvas, designWidth, designHeight);
+    if (!rasterWithinBudget(width, height, multiplier, deviceRasterBudget())) throw Error('RASTER_SIZE_LIMIT');
     const safeMultiplier = Math.max(0.01, multiplier);
     // toCanvasElement() scales the viewport by `multiplier`, so dividing by the
     // on-screen zoom renders objects at 1 design unit = safeMultiplier pixels.
-    const exportScale = designWidth && designWidth > 0
-      ? (width * safeMultiplier) / canvas.getWidth()
-      : safeMultiplier / zoom;
+    const exportScale = safeMultiplier / zoom;
 
     const vpt = (canvas.viewportTransform as number[]).slice();
     canvas.viewportTransform[4] = 0;
@@ -1000,6 +1006,8 @@ export const exportCanvasImage = (
         format: (format as any) === 'jpg' ? 'jpeg' : format,
         quality,
         multiplier: exportScale,
+        width: width * zoom,
+        height: height * zoom,
         enableRetinaScaling: false
       });
     } finally {
@@ -1011,6 +1019,22 @@ export const exportCanvasImage = (
     return '';
   }
 };
+
+export async function exportCanvasBlob(canvas: fabric.Canvas, format: 'png' | 'jpeg' | 'webp', quality = .95, multiplier = 1, designWidth?: number, designHeight?: number): Promise<Blob> {
+  const { zoom, width, height } = resolveExportSize(canvas, designWidth, designHeight);
+  if (!rasterWithinBudget(width, height, multiplier, deviceRasterBudget())) throw Error('RASTER_SIZE_LIMIT');
+  const scale = multiplier / zoom;
+  const original = canvas.viewportTransform!.slice();
+  let surface: HTMLCanvasElement;
+  try {
+    canvas.viewportTransform![4] = canvas.viewportTransform![5] = 0;
+    canvas.calcViewportBoundaries();
+    surface = canvas.toCanvasElement(scale, { width: width * zoom, height: height * zoom });
+  } finally { canvas.viewportTransform = original; canvas.calcViewportBoundaries(); }
+  try {
+    return await new Promise<Blob>((resolve, reject) => surface.toBlob(blob => blob ? resolve(blob) : reject(Error('RASTER_ENCODING_FAILED')), 'image/' + format, quality));
+  } finally { surface.width = surface.height = 1; }
+}
 
 // Export Canvas as Clean SVG
 export const exportCanvasSvg = (
@@ -1048,57 +1072,17 @@ export const exportCanvasSvg = (
 };
 
 // Export Canvas as PDF Document
-export const exportCanvasPdf = (
-  canvas: fabric.Canvas,
-  title: string = 'design',
-  designWidth?: number,
-  designHeight?: number
-): void => {
-  try {
-    const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
-    // 2x for print-quality output, independent of the on-screen zoom
-    const dataUrl = exportCanvasImage(canvas, 'png', 1, 2, width, height);
-    if (!dataUrl) return;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${title} - PDF</title>
-            <style>
-              @page {
-                size: ${width}px ${height}px;
-                margin: 0;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #ffffff;
-                width: ${width}px;
-                height: ${height}px;
-              }
-              img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${dataUrl}" onload="window.print();" />
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
-  } catch (err) {
-    console.error('Error creating PDF preview:', err);
-  }
+export const exportCanvasPdf = async (canvas: fabric.Canvas, title = 'design', designWidth?: number, designHeight?: number): Promise<void> => {
+  const { width, height } = resolveExportSize(canvas, designWidth, designHeight);
+  const multiplier = Math.min(2, Math.sqrt(deviceRasterBudget() * .95 / (width * height)), 16384 / Math.max(width, height));
+  const blob = await exportCanvasBlob(canvas, 'png', 1, multiplier, width, height);
+  const { PDFDocument } = await import('pdf-lib');
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(title);
+  const image = await pdf.embedPng(await blob.arrayBuffer());
+  const page = pdf.addPage([width * .75, height * .75]);
+  page.drawImage(image, { x: 0, y: 0, width: width * .75, height: height * .75 });
+  downloadFile(new Blob([new Uint8Array(await pdf.save()).buffer], { type: 'application/pdf' }), `${title}.pdf`);
 };
 
 // Apply Modern Text Gradients
@@ -1171,16 +1155,14 @@ export const getSavedProjects = (): ProjectItem[] => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MOCK_PROJECTS));
       return INITIAL_MOCK_PROJECTS;
     }
-    const projects: unknown = JSON.parse(raw);
-    if (!Array.isArray(projects)) return [];
-    return projects.filter((project): project is ProjectItem => !!project && typeof project.id === 'string' && typeof project.title === 'string' && Number.isFinite(project.width) && Number.isFinite(project.height) && !!project.canvasData);
+    return JSON.parse(raw);
   } catch (err) {
     console.error('Failed to parse saved projects', err);
     return INITIAL_MOCK_PROJECTS;
   }
 };
 
-export const saveProjectToStorage = (project: ProjectItem): boolean => {
+export const saveProjectToStorage = (project: ProjectItem): void => {
   try {
     const projects = getSavedProjects();
     const index = projects.findIndex((p) => p.id === project.id);
@@ -1190,10 +1172,8 @@ export const saveProjectToStorage = (project: ProjectItem): boolean => {
       projects.unshift({ ...project, createdAt: Date.now(), updatedAt: Date.now() });
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    return true;
   } catch (err) {
     console.error('Failed to save project', err);
-    return false;
   }
 };
 
@@ -1291,6 +1271,7 @@ export const setCanvasPatternBackground = (
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
+    if (!canvas.contextContainer) return;
     try {
       const pattern = new fabric.Pattern({
         source: img,
@@ -1322,7 +1303,7 @@ export const setCanvasWallpaperBackground = (
     fabric.Image.fromURL(
       imageUrl,
       (img) => {
-        if (!img) return;
+        if (!img || !canvas.contextContainer) return;
 
         const { width: canvasW, height: canvasH } = getDesignMetrics(canvas);
         const imgW = img.width || 800;

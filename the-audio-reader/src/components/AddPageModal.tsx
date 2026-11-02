@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, FilePlus2 } from 'lucide-react';
-import { UILanguage } from '../types';
-import { getTranslation } from '../translations';
+import { DialogBackdrop } from "./DialogBackdrop";
+import React, { useState } from "react";
+import { X, FilePlus2 } from "lucide-react";
+import { UILanguage } from "../types";
+import { getTranslation } from "../translations";
 
 interface AddPageModalProps {
   isOpen: boolean;
@@ -19,8 +20,8 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
   nextPageNumber,
 }) => {
   const t = getTranslation(uiLang);
-  const [title, setTitle] = useState('');
-  const [rawText, setRawText] = useState('');
+  const [title, setTitle] = useState("");
+  const [rawText, setRawText] = useState("");
 
   if (!isOpen) return null;
 
@@ -30,20 +31,20 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
 
     const pageTitle = title.trim() || `${t.page} ${nextPageNumber}`;
     onAddPage(pageTitle, trimmed);
-    setTitle('');
-    setRawText('');
+    setTitle("");
+    setRawText("");
     onClose();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === "Escape") onClose();
   };
 
   return (
-    <div
+    <DialogBackdrop
+      label={uiLang === "ar" ? "إضافة صفحة" : "Add page"}
+      onClose={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4"
-      onClick={onClose}
-      onKeyDown={handleKeyDown}
     >
       <div
         className="relative w-full max-w-lg rounded-2xl border border-slate-700/60 bg-slate-900 shadow-2xl"
@@ -56,7 +57,7 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
               <FilePlus2 className="h-5 w-5" />
             </div>
             <h2 className="text-base font-bold text-white">
-              {uiLang === 'ar' ? 'إضافة صفحة جديدة' : 'Add New Page'}
+              {uiLang === "ar" ? "إضافة صفحة جديدة" : "Add New Page"}
             </h2>
           </div>
           <button
@@ -72,7 +73,9 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
           {/* Title Input */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-400">
-              {uiLang === 'ar' ? 'عنوان الصفحة (اختياري)' : 'Page Title (optional)'}
+              {uiLang === "ar"
+                ? "عنوان الصفحة (اختياري)"
+                : "Page Title (optional)"}
             </label>
             <input
               type="text"
@@ -86,18 +89,23 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
           {/* Textarea */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-400">
-              {uiLang === 'ar' ? 'محتوى الصفحة' : 'Page Content'}
+              {uiLang === "ar" ? "محتوى الصفحة" : "Page Content"}
             </label>
             <textarea
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
-              placeholder={uiLang === 'ar' ? 'اكتب أو الصق نص الصفحة هنا...' : 'Type or paste page text here...'}
+              placeholder={
+                uiLang === "ar"
+                  ? "اكتب أو الصق نص الصفحة هنا..."
+                  : "Type or paste page text here..."
+              }
               rows={8}
               className="w-full resize-y rounded-xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 leading-relaxed"
               autoFocus
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              {rawText.trim().split(/\s+/).filter(Boolean).length} {t.wordsCount}
+              {rawText.trim().split(/\s+/).filter(Boolean).length}{" "}
+              {t.wordsCount}
             </p>
           </div>
         </div>
@@ -115,10 +123,10 @@ export const AddPageModal: React.FC<AddPageModalProps> = ({
             disabled={!rawText.trim()}
             className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
           >
-            {uiLang === 'ar' ? 'إضافة الصفحة' : 'Add Page'}
+            {uiLang === "ar" ? "إضافة الصفحة" : "Add Page"}
           </button>
         </div>
       </div>
-    </div>
+    </DialogBackdrop>
   );
 };

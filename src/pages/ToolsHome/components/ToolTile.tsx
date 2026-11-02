@@ -16,7 +16,7 @@ export function ToolTile({ tool, lang, delay, onNavigate }: Props) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, type: 'spring', stiffness: 320, damping: 26 }}
-      onClick={() => onNavigate(tool.id)}
+      onClick={() => tool.href ? window.location.assign(tool.href) : onNavigate(tool.id)}
       className={cn(
         'group relative overflow-hidden rounded-2xl border bg-white/[0.02] p-3.5 text-start',
         'transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.04] hover:shadow-xl',

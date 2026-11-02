@@ -15,9 +15,7 @@ import {
   Lock,
   Unlock,
   MoveVertical,
-  Import,
-  Group,
-  Ungroup
+  Import
 } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
@@ -31,10 +29,6 @@ interface AlignPropertiesProps {
   onDelete: () => void;
   isLocked: boolean;
   onToggleLock: () => void;
-  canGroup: boolean;
-  canUngroup: boolean;
-  onGroup: () => void;
-  onUngroup: () => void;
 }
 
 const PropCard: React.FC<{
@@ -61,20 +55,11 @@ export const AlignProperties: React.FC<AlignPropertiesProps> = ({
   onDuplicate,
   onDelete,
   isLocked,
-  onToggleLock,
-  canGroup,
-  canUngroup,
-  onGroup,
-  onUngroup
+  onToggleLock
 }) => {
   const { t } = useDcLang();
   return (
     <div className="space-y-2.5">
-      {(canGroup || canUngroup) && <PropCard title={t.groupTitle} icon={<Group className="h-3 w-3 text-sky-300" />} iconBg="bg-sky-500/15">
-        <button type="button" onClick={canGroup ? onGroup : onUngroup} className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 py-2.5 text-xs font-bold text-sky-300 hover:bg-sky-500/20">{canGroup ? <Group className="h-4 w-4" /> : <Ungroup className="h-4 w-4" />}{canGroup ? t.groupAction : t.ungroupAction}</button>
-        {canGroup && <p className="mt-2 text-[10px] text-slate-400">{t.groupHint}</p>}
-      </PropCard>}
-
       {/* 1. Canvas alignment grid */}
       <PropCard
         title={t.apTitle}

@@ -172,6 +172,9 @@ export function removeItems(
           : { ...l, at: mapped(l.at) },
       ),
     markers: p.markers?.map((m) => ({ ...m, time: mapped(m.time) })),
+    sounds: p.sounds?.map((c) =>
+      p.tracks?.sfx?.locked ? c : { ...c, at: mapped(c.at) },
+    ),
     audioStart: p.tracks?.audio?.locked
       ? p.audioStart
       : mapped(p.audioStart || 0),
@@ -262,6 +265,9 @@ export function trimBase(
           : { ...l, at: shift(l.at) },
       ),
       markers: out.markers?.map((m) => ({ ...m, time: shift(m.time) })),
+      sounds: out.sounds?.map((c) =>
+        p.tracks?.sfx?.locked ? c : { ...c, at: shift(c.at) },
+      ),
       audioStart: p.tracks?.audio?.locked
         ? p.audioStart
         : shift(p.audioStart || 0),
@@ -427,6 +433,9 @@ export function insertFrozen(
       ...m,
       time: m.time >= when ? m.time + duration : m.time,
     })),
+    sounds: p.sounds?.map((c) =>
+      p.tracks?.sfx?.locked || c.at < when ? c : { ...c, at: c.at + duration },
+    ),
     audioStart: p.tracks?.audio?.locked
       ? p.audioStart
       : (p.audioStart || 0) >= when

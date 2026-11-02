@@ -1,0 +1,121 @@
+.cloudflare-featured {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 28px;
+  padding: 30px;
+  margin: 24px 0;
+  border: 1px solid #754725;
+  border-radius: 22px;
+  background: linear-gradient(125deg, #141b25, #281c15);
+  overflow: hidden;
+}
+.cloudflare-eyebrow {
+  color: #f6821f;
+  font: 11px monospace;
+  letter-spacing: 2px;
+}
+.cloudflare-featured h3 {
+  font-size: 32px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.cloudflare-featured em {
+  color: #f69b50;
+  font-style: normal;
+}
+.cloudflare-featured p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #a8b2c1;
+}
+.cloudflare-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+.cloudflare-tags span {
+  padding: 6px 10px;
+  border: 1px solid #69503a;
+  border-radius: 50px;
+  color: #edc5a4;
+  font-size: 11px;
+}
+.cloudflare-featured button {
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 9px;
+  background: #f6821f;
+  color: #171b22;
+  font-weight: 700;
+}
+.cloudflare-featured nav {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.cloudflare-featured a {
+  color: #f6b27a;
+  font-size: 12px;
+}
+.cloudflare-featured small {
+  font-size: 10px;
+  color: #a5adba;
+}
+.cloudflare-code {
+  background: #10161e;
+  border: 1px solid #3b4656;
+  border-radius: 16px;
+  padding: 24px;
+  align-self: center;
+  font-family: monospace;
+  min-width: 0;
+}
+.cloudflare-code pre {
+  font-size: clamp(10px, 1.2vw, 15px);
+  white-space: pre-wrap;
+  color: #d4dce8;
+}
+.cloudflare-code b {
+  color: #69e5a0;
+  font-size: 12px;
+}
+.cloudflare-code span {
+  font-size: 10px;
+  color: #8999af;
+}
+.cloudflare-code hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #2a3749;
+}
+.cloudflare-code p {
+  font: 13px/2.4 monospace;
+  letter-spacing: 1px;
+}
+.cloudflare-code strong,
+.cloudflare-dots {
+  color: #f6821f;
+}
+.cloudflare-dots {
+  margin-bottom: 25px;
+  letter-spacing: 5px;
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .cloudflare-featured {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 18px;
+  }
+  .cloudflare-featured h3 {
+    font-size: 26px;
+  }
+  .cloudflare-code pre {
+    font-size: 11px;
+  }
+  .cloudflare-code {
+    padding: 18px;
+  }
+}

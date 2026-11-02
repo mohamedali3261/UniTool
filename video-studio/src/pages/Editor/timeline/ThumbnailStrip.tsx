@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { Asset } from "../../../types";
 import { videoFrames } from "./mediaFrames";
 const cache = new Map<string, string[]>();
 // One thumbnail decoder at a time; cancelled/unmounted strips never retain media elements.
 let queue: Promise<unknown> = Promise.resolve();
-export function ThumbnailStrip({
+export const ThumbnailStrip = memo(function ThumbnailStrip({
   asset,
   start,
   end,
@@ -76,4 +76,4 @@ export function ThumbnailStrip({
       ))}
     </div>
   );
-}
+});

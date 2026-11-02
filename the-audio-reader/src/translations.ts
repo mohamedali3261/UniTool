@@ -60,7 +60,7 @@ export const translations = {
     
     // Voice Selector Modal
     voiceSelectorTitle: 'أصوات القراءة المتاحة على جهازك',
-    voiceSelectorDesc: 'يستخدم التطبيق أصوات TTS المثبتة في نظام التشغيل والمتصفح لجهازك مباشرة وبدون استهلاك بيانات.',
+    voiceSelectorDesc: 'يستخدم التطبيق أصوات جهازك أو متصفحك. بعض الأصوات تعمل دون إنترنت، وبعضها يحتاج اتصالًا.',
     filterAll: 'جميع الأصوات',
     filterArabic: 'الأصوات العربية',
     filterEnglish: 'الأصوات الإنجليزية',
@@ -187,7 +187,7 @@ export const translations = {
     
     // Voice Selector Modal
     voiceSelectorTitle: 'Available Device Voices',
-    voiceSelectorDesc: 'Sawti uses native TTS voices installed in your operating system and browser for instant, high quality playback without bandwidth cost.',
+    voiceSelectorDesc: 'Sawti uses device/browser TTS voices. Local voices work offline; some voices need network access.',
     filterAll: 'All Voices',
     filterArabic: 'Arabic Voices',
     filterEnglish: 'English Voices',

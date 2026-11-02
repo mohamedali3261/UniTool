@@ -1,277 +1,265 @@
-import { BookChunk, DeviceVoice, ReaderSettings } from '../types';
-import { cleanTextForSpeech } from './textProcessor';
-
+import { BookChunk, DeviceVoice, ReaderSettings } from "../types";
+import { prepareSpeech, speechParts } from "./textProcessor";
 export interface SpeechCallbacks {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: string) => void;
   onWordBoundary?: (charIndex: number, charLength: number) => void;
 }
-
-class SpeechEngineService {
-  private synth: SpeechSynthesis | null = null;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
-  private keepAliveInterval: any = null;
-  private voicesCache: DeviceVoice[] = [];
-  private isSpeakingInternal = false;
-  private isPausedInternal = false;
-
-  constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.synth = window.speechSynthesis;
-    }
+export function voiceLanguage(
+  v: Pick<SpeechSynthesisVoice, "lang" | "name">,
+): "ar" | "en" | null {
+  const lang = v.lang.toLowerCase().replace(/_/g, "-");
+  if (
+    /^ar(?:-|$)/.test(lang) ||
+    /arabic|عربي|maged|tarik|laila|zeina/i.test(v.name)
+  )
+    return "ar";
+  if (/^en(?:-|$)/.test(lang) || /english/i.test(v.name)) return "en";
+  return null;
+}
+// محرك المتصفح مشترك بين القراءة والمعاينة والترجمة؛ المالك وحده يلغي النطق.
+const owners = new WeakMap<SpeechSynthesis, SpeechEngineService>();
+/** جلسة مرقمة تمنع وصول نهاية/خطأ من قراءة أُلغيت إلى قراءة جديدة. */
+export class SpeechEngineService {
+  private synth: SpeechSynthesis | null;
+  private current: SpeechSynthesisUtterance | null = null;
+  private generation = 0;
+  private paused = false;
+  private restart = false;
+  private lastBoundary = 0;
+  private resumeCurrent: (() => void) | null = null;
+  private pending: (() => void) | null = null;
+  constructor(
+    synth: SpeechSynthesis | null = typeof window !== "undefined" &&
+    "speechSynthesis" in window
+      ? window.speechSynthesis
+      : null,
+    private utteranceFactory: (text: string) => SpeechSynthesisUtterance = (
+      text,
+    ) => new SpeechSynthesisUtterance(text),
+  ) {
+    this.synth = synth;
   }
-
-  public isSupported(): boolean {
+  isSupported() {
     return this.synth !== null;
   }
-
-  /**
-   * Fetch all system voices with retry for browsers where voices load asynchronously
-   */
-  public async getAvailableVoices(): Promise<DeviceVoice[]> {
+  async getAvailableVoices(): Promise<DeviceVoice[]> {
     if (!this.synth) return [];
-
-    let rawVoices = this.synth.getVoices();
-    if (rawVoices.length === 0) {
-      // Wait for onvoiceschanged event
+    if (!this.synth.getVoices().length)
       await new Promise<void>((resolve) => {
-        const handleVoicesChanged = () => {
-          if (this.synth) {
-            this.synth.removeEventListener('voiceschanged', handleVoicesChanged);
-          }
+        let timer: ReturnType<typeof setTimeout>;
+        const done = () => {
+          clearTimeout(timer);
+          this.synth?.removeEventListener("voiceschanged", done);
           resolve();
         };
-
-        if (this.synth) {
-          this.synth.addEventListener('voiceschanged', handleVoicesChanged);
-        }
-
-        // Timeout fallback after 1.5s
-        setTimeout(() => {
-          if (this.synth) {
-            this.synth.removeEventListener('voiceschanged', handleVoicesChanged);
-          }
-          resolve();
-        }, 1500);
+        this.synth!.addEventListener("voiceschanged", done);
+        timer = setTimeout(done, 1500);
       });
-      rawVoices = this.synth.getVoices();
-    }
-
-    this.voicesCache = rawVoices.map((v) => {
-      const lowerLang = v.lang.toLowerCase();
-      const lowerName = v.name.toLowerCase();
-      const isArabic = lowerLang.startsWith('ar') || lowerName.includes('arabic') || lowerName.includes('عربي') || lowerName.includes('maged') || lowerName.includes('tarik') || lowerName.includes('laila') || lowerName.includes('zeina');
-      const isEnglish = lowerLang.startsWith('en') || lowerName.includes('english');
-
-      return {
-        voiceURI: v.voiceURI,
-        name: v.name,
-        lang: v.lang,
-        isDefault: v.default,
-        isArabic,
-        isEnglish,
-        localService: v.localService,
-      };
-    });
-
-    return this.voicesCache;
+    return this.synth.getVoices().map((v) => ({
+      voiceURI: v.voiceURI,
+      name: v.name,
+      lang: v.lang,
+      isDefault: v.default,
+      isArabic: voiceLanguage(v) === "ar",
+      isEnglish: voiceLanguage(v) === "en",
+      localService: v.localService,
+    }));
   }
-
-  /**
-   * Find the matching SpeechSynthesisVoice by URI or language
-   */
-  public findVoice(
-    lang: 'ar' | 'en',
-    preferredUri: string | null,
-    autoSelect: boolean = true
-  ): SpeechSynthesisVoice | null {
-    if (!this.synth) return null;
-    const voices = this.synth.getVoices();
-    if (voices.length === 0) return null;
-
-    // 1. If explicit preferred URI matched
-    if (preferredUri) {
-      const matched = voices.find((v) => v.voiceURI === preferredUri);
-      if (matched) return matched;
-    }
-
-    // 2. Auto-select best voice for language
-    if (autoSelect || !preferredUri) {
-      if (lang === 'ar') {
-        // Priority 1: Exact ar-SA or ar-* natural voice
-        const arVoice = voices.find((v) => {
-          const l = v.lang.toLowerCase();
-          const n = v.name.toLowerCase();
-          return l.startsWith('ar') || n.includes('arabic') || n.includes('maged') || n.includes('tarik') || n.includes('laila');
-        });
-        if (arVoice) return arVoice;
-      } else {
-        const enVoice = voices.find((v) => {
-          const l = v.lang.toLowerCase();
-          return l === 'en-us' || l === 'en-gb' || l.startsWith('en');
-        });
-        if (enVoice) return enVoice;
-      }
-    }
-
-    // Fallback to default or first available voice
-    return voices.find((v) => v.default) || voices[0] || null;
+  findVoice(lang: "ar" | "en", preferred: string | null, _auto = true) {
+    const candidates =
+      this.synth?.getVoices().filter((v) => voiceLanguage(v) === lang) || [];
+    return (
+      candidates.find((v) => v.voiceURI === preferred) ||
+      candidates.find(
+        (v) =>
+          v.lang.toLowerCase().replace("_", "-") ===
+          (lang === "ar" ? "ar-eg" : "en-us"),
+      ) ||
+      candidates.find((v) => v.default) ||
+      candidates[0] ||
+      null
+    );
   }
-
-  /**
-   * Speaks a specific chunk with precision boundaries and error handling
-   */
-  public speak(
+  speak(
     chunk: BookChunk,
     settings: ReaderSettings,
-    callbacks: SpeechCallbacks
-  ): void {
+    callbacks: SpeechCallbacks,
+  ) {
+    const previous = this.synth && owners.get(this.synth);
+    if (previous && previous !== this) previous.stop();
+    this.stop();
+    if (this.synth) owners.set(this.synth, this);
+    const token = this.generation;
     if (!this.synth) {
-      callbacks.onError?.('Web Speech API is not supported in this browser.');
+      callbacks.onError?.("unsupported");
       return;
     }
-
-    // Cancel any ongoing speech cleanly
-    this.stop();
-
-    const cleanText = cleanTextForSpeech(chunk.text);
-    if (!cleanText) {
+    const prepared = prepareSpeech(chunk.text),
+      parts = speechParts(prepared.text);
+    if (!parts.length) {
       callbacks.onEnd?.();
       return;
     }
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    this.currentUtterance = utterance;
-
-    // Determine voice
-    const preferredUri = chunk.language === 'ar' ? settings.selectedArabicVoiceURI : settings.selectedEnglishVoiceURI;
-    const selectedVoice = this.findVoice(chunk.language, preferredUri, settings.autoVoiceSelect);
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
-    } else {
-      utterance.lang = chunk.language === 'ar' ? 'ar-SA' : 'en-US';
+    const voice = this.findVoice(
+      chunk.language,
+      chunk.language === "ar"
+        ? settings.selectedArabicVoiceURI
+        : settings.selectedEnglishVoiceURI,
+      settings.autoVoiceSelect,
+    );
+    if (!voice) {
+      callbacks.onError?.(
+        chunk.language === "ar"
+          ? "missing-arabic-voice"
+          : "missing-english-voice",
+      );
+      return;
     }
-
-    utterance.rate = Math.max(0.5, Math.min(2.0, settings.speechRate));
-    utterance.pitch = Math.max(0.5, Math.min(1.5, settings.pitch));
-    utterance.volume = Math.max(0.0, Math.min(1.0, settings.volume));
-
-    utterance.onstart = () => {
-      this.isSpeakingInternal = true;
-      this.isPausedInternal = false;
-      this.startKeepAlive();
-      callbacks.onStart?.();
-    };
-
-    utterance.onend = () => {
-      this.isSpeakingInternal = false;
-      this.isPausedInternal = false;
-      this.stopKeepAlive();
-      this.currentUtterance = null;
-      callbacks.onEnd?.();
-    };
-
-    utterance.onerror = (e) => {
-      this.isSpeakingInternal = false;
-      this.isPausedInternal = false;
-      this.stopKeepAlive();
-      this.currentUtterance = null;
-
-      // Ignore 'canceled' or 'interrupted' errors when switching chunks
-      if (e.error !== 'canceled' && e.error !== 'interrupted') {
-        console.warn('Speech synthesis error:', e.error);
-        callbacks.onError?.(`Speech error: ${e.error}`);
+    let index = 0,
+      started = false;
+    const play = (offset = 0) => {
+      if (token !== this.generation) return;
+      if (this.paused) {
+        this.pending = () => play(offset);
+        return;
+      }
+      const part = parts[index],
+        utterance = this.utteranceFactory(part.text.slice(offset));
+      this.current = utterance;
+      this.lastBoundary = offset;
+      this.restart = false;
+      this.resumeCurrent = () => play(this.lastBoundary);
+      utterance.voice = voice;
+      utterance.lang = voice.lang.replace(/_/g, "-");
+      utterance.rate = Math.max(0.5, Math.min(2, settings.speechRate));
+      utterance.pitch = Math.max(0.5, Math.min(1.5, settings.pitch));
+      utterance.volume = Math.max(0, Math.min(1, settings.volume));
+      const valid = () =>
+        token === this.generation && this.current === utterance;
+      utterance.onstart = () => {
+        if (valid() && !started) {
+          started = true;
+          callbacks.onStart?.();
+        }
+      };
+      utterance.onboundary = (e) => {
+        if (!valid() || this.paused || e.name !== "word") return;
+        const local = offset + e.charIndex;
+        this.lastBoundary = local;
+        const start = part.start + local,
+          length =
+            e.charLength ||
+            part.text.slice(local).match(/^\S+/)?.[0].length ||
+            1;
+        const sourceStart = prepared.offsets[start] ?? 0,
+          sourceEnd =
+            prepared.offsets[
+              Math.min(prepared.offsets.length - 1, start + length - 1)
+            ] ?? sourceStart;
+        callbacks.onWordBoundary?.(sourceStart, sourceEnd - sourceStart + 1);
+      };
+      utterance.onend = () => {
+        if (!valid()) return;
+        if (this.paused) {
+          this.restart = true;
+          return;
+        }
+        this.current = null;
+        index++;
+        if (index < parts.length) play();
+        else {
+          this.resumeCurrent = null;
+          callbacks.onEnd?.();
+        }
+      };
+      utterance.onerror = (e) => {
+        if (!valid()) return;
+        if (
+          this.paused &&
+          (e.error === "interrupted" || e.error === "canceled")
+        ) {
+          this.restart = true;
+          return;
+        }
+        this.current = null;
+        this.resumeCurrent = null;
+        callbacks.onError?.(e.error || "synthesis-failed");
+      };
+      try {
+        this.synth!.speak(utterance);
+      } catch {
+        if (valid()) {
+          this.current = null;
+          callbacks.onError?.("synthesis-failed");
+        }
       }
     };
-
-    utterance.onboundary = (event) => {
-      if (event.name === 'word' && typeof event.charIndex === 'number') {
-        const charLength = (event as any).charLength || 5;
-        callbacks.onWordBoundary?.(event.charIndex, charLength);
-      }
-    };
-
-    try {
-      this.synth.speak(utterance);
-    } catch (err: any) {
-      console.error('Failed to trigger speak:', err);
-      callbacks.onError?.(err.message || 'Error initializing voice playback');
-    }
+    play();
   }
-
-  public pause(): void {
-    if (this.synth && this.synth.speaking && !this.synth.paused) {
+  pause() {
+    if (this.synth && owners.get(this.synth) === this && this.current) {
+      this.paused = true;
       this.synth.pause();
-      this.isPausedInternal = true;
-      this.isSpeakingInternal = false;
     }
   }
-
-  public resume(): void {
-    if (this.synth && this.synth.paused) {
-      this.synth.resume();
-      this.isPausedInternal = false;
-      this.isSpeakingInternal = true;
-    }
+  resume() {
+    if (!this.synth || owners.get(this.synth) !== this || !this.paused) return;
+    this.paused = false;
+    if (this.pending) {
+      const pending = this.pending;
+      this.pending = null;
+      pending();
+    } else if (this.restart || !this.synth.speaking) {
+      this.resumeCurrent?.();
+    } else this.synth.resume();
   }
-
-  public stop(): void {
-    this.stopKeepAlive();
-    if (this.synth) {
+  stop() {
+    this.generation++;
+    this.current = null;
+    this.paused = false;
+    this.restart = false;
+    this.pending = null;
+    this.resumeCurrent = null;
+    if (
+      this.synth &&
+      (!owners.has(this.synth) || owners.get(this.synth) === this)
+    ) {
       this.synth.cancel();
+      if (this.synth.paused) this.synth.resume();
+      owners.delete(this.synth);
     }
-    this.currentUtterance = null;
-    this.isSpeakingInternal = false;
-    this.isPausedInternal = false;
   }
-
-  /**
-   * Speak a short test sentence for voice preview
-   */
-  public testVoice(
-    voiceURI: string,
-    sampleTextArabic: string = 'مرحباً بك في قارئ الكتب والمستندات الذكي.',
-    sampleTextEnglish: string = 'Hello, this is a voice preview for the audio book reader.'
-  ): void {
-    if (!this.synth) return;
-    this.stop();
-
-    const voices = this.synth.getVoices();
-    const voice = voices.find((v) => v.voiceURI === voiceURI);
-    if (!voice) return;
-
-    const isAr = voice.lang.toLowerCase().startsWith('ar');
-    const text = isAr ? sampleTextArabic : sampleTextEnglish;
-    const testUtterance = new SpeechSynthesisUtterance(text);
-    testUtterance.voice = voice;
-    testUtterance.lang = voice.lang;
-    testUtterance.rate = 1.0;
-
-    this.synth.speak(testUtterance);
-  }
-
-  /**
-   * Keep-alive workaround for Chrome speech synthesis pauses
-   */
-  private startKeepAlive(): void {
-    this.stopKeepAlive();
-    this.keepAliveInterval = setInterval(() => {
-      if (this.synth && this.synth.speaking && !this.synth.paused) {
-        this.synth.pause();
-        this.synth.resume();
-      }
-    }, 10000);
-  }
-
-  private stopKeepAlive(): void {
-    if (this.keepAliveInterval) {
-      clearInterval(this.keepAliveInterval);
-      this.keepAliveInterval = null;
-    }
+  testVoice(
+    uri: string,
+    callbacks: SpeechCallbacks = {},
+    arabic = "مرحبًا بك. القراءة العربية تحفظ الكلمات والتشكيل، وتقرأ الأرقام ١٢٣ بوضوح.",
+    english = "Hello, this is a voice preview.",
+  ) {
+    const v = this.synth?.getVoices().find((v) => v.voiceURI === uri);
+    if (!v) return;
+    const language = voiceLanguage(v) || "en";
+    this.speak(
+      {
+        id: "preview",
+        pageNumber: 1,
+        chunkIndex: 0,
+        text: language === "ar" ? arabic : english,
+        language,
+        startChar: 0,
+        endChar: 0,
+      },
+      {
+        speechRate: 1,
+        pitch: 1,
+        volume: 1,
+        selectedArabicVoiceURI: uri,
+        selectedEnglishVoiceURI: uri,
+        autoVoiceSelect: false,
+      } as ReaderSettings,
+      callbacks,
+    );
   }
 }
-
 export const speechEngine = new SpeechEngineService();

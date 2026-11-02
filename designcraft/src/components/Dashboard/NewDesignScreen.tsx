@@ -1,3 +1,4 @@
+import {PackagingEntry} from "../../packaging/PackagingEntry";
 import React, { useState, useEffect, useRef } from 'react';
 import { ProjectItem, DimensionPreset } from '../../types';
 import { DIMENSION_PRESETS } from '../../data/presets';
@@ -27,7 +28,6 @@ import {
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
-import { MAX_PROJECT_FILE_BYTES, parseProjectFile } from '../../utils/projectFile';
 
 interface NewDesignScreenProps {
   onSelectPreset: (preset: DimensionPreset) => void;
@@ -70,8 +70,6 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [projectSearch, setProjectSearch] = useState<string>('');
   const [projectSort, setProjectSort] = useState<'newest' | 'oldest' | 'name'>('newest');
-  const [isImporting, setIsImporting] = useState(false);
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Direction follows the chosen language (Arabic = RTL) — truncation & alignment stay correct
   const dir: string = lang === 'ar' ? 'rtl' : 'ltr';
@@ -164,29 +162,6 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     setProjects(getSavedProjects());
     if (onShowToast) {
       onShowToast(t.toastDuplicated, duplicated.title, 'success');
-    }
-  };
-
-  const handleImportProject = async (file: File | undefined) => {
-    if (!file || isImporting) return;
-    setIsImporting(true);
-    try {
-      if (file.size > MAX_PROJECT_FILE_BYTES) throw new Error('File too large');
-      const project = parseProjectFile(await file.text());
-      if (!saveProjectToStorage(project)) {
-        onShowToast?.(t.importStorageError, '', 'error');
-        return;
-      }
-      setProjects(getSavedProjects());
-      setProjectSearch('');
-      onOpenProject(project);
-      onShowToast?.(t.importSuccess, project.title, 'success');
-    } catch (error) {
-      console.error('Design import failed', error);
-      onShowToast?.(t.importError, '', 'error');
-    } finally {
-      setIsImporting(false);
-      if (importInputRef.current) importInputRef.current.value = '';
     }
   };
 
@@ -421,6 +396,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
           {/* Create New Design */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
+              <PackagingEntry onCreate={onOpenProject}/>
               {/* Custom Dimension Box */}
               <section className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -449,6 +425,10 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  <button type="button" data-testid="dimensions-import" onClick={() => document.getElementById('designer-project-input')?.click()} className="mb-4 flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm font-semibold text-sky-200 hover:bg-sky-500/20">
+                    <Upload className="h-4 w-4" />{lang === 'ar' ? 'استيراد مشروع من ملف' : 'Import project from file'}
+                  </button>
 
                   {/* Form & Live Proportional Canvas Preview Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
@@ -840,9 +820,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   </div>
                 </div>
 
-                <input ref={importInputRef} type="file" accept=".json,application/json" aria-label={t.importProject} className="hidden" onChange={event => void handleImportProject(event.target.files?.[0])} />
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <button type="button" disabled={isImporting} onClick={() => importInputRef.current?.click()} title={t.importPrivacy} className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-bold text-sky-300 transition hover:bg-sky-500/20 disabled:opacity-50"><Upload className="h-3.5 w-3.5" />{isImporting ? t.importingProject : t.importProject}</button>
                   {projects.length > 0 && (
                     <div className="relative min-w-[200px]">
                       <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
@@ -943,7 +921,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                               className="w-12 h-12"
                             />
                             <span className="text-[10px] font-mono text-slate-400">
-                              {p.width} × {p.height} px
+                              {p.packaging ? `${p.packaging.size.width} × ${p.packaging.size.height} × ${p.packaging.size.depth} mm` : `${Math.round(p.width)} × ${Math.round(p.height)} px`}
                             </span>
                           </div>
                         )}
@@ -965,7 +943,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                             {p.title}
                           </h4>
                           <span className="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20 shrink-0">
-                            {p.width}×{p.height}
+                            {p.packaging ? `${p.packaging.size.width}×${p.packaging.size.height}×${p.packaging.size.depth} mm` : `${Math.round(p.width)}×${Math.round(p.height)}`}
                           </span>
                         </div>
 

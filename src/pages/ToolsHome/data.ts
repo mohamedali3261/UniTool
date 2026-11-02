@@ -2,7 +2,7 @@ import {
   FileText, Image, Type, Shrink, Merge, Scissors, Lock, Unlock, ScanLine, Files,
   LayoutGrid, Percent, Film, Subtitles, Plus, Combine, Video, Images,
   AudioLines, FileAudio, MessageSquareText, Zap, QrCode, ScanQrCode, Briefcase, Sparkles,
-  FileSignature, ArrowLeftRight,
+  FileSignature, ArrowLeftRight, Table2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export interface ToolEntry {
   gradient: string;
   border: string;
   glow: string;
+  href?: string;
   badgeAr?: string;
   badgeEn?: string;
 }
@@ -33,6 +34,7 @@ export interface ToolCategory {
 }
 
 export const toolCategories: ToolCategory[] = [
+ {id:'spreadsheets',titleAr:'جداول وبيانات',titleEn:'Spreadsheets',taglineAr:'جداول ومعادلات Excel بسهولة',taglineEn:'Easy tables and Excel formulas',icon:Table2,accent:'from-emerald-500 to-green-600',soft:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',tools:[{id:'excelStudio',href:'/excel-studio/',icon:Table2,titleAr:'استوديو الجداول',titleEn:'Sheet Studio',descAr:'صمم جدولك وتعلّم المعادلات بالأمثلة، مع استيراد وتصدير Excel',descEn:'Build tables, learn formulas with examples, import and export Excel',gradient:'from-emerald-500 to-green-600',border:'border-emerald-500/25 hover:border-emerald-400/50',glow:'group-hover:shadow-emerald-500/20',badgeAr:'جديد',badgeEn:'New'}]},
   {
     id: 'pdf',
     titleAr: 'أدوات PDF',
@@ -43,6 +45,7 @@ export const toolCategories: ToolCategory[] = [
     accent: 'from-red-500 to-rose-600',
     soft: 'bg-red-500/10 text-red-300 border-red-500/20',
     tools: [
+      {id:'pdfStudio',href:'/pdf-studio/',icon:FileText,titleAr:'استوديو تعديل PDF',titleEn:'PDF Studio',descAr:'اقرأ العربي وعلّق ورتّب صفحاتك، مع OCR محلي وتصدير نسخة جديدة',descEn:'Read Arabic, annotate and organize pages with local OCR and copy export',gradient:'from-orange-500 to-amber-600',border:'border-orange-500/25 hover:border-orange-400/50',glow:'group-hover:shadow-orange-500/20',badgeAr:'جديد',badgeEn:'New'},
       {
         id: 'imageToPdf', icon: Image,
         titleAr: 'صور → PDF', titleEn: 'Images → PDF',
@@ -229,6 +232,13 @@ export const toolCategories: ToolCategory[] = [
     soft: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
     tools: [
       {
+        id: 'compress', icon: AudioLines,
+        titleAr: 'ضغط الصوت', titleEn: 'Audio Compression',
+        descAr: 'قلّل حجم الملفات الصوتية مع إعدادات الصيغة والجودة',
+        descEn: 'Reduce audio file size with format and quality controls',
+        gradient: 'from-blue-500 to-indigo-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
+      },
+      {
         id: 'audioExtractor', icon: AudioLines,
         titleAr: 'استخراج الصوت', titleEn: 'Extract Audio',
         descAr: 'اسحب الصوت من أي فيديو بصيغ متعددة',
@@ -305,6 +315,7 @@ export const toolCategories: ToolCategory[] = [
       },
     ],
   },
+ {id:'typography',titleAr:'نصوص وخطوط',titleEn:'Text & typography',taglineAr:'كلماتك بتصميم يشبهك، محليًا',taglineEn:'Local typography, your way',icon:Type,accent:'from-lime-500 to-emerald-600',soft:'bg-lime-500/10 text-lime-300 border-lime-500/20',tools:[{id:'textStudio',href:'/text-studio/',icon:Type,titleAr:'استوديو النصوص',titleEn:'Text Studio',descAr:'خطوط عربية وقوالب وتأثيرات وتصدير PNG وSVG بدون رفع النصوص',descEn:'Arabic fonts, templates, effects and PNG/SVG exports without uploading your text',gradient:'from-lime-500 to-emerald-600',border:'border-lime-500/25 hover:border-lime-400/50',glow:'group-hover:shadow-lime-500/20',badgeAr:'جديد',badgeEn:'New'}]},
 ];
 
 export const totalToolCount = toolCategories.reduce((sum, c) => sum + c.tools.length, 0);

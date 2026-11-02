@@ -15,7 +15,12 @@ export class PreviewMedia {
   >();
   private disposed = false;
   private generation = 0;
-  async sync(entries: SceneEntry[], assets: Asset[], playing: boolean) {
+  async sync(
+    entries: SceneEntry[],
+    assets: Asset[],
+    playing: boolean,
+    onAudioError?: (error: unknown) => void,
+  ) {
     const generation = ++this.generation;
     const active = new Set(entries.map((e) => e.id));
     for (const [id, slot] of this.slots)
@@ -102,13 +107,19 @@ export class PreviewMedia {
                 clipOpacity(entry.clip, entry.local),
             ),
           );
-          if (playing && entry.playing) void el.play().catch(() => {});
+          if (playing && entry.playing)
+            void el.play().catch((error) => onAudioError?.(error));
           else el.pause();
         }
         output.set(entry.id, el);
       }),
     );
     return this.disposed || generation !== this.generation ? null : output;
+  }
+  playbackElements(): HTMLVideoElement[] {
+    return [...this.slots.values()]
+      .map((s) => s.el)
+      .filter((el): el is HTMLVideoElement => el instanceof HTMLVideoElement);
   }
   private release(slot: {
     el: HTMLVideoElement | HTMLImageElement;
@@ -123,6 +134,14 @@ export class PreviewMedia {
       el.removeAttribute("src");
       el.load();
     } else el.src = "";
+  }
+  /** Pause immediately, including a decoder still awaiting its seek. */
+  suspend() {
+    this.generation++;
+    for (const slot of this.slots.values()) {
+      if (slot.el instanceof HTMLVideoElement) slot.el.pause();
+      for (const done of [...slot.pending]) done();
+    }
   }
   dispose() {
     this.disposed = true;

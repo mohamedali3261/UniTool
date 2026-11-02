@@ -1,3 +1,4 @@
+import "./elements/elements.css";
 import { mediaAccept, releaseMediaURL } from "./media/files";
 import { durationOf } from "./types";
 import { useAutosave } from "./persistence/useAutosave";
@@ -16,11 +17,15 @@ import { readAsset } from "./lib/media";
 import { loadProject, saveProject } from "./lib/projectIO";
 export default function App() {
   const state = useProject();
-  const [page, setPage] = useState<"home" | "editor">("home");
+  const [page, setPage] = useState<"home" | "editor">(() =>
+    location.hash === "#elements" ? "editor" : "home",
+  );
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [page]);
-  const [startTab, setStartTab] = useState<Tab>("media");
+  const [startTab, setStartTab] = useState<Tab>(() =>
+    location.hash === "#elements" ? "elements" : "media",
+  );
   const [assets, setAssets] = useState<Asset[]>([]);
   const [draftId, setDraftId] = useState<string>(uid);
   const autosave = useAutosave(draftId, state.project, assets);
@@ -180,6 +185,13 @@ export default function App() {
   }
   return (
     <>
+      {page === "home" &&
+        new URLSearchParams(location.search).has("element") && (
+          <div className="element-handoff" role="status">
+            عنصرك جاهز للإضافة. افتح مشروع محفوظ، أو ابدأ مشروع جديد؛ هنضيفه
+            للتايم لاين من غير استبدال المحتوى.
+          </div>
+        )}
       <input
         hidden
         ref={input}

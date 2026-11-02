@@ -1,8 +1,10 @@
+import { extendedMotions } from "./extended";
 import { entryMotions } from "./entry";
 import { exitMotions } from "./exit";
 import { loopMotions } from "./loop";
 import { cameraMotions } from "./camera";
 export const motions = [
+  ...extendedMotions,
   ...cameraMotions,
   ...entryMotions,
   ...exitMotions,

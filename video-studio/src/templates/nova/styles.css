@@ -1,0 +1,201 @@
+.template-nova {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 45px #6ee7f90c;
+}
+.template-nova .template-art {
+  background:
+    radial-gradient(ellipse at 75% 40%, #7c60d766, transparent 65%),
+    repeating-linear-gradient(0deg, transparent 0 29px, #6ee7f908 30px), #080e1c;
+  position: relative;
+  overflow: hidden;
+}
+.template-nova .template-art::after {
+  content: "";
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  right: -15px;
+  top: 15px;
+  border: 1px solid #6ee7f955;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 18px #6ee7f909,
+    0 0 0 36px #6ee7f908,
+    0 0 55px #6ee7f922;
+  pointer-events: none;
+}
+.template-nova .nova-wordmark {
+  font-family: Arial, sans-serif;
+  font-size: 42px;
+  letter-spacing: 12px;
+  color: #fff;
+  line-height: 1.2;
+  z-index: 1;
+}
+.template-nova .template-art b {
+  font-size: 17px;
+  z-index: 1;
+}
+.nova-features {
+  color: #6ee7f9;
+  font-size: 10px;
+  padding: 12px 14px 0;
+  line-height: 1.8;
+}
+.nova-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 32px;
+  align-items: center;
+  padding: 32px;
+  margin: 24px 0;
+  border: 1px solid #6ee7f92b;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 90% 0, #30234d66, transparent 55%), #0c111c;
+}
+.nova-eyebrow {
+  color: #6ee7f9;
+  font:
+    10px Arial,
+    sans-serif;
+  letter-spacing: 2px;
+}
+.nova-showcase h3 {
+  font-size: clamp(23px, 2.3vw, 36px);
+  line-height: 1.55;
+  margin: 16px 0;
+  font-weight: 700;
+}
+.nova-showcase h3 em {
+  color: #6ee7f9;
+  font-style: normal;
+}
+.nova-showcase p {
+  color: #a9b6cb;
+  font-size: 12px;
+  line-height: 2;
+}
+.nova-specs {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.nova-specs span {
+  padding: 6px 9px;
+  border: 1px solid #ffffff14;
+  border-radius: 5px;
+  font-size: 10px;
+  color: #cad5e6;
+}
+.nova-showcase .primary {
+  background: #6ee7f9;
+  color: #0b1725;
+}
+.nova-showcase small {
+  display: block;
+  color: #7f90aa;
+  line-height: 1.9;
+  font-size: 10px;
+  margin-top: 12px;
+}
+.nova-demo {
+  min-width: 0;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #080d17;
+}
+.nova-demo-frame {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+.nova-demo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nova-demo-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px;
+}
+.nova-demo-title b {
+  color: white;
+  font-size: clamp(20px, 2vw, 34px);
+  text-shadow: 0 3px 18px #000;
+}
+.nova-demo-title span {
+  color: #6ee7f9;
+  font-size: clamp(11px, 1vw, 15px);
+}
+.nova-demo-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+  font-size: 10px;
+}
+.nova-demo-controls button {
+  color: #6ee7f9;
+  border: 1px solid #6ee7f940;
+  padding: 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.nova-demo-controls > span {
+  color: #73859d;
+  font-size: 9px;
+}
+.nova-demo-controls time {
+  color: #a6b4c9;
+  font: 9px monospace;
+  white-space: nowrap;
+}
+.nova-demo progress {
+  width: 100%;
+  height: 3px;
+  display: block;
+  appearance: none;
+  border: 0;
+  accent-color: #6ee7f9;
+}
+.nova-demo progress::-webkit-progress-bar {
+  background: #202d3d;
+}
+.nova-demo progress::-webkit-progress-value {
+  background: #6ee7f9;
+}
+.nova-demo > p {
+  padding: 8px 12px;
+}
+@media (max-width: 800px) {
+  .nova-showcase {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 22px;
+  }
+  .nova-showcase-copy {
+    order: 1;
+  }
+  .nova-demo-controls > span {
+    display: none;
+  }
+  .nova-demo-title b {
+    font-size: clamp(18px, 5vw, 30px);
+  }
+  .nova-demo-title span {
+    font-size: 11px;
+  }
+}

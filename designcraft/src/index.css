@@ -111,3 +111,25 @@ input, textarea {
 .tools-menu-item:active {
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* Keep the logo and all file actions reachable on narrow editor screens. */
+@media (max-width: 767px) {
+  #editor-top-bar {
+    flex-wrap: wrap;
+    padding: 6px 8px !important;
+    gap: 6px !important;
+  }
+  #editor-top-bar > a { margin-left: auto !important; }
+  #editor-top-bar > div { flex-basis: 100% !important; gap: 6px !important; }
+}
+
+/* Consistent property controls: shrink inside grids, never force a sheet wider. */
+#editor-properties-panel { min-height: 0; }
+#editor-properties-panel .properties-scroll > * { min-width: 0; max-width: 100%; }
+#editor-properties-panel input:not([type="checkbox"]):not([type="radio"]),
+#editor-properties-panel select,
+#editor-properties-panel textarea { min-width: 0; max-width: 100%; }
+#editor-properties-panel h4 { font-size: 11px; line-height: 1.5; }
+#editor-properties-panel label { line-height: 1.6; }
+#editor-properties-panel button:focus-visible,
+[data-color-popover] button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }

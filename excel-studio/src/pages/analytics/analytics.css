@@ -1,0 +1,686 @@
+.bi-report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid #dfe6da;
+  padding: 13px 17px;
+  border-radius: 12px;
+}
+.bi-source,
+.bi-report-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.bi-source > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #72876d;
+}
+.bi-source select {
+  font-size: 11px;
+  max-width: 200px;
+  padding: 7px 12px;
+}
+.bi-source small {
+  font-size: 9px;
+}
+.positive {
+  color: #35886a;
+}
+.warning {
+  color: #b38b3e;
+}
+.bi-overview {
+  display: flex;
+  gap: 30px;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+  padding: 28px 32px;
+  background: #1e3529;
+  color: white;
+  margin-bottom: 22px;
+  isolation: isolate;
+}
+.bi-overview:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 0% 50%, #a7bf7155, transparent 65%);
+  z-index: -1;
+}
+.bi-overview small {
+  font: 8px Arial;
+  letter-spacing: 1.7px;
+  color: #a7bb96;
+}
+.bi-overview h2 {
+  font-size: 25px;
+  line-height: 1.6;
+  margin-top: 10px;
+  letter-spacing: -0.6px;
+}
+.bi-overview em {
+  font-style: normal;
+  color: #c4d99f;
+}
+.bi-overview p {
+  font-size: 10px;
+  color: #a6b99f;
+  margin-top: 9px;
+}
+.bi-overview button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  background: none;
+  color: #cbdfb6;
+  border: 0;
+  padding: 0;
+  font-size: 10px;
+}
+.bi-overview-metrics {
+  display: flex;
+  gap: 35px;
+  z-index: 1;
+}
+.bi-overview-metrics span {
+  display: flex;
+  flex-direction: column;
+  font-size: 9px;
+  gap: 7px;
+  color: #a9bea0;
+}
+.bi-overview-metrics b {
+  font: 36px Arial;
+  color: #eaf3e3;
+}
+.bi-overview-spark {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  height: 125px;
+  opacity: 0.4;
+  position: absolute;
+  inset-inline-end: 30px;
+  bottom: -10px;
+  z-index: 0;
+}
+.bi-overview-spark i {
+  width: 25px;
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(#b8d38c, #5f9c7855);
+  transform-origin: bottom;
+  animation: bi-grow 0.8s both;
+}
+@keyframes bi-grow {
+  from {
+    transform: scaleY(0.1);
+    opacity: 0;
+  }
+}
+.bi-filters {
+  background: #fff;
+  border: 1px solid #dfe7d9;
+  border-radius: 11px;
+  padding: 15px 18px;
+  margin-bottom: 24px;
+}
+.bi-filter-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bi-filter-top > span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  flex: 1;
+}
+.bi-filter-top b {
+  background: #eef5e7;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  color: #6f8f5c;
+}
+.bi-filter-top .xs-button {
+  font-size: 10px;
+  min-height: 30px;
+  padding: 6px 10px;
+}
+.bi-filter-builder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 13px;
+}
+.bi-filter-builder input,
+.bi-filter-builder select {
+  font-size: 11px;
+  max-width: 200px;
+  flex: 1;
+  min-width: 120px;
+}
+.bi-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+}
+.bi-filter-chips small {
+  font-size: 10px;
+  color: #6e8362;
+}
+.bi-filter-chips button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #c9ddbc;
+  background: #eff6e9;
+  color: #63844b;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+}
+.bi-board-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.bi-board-heading > input {
+  font-size: 17px;
+  font-weight: 700;
+  border: 0;
+  background: transparent;
+  padding: 3px 0;
+  width: min(400px, 55%);
+}
+.bi-board-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bi-board-heading label,
+.bi-inline-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  color: #78926b;
+}
+.bi-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.bi-widget {
+  background: white;
+  border: 1px solid #dce6d5;
+  border-radius: 12px;
+  min-width: 0;
+  box-shadow: 0 3px 8px #12301405;
+  break-inside: avoid;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.bi-widget.bi-wide {
+  grid-column: 1/-1;
+}
+.bi-widget > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 17px 16px 9px;
+}
+.bi-widget-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.bi-widget-name > span {
+  display: flex;
+  color: #c5d1bf;
+  cursor: grab;
+}
+.bi-widget h2 {
+  font-size: 12px;
+  color: #54714a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bi-widget-menu {
+  position: relative;
+}
+.bi-widget-menu summary {
+  list-style: none;
+  cursor: pointer;
+  color: #95a98a;
+  line-height: 1;
+  width: 22px;
+  text-align: center;
+  user-select: none;
+}
+.bi-widget-menu summary::-webkit-details-marker {
+  display: none;
+}
+.bi-widget-menu > div {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 21px;
+  z-index: 25;
+  background: white;
+  border: 1px solid #d5e3c9;
+  box-shadow: 0 10px 30px #12351a22;
+  width: 180px;
+  border-radius: 9px;
+  padding: 6px;
+}
+.bi-widget-menu button {
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px;
+  text-align: start;
+  font-size: 11px;
+  border-radius: 5px;
+}
+.bi-widget-menu button:hover {
+  background: #f0f6ea;
+}
+.bi-kpi-body {
+  padding: 10px 22px 19px;
+}
+.bi-kpi-body > b {
+  font:
+    700 33px StudioCairo,
+    Arial;
+  color: #295f48;
+  line-height: 1.6;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+.bi-kpi-body > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 9px;
+  margin-top: 4px;
+}
+.bi-kpi-body span {
+  font: 9px Arial;
+  color: #9ca990;
+  letter-spacing: 1px;
+}
+.bi-kpi-body strong {
+  font-size: 10px;
+}
+.bi-kpi-body small {
+  display: block;
+  font-size: 9px;
+  color: #839775;
+  margin-top: 12px;
+}
+.bi-kpi-body progress {
+  width: 100%;
+  height: 5px;
+  accent-color: #5d9c70;
+  margin-top: 13px;
+}
+.bi-widget > svg[role="img"] {
+  width: 100%;
+  height: auto;
+  display: block;
+  padding: 12px 6px;
+}
+.bi-widget > footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font: 8px Arial;
+  color: #a1ad96;
+  border-top: 1px solid #edf1e8;
+  padding: 12px 16px;
+  margin-top: auto;
+}
+.bi-widget > footer button {
+  font:
+    10px StudioCairo,
+    Arial;
+  background: none;
+  border: 0;
+  color: #77916a;
+  padding: 0;
+}
+.bi-chart-point,
+[role="button"] {
+  cursor: pointer;
+}
+.bi-chart-point:hover {
+  opacity: 0.65;
+}
+.bi-chart-point:focus {
+  outline: none;
+  filter: drop-shadow(0 0 2px #2d6744);
+}
+.bi-chart-empty {
+  padding: 40px 15px;
+  display: grid;
+  place-items: center;
+  color: #a6b69a;
+  font-size: 30px;
+  text-align: center;
+}
+.bi-chart-empty p {
+  font-size: 11px;
+}
+.bi-donut-wrap {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 4px;
+  min-width: 0;
+}
+.bi-donut-wrap > svg {
+  width: 54%;
+  min-width: 0;
+  height: auto;
+}
+.bi-legend {
+  flex: 1;
+  min-width: 0;
+  max-height: 205px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.bi-legend button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #edf1e8;
+  background: none;
+  padding: 7px 0;
+  font-size: 9px;
+  text-align: start;
+}
+.bi-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bi-legend span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.bi-legend b {
+  color: #7c966f;
+  font-weight: 400;
+  direction: ltr;
+}
+.bi-legend small {
+  font-size: 8px;
+  color: #a7865d;
+  display: block;
+  margin-top: 8px;
+}
+.bi-pivot-scroll {
+  overflow: auto;
+  max-height: 310px;
+  scrollbar-width: thin;
+  padding: 10px 16px 16px;
+}
+.bi-pivot {
+  border-collapse: collapse;
+  font-size: 11px;
+  width: 100%;
+}
+.bi-pivot caption {
+  text-align: start;
+  font-size: 9px;
+  color: #8ba07c;
+  padding-bottom: 10px;
+}
+.bi-pivot td,
+.bi-pivot th {
+  padding: 9px;
+  border-bottom: 1px solid #e6eee0;
+  text-align: start;
+}
+.bi-pivot th {
+  font-size: 10px;
+  color: #78926b;
+  background: #f4f8ef;
+}
+.bi-pivot td button {
+  background: none;
+  border: 0;
+  color: #517a48;
+  font-size: 11px;
+  padding: 0;
+}
+.bi-quality {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 9px;
+  color: #8a9f7a;
+}
+.bi-quality button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  color: #6c8d58;
+  background: none;
+  border: 0;
+  margin-inline-start: auto;
+}
+.bi-data-preview {
+  overflow: auto;
+  margin-top: 20px;
+  border: 1px solid #d9e7cf;
+  border-radius: 10px;
+  background: #fff;
+  padding: 15px;
+}
+.bi-data-preview table {
+  border-collapse: collapse;
+  font-size: 10px;
+  width: 100%;
+  white-space: nowrap;
+}
+.bi-data-preview th,
+.bi-data-preview td {
+  padding: 10px;
+  border-bottom: 1px solid #edf2e8;
+  text-align: start;
+}
+.bi-data-preview th {
+  background: #f2f6ed;
+  color: #6e8b5b;
+}
+.bi-data-preview small {
+  display: block;
+  padding-top: 12px;
+  font-size: 9px;
+  color: #9bae89;
+}
+.bi-print-title {
+  display: none;
+}
+.bi-board-capture {
+  padding: 0 0 5px;
+}
+.bi-inline-check {
+  margin-bottom: 16px;
+}
+.bi-inline-check input {
+  width: 16px !important;
+}
+@media (min-width: 1700px) {
+  .bi-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bi-widget > svg[role="img"] {
+    max-height: 330px;
+  }
+}
+@media (max-width: 1250px) {
+  .bi-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bi-overview-metrics {
+    gap: 25px;
+  }
+  .bi-overview {
+    gap: 20px;
+    padding: 25px;
+  }
+  .bi-overview-metrics b {
+    font-size: 29px;
+  }
+  .bi-overview h2 {
+    font-size: 23px;
+  }
+}
+@media (max-width: 650px) {
+  .bi-board {
+    grid-template-columns: 1fr;
+  }
+  .bi-overview {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+  .bi-overview-metrics {
+    width: 100%;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .bi-overview h2 {
+    font-size: 25px;
+  }
+  .bi-overview-metrics b {
+    font-size: 27px;
+  }
+  .bi-overview-spark {
+    opacity: 0.2;
+  }
+  .bi-source {
+    width: 100%;
+    gap: 7px;
+  }
+  .bi-source select {
+    max-width: 155px;
+    flex: 1;
+  }
+  .bi-source > span {
+    font-size: 9px;
+  }
+  .bi-source small {
+    font-size: 8px;
+  }
+  .bi-report-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .bi-report-actions .xs-button {
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+  .bi-board-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .bi-board-heading > input {
+    width: 100%;
+  }
+  .bi-filter-builder input,
+  .bi-filter-builder select {
+    max-width: none;
+  }
+  .bi-filter-top {
+    gap: 5px;
+  }
+  .bi-filter-top > span {
+    font-size: 10px;
+  }
+  .bi-widget > header {
+    padding: 18px;
+  }
+  .bi-widget h2 {
+    font-size: 13px;
+  }
+  .bi-quality {
+    font-size: 9px;
+  }
+  .bi-donut-wrap > svg {
+    max-height: 240px;
+  }
+}
+@media print {
+  .bi-page .bi-report-toolbar,
+  .bi-page .bi-overview,
+  .bi-page .bi-filters,
+  .bi-page .bi-quality,
+  .bi-page .bi-board-heading,
+  .bi-widget-menu,
+  .bi-widget footer button,
+  .bi-data-preview {
+    display: none !important;
+  }
+  .bi-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+  .bi-widget {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none;
+  }
+  .bi-widget.bi-wide {
+    grid-column: 1/-1;
+  }
+  .bi-print-title {
+    display: block;
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  .bi-board-capture > h2 {
+    font-size: 22px;
+  }
+  .bi-widget-name > span {
+    display: none;
+  }
+}

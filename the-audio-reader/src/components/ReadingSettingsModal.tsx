@@ -1,19 +1,26 @@
-import React from 'react';
-import { 
-  X, 
-  Settings, 
-  Type, 
-  Palette, 
-  Volume2, 
-  Highlighter, 
-  RotateCcw, 
-  Check, 
+import { DialogBackdrop } from "./DialogBackdrop";
+import React from "react";
+import {
+  X,
+  Settings,
+  Type,
+  Palette,
+  Volume2,
+  Highlighter,
+  RotateCcw,
+  Check,
   Sparkles,
-  MoveVertical
-} from 'lucide-react';
-import { FontFamily, HighlightMode, ReaderSettings, ThemeMode, UILanguage } from '../types';
-import { getTranslation } from '../translations';
-import { DEFAULT_SETTINGS } from '../utils/storage';
+  MoveVertical,
+} from "lucide-react";
+import {
+  FontFamily,
+  HighlightMode,
+  ReaderSettings,
+  ThemeMode,
+  UILanguage,
+} from "../types";
+import { getTranslation } from "../translations";
+import { DEFAULT_SETTINGS } from "../utils/storage";
 
 interface ReadingSettingsModalProps {
   isOpen: boolean;
@@ -34,31 +41,68 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
   if (!isOpen) return null;
 
   const fontOptions: { id: FontFamily; label: string; sample: string }[] = [
-    { id: 'cairo', label: t.fontCairo, sample: 'أبجد هوز Cairo' },
-    { id: 'amiri', label: t.fontAmiri, sample: 'بسم الله Amiri' },
-    { id: 'tajawal', label: t.fontTajawal, sample: 'معرفة وفكر Tajawal' },
-    { id: 'sans', label: t.fontSans, sample: 'Modern Sans' },
-    { id: 'serif', label: t.fontSerif, sample: 'Classic Serif' },
+    { id: "cairo", label: t.fontCairo, sample: "أبجد هوز Cairo" },
+    { id: "amiri", label: t.fontAmiri, sample: "بسم الله Amiri" },
+    { id: "tajawal", label: t.fontTajawal, sample: "معرفة وفكر Tajawal" },
+    { id: "sans", label: t.fontSans, sample: "Modern Sans" },
+    { id: "serif", label: t.fontSerif, sample: "Classic Serif" },
   ];
 
-  const themeOptions: { id: ThemeMode; label: string; bg: string; text: string; border: string }[] = [
-    { id: 'dark', label: t.themeDark, bg: 'bg-slate-950', text: 'text-slate-100', border: 'border-slate-800' },
-    { id: 'midnight', label: t.themeMidnight, bg: 'bg-black', text: 'text-zinc-200', border: 'border-zinc-800' },
-    { id: 'sepia', label: t.themeSepia, bg: 'bg-[#141210]', text: 'text-[#f0e6d2]', border: 'border-[#362e28]' },
-    { id: 'light', label: t.themeLight, bg: 'bg-[#031e17]', text: 'text-[#e6f4f1]', border: 'border-[#0f4d3d]' },
+  const themeOptions: {
+    id: ThemeMode;
+    label: string;
+    bg: string;
+    text: string;
+    border: string;
+  }[] = [
+    {
+      id: "dark",
+      label: t.themeDark,
+      bg: "bg-slate-950",
+      text: "text-slate-100",
+      border: "border-slate-800",
+    },
+    {
+      id: "midnight",
+      label: t.themeMidnight,
+      bg: "bg-black",
+      text: "text-zinc-200",
+      border: "border-zinc-800",
+    },
+    {
+      id: "sepia",
+      label: t.themeSepia,
+      bg: "bg-[#141210]",
+      text: "text-[#f0e6d2]",
+      border: "border-[#362e28]",
+    },
+    {
+      id: "light",
+      label: t.themeLight,
+      bg: "bg-[#031e17]",
+      text: "text-[#e6f4f1]",
+      border: "border-[#0f4d3d]",
+    },
   ];
 
   const highlightOptions: { id: HighlightMode; label: string }[] = [
-    { id: 'sentence', label: t.highlightSentence },
-    { id: 'word', label: t.highlightWord },
-    { id: 'paragraph', label: t.highlightParagraph },
-    { id: 'glow', label: (t as any).highlightGlow || 'Aurora Glow' },
-    { id: 'underline', label: (t as any).highlightUnderline || 'Dashed Underline' },
+    { id: "sentence", label: t.highlightSentence },
+    { id: "word", label: t.highlightWord },
+    { id: "paragraph", label: t.highlightParagraph },
+    { id: "glow", label: (t as any).highlightGlow || "Aurora Glow" },
+    {
+      id: "underline",
+      label: (t as any).highlightUnderline || "Dashed Underline",
+    },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in">
-      <div 
+    <DialogBackdrop
+      label={uiLang === "ar" ? "إعدادات القراءة" : "Reading settings"}
+      onClose={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-slate-950/80 animate-fade-in"
+    >
+      <div
         className="relative flex h-[85vh] max-h-[700px] w-full max-w-xl flex-col rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl backdrop-blur-2xl"
         id="reading-settings-modal"
       >
@@ -86,7 +130,6 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
 
         {/* Settings Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          
           {/* Section 1: Themes */}
           <div className="space-y-2.5">
             <label className="flex items-center gap-2 text-xs font-bold text-slate-300">
@@ -100,12 +143,12 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   onClick={() => onUpdateSettings({ theme: th.id })}
                   className={`flex flex-col items-center justify-between rounded-2xl border p-3 text-center transition ${
                     settings.theme === th.id
-                      ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-                      : 'border-slate-800 hover:border-slate-700'
+                      ? "border-indigo-500 ring-2 ring-indigo-500/30"
+                      : "border-slate-800 hover:border-slate-700"
                   } ${th.bg}`}
                 >
                   <span className={`text-xs font-bold ${th.text}`}>
-                    {th.label.split(' ')[0]}
+                    {th.label.split(" ")[0]}
                   </span>
                   {settings.theme === th.id && (
                     <span className="mt-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px]">
@@ -130,12 +173,14 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   onClick={() => onUpdateSettings({ fontFamily: f.id })}
                   className={`flex items-center justify-between rounded-xl border p-3 text-start transition ${
                     settings.fontFamily === f.id
-                      ? 'border-indigo-500 bg-indigo-950/40 text-indigo-300 font-bold'
-                      : 'border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700'
+                      ? "border-indigo-500 bg-indigo-950/40 text-indigo-300 font-bold"
+                      : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700"
                   }`}
                 >
                   <span className="text-xs">{f.label}</span>
-                  {settings.fontFamily === f.id && <Check className="h-4 w-4 text-indigo-400" />}
+                  {settings.fontFamily === f.id && (
+                    <Check className="h-4 w-4 text-indigo-400" />
+                  )}
                 </button>
               ))}
             </div>
@@ -147,7 +192,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-semibold text-slate-300">
                 <span>{t.fontSize}</span>
-                <span className="text-indigo-400 font-mono">{settings.fontSize}px</span>
+                <span className="text-indigo-400 font-mono">
+                  {settings.fontSize}px
+                </span>
               </div>
               <input
                 type="range"
@@ -155,7 +202,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                 max={32}
                 step={1}
                 value={settings.fontSize}
-                onChange={(e) => onUpdateSettings({ fontSize: parseInt(e.target.value, 10) })}
+                onChange={(e) =>
+                  onUpdateSettings({ fontSize: parseInt(e.target.value, 10) })
+                }
                 className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
@@ -164,7 +213,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-semibold text-slate-300">
                 <span>{t.lineHeight}</span>
-                <span className="text-purple-400 font-mono">{settings.lineHeight}x</span>
+                <span className="text-purple-400 font-mono">
+                  {settings.lineHeight}x
+                </span>
               </div>
               <input
                 type="range"
@@ -172,7 +223,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                 max={2.4}
                 step={0.1}
                 value={settings.lineHeight}
-                onChange={(e) => onUpdateSettings({ lineHeight: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  onUpdateSettings({ lineHeight: parseFloat(e.target.value) })
+                }
                 className="w-full accent-purple-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
@@ -183,7 +236,11 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             <div className="flex justify-between items-center text-xs font-semibold text-slate-300">
               <span className="flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-emerald-400" />
-                <span>{uiLang === 'ar' ? 'مؤشر سرعة القراءة الصوتية' : 'Speech Speed Gauge'}</span>
+                <span>
+                  {uiLang === "ar"
+                    ? "مؤشر سرعة القراءة الصوتية"
+                    : "Speech Speed Gauge"}
+                </span>
               </span>
               <span className="text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 {settings.speechRate.toFixed(2)}x
@@ -195,9 +252,11 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               max={3.0}
               step={0.05}
               value={settings.speechRate}
-              onChange={(e) => onUpdateSettings({ speechRate: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                onUpdateSettings({ speechRate: parseFloat(e.target.value) })
+              }
               className="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
-              title={uiLang === 'ar' ? 'مؤشر التحكم في السرعة' : 'Speed Slider'}
+              title={uiLang === "ar" ? "مؤشر التحكم في السرعة" : "Speed Slider"}
             />
             <div className="flex justify-between text-[10px] font-mono text-slate-500">
               <span>0.5x (بطيء)</span>
@@ -220,8 +279,8 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   onClick={() => onUpdateSettings({ highlightMode: opt.id })}
                   className={`rounded-xl border p-2.5 text-center text-xs font-medium transition ${
                     settings.highlightMode === opt.id
-                      ? 'border-amber-500/60 bg-amber-500/10 text-amber-300 font-bold'
-                      : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                      ? "border-amber-500/60 bg-amber-500/10 text-amber-300 font-bold"
+                      : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                   }`}
                 >
                   {opt.label}
@@ -233,31 +292,53 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
           {/* Section 6: Reading Mode */}
           <div className="space-y-2.5">
             <label className="flex items-center gap-2 text-xs font-bold text-slate-300">
-              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 text-[10px]">🎙️</span>
-              <span>{uiLang === 'ar' ? 'طريقة القراءة الصوتية (الوقفات)' : 'Reading Mode (Pauses)'}</span>
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 text-[10px]">
+                🎙️
+              </span>
+              <span>
+                {uiLang === "ar"
+                  ? "طريقة القراءة الصوتية (الوقفات)"
+                  : "Reading Mode (Pauses)"}
+              </span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
-                onClick={() => onUpdateSettings({ readingMode: 'page' })}
+                onClick={() => onUpdateSettings({ readingMode: "page" })}
                 className={`rounded-xl border p-2.5 text-center text-xs font-medium transition flex flex-col items-center justify-center gap-1 ${
-                  settings.readingMode === 'page'
-                    ? 'border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold'
-                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                  settings.readingMode === "page"
+                    ? "border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold"
+                    : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                 }`}
               >
-                <span>{uiLang === 'ar' ? 'قراءة متصلة (الصفحة كاملة)' : 'Continuous (Full Page)'}</span>
-                <span className="text-[10px] opacity-70 font-normal">{uiLang === 'ar' ? 'يقرأ الصفحة في نفس واحد' : 'Reads page in one breath'}</span>
+                <span>
+                  {uiLang === "ar"
+                    ? "قراءة متصلة (الصفحة كاملة)"
+                    : "Continuous (Full Page)"}
+                </span>
+                <span className="text-[10px] opacity-70 font-normal">
+                  {uiLang === "ar"
+                    ? "يقرأ الصفحة في نفس واحد"
+                    : "Reads page in one breath"}
+                </span>
               </button>
               <button
-                onClick={() => onUpdateSettings({ readingMode: 'sentence' })}
+                onClick={() => onUpdateSettings({ readingMode: "sentence" })}
                 className={`rounded-xl border p-2.5 text-center text-xs font-medium transition flex flex-col items-center justify-center gap-1 ${
-                  settings.readingMode === 'sentence'
-                    ? 'border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold'
-                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                  settings.readingMode === "sentence"
+                    ? "border-blue-500/60 bg-blue-500/10 text-blue-300 font-bold"
+                    : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
                 }`}
               >
-                <span>{uiLang === 'ar' ? 'قراءة متقطعة (جملة بجملة)' : 'Sentence by Sentence'}</span>
-                <span className="text-[10px] opacity-70 font-normal">{uiLang === 'ar' ? 'يتوقف عند الفواصل والنقاط' : 'Pauses at periods'}</span>
+                <span>
+                  {uiLang === "ar"
+                    ? "قراءة متقطعة (جملة بجملة)"
+                    : "Sentence by Sentence"}
+                </span>
+                <span className="text-[10px] opacity-70 font-normal">
+                  {uiLang === "ar"
+                    ? "يتوقف عند الفواصل والنقاط"
+                    : "Pauses at periods"}
+                </span>
               </button>
             </div>
           </div>
@@ -267,17 +348,20 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             <label className="flex items-center justify-between cursor-pointer">
               <div className="flex items-center gap-2">
                 <MoveVertical className="h-4 w-4 text-indigo-400" />
-                <span className="text-xs font-semibold text-slate-200">{t.autoScroll}</span>
+                <span className="text-xs font-semibold text-slate-200">
+                  {t.autoScroll}
+                </span>
               </div>
               <input
                 type="checkbox"
                 checked={settings.autoScroll}
-                onChange={(e) => onUpdateSettings({ autoScroll: e.target.checked })}
+                onChange={(e) =>
+                  onUpdateSettings({ autoScroll: e.target.checked })
+                }
                 className="h-4 w-4 rounded accent-indigo-600 cursor-pointer"
               />
             </label>
           </div>
-
         </div>
 
         {/* Modal Footer */}
@@ -297,8 +381,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {t.close}
           </button>
         </div>
-
       </div>
-    </div>
+    </DialogBackdrop>
   );
 };

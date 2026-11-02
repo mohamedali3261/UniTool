@@ -21,12 +21,22 @@
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true
   },
   "include": [
+    "excel-studio/**/*.ts",
+    "excel-studio/**/*.tsx",
+    "the-audio-reader/**/*.ts",
+    "the-audio-reader/**/*.tsx",
+    "logo-designer/**/*.ts",
+    "logo-designer/**/*.tsx",
     "src/**/*",
     "designcraft/src/**/*",
     "video-studio/src/**/*",
-    "designcraft/tests/**/*"
+    "pdf-studio/**/*.ts",
+    "pdf-studio/**/*.tsx",
+    "text-studio/**/*.ts",
+    "text-studio/**/*.tsx"
   ]
 }

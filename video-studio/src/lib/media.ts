@@ -1,6 +1,9 @@
+import { clipTransitionMask } from "../creative/clipTransitions";
+import { isBackgroundText } from "../composition/stacking";
+import { drawInterfaceScene } from "../templates/interface-flow/render";
 import { classifyMedia, localMediaURL, releaseMediaURL } from "../media/files";
-import { textLayout } from "../text/layout";
-import { motionAt, textAt } from "../animation/evaluate";
+import { drawTextLayers } from "../text/render";
+import { motionAt } from "../animation/evaluate";
 import { sceneAt } from "../composition/scene";
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
 import { clipOpacity } from "./timeline";
@@ -213,6 +216,18 @@ function drawSingleFrame(
         sw * scale,
         sh * scale,
       );
+      if (clip?.designScene) {
+        ctx.save();
+        ctx.translate((-sw * scale) / 2, (-sh * scale) / 2);
+        ctx.scale((sw * scale) / 720, (sh * scale) / 1280);
+        drawInterfaceScene(
+          ctx,
+          clip.designScene,
+          clip.start + elapsed * clip.speed,
+          clip.designAccent,
+        );
+        ctx.restore();
+      }
       ctx.restore();
     }
   }
@@ -225,48 +240,7 @@ function drawSingleFrame(
     drawEffectOverlay(ctx, e);
     ctx.restore();
   }
-  for (const t of p.texts.filter(
-    (t) =>
-      !t.hidden && !p.tracks?.text?.hidden && time >= t.start && time < t.end,
-  )) {
-    const animation = textAt(t, time);
-    ctx.save();
-    ctx.globalAlpha = animation.opacity * (t.opacity ?? 1);
-    ctx.translate((w * t.x) / 100, (h * (t.y + animation.y)) / 100);
-    ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
-    ctx.scale(animation.scale, animation.scale);
-    const layout = textLayout(ctx, t, w);
-    ctx.font = layout.font;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = t.color;
-    ctx.shadowColor = "#000a";
-    ctx.shadowBlur = 8;
-    if (t.background) {
-      ctx.save();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = t.background;
-      ctx.fillRect(
-        -layout.width / 2 - layout.size * 0.25,
-        -layout.size * 0.65,
-        layout.width + layout.size * 0.5,
-        layout.height + layout.size * 0.3,
-      );
-      ctx.restore();
-    }
-    const lines = animation.text.split("\n");
-    lines.forEach((line, i) => {
-      const y = i * layout.size * 1.2;
-      if (t.outline) {
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = Math.max(1, layout.size * 0.07);
-        ctx.lineJoin = "round";
-        ctx.strokeText(line, 0, y, w * 0.94);
-      }
-      ctx.fillText(line, 0, y, w * 0.94);
-    });
-    ctx.restore();
-  }
+  drawTextLayers(ctx, p.texts, time, !!p.tracks?.text?.hidden);
 }
 /** One compositor for preview, snapshots and both export formats. */
 const scratch = new WeakMap<CanvasRenderingContext2D, HTMLCanvasElement>();
@@ -297,8 +271,29 @@ export function drawFrame(
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
   };
+  const paintOverlay = (entry: import("../composition/scene").SceneEntry) => {
+    const media = sources.get(entry.id);
+    if (!media) return;
+    const l = entry.overlay;
+    ctx.save();
+    ctx.translate((w * l.x) / 100, (h * l.y) / 100);
+    ctx.scale(l.width / 100, l.width / 100);
+    ctx.translate(-w / 2, -h / 2);
+    drawSingleFrame(
+      ctx,
+      media,
+      withoutText,
+      time,
+      entry.clip,
+      entry.elapsed,
+      false,
+      entry.alpha,
+    );
+    ctx.restore();
+  };
   const baseCount = entries.filter((entry) => !entry.overlay).length;
   for (const entry of entries) {
+    if (entry.overlay) continue;
     if (entry.overlay && !flashed) {
       paintFlash();
       flashed = true;
@@ -306,22 +301,7 @@ export function drawFrame(
     const media = sources.get(entry.id);
     if (!media) continue;
     if (entry.overlay) {
-      const l = entry.overlay;
-      ctx.save();
-      ctx.translate((w * l.x) / 100, (h * l.y) / 100);
-      ctx.scale(l.width / 100, l.width / 100);
-      ctx.translate(-w / 2, -h / 2);
-      drawSingleFrame(
-        ctx,
-        media,
-        withoutText,
-        time,
-        entry.clip,
-        entry.elapsed,
-        false,
-        entry.alpha,
-      );
-      ctx.restore();
+      paintOverlay(entry);
     } else {
       if (baseCount === 1) {
         drawSingleFrame(
@@ -354,6 +334,7 @@ export function drawFrame(
       );
       ctx.save();
       ctx.globalAlpha = entry.alpha;
+      clipTransitionMask(ctx, entry, w, h);
       ctx.translate(w / 2 + entry.shift * w, h / 2);
       ctx.scale(entry.scale, entry.scale);
       ctx.drawImage(surface, -w / 2, -h / 2);
@@ -361,7 +342,33 @@ export function drawFrame(
     }
   }
   if (!flashed) paintFlash();
-  drawSingleFrame(ctx, null, p, time, undefined, 0, false);
+  drawTextLayers(
+    ctx,
+    p.texts.filter(isBackgroundText),
+    time,
+    !!p.tracks?.text?.hidden,
+  );
+  for (const entry of entries)
+    if (entry.overlay?.backgroundLayer) paintOverlay(entry);
+  for (const entry of entries)
+    if (
+      entry.overlay &&
+      !entry.overlay.backgroundLayer &&
+      !entry.overlay.foreground
+    )
+      paintOverlay(entry);
+  drawSingleFrame(
+    ctx,
+    null,
+    { ...p, texts: p.texts.filter((t) => !isBackgroundText(t)) },
+    time,
+    undefined,
+    0,
+    false,
+  );
+  for (const entry of entries)
+    if (entry.overlay?.foreground && !entry.overlay.backgroundLayer)
+      paintOverlay(entry);
 }
 /** Portable filenames avoid browsers dropping the extension on non-Latin names. */
 export function portableFilename(name: string) {

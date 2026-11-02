@@ -1,3 +1,7 @@
+import { validCreative } from "../creative/catalog";
+import { validPoints } from "../text/vectorPath";
+import { validLayerAnimation } from "../animation/layerFrames";
+import { isInterfaceScene } from "../templates/interface-flow/scenes";
 import {
   estimatedMediaBytes,
   portableMemoryLimit,
@@ -88,6 +92,26 @@ export function validateProjectData(
     )
       throw new Error("وسائط المشروع غير صالحة");
   }
+  if (p.sounds !== undefined) {
+    if (!Array.isArray(p.sounds) || p.sounds.length > 32 || !unique(p.sounds))
+      throw new Error("مؤثرات الصوت غير صالحة");
+    for (const cue of p.sounds) {
+      const a = d.assets.find(
+        (a: Asset) => a.id === cue?.assetId && a.type === "audio",
+      );
+      if (
+        !a ||
+        !id(cue.id) ||
+        !num(cue.at) ||
+        !num(cue.start) ||
+        !num(cue.end, 0.01) ||
+        cue.end <= cue.start ||
+        cue.end > a.duration + 0.05 ||
+        !num(cue.volume, 0, 1)
+      )
+        throw new Error("توقيت أو مستوى مؤثر الصوت غير صالح");
+    }
+  }
   if (!unique(d.assets)) throw new Error("وسائط المشروع مكررة");
   if (
     p.audioId !== null &&
@@ -153,13 +177,14 @@ export function validateProjectData(
     (!p.tracks ||
       typeof p.tracks !== "object" ||
       Array.isArray(p.tracks) ||
-      Object.keys(p.tracks).length > 9 ||
+      Object.keys(p.tracks).length > 10 ||
       Object.entries(p.tracks).some(
         ([key, v]: [string, any]) =>
           ![
             "video",
             "text",
             "audio",
+            "sfx",
             ...(p.overlays || []).map((l: any) => l.id),
           ].includes(key) ||
           !v ||
@@ -186,6 +211,10 @@ export function validateProjectData(
     );
     if (
       !c ||
+      (c.designScene !== undefined && !isInterfaceScene(c.designScene)) ||
+      (c.designAccent !== undefined &&
+        (typeof c.designAccent !== "string" ||
+          !/^#[0-9a-f]{6}$/i.test(c.designAccent))) ||
       (c.motion !== undefined &&
         c.motion !== "none" &&
         !motionById.has(c.motion)) ||
@@ -194,9 +223,18 @@ export function validateProjectData(
       (c.hidden !== undefined && typeof c.hidden !== "boolean") ||
       (c.transition !== undefined &&
         (!c.transition ||
-          !["none", "crossfade", "slide", "zoom", "light"].includes(
-            c.transition.kind,
-          ) ||
+          ![
+            "none",
+            "crossfade",
+            "slide",
+            "zoom",
+            "light",
+            "shared-card",
+            "circle-reveal",
+            "page-flip",
+            "zoom-through",
+            "liquid-wipe",
+          ].includes(c.transition.kind) ||
           !num(c.transition.duration, 0.1, 3))) ||
       (c.rotation !== undefined && !num(c.rotation, 0, 360)) ||
       (c.x !== undefined && !num(c.x, -100, 100)) ||
@@ -248,6 +286,11 @@ export function validateProjectData(
       !num(layer.volume, 0, 1) ||
       !num(layer.rotation, 0, 360) ||
       (layer.locked !== undefined && typeof layer.locked !== "boolean") ||
+      (layer.fit !== undefined && !["contain", "cover"].includes(layer.fit)) ||
+      (layer.backgroundLayer !== undefined &&
+        typeof layer.backgroundLayer !== "boolean") ||
+      (layer.foreground !== undefined &&
+        typeof layer.foreground !== "boolean") ||
       (layer.hidden !== undefined && typeof layer.hidden !== "boolean")
     )
       throw new Error("طبقة صورة أو فيديو غير صالحة");
@@ -265,6 +308,22 @@ export function validateProjectData(
         !["none", "fade", "slide", "pop"].includes(t.animationOut)) ||
       (t.animationDuration !== undefined &&
         !num(t.animationDuration, 0.1, 3)) ||
+      !validLayerAnimation(t) ||
+      (t.creative !== undefined && !validCreative(t.creative)) ||
+      (t.name !== undefined &&
+        (typeof t.name !== "string" || t.name.length > 160)) ||
+      (t.box !== undefined &&
+        (!t.box ||
+          !num(t.box.width, 1, 4000) ||
+          !num(t.box.height, 1, 4000) ||
+          (t.box.points !== undefined && !validPoints(t.box.points)) ||
+          (t.box.gradient !== undefined &&
+            !/^#[0-9a-f]{6}$/i.test(t.box.gradient)) ||
+          (t.box.radius !== undefined && !num(t.box.radius, 0, 2000)) ||
+          (t.box.borderWidth !== undefined &&
+            !num(t.box.borderWidth, 0, 100)) ||
+          (t.box.borderColor !== undefined &&
+            !/^#[0-9a-f]{6}$/i.test(t.box.borderColor)))) ||
       !id(t.id) ||
       typeof t.text !== "string" ||
       typeof t.color !== "string" ||
@@ -279,7 +338,7 @@ export function validateProjectData(
       (t.opacity !== undefined && !num(t.opacity, 0, 1)) ||
       (t.font !== undefined && !["sans", "serif", "mono"].includes(t.font)) ||
       (t.background !== undefined && !/^#[0-9a-f]{6}$/i.test(t.background)) ||
-      ["bold", "outline", "hidden", "locked"].some(
+      ["bold", "outline", "hidden", "locked", "backgroundLayer"].some(
         (key) => t[key] !== undefined && typeof t[key] !== "boolean",
       )
     )

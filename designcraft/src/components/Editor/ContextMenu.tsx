@@ -9,9 +9,7 @@ import {
   ArrowUpToLine, 
   ArrowDownToLine,
   ChevronUp,
-  ChevronDown,
-  Group,
-  Ungroup
+  ChevronDown
 } from 'lucide-react';
 
 export interface ContextMenuOptions {
@@ -20,16 +18,12 @@ export interface ContextMenuOptions {
   y: number;
   hasSelection: boolean;
   hasClipboard: boolean;
-  canGroup?: boolean;
-  canUngroup?: boolean;
 }
 
 interface ContextMenuProps {
   options: ContextMenuOptions;
   onClose: () => void;
   onCopy: () => void;
-  onGroup: () => void;
-  onUngroup: () => void;
   onCut: () => void;
   onPaste: () => void;
   onDuplicate: () => void;
@@ -44,8 +38,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   options,
   onClose,
   onCopy,
-  onGroup,
-  onUngroup,
   onCut,
   onPaste,
   onDuplicate,
@@ -149,11 +141,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           onClick={() => handleAction(onDuplicate)} 
         />
         
-        {(options.canGroup || options.canUngroup) && <>
-          <MenuItem icon={options.canGroup ? <Group className="h-4 w-4" /> : <Ungroup className="h-4 w-4" />} label={options.canGroup ? t.groupAction : t.ungroupAction} shortcut={options.canGroup ? 'Ctrl+G' : 'Ctrl+Shift+G'} onClick={() => handleAction(options.canGroup ? onGroup : onUngroup)} />
-          <div className="h-px bg-slate-700/50 my-1 mx-2" />
-        </>}
-
         <div className="h-px bg-slate-700/50 my-1 mx-2" />
         
         <MenuItem 

@@ -114,6 +114,9 @@ export function ExportDialog({
                   { value: 480, label: "480p — خفيف وسريع" },
                   { value: 720, label: "720p — جودة ممتازة" },
                   { value: 1080, label: "1080p — Full HD" },
+                  ...(project.ratio === "9:16"
+                    ? [{ value: 1280, label: "ريل 720 × 1280 — عمودي" }]
+                    : []),
                 ]}
               />
             </label>

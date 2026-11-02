@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   TEMPLATE_CATALOG,
   TEMPLATE_CATEGORIES,
@@ -6,7 +6,7 @@ import {
   DesignTemplate,
   TemplateCategory
 } from '../../../data/templates';
-import { Search, LayoutTemplate, X, Zap, Smartphone } from 'lucide-react';
+import { Search, LayoutTemplate, X, Zap, Smartphone, Star } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
 interface TemplatesTabProps {
@@ -115,10 +115,35 @@ const TemplatePreview: React.FC<{ tpl: DesignTemplate }> = ({ tpl }) => {
 export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) => {
   const { t, lang } = useDcLang();
   const [query, setQuery] = useState('');
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try { const ids = JSON.parse(localStorage.getItem('designcraft-template-favorites') || '[]'); return Array.isArray(ids) ? ids.filter((id: unknown) => typeof id === 'string' && TEMPLATE_CATALOG.some(t => t.id === id)) : []; } catch { return []; }
+  });
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const [orientation, setOrientation] = useState('all');
+  const [storageFailed, setStorageFailed] = useState(false);
+  useEffect(() => {
+    const sync = (event: Event) => {
+      const detail = (event as CustomEvent<{ ids: string[]; failed: boolean }>).detail;
+      if (detail) { setFavorites(detail.ids); setStorageFailed(detail.failed); }
+    };
+    window.addEventListener('designcraft:template-favorites', sync);
+    return () => window.removeEventListener('designcraft:template-favorites', sync);
+  }, []);
+  const toggleFavorite = (id: string) => {
+    const ids = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
+    let failed = false;
+    try { localStorage.setItem('designcraft-template-favorites', JSON.stringify(ids)); } catch { failed = true; }
+    setFavorites(ids); setStorageFailed(failed);
+    window.dispatchEvent(new CustomEvent('designcraft:template-favorites', { detail: { ids, failed } }));
+  };
   const [category, setCategory] = useState<TemplateCategory | 'all'>('all');
 
   const filtered = useMemo(() => {
     return TEMPLATE_CATALOG.filter((tpl) => {
+      if (favoriteOnly && !favorites.includes(tpl.id)) return false;
+      if (orientation === 'landscape' && tpl.baseW <= tpl.baseH) return false;
+      if (orientation === 'portrait' && tpl.baseW >= tpl.baseH) return false;
+      if (orientation === 'square' && tpl.baseW !== tpl.baseH) return false;
       if (category !== 'all' && tpl.cat !== category) return false;
       if (!query.trim()) return true;
       const q = query.toLowerCase().trim();
@@ -129,7 +154,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
         (tpl.descEn || '').toLowerCase().includes(q)
       );
     });
-  }, [query, category]);
+  }, [query, category, favoriteOnly, favorites, orientation]);
 
   const groups = useMemo(
     () =>
@@ -174,6 +199,17 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
         )}
       </div>
 
+      <div className="flex items-center gap-2">
+        <button type="button" aria-pressed={favoriteOnly} onClick={() => setFavoriteOnly(!favoriteOnly)} className={`flex items-center gap-1 rounded-lg border p-2 text-xs ${favoriteOnly ? 'bg-amber-500 text-slate-950' : 'border-slate-700 text-slate-300'}`}><Star className="h-3 w-3" />{lang === 'ar' ? 'المفضلة' : 'Favorites'}</button>
+        <select aria-label={lang === 'ar' ? 'اتجاه القالب' : 'Template orientation'} value={orientation} onChange={e => setOrientation(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 p-2 text-xs text-white">
+          <option value="all">{lang === 'ar' ? 'كل الأشكال' : 'All orientations'}</option>
+          <option value="landscape">{lang === 'ar' ? 'أفقي' : 'Landscape'}</option>
+          <option value="portrait">{lang === 'ar' ? 'رأسي' : 'Portrait'}</option>
+          <option value="square">{lang === 'ar' ? 'مربع' : 'Square'}</option>
+        </select>
+      </div>
+      {storageFailed && <p role="status" className="text-xs text-amber-300">{lang === 'ar' ? 'المفضلة متاحة مؤقتًا؛ تعذر حفظها في المتصفح.' : 'Favorites are temporary; browser storage is unavailable.'}</p>}
+      <p className="rounded-lg border border-sky-800 bg-sky-950/30 p-2 text-[10px] leading-relaxed text-sky-200">{lang === 'ar' ? 'قوالب الطباعة بمقاسات مقترحة عند 300 DPI. اختر المقاس نفسه في المطبعة وراجع النصوص. لا تشمل نزيفًا أو مسارات قص تلقائية. أمام وخلف الكارت قالبان منفصلان.' : 'Print templates use suggested sizes at 300 DPI. Set matching dimensions at your printer and review text. No automatic bleed or die-cut paths. Card fronts and backs are separate templates.'}</p>
       {/* Category pills */}
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         {MAIN_CATEGORIES.map((cat) => (
@@ -230,7 +266,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
           <p className="text-sm font-semibold text-slate-300">{t.tplNoResults}</p>
           <button
             type="button"
-            onClick={() => { setQuery(''); setCategory('all'); }}
+            onClick={() => { setQuery(''); setCategory('all'); setOrientation('all'); setFavoriteOnly(false); }}
             className="text-xs text-sky-400 hover:underline font-bold"
           >
             {t.resetFilters || 'RESET'}
@@ -250,8 +286,8 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
 
               <div className="grid grid-cols-2 gap-2">
                 {items.map((tpl) => (
+                  <div key={tpl.id} className="relative" data-template-id={tpl.id}>
                   <button
-                    key={tpl.id}
                     type="button"
                     onClick={() => onApplyTemplate(tpl)}
                     className="group text-start rounded-xl bg-[#141E38]/90 hover:bg-[#192444] border border-slate-700/80 hover:border-sky-400/90 transition-all duration-200 p-1.5 shadow-sm hover:shadow-lg hover:shadow-sky-500/10 hover:-translate-y-0.5 active:scale-[0.98] w-full"
@@ -275,10 +311,13 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
                     <h4 className="text-[10px] leading-tight font-bold text-white group-hover:text-sky-300 transition truncate mt-1.5 px-0.5">
                       {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
                     </h4>
+                    {tpl.print && <p className="mt-1 text-[9px] font-semibold text-emerald-300">{tpl.print.widthMm} × {tpl.print.heightMm} mm · 300 DPI</p>}
                     <p className="text-[8px] text-slate-500 font-mono truncate px-0.5">
                       {tpl.baseW} × {tpl.baseH} · {tpl.objects.length} {t.tplObjects}
                     </p>
                   </button>
+                  <button type="button" aria-label={`${lang === 'ar' ? 'تفضيل' : 'Favorite'} ${lang === 'ar' ? tpl.nameAr : tpl.nameEn}`} aria-pressed={favorites.includes(tpl.id)} onClick={() => toggleFavorite(tpl.id)} className="absolute end-2 top-2 z-10 rounded-lg bg-slate-950/90 p-1.5 text-amber-300 hover:bg-slate-800"><Star className="h-3.5 w-3.5" fill={favorites.includes(tpl.id) ? 'currentColor' : 'none'} /></button>
+                  </div>
                 ))}
               </div>
             </section>

@@ -15,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { StudioSelect } from "../components/StudioSelect";
 import type { Project, TextLayer } from "../types";
@@ -35,6 +35,8 @@ import {
   type Dimensions,
 } from "./model";
 type Props = {
+  viewVersion?: string;
+  compositionGuides?: boolean;
   project: Project;
   displayProject: Project;
   toolbarHost: HTMLElement | null;
@@ -89,7 +91,8 @@ export function Interaction(props: Props) {
   const field = useRef<HTMLTextAreaElement>(null);
   const [moreTools, setMoreTools] = useState(false);
   const ctx = canvas?.getContext("2d");
-  const boxes = ctx ? boxesAt(props.displayProject, time, ctx, dimensions) : [];
+  const boxes =
+    ctx && !playing ? boxesAt(props.displayProject, time, ctx, dimensions) : [];
   const box = boxes.find(
     (b) => selection && b.id === selection.id && b.kind === selection.kind,
   );
@@ -111,7 +114,7 @@ export function Interaction(props: Props) {
     onDraft(null);
     setGuides({ x: false, y: false });
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!canvas) return;
     const measure = () => {
       const c = canvas.getBoundingClientRect(),
@@ -128,7 +131,7 @@ export function Interaction(props: Props) {
     observer.observe(canvas);
     observer.observe(canvas.parentElement!);
     return () => observer.disconnect();
-  }, [canvas]);
+  }, [canvas, props.viewVersion]);
   useEffect(() => {
     if (gesture.current && gesture.current.project !== project) cancel();
     // Keep inline typing transient, but rebase it on external style/timing edits.
@@ -273,7 +276,8 @@ export function Interaction(props: Props) {
         Math.hypot(p.x - g.box.cx, p.y - g.box.cy) / g.distance,
       );
     if (
-      Math.hypot(p.x - g.x, p.y - g.y) < (2 * w) / Math.max(1, rect.width) &&
+      Math.hypot(p.x - g.x, p.y - g.y) <
+        ((e.pointerType === "touch" ? 8 : 4) * w) / Math.max(1, rect.width) &&
       !g.moved
     )
       return;
@@ -341,6 +345,7 @@ export function Interaction(props: Props) {
                   onPause();
                   cancel();
                   setEditing(!editing);
+                  onSelect(null);
                 }}
               >
                 <Move size={14} />
@@ -505,7 +510,9 @@ export function Interaction(props: Props) {
               {playing
                 ? "أوقف التشغيل للتعديل المباشر"
                 : editing
-                  ? "اسحب العنصر • المقابض للحجم والتدوير • ضغطتين على النص لتعديله • Esc للإلغاء"
+                  ? box
+                    ? "اسحب العنصر المحدد • المقابض للحجم والتدوير • Esc لإلغاء التحديد"
+                    : "اضغط على عنصر داخل المعاينة لتحديده • التايم لاين للتوقيت والقص"
                   : "وضع مشاهدة: تقدر تمرّر الصفحة فوق المعاينة بحرية"}
             </p>
           </>,
@@ -612,6 +619,9 @@ export function Interaction(props: Props) {
           }
         }}
       >
+        {props.compositionGuides && (
+          <div className="preview-composition-guides" aria-hidden="true" />
+        )}
         {editing && !playing && box && !box.hidden && !inline && (
           <div
             className={`preview-selection ${box.locked ? "is-locked" : ""}`}

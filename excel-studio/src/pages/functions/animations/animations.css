@@ -1,0 +1,527 @@
+.xs-formula-animation {
+  border: 1px solid #d7e5cd;
+  background: linear-gradient(150deg, #f5f9ef, #fff);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 0;
+  color: #30442b;
+}
+.xs-animation-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.xs-animation-badge {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #577644;
+  font-weight: 700;
+}
+.xs-animation-heading h4 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.xs-formula-animation .xs-animation-scope {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #65765e;
+  margin: 12px 0 8px;
+}
+.xs-animation-formula {
+  display: block;
+  background: #253f30;
+  color: #e4f4d4;
+  padding: 13px 10px;
+  border-radius: 9px;
+  font:
+    12px Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.xs-animation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 13px 0;
+  font-size: 9px;
+  color: #63755c;
+}
+.xs-animation-legend span:first-child {
+  color: #805e13;
+}
+.xs-animation-legend span:nth-child(2) {
+  color: #326243;
+}
+.xs-animation-legend span:last-child {
+  color: #7d5f5c;
+}
+.xs-animation-table {
+  table-layout: fixed;
+}
+.xs-animation-table td {
+  position: relative;
+  transition:
+    background-color 0.35s,
+    box-shadow 0.35s;
+  vertical-align: middle;
+  background: #fff;
+}
+.xs-animation-table td[data-state="active"] {
+  background: #fff1c9;
+  box-shadow: inset 0 0 0 2px #d0a747;
+}
+.xs-animation-table td[data-state="matched"] {
+  background: #e2f2df;
+  box-shadow: inset 0 0 0 1px #b1d3a3;
+}
+.xs-animation-table td[data-state="skipped"] {
+  background: repeating-linear-gradient(
+    135deg,
+    #f1eceb,
+    #f1eceb 5px,
+    #f8f5f4 5px,
+    #f8f5f4 10px
+  );
+  color: #806e6a;
+}
+.xs-animation-table .xs-cell-value {
+  display: block;
+  font-size: 13px;
+  color: inherit;
+}
+.xs-animation-table .xs-cell-state {
+  display: block;
+  min-height: 12px;
+  font-size: 8px;
+  margin-top: 7px;
+  color: #6d734f;
+}
+.xs-animation-table td[data-state="active"] .xs-cell-value {
+  animation: xs-cell-read 0.5s ease both;
+}
+.xs-animation-narration {
+  margin-top: 15px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e0e9d8;
+  border-radius: 11px;
+  min-height: 205px;
+}
+.xs-animation-step-number {
+  font-size: 10px;
+  color: #7a8d6c;
+}
+.xs-animation-narration h4 {
+  font-size: 14px;
+  margin: 9px 0;
+}
+.xs-animation-narration p {
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 8px 0;
+  color: #5a6b52;
+}
+.xs-animation-math {
+  border-radius: 8px;
+  background: #edf4e5;
+  padding: 12px;
+  font:
+    600 14px Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+  animation: xs-math-in 0.4s ease both;
+  unicode-bidi: plaintext;
+}
+.xs-animation-final {
+  display: block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #326243;
+}
+.xs-animation-progress {
+  display: flex;
+  gap: 5px;
+  margin: 12px 0;
+}
+.xs-animation-progress button {
+  flex: 1;
+  min-width: 0;
+  min-height: 28px;
+  border: 1px solid #d5dfca;
+  background: #e7ecdf;
+  cursor: pointer;
+  border-radius: 5px;
+  color: #738065;
+  font: 10px Arial;
+}
+.xs-animation-progress button.done {
+  background: #a7be90;
+  color: #263e25;
+}
+.xs-animation-progress button[aria-current] {
+  outline: 2px solid #547545;
+  outline-offset: 2px;
+}
+.xs-animation-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xs-formula-animation .xs-button {
+  font-size: 10px;
+  padding: 9px 10px;
+}
+.xs-animation-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+.xs-animation-controls select {
+  border: 1px solid #cbd9c0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 7px;
+  color: #42583b;
+  font-size: 10px;
+}
+.xs-animation-tip {
+  font-size: 11px;
+  line-height: 1.9;
+  border-inline-start: 3px solid #b2c794;
+  padding-inline-start: 12px;
+  color: #627456;
+  margin: 16px 0;
+}
+.xs-formula-animation button:focus-visible,
+.xs-formula-animation select:focus-visible {
+  outline: 2px solid #4b7142;
+  outline-offset: 3px;
+}
+.xs-formula-animation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.xs-example-layout > div {
+  min-width: 0;
+}
+@keyframes xs-cell-read {
+  from {
+    transform: translateY(-5px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes xs-math-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 600px) {
+  .xs-formula-animation {
+    padding: 12px;
+  }
+  .xs-animation-table td,
+  .xs-animation-table th {
+    padding: 9px 4px;
+  }
+  .xs-animation-controls .xs-button {
+    padding: 9px;
+  }
+  .xs-animation-narration {
+    min-height: 220px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-animation-table td {
+    transition: none;
+  }
+  .xs-animation-math,
+  .xs-animation-table td[data-state="active"] .xs-cell-value {
+    animation: none;
+  }
+}
+/* Pointer-driven teaching sheet: fixed geometry keeps cursor and selection aligned. */
+.xs-demo-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cbd9c0;
+  background: #fff;
+  border-radius: 8px;
+  margin: 14px 0 9px;
+  padding: 8px;
+  font:
+    11px Consolas,
+    monospace;
+  min-width: 0;
+}
+.xs-demo-formula-bar > span {
+  background: #eef3e8;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.xs-demo-formula-bar > b {
+  color: #718763;
+  font-style: italic;
+}
+.xs-demo-formula-bar code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.xs-demo-sheet {
+  position: relative;
+  border: 1px solid #cad9bd;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #fff;
+}
+.xs-demo-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  table-layout: fixed;
+  font:
+    12px Arial,
+    sans-serif;
+}
+.xs-demo-grid th:first-child {
+  width: 28px;
+}
+.xs-demo-grid thead th {
+  height: 28px;
+  background: #e7eedf;
+  font-size: 10px;
+  color: #648153;
+  padding: 0;
+  border-bottom: 1px solid #cbd9c0;
+}
+.xs-demo-grid tbody th {
+  background: #eff4e9;
+  color: #74886a;
+  font-size: 10px;
+  padding: 0;
+  border-bottom: 1px solid #e2eadb;
+}
+.xs-demo-grid td {
+  height: 52px;
+  box-sizing: border-box;
+  border-inline-start: 1px solid #dce6d3;
+  border-bottom: 1px solid #dce6d3;
+  text-align: center;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.xs-demo-grid td.xs-demo-output {
+  outline: 2px solid #48815e;
+  outline-offset: -2px;
+  background: #f4fbf0;
+}
+.xs-demo-grid .xs-demo-output input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: transparent;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 5px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  font:
+    11px Consolas,
+    monospace;
+  color: #26472c;
+  direction: ltr;
+  cursor: default;
+  pointer-events: none;
+}
+.xs-demo-output .is-typing {
+  background: #eaf8df !important;
+}
+.xs-demo-overlay {
+  position: absolute;
+  top: 28px;
+  inset-inline-start: 28px;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.xs-demo-selection {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid #427bc6;
+  background: #4e8fde20;
+  z-index: 1;
+}
+.xs-demo-selection i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  bottom: -4px;
+  right: -4px;
+  background: #427bc6;
+  border: 1px solid #fff;
+}
+.xs-demo-pointer {
+  position: absolute;
+  z-index: 3;
+  color: #243f37;
+  filter: drop-shadow(1px 2px 1px #fff);
+  transform: translate(-4px, -3px);
+  display: flex;
+  align-items: flex-start;
+}
+.xs-demo-pointer svg {
+  flex-shrink: 0;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.xs-demo-pointer span {
+  font: 700 8px Arial;
+  background: #243f37;
+  color: #fff;
+  border-radius: 4px;
+  padding: 3px 5px;
+  margin: 18px 0 0 -5px;
+  white-space: nowrap;
+}
+.xs-demo-pointer.is-dragging:before {
+  content: "";
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #558bd3;
+  background: #558bd31a;
+  border-radius: 50%;
+  left: -10px;
+  top: -10px;
+}
+.xs-demo-pointer.is-clicking:before {
+  content: "";
+  position: absolute;
+  border: 2px solid #d4a137;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  top: -10px;
+  left: -10px;
+}
+.xs-demo-keyboard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  min-height: 34px;
+}
+.xs-demo-keyboard kbd {
+  font:
+    11px Consolas,
+    monospace;
+  background: #fff;
+  border: 1px solid #cbd9c0;
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  padding: 8px;
+  color: #64735d;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.xs-demo-keyboard kbd.pressed {
+  background: #376248;
+  color: #fff;
+  border-color: #2f553d;
+  transform: translateY(2px);
+}
+.xs-demo-keyboard > span {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #687b5e;
+}
+.xs-demo-result {
+  font:
+    700 19px Arial,
+    sans-serif;
+  color: #27673c;
+}
+.xs-demo-caption {
+  margin: 14px 0;
+  background: #fff;
+  padding: 13px;
+  border: 1px solid #d8e4cd;
+  border-radius: 9px;
+  min-height: 96px;
+}
+.xs-demo-caption p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #354b2e;
+  margin: 7px 0;
+}
+.xs-demo-details {
+  margin-top: 16px;
+  font-size: 11px;
+  line-height: 1.9;
+}
+.xs-demo-details > div {
+  padding: 10px 0;
+  border-bottom: 1px solid #dce6d3;
+}
+.xs-demo-details summary {
+  cursor: pointer;
+}
+.xs-demo-details p {
+  margin: 6px 0;
+}
+.xs-demo-details code {
+  display: block;
+  unicode-bidi: plaintext;
+}
+.xs-cursor-lesson .xs-animation-progress button {
+  min-height: 32px;
+}
+.xs-cursor-lesson .xs-animation-scope {
+  margin-bottom: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-demo-keyboard kbd {
+    transition: none;
+  }
+}
+.xs-demo-caret {
+  position: absolute;
+  top: 18px;
+  height: 16px;
+  width: 1px;
+  background: #27673c;
+  font:
+    11px Consolas,
+    monospace;
+  animation: xs-demo-caret-blink 0.8s steps(1) infinite;
+  pointer-events: none;
+}
+@keyframes xs-demo-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-demo-caret {
+    animation: none;
+  }
+}
+.xs-demo-pointer.is-dragging span {
+  margin-top: -12px;
+  margin-left: -3px;
+}

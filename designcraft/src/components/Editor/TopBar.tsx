@@ -1,3 +1,4 @@
+import { FileMenu } from './FileMenu';
 import React, { useState } from 'react';
 import {
   ArrowRight,
@@ -19,9 +20,7 @@ import {
   SlidersHorizontal,
   Hand,
   Globe,
-  Zap,
-  Magnet,
-  FileArchive
+  Zap
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 
@@ -39,9 +38,6 @@ interface TopBarProps {
   onResetZoom: () => void;
   showGrid: boolean;
   onToggleGrid: () => void;
-  snapEnabled: boolean;
-  onToggleSnap: () => void;
-  onDownloadBackup: () => void;
   onOpenPreview: () => void;
   onOpenExport: () => void;
   onSave: () => void;
@@ -72,9 +68,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onResetZoom,
   showGrid,
   onToggleGrid,
-  snapEnabled,
-  onToggleSnap,
-  onDownloadBackup,
   onOpenPreview,
   onOpenExport,
   onSave,
@@ -109,7 +102,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       dir={dir}
       style={{
         position: 'relative', zIndex: 100, flexShrink: 0,
-        padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
         /* In normal flow so nothing sits under it; logo pinned to the RIGHT via ltr + row-reverse */
         direction: 'ltr', flexDirection: 'row-reverse',
         background: 'rgba(7,8,11,.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
@@ -118,10 +111,10 @@ export const TopBar: React.FC<TopBarProps> = ({
     >
       {/* Logo — always the far-RIGHT element */}
       <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0, flexShrink: 0 }}>
-        <img src="/UniTool_logo.png" alt="UniTool" className="w-16 sm:w-[80px] md:w-[104px]" style={{ height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
+        <img src="/UniTool_logo.png" alt="UniTool" className="w-[80px] md:w-[104px]" style={{ height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
       </a>
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       {/* Left Section: Navigation (home + sidebar toggle in a segmented pill) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 2 }}>
@@ -327,8 +320,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        <button type="button" onClick={onToggleSnap} aria-pressed={snapEnabled} aria-label={snapEnabled ? t.snapDisable : t.snapEnable} title={`${snapEnabled ? t.snapDisable : t.snapEnable} · ${t.snapHint}`} style={{ display: 'flex', padding: 6, borderRadius: 8, border: `1px solid ${snapEnabled ? 'rgba(217,70,239,.4)' : '#1e2028'}`, background: snapEnabled ? 'rgba(217,70,239,.1)' : '#0d0f14', color: snapEnabled ? '#e879f9' : '#7c7f8a', cursor: 'pointer' }}><Magnet style={{ width: 14, height: 14 }} /></button>
-
         {/* Grid Toggle */}
         <button
           type="button"
@@ -362,6 +353,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; e.currentTarget.style.color = '#e4e6eb'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7c7f8a'; }}
           title={t.switchLang}
+          aria-label={t.switchLang}
         >
           <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
           <span className="hidden sm:inline">{lang === 'ar' ? 'EN' : 'عربي'}</span>
@@ -392,11 +384,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           type="button"
           onClick={onOpenPreview}
-          className="hidden sm:flex"
           title={t.previewDesign}
+          aria-label={t.preview}
           style={{
-            alignItems: 'center', gap: 4,
-            padding: '5px 6px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
             border: 'none', background: 'transparent',
             color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
           }}
@@ -413,6 +405,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={onSave}
           disabled={isSaving}
           title={t.saveProject}
+          aria-label={t.save}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
@@ -427,50 +420,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           <span className="hidden sm:inline">{isSaving ? '...' : t.save}</span>
         </button>
 
-        <button type="button" onClick={onDownloadBackup} aria-label={t.backupTitle} title={t.backupTitle} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/5 hover:text-sky-300"><FileArchive style={{ width: 14, height: 14 }} /></button>
-
-        {/* Quick PNG download — one click, no dialog */}
-        {onQuickDownload && (
-          <>
-            <div className="hidden sm:block" style={{ width: 1, height: 14, background: '#262b36' }} />
-            <button
-              type="button"
-              onClick={onQuickDownload}
-              className="hidden sm:flex"
-              title={t.quickExportTitle}
-              style={{
-                alignItems: 'center', gap: 4,
-                padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                border: 'none', background: 'transparent',
-                color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <Zap style={{ width: 14, height: 14, color: '#fbbf24' }} />
-              <span className="hidden sm:inline">PNG</span>
-            </button>
-          </>
-        )}
         </div>
-
-        {/* Export CTA */}
-        <button
-          type="button"
-          onClick={onOpenExport}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-            border: 'none', background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
-            color: '#fff', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-            boxShadow: '0 4px 14px rgba(79,70,229,.35)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          <Download style={{ width: 14, height: 14 }} />
-          <span className="hidden sm:inline">{t.export}</span>
-        </button>
+        <FileMenu onExport={onOpenExport} onQuickDownload={onQuickDownload} />
       </div>
       </div>
     </nav>

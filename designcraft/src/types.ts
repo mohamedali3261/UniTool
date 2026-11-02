@@ -21,6 +21,9 @@ export interface CanvasPage {
 }
 
 export interface ProjectItem {
+  /** In-memory import when browser project storage refused the write. */
+  sessionOnly?: boolean;
+  studio?: import('./advanced/core/faces').PrintSettings;
   id: string;
   title: string;
   width: number;
@@ -29,6 +32,7 @@ export interface ProjectItem {
   pages?: CanvasPage[];
   thumbnail?: string;
   category: string;
+  packaging?: {kind:'reverse-tuck';size:import('./packaging/geometry').CartonSize;version:1};
   createdAt: number;
   updatedAt: number;
 }
@@ -42,8 +46,7 @@ export type SidebarTabType =
   | 'layers'
   | 'templates'
   | 'media'
-  | 'background'
-  | 'brand';
+  | 'background';
 
 export interface StockPhoto {
   id: string;
@@ -73,9 +76,6 @@ export interface TextPreset {
 }
 
 export interface ActiveObjectProperties {
-  id?: string;
-  name?: string;
-  selectionCount?: number;
   type: string;
   left: number;
   top: number;

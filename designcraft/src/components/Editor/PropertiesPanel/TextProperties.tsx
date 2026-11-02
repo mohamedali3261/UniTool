@@ -24,6 +24,7 @@ import { useDcLang } from '../../../hooks/useDcLang';
 interface TextPropertiesProps {
   properties: ActiveObjectProperties;
   onUpdate: (key: string, value: any) => void;
+  onResetFormatting?: () => void;
 }
 
 /* Shared card wrapper with colored icon-chip header */
@@ -72,8 +73,8 @@ const SliderRow: React.FC<{
   </div>
 );
 
-export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUpdate }) => {
-  const { t } = useDcLang();
+export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUpdate, onResetFormatting }) => {
+  const { t, lang } = useDcLang();
   const currentFontSize = properties.fontSize || 40;
   const isBold =
     properties.fontWeight === 'bold' ||
@@ -95,6 +96,12 @@ export const TextProperties: React.FC<TextPropertiesProps> = ({ properties, onUp
 
   return (
     <div className="space-y-2.5">
+      <label className="block text-xs text-slate-200">
+        {lang === 'ar' ? 'محتوى النص' : 'Text content'}
+        <textarea aria-label={lang === 'ar' ? 'محتوى النص' : 'Text content'} value={properties.text ?? ''} onChange={e => onUpdate('text', e.target.value)} rows={3} dir="auto" className="mt-1 w-full resize-y rounded-lg border border-slate-600 bg-slate-900 p-2 text-sm text-white" />
+      </label>
+      <p className="text-xs leading-relaxed text-slate-400">{lang === 'ar' ? 'اكتب داخل الصندوق أو انقر النص مرتين على اللوحة. حذف المحتوى لا يضيف نصًا افتراضيًا.' : 'Type in this box or double-click text on the canvas. Clearing content does not insert placeholder text.'}</p>
+      {onResetFormatting && <button type="button" onClick={onResetFormatting} className="w-full rounded-lg border border-sky-700 bg-sky-950/50 px-3 py-2 text-xs font-medium text-sky-200">{lang === 'ar' ? 'إزالة التنسيق مع الاحتفاظ بالنص' : 'Clear formatting, keep text'}</button>}
       {/* 1. Font family */}
       <PropCard
         title={t.tpFontFamily}

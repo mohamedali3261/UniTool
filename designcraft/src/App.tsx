@@ -1,3 +1,4 @@
+import {ProjectImport} from './components/Common/ProjectImport';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProjectItem, DimensionPreset, ToastMessage } from './types';
 import { NewDesignScreen } from './components/Dashboard/NewDesignScreen';
@@ -59,11 +60,12 @@ export default function App() {
   const flushActiveTab = () => editorRef.current?.flushSave();
 
   // Open a design in its own tab (or focus its existing tab) and enter the editor.
-  const openProjectInTab = (project: ProjectItem) => {
+  const openProjectInTab = (project: ProjectItem, skipLeaveCheck = false) => {
+    if(!skipLeaveCheck && editorRef.current&&!editorRef.current.confirmLeave())return;
     const saved = getSavedProjects();
     setOpenTabs((prev) => {
       // Drop tabs whose projects were removed from the dashboard in the meantime.
-      const alive = prev.filter((p) => saved.some((s) => s.id === p.id));
+      const alive = prev.filter((p) => p.sessionOnly || saved.some((s) => s.id === p.id));
       return alive.some((p) => p.id === project.id)
         ? alive.map((p) => (p.id === project.id ? project : p))
         : [...alive, project];
@@ -88,12 +90,12 @@ export default function App() {
       }
     };
 
-    const saved = saveProjectToStorage(newProject);
+    saveProjectToStorage(newProject);
     openProjectInTab(newProject);
     showToast(
-      saved ? t.appWorkspaceTitle : t.saveStorageError,
-      saved ? `${preset.width} × ${preset.height} px · ${t.appWorkspaceMsg}` : t.saveStorageErrorMsg,
-      saved ? 'info' : 'error'
+      t.appWorkspaceTitle,
+      `${preset.width} × ${preset.height} px · ${t.appWorkspaceMsg}`,
+      'info'
     );
   };
 
@@ -118,12 +120,12 @@ export default function App() {
       }
     };
 
-    const saved = saveProjectToStorage(newProject);
+    saveProjectToStorage(newProject);
     openProjectInTab(newProject);
     showToast(
-      saved ? t.appDesignReadyTitle : t.saveStorageError,
-      saved ? `${data.width} × ${data.height} px · ${t.appDesignReadyMsg}` : t.saveStorageErrorMsg,
-      saved ? 'success' : 'error'
+      t.appDesignReadyTitle,
+      `${data.width} × ${data.height} px · ${t.appDesignReadyMsg}`,
+      'success'
     );
   };
 
@@ -135,6 +137,7 @@ export default function App() {
   // 4. Switch Between Open Design Tabs (save the current canvas first)
   const handleSelectTab = (id: string) => {
     if (id === activeTabId) return;
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
 
     const saved = flushActiveTab();
     const target = getSavedProjects().find((p) => p.id === id);
@@ -150,6 +153,7 @@ export default function App() {
   // 5. Close a Tab (the design stays saved in "My Projects")
   const handleCloseTab = (id: string) => {
     const isActive = id === activeTabId;
+    if(isActive&&editorRef.current&&!editorRef.current.confirmLeave())return;
     const saved = isActive ? flushActiveTab() : undefined;
     const closingIndex = openTabs.findIndex((p) => p.id === id);
     if (closingIndex === -1) return;
@@ -173,11 +177,13 @@ export default function App() {
 
   // 6. Back to Dashboard / New Tab (both keep the current design saved)
   const handleBackToDashboard = () => {
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
     flushActiveTab();
     setCurrentView('dashboard');
   };
 
   const handleNewTab = () => {
+    if(editorRef.current&&!editorRef.current.confirmLeave())return;
     flushActiveTab();
     setCurrentView('dashboard');
   };
@@ -200,17 +206,27 @@ export default function App() {
           initialProject={activeProject}
           onBackToDashboard={handleBackToDashboard}
           onShowToast={showToast}
-          tabs={openTabs.map(({ id, title, width, height }) => ({ id, title, width, height }))}
+          tabs={openTabs.map(({ id, title, width, height }) => ({ id, title, width:Math.round(width), height:Math.round(height) }))}
           activeTabId={activeProject.id}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
           onNewTab={handleNewTab}
+          onOpenPackagingProject={openProjectInTab}
           onProjectUpdated={(project) => {
             setOpenTabs((prev) => prev.map((p) => (p.id === project.id ? project : p)));
           }}
         />
       )}
 
+      <ProjectImport hideButton onImport={project=>{
+        if(editorRef.current && !editorRef.current.confirmLeave()) return null;
+        flushActiveTab();
+        saveProjectToStorage(project);
+        const stored = getSavedProjects().some(p=>p.id===project.id);
+        openProjectInTab({...project, sessionOnly: !stored}, true);
+        showToast(stored ? (lang==='ar'?'تم فتح المشروع':'Project imported') : (lang==='ar'?'تم فتح المشروع بدون حفظ دائم':'Project opened without a durable save'), undefined, stored ? 'success' : 'warning');
+        return stored;
+      }}/>
       {/* Global Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </main>

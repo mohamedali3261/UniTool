@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { TEXT_PRESETS, POPULAR_FONTS, COLOR_PALETTES } from '../../../data/presets';
 import { TextPreset, ActiveObjectProperties } from '../../../types';
 import { useDcLang } from '../../../hooks/useDcLang';
@@ -77,7 +77,7 @@ export const TextTab: React.FC<TextTabProps> = ({
   const isAr = lang === 'ar';
   const [customText, setCustomText] = useState('');
   const [selectedFont, setSelectedFont] = useState('Cairo');
-  const [selectedColor, setSelectedColor] = useState('#FFFFFF');
+  const [selectedColor, setSelectedColor] = useState('#000000');
 
   // Preset customizer state
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -89,6 +89,8 @@ export const TextTab: React.FC<TextTabProps> = ({
     activeProperties.type === 'text' ||
     activeProperties.type === 'i-text'
   );
+
+  useEffect(()=>{if(!isTextSelected){setSelectedFont('Cairo');setSelectedColor('#000000');setPresetScale(100);setOverridePresetColor(null);}},[!!isTextSelected]);
 
   const safeAddText = (options: {
     text: string;
@@ -123,11 +125,12 @@ export const TextTab: React.FC<TextTabProps> = ({
 
   const handleAddCustomText = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const textToAdd = customText.trim() || t.addNewText;
+    if (!customText.trim()) return;
+    const textToAdd = customText;
     safeAddText({
       text: textToAdd,
       fontSize: Math.round(36 * (presetScale / 100)),
-      fontWeight: 700,
+      fontWeight: 400,
       fontFamily: selectedFont,
       fill: selectedColor
     });
