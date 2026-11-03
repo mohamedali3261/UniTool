@@ -1,3 +1,4 @@
+import { saveAndWait, storedProject } from './helpers/storage';
 import { test, expect } from '@playwright/test';
 const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
 test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
@@ -23,8 +24,8 @@ test('mobile empty-space drag pans, object drag edits, and scroll rails are hidd
   await expect.poll(() => area.evaluate(el => el.scrollLeft)).toBe(100);
   await expect.poll(() => area.evaluate(el => el.scrollTop)).toBe(120);
   const save = async () => {
-    await page.getByRole('button', { name: 'Save', exact: true }).first().tap();
-    return page.evaluate(() => JSON.parse(localStorage.getItem('designcraft_saved_projects_v1')!).find((p: any) => p.title === 'Gesture QA').canvasData.objects[0]);
+    await saveAndWait(page);
+    return (await storedProject(page, 'Gesture QA')).canvasData.objects[0];
   };
   expect(await save()).toMatchObject({ left: 300, top: 400 });
   let canvas = (await page.locator('canvas.upper-canvas').boundingBox())!;

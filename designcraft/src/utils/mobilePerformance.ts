@@ -10,3 +10,8 @@ export function boundedHistory(stack: string[], index: number, snapshot: string,
   while (next.length > 1 && (next.length > 30 || bytes > budget)) bytes -= next.shift()!.length * 2;
   return next;
 }
+
+/** Display only: never round the editable/exported design dimensions. */
+export function formatCanvasDimension(value: number) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, useGrouping: false }).format(value);
+}
