@@ -256,24 +256,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        {/* Pan Mode Toggle */}
-        {onTogglePanMode && (
-          <button
-            type="button"
-            onClick={onTogglePanMode}
-            title={isPanMode ? t.panOff : t.panOn}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: 6, borderRadius: 8, fontSize: 12, fontFamily: 'inherit',
-              border: `1px solid ${isPanMode ? 'rgba(245,158,11,.5)' : '#1e2028'}`,
-              background: isPanMode ? 'rgba(245,158,11,.15)' : '#0d0f14',
-              color: isPanMode ? '#fbbf24' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
-            }}
-          >
-            <Hand style={{ width: 14, height: 14 }} />
-          </button>
-        )}
-
         {/* Zoom Controls */}
         <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028', fontSize: 12 }}>
           <button

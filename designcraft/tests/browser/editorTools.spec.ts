@@ -121,8 +121,19 @@ test("dragging snaps physical edges/centers and never saves guide lines as artwo
   await expect
     .poll(async () => (await canvas.boundingBox())!.width)
     .toBe(720); // Wait for the initial 90% auto-fit before mapping design coordinates.
-  const b = (await canvas.boundingBox())!,
-    z = b.width / 800;
+  let b = (await canvas.boundingBox())!;
+  const z = b.width / 800;
+  // A completed click arms the object; a first drag intentionally pans now.
+  await page.mouse.click(b.x + 350 * z, b.y + 205 * z);
+  b = (await canvas.boundingBox())!;
+  await page.evaluate(() => {
+    (window as any).rulerTextCalls = 0;
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function(...args: Parameters<typeof original>) {
+      if (this.canvas.classList.contains('upper-canvas')) (window as any).rulerTextCalls++;
+      return original.apply(this, args);
+    };
+  });
   await page.mouse.move(b.x + 350 * z, b.y + 205 * z);
   await page.mouse.down();
   await page.mouse.move(b.x + 350 * z, b.y + 127 * z, { steps: 15 });
@@ -131,6 +142,7 @@ test("dragging snaps physical edges/centers and never saves guide lines as artwo
   expect(project.canvasData.objects.length).toBe(2);
   expect(Math.abs(project.canvasData.objects[1].top - 100)).toBeLessThan(1);
   expect(JSON.stringify(project.canvasData)).not.toContain("#f472b6");
+  expect(await page.evaluate(() => (window as any).rulerTextCalls)).toBe(0);
 });
 test("clearing styled text and retyping starts an ordinary text run", async ({
   page,

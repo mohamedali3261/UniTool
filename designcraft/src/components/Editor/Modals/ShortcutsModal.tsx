@@ -14,7 +14,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
   const shortcuts = [
     { key: 'H / V', desc: lang === 'ar' ? 'تحريك اللوحة / تحديد العناصر (يعمل مع لوحة المفاتيح العربية)' : 'Pan / select (also works with Arabic keyboard)' },
     { key: 'Space + Drag', desc: lang === 'ar' ? 'تحريك اللوحة مؤقتًا بدون تحريك العناصر' : 'Temporarily pan without moving artwork' },
-    { key: 'Ctrl + Wheel', desc: lang === 'ar' ? 'تكبير وتصغير؛ التمرير العادي لتحريك العرض' : 'Zoom; regular wheel scrolls the workspace' },
+    { key: 'Wheel', desc: lang === 'ar' ? 'تكبير وتصغير؛ اسحب المساحة الفارغة لتحريك اللوحة' : 'Zoom; drag empty space to pan the workspace' },
     { key: 'Ctrl + Z', desc: t.scUndo },
     { key: 'Ctrl + Y / Ctrl + Shift + Z', desc: t.scRedo },
     { key: 'Delete / Backspace', desc: t.scDelete },

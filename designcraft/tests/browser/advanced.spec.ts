@@ -630,7 +630,7 @@ test('Arabic-layout shortcuts and safe hand dragging never transform artwork', a
     await page.mouse.up();
   };
   await physical('KeyH', 'ا', false);
-  await expect(page.getByRole('button', { name: 'Pan', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#canvas-area-container')).toHaveClass(/cursor-grab/);
   await drag();
   expect((await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top])).toEqual(before.map((o: any) => [o.left, o.top]));
   await physical('KeyV', 'ر', false);
@@ -662,14 +662,14 @@ test('text content may stay empty and retype Arabic without placeholder replacem
 test('touch hand and two-finger gestures leave artwork coordinates unchanged', async ({ page }) => {
   await load(page);
   const before = (await saved(page)).canvasData.objects.map((o: any) => [o.left, o.top, o.scaleX, o.scaleY]);
-  await page.getByRole('button', { name: 'Pan', exact: true }).click();
+  await page.keyboard.press('h');
   const box = (await page.locator('canvas.upper-canvas').boundingBox())!;
   const session = await page.context().newCDPSession(page);
   const point = (x: number, y: number, id: number) => ({ x: box.x + x, y: box.y + y, id });
   await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(100, 100, 1)] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(180, 160, 1)] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.keyboard.press('v');
   await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(150, 150, 1), point(250, 150, 2)] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(130, 130, 1), point(280, 180, 2)] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -678,7 +678,7 @@ test('touch hand and two-finger gestures leave artwork coordinates unchanged', a
   await session.detach();
 });
 
-test('oversized artboard remains scrollable and wheel scroll is distinct from zoom', async ({ page }) => {
+test('oversized artboard supports plain wheel zoom and automatic blank-space dragging', async ({ page }) => {
   await load(page);
   await page.locator('#floating-zoom-pill').getByRole('button', { name: '100%', exact: true }).click();
   for (let i = 0; i < 12; i++) await page.locator('#floating-zoom-pill button').nth(1).click();
@@ -689,14 +689,12 @@ test('oversized artboard remains scrollable and wheel scroll is distinct from zo
   await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
   const zoomBefore = await page.locator('#floating-zoom-pill').innerText();
   await page.mouse.wheel(0, 200);
-  await expect.poll(() => area.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
-  expect(await page.locator('#floating-zoom-pill').innerText()).toBe(zoomBefore);
-  await page.getByRole('button', { name: 'Pan', exact: true }).click();
+  await expect.poll(() => page.locator('#floating-zoom-pill').innerText()).not.toBe(zoomBefore);
   await area.evaluate(el => { el.scrollLeft = 150; el.scrollTop = 150; });
   const before = await area.evaluate(el => el.scrollLeft);
-  await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await page.mouse.move(rect.x + 80, rect.y + rect.height - 100);
   await page.mouse.down();
-  await page.mouse.move(rect.x + rect.width / 2 + 50, rect.y + rect.height / 2 + 30, { steps: 5 });
+  await page.mouse.move(rect.x + 130, rect.y + rect.height - 70, { steps: 5 });
   await page.mouse.up();
   expect(await area.evaluate(el => el.scrollLeft)).toBeLessThan(before);
 });
@@ -739,4 +737,25 @@ test('template favorites persist and orientation/reset filters work without appl
   await expect(page.locator('[data-template-id]:visible')).toHaveCount(1);
   await favorite.click();
   await expect(page.locator('[data-template-id]:visible')).toHaveCount(0);
+});
+
+test('desktop unselected artwork first-drag pans and requires a released click before movement', async ({ page }) => {
+  await load(page);
+  let box = (await page.locator('canvas.upper-canvas').boundingBox())!;
+  await page.mouse.move(box.x + 100 * .9, box.y + 100 * .9);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 140 * .9, box.y + 130 * .9, { steps: 6 });
+  await page.mouse.up();
+  expect((await saved(page)).canvasData.objects[0]).toMatchObject({ left: 80, top: 80 });
+  box = (await page.locator('canvas.upper-canvas').boundingBox())!;
+  await page.mouse.click(box.x + 100 * .9, box.y + 100 * .9);
+  expect((await saved(page)).canvasData.objects[0]).toMatchObject({ left: 80, top: 80 });
+  box = (await page.locator('canvas.upper-canvas').boundingBox())!;
+  await page.mouse.move(box.x + 100 * .9, box.y + 100 * .9);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 140 * .9, box.y + 130 * .9, { steps: 6 });
+  await page.mouse.up();
+  const object = (await saved(page)).canvasData.objects[0];
+  expect(object.left).toBeGreaterThan(100); expect(object.top).toBeGreaterThan(100);
+  await expect(page.locator('#floating-object-hud')).toHaveCount(0);
 });

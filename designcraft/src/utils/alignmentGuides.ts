@@ -115,44 +115,6 @@ export function installAlignmentGuides(canvas: fabric.Canvas) {
       ctx.lineTo(canvas.getWidth(), y);
     }
     ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = "11px sans-serif";
-    ctx.fillStyle = "#f472b6";
-    const label = [
-      guides.x === null ? "" : `X ${Math.round(guides.x)}`,
-      guides.y === null ? "" : `Y ${Math.round(guides.y)}`,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    ctx.fillStyle = "#0f172ae8";
-    ctx.fillRect(0, 0, canvas.getWidth(), 24);
-    ctx.fillRect(0, 24, 28, canvas.getHeight() - 24);
-    const zoom = canvas.getZoom() || 1,
-      step =
-        [10, 20, 50, 100, 200, 500, 1000].find((n) => n * zoom >= 45) || 1000;
-    ctx.fillStyle = "#f9a8d4";
-    ctx.strokeStyle = "#f9a8d4";
-    ctx.font = "9px sans-serif";
-    ctx.beginPath();
-    for (let n = 0; n <= canvas.getWidth() / zoom; n += step) {
-      const x = n * zoom + v[4];
-      ctx.moveTo(x, 19);
-      ctx.lineTo(x, 24);
-      ctx.fillText(String(n), x + 3, 12);
-    }
-    for (let n = step; n <= canvas.getHeight() / zoom; n += step) {
-      const y = n * zoom + v[5];
-      ctx.moveTo(23, y);
-      ctx.lineTo(28, y);
-      ctx.save();
-      ctx.translate(11, y - 3);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText(String(n), 0, 0);
-      ctx.restore();
-    }
-    ctx.stroke();
-    ctx.font = "11px sans-serif";
-    ctx.fillText(`${label} · px`, 40, 43);
     ctx.restore();
   };
   const clear = () => {

@@ -133,3 +133,9 @@ input, textarea {
 #editor-properties-panel label { line-height: 1.6; }
 #editor-properties-panel button:focus-visible,
 [data-color-popover] button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+
+/* Hide only the workspace scroll rails on mobile; dragging still scrolls. */
+@media (max-width: 767px), (pointer: coarse) {
+  #canvas-area-container { scrollbar-width: none; }
+  #canvas-area-container::-webkit-scrollbar { display: none; width: 0; height: 0; }
+}
