@@ -42,7 +42,6 @@ export const navGroupLabels: Record<NavGroup, { ar: string; en: string }> = {
 };
 
 export const navItems: NavItem[] = [
- {id:'textStudio',labelAr:'استوديو النصوص',labelEn:'Text Studio',icon:Type,color:'from-lime-500 to-emerald-600',activeBg:'bg-lime-500/15 ring-1 ring-lime-500/30',group:'more'},
   { id: 'toolsHome', labelAr: 'كل الأدوات', labelEn: 'All Tools', icon: LayoutDashboard, color: 'from-indigo-600 to-violet-600', activeBg: 'bg-indigo-600/15 ring-1 ring-indigo-500/30', group: 'overview' },
   { id: 'pdfTools', labelAr: 'أدوات PDF', labelEn: 'PDF Tools', icon: FileText, color: 'from-red-600 to-rose-600', activeBg: 'bg-red-600/15 ring-1 ring-red-500/30', group: 'pdf' },
   { id: 'pdfSigner', labelAr: 'توقيع PDF', labelEn: 'PDF Signer', icon: FileSignature, color: 'from-lime-600 to-green-600', activeBg: 'bg-lime-600/15 ring-1 ring-lime-500/30', group: 'pdf' },

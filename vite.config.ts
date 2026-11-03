@@ -18,10 +18,9 @@ export default defineConfig(() => {
     build: {
       rollupOptions: {
         input: {
+          storage: path.resolve(__dirname, 'storage.html'),
           landing: path.resolve(__dirname, 'index.html'),
           logoDesigner: path.resolve(__dirname, 'logo-designer/index.html'),
-          pdfStudio: path.resolve(__dirname, 'pdf-studio/index.html'),
-          textStudio: path.resolve(__dirname, 'text-studio/index.html'),
           excelStudio: path.resolve(__dirname, 'excel-studio/index.html'),
           elements: path.resolve(__dirname, 'elements.html'),
           main: path.resolve(__dirname, 'app.html'),

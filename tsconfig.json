@@ -37,6 +37,8 @@
     "pdf-studio/**/*.ts",
     "pdf-studio/**/*.tsx",
     "text-studio/**/*.ts",
-    "text-studio/**/*.tsx"
+    "text-studio/**/*.tsx",
+    "site-storage/**/*.ts",
+    "site-storage/**/*.tsx"
   ]
 }
