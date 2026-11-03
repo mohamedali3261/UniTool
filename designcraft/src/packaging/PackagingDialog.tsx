@@ -11,7 +11,7 @@ import {
 } from "./geometry";
 import { cartonPdf, downloadCartonSvg, downloadPackaging } from "./export";
 import { createCartonProject } from "./project";
-import { getSavedProjects, saveProjectToStorage } from "../utils/fabricHelpers";
+import { saveProjectToStorage } from "../utils/fabricHelpers";
 import type { ProjectItem } from "../types";
 import { PerfumeTemplates } from "./PerfumeTemplates";
 import { ArtworkControls } from "./ArtworkControls";
@@ -86,17 +86,17 @@ export function PackagingDialog({
       ? "لسان القفل: 5–30 مم، بحد أقصى 60% من العمق و25% من العرض."
       : "Tuck: 5–30 mm; at most 60% of depth and 25% of width.",
   };
-  const create = () => {
-    if (issue) return;
+  const create = async () => {
+    if (issue || busy) return;
+    setBusy(true);
+    setError("");
     try {
       const p = createCartonProject(size, title);
       p.canvasData.objects = [
         ...cartonArtwork(size, artwork),
         ...p.canvasData.objects,
       ];
-      saveProjectToStorage(p);
-      if (!getSavedProjects().some((v) => v.id === p.id))
-        throw Error("Storage");
+      if (!(await saveProjectToStorage(p))) throw Error("Storage");
       onCreate(p);
     } catch {
       setError(
@@ -104,6 +104,8 @@ export function PackagingDialog({
           ? "تعذر إنشاء القالب أو حفظه. تحقق من مساحة التخزين."
           : "Could not create/save the template. Check storage.",
       );
+    } finally {
+      setBusy(false);
     }
   };
   return (

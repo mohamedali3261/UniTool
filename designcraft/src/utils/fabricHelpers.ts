@@ -3,12 +3,36 @@ import { deviceRasterBudget, rasterWithinBudget } from './rasterBudget';
 import { fabric } from 'fabric';
 import { SVG_ICON_STRINGS, getFallbackSvgForIcon } from './svgIcons';
 import { ProjectItem } from '../types';
-import { INITIAL_MOCK_PROJECTS } from '../data/presets';
 
 let styleHandlersInstalled = false;
+let clearContextGuardInstalled = false;
+
+/** Fabric 5 async object-enliven/font callbacks can render a canvas after dispose. */
+function installClearContextGuard() {
+  if (clearContextGuardInstalled) return;
+  clearContextGuardInstalled = true;
+  const proto = fabric.StaticCanvas.prototype as any;
+  const originalClear = proto.clearContext;
+  proto.clearContext = function (ctx: CanvasRenderingContext2D | null) {
+    if (!ctx) return this;
+    return originalClear.call(this, ctx);
+  };
+  const originalRender = proto.renderAll;
+  proto.renderAll = function () {
+    if (!this.contextContainer) return this;
+    return originalRender.call(this);
+  };
+  const originalRenderCanvas = proto.renderCanvas;
+  proto.renderCanvas = function (ctx: CanvasRenderingContext2D | null, objects: any[]) {
+    if (!ctx) return this;
+    return originalRenderCanvas.call(this, ctx, objects);
+  };
+}
+
 
 // Configure Fabric default control styling and safe text style handlers
 export const initFabricDefaults = () => {
+  installClearContextGuard();
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.cornerColor = '#0284C7';
   fabric.Object.prototype.cornerStrokeColor = '#FFFFFF';
@@ -1145,48 +1169,12 @@ export const applyTextCurve = (
   }
 };
 
-// LocalStorage Project Management
-const STORAGE_KEY = 'designcraft_saved_projects_v1';
-
-export const getSavedProjects = (): ProjectItem[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MOCK_PROJECTS));
-      return INITIAL_MOCK_PROJECTS;
-    }
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('Failed to parse saved projects', err);
-    return INITIAL_MOCK_PROJECTS;
-  }
-};
-
-export const saveProjectToStorage = (project: ProjectItem): void => {
-  try {
-    const projects = getSavedProjects();
-    const index = projects.findIndex((p) => p.id === project.id);
-    if (index >= 0) {
-      projects[index] = { ...project, updatedAt: Date.now() };
-    } else {
-      projects.unshift({ ...project, createdAt: Date.now(), updatedAt: Date.now() });
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  } catch (err) {
-    console.error('Failed to save project', err);
-  }
-};
-
-export const deleteProjectFromStorage = (projectId: string): ProjectItem[] => {
-  try {
-    const projects = getSavedProjects().filter((p) => p.id !== projectId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    return projects;
-  } catch (err) {
-    console.error('Failed to delete project', err);
-    return [];
-  }
-};
+// Project persistence lives in IndexedDB; keep these historical import paths stable.
+export {
+  getSavedProjects,
+  saveProjectToStorage,
+  deleteProjectFromStorage,
+} from './projectStorage';
 
 // Add Generic SVG Shape from Catalog
 export const addSvgShapeToCanvas = (

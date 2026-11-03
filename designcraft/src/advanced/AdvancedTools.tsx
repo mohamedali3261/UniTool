@@ -104,9 +104,11 @@ export function AdvancedTools({
           {t(ar, "أدوات المصمم المتقدمة", "Advanced designer tools")}
         </button>
         <span data-testid="design-save-status" role="status">
-          {studio.dirty
-            ? t(ar, "تعديلات غير محفوظة", "Unsaved changes")
-            : t(ar, "لا توجد تعديلات غير محفوظة", "No unsaved changes")}
+          {studio.saving
+            ? t(ar, "جارٍ الحفظ في المتصفح…", "Saving in this browser…")
+            : studio.dirty
+              ? t(ar, "تعديلات غير محفوظة", "Unsaved changes")
+              : t(ar, "لا توجد تعديلات غير محفوظة", "No unsaved changes")}
         </span>
         <span>
           {t(ar, "استرداد: ", "Recovery: ")}

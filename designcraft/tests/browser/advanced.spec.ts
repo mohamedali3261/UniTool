@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs/promises";
 import JSZip from "jszip";
+import { saveAndWait, storedProject } from "./helpers/storage";
 const base = process.env.DESIGN_QA_URL || "http://localhost:3000";
 const rects = [
   {
@@ -102,14 +103,8 @@ async function action(page: Page, label: string) {
   });
 }
 async function saved(page: Page, title = "Advanced QA") {
-  await page.getByRole("button", { name: "Save", exact: true }).first().click();
-  return page.evaluate(
-    (title) =>
-      JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-        (p: any) => p.title === title,
-      ),
-    title,
-  );
+  await saveAndWait(page);
+  return storedProject(page, title);
 }
 async function select(page: Page, x: number, y: number) {
   const b = (await page.locator("canvas.upper-canvas").boundingBox())!,
@@ -376,13 +371,13 @@ test("unsaved edits trigger beforeunload and save failures keep the warning", as
   const warning = await pending;
   expect(warning.type()).toBe("beforeunload");
   await warning.dismiss();
-  await page.evaluate(() =>
-    Object.defineProperty(Storage.prototype, "setItem", {
-      value: () => {
-        throw Error("Quota");
-      },
-    }),
-  );
+  await page.evaluate(() => {
+    const original = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args: any[]) {
+      if (this.name === "projects") throw new DOMException("Full", "QuotaExceededError");
+      return original.apply(this, args);
+    };
+  });
   await page.getByRole("button", { name: "Save", exact: true }).first().click();
   await expect(page.getByTestId("design-save-status")).toHaveText(
     "Unsaved changes",

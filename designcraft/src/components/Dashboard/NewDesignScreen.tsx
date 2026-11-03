@@ -1,12 +1,13 @@
 import {PackagingEntry} from "../../packaging/PackagingEntry";
+import { StorageManager } from './StorageManager';
+import { STORAGE_CHANGED_EVENT, removeProject } from '../../utils/projectStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { ProjectItem, DimensionPreset } from '../../types';
 import { DIMENSION_PRESETS } from '../../data/presets';
 import { PresetSilhouette } from './PresetSilhouette';
 import {
   getSavedProjects,
-  saveProjectToStorage,
-  deleteProjectFromStorage
+  saveProjectToStorage
 } from '../../utils/fabricHelpers';
 import {
   Sparkles,
@@ -24,7 +25,8 @@ import {
   Plus,
   X,
   Globe,
-  Upload
+  Upload,
+  Database
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
@@ -56,7 +58,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
 }) => {
   const { lang, t } = useDcLang();
 
-  const [activeTab, setActiveTab] = useState<'create' | 'projects'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'projects' | 'storage'>('create');
   const [customWidth, setCustomWidth] = useState<number>(1080);
   const [customHeight, setCustomHeight] = useState<number>(1080);
   const [customTitle, setCustomTitle] = useState<string>('');
@@ -96,12 +98,10 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const dispH = Math.max(16, Math.round(ph * fitScale));
 
   useEffect(() => {
-    try {
-      const saved = getSavedProjects();
-      setProjects(saved || []);
-    } catch (e) {
-      setProjects([]);
-    }
+    const refresh = () => setProjects(getSavedProjects());
+    refresh();
+    window.addEventListener(STORAGE_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(STORAGE_CHANGED_EVENT, refresh);
   }, []);
 
   const toggleLang = () => setDcLang(lang === 'ar' ? 'en' : 'ar');
@@ -150,7 +150,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     });
   };
 
-  const handleDuplicateProject = (project: ProjectItem) => {
+  const handleDuplicateProject = async (project: ProjectItem) => {
     const duplicated: ProjectItem = {
       ...project,
       id: `proj-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -158,19 +158,13 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-    saveProjectToStorage(duplicated);
-    setProjects(getSavedProjects());
-    if (onShowToast) {
-      onShowToast(t.toastDuplicated, duplicated.title, 'success');
-    }
+    const ok = await saveProjectToStorage(duplicated);
+    onShowToast?.(ok ? t.toastDuplicated : t.storageActionFailed, ok ? duplicated.title : undefined, ok ? 'success' : 'error');
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    const updated = deleteProjectFromStorage(projectId);
-    setProjects(updated);
-    if (onShowToast) {
-      onShowToast(t.toastDeleted, '', 'info');
-    }
+  const handleDeleteProject = async (projectId: string) => {
+    const ok = await removeProject(projectId);
+    onShowToast?.(ok ? t.toastDeleted : t.storageActionFailed, '', ok ? 'info' : 'error');
   };
 
   // Filter presets based on category and search query
@@ -391,7 +385,23 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                 </span>
               )}
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('storage')}
+              className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                activeTab === 'storage'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
+                  : 'text-slate-400 hover:text-white border border-transparent'
+              }`}
+            >
+              <Database className="w-4 h-4" />
+              <span>{t.storageTab}</span>
+            </button>
           </div>
+
+          {activeTab === 'storage' && (
+            <StorageManager projects={projects} onOpenProject={onOpenProject} onShowToast={onShowToast} />
+          )}
 
           {/* Create New Design */}
           {activeTab === 'create' && (

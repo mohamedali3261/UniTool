@@ -15,7 +15,8 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
   const [dirty, setDirty] = useState(false),
     [revision, setRevision] = useState(0),
     [points, setPoints] = useState<RecoveryPoint[]>([]),
-    [recoveryStatus, setRecoveryStatus] = useState("idle");
+    [recoveryStatus, setRecoveryStatus] = useState("idle"),
+    [saving, setSaving] = useState(false);
   const needsSave = useRef(!!project.sessionOnly);
   const baseline = useRef(""),
     lastRecovery = useRef("");
@@ -91,11 +92,17 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
     const saved = (event: Event) => {
       const d = (event as CustomEvent).detail;
       if (d?.id !== meta.current.id) return;
+      setSaving(false);
       if (d.ok) {
         needsSave.current = false;
-        baseline.current = fingerprint();
-        setDirty(false);
+        const current = fingerprint();
+        if (typeof d.fingerprint === "string") baseline.current = d.fingerprint;
+        else baseline.current = current;
+        setDirty(current !== baseline.current);
       } else setDirty(true);
+    };
+    const savingHandler = (event: Event) => {
+      if ((event as CustomEvent).detail?.id === meta.current.id) setSaving(true);
     };
     for (const name of [
       "object:added",
@@ -113,6 +120,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
       canvas.on(name as any, selected);
     canvas.on("studio:loaded" as any, loaded);
     window.addEventListener("designcraft:saved", saved);
+    window.addEventListener("designcraft:saving", savingHandler);
     if (!(canvas as any).__studioInitializing) loaded();
     refresh().catch(() => setRecoveryStatus("failed"));
     return () => {
@@ -135,6 +143,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
         canvas.off(name as any, selected);
       canvas.off("studio:loaded" as any, loaded);
       window.removeEventListener("designcraft:saved", saved);
+      window.removeEventListener("designcraft:saving", savingHandler);
     };
   }, [canvas, project.id]);
   useEffect(() => {
@@ -147,16 +156,17 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
     project.canvasData?.background,
   ]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !saving) return;
     const before = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", before);
     return () => window.removeEventListener("beforeunload", before);
-  }, [dirty]);
+  }, [dirty, saving]);
   return {
     dirty,
+    saving,
     revision,
     points,
     recoveryStatus,

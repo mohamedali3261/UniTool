@@ -21,7 +21,7 @@ export interface CanvasPage {
 }
 
 export interface ProjectItem {
-  /** In-memory import when browser project storage refused the write. */
+  /** Legacy flag kept for old in-memory imports; new saves are durable IndexedDB writes. */
   sessionOnly?: boolean;
   studio?: import('./advanced/core/faces').PrintSettings;
   id: string;
