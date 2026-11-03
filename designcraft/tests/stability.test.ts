@@ -66,3 +66,12 @@ test('initial fit and history budgets avoid full-size mobile allocations and rep
   assert.deepEqual(boundedHistory(['aa', 'bb', 'cc'], 0, 'new'), ['aa', 'new']);
   assert.deepEqual(boundedHistory(['old'], 0, 'large', 2), ['large']);
 });
+
+import { formatCanvasDimension } from '../src/utils/mobilePerformance';
+test('canvas dimension labels are concise without changing the source precision', () => {
+  const width = 884.4094488188978;
+  assert.equal(formatCanvasDimension(width), '884.4');
+  assert.equal(formatCanvasDimension(990.236220472441), '990.2');
+  assert.equal(formatCanvasDimension(800), '800');
+  assert.equal(width, 884.4094488188978);
+});

@@ -1,0 +1,68 @@
+import { saveAndWait, storedProject } from './helpers/storage';
+import { test, expect } from '@playwright/test';
+const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
+test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+for (const ar of [false, true]) test(`frame-batched pan, compact precision labels and docked zoom: ${ar ? 'RTL' : 'LTR'}`, async ({ page }) => {
+  await page.addInitScript(lang => localStorage.setItem('unitool-lang', lang), ar ? 'ar' : 'en');
+  await page.goto(base + '/designcraft.html');
+  const width = 884.4094488188978, height = 990.236220472441;
+  await page.locator('#designer-project-input').setInputFiles({ name: 'viewport.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ format: 'unitool-designcraft', version: 1, project: { title: 'Viewport QA', width, height, canvasData: { objects: [{ type: 'rect', left: 100, top: 100, width: 80, height: 60, fill: '#123456' }] } } })) });
+  await expect(page.locator('canvas.upper-canvas')).toBeVisible();
+  for (let i = 0; i < 4; i++) { const close = page.getByRole('button', { name: ar ? 'إغلاق' : 'Close', exact: true }); if (!await close.count()) break; await close.last().tap(); }
+  await expect(page.getByTestId('canvas-size-label')).toContainText('(884.4 × 990.2 px)');
+  const pill = page.locator('#floating-zoom-pill');
+  const origin = (await pill.boundingBox())!;
+  const result = await page.evaluate(async () => {
+    const area = document.getElementById('canvas-area-container')!;
+    const frame = document.getElementById('fabric-canvas-artboard-wrapper')!.parentElement!;
+    const rect = area.getBoundingClientRect();
+    let mutations = 0;
+    const observer = new MutationObserver(records => mutations += records.length);
+    observer.observe(frame, { attributes: true, attributeFilter: ['style'] });
+    const emit = (type: string, dx: number, dy: number) => {
+      const touch = new Touch({ identifier: 1, target: area, clientX: rect.left + 40 + dx, clientY: rect.top + 100 + dy });
+      area.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [touch], changedTouches: [touch] }));
+    };
+    emit('touchstart', 0, 0);
+    const before = frame.style.transform;
+    for (let i = 1; i <= 60; i++) emit('touchmove', i, i / 2);
+    const synchronous = frame.style.transform;
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    await Promise.resolve();
+    const frames = mutations;
+    const transform = frame.style.transform;
+    emit('touchend', 60, 30);
+    // Releasing before the next animation frame must retain the final position.
+    emit('touchstart', 0, 0);
+    emit('touchmove', 20, 10);
+    emit('touchend', 20, 10);
+    const released = frame.style.transform;
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    const settled = frame.style.transform;
+    observer.disconnect();
+    return { before, synchronous, frames, transform, released, settled };
+  });
+  expect(result.synchronous).toBe(result.before);
+  expect(result.frames).toBe(1);
+  expect(result.transform).toContain('60px, 30px');
+  expect(result.released).toContain('80px, 40px');
+  expect(result.settled).toBe(result.released);
+  let current = (await pill.boundingBox())!;
+  expect(current.x).toBeCloseTo(origin.x, 0); expect(current.y).toBeCloseTo(origin.y, 0);
+  await pill.getByRole('button', { name: '100%', exact: true }).tap();
+  for (let i = 0; i < 4; i++) await pill.getByRole('button').nth(1).tap();
+  await page.locator('#canvas-area-container').evaluate(el => { el.scrollLeft = 180; el.scrollTop = 140; });
+  current = (await pill.boundingBox())!;
+  expect(current.x).toBeCloseTo(origin.x, 0); expect(current.y).toBeCloseTo(origin.y, 0);
+  await expect(pill.getByRole('button').first()).toBeInViewport();
+  await expect(pill.getByRole('button').last()).toBeInViewport();
+  await saveAndWait(page, ar);
+  const project = await storedProject(page, 'Viewport QA');
+  expect(project.width).toBe(width); expect(project.height).toBe(height);
+  expect(project.canvasData.objects[0]).toMatchObject({ left: 100, top: 100 });
+  await page.setViewportSize({ width: 640, height: 390 });
+  await expect(pill).toBeInViewport();
+  const workspace = (await page.locator('#canvas-workspace').boundingBox())!;
+  current = (await pill.boundingBox())!;
+  expect(current.y + current.height).toBeLessThanOrEqual(workspace.y + workspace.height);
+});

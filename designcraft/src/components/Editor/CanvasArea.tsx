@@ -1,4 +1,4 @@
-import { fittedInitialZoom } from '../../utils/mobilePerformance';
+import { formatCanvasDimension, fittedInitialZoom } from '../../utils/mobilePerformance';
 import { shortcutKey } from '../../utils/keyboard';
 import {applyTextFit} from '../../advanced/core/text';
 import {installAlignmentGuides} from '../../utils/alignmentGuides';
@@ -88,22 +88,47 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // An unselected object must receive a completed click/tap before Fabric
   // may transform it on a subsequent gesture. First-drag always navigates.
   const pendingSelection = useRef<{ target: fabric.Object | null; x: number; y: number; moved: boolean } | null>(null);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const panOffsetRef = useRef(panOffset);
+  const artboardFrameRef = useRef<HTMLDivElement | null>(null);
+  const panOffsetRef = useRef({ x: 0, y: 0 });
+  const viewportFrame = useRef<number | null>(null);
+  const pendingViewport = useRef<{ left: number; top: number; x: number; y: number } | null>(null);
+  const pendingZoom = useRef<number | null>(null);
+  // Latest event wins: navigation never re-renders React or Fabric per move.
+  const flushViewport = () => {
+    if (viewportFrame.current !== null) cancelAnimationFrame(viewportFrame.current);
+    viewportFrame.current = null;
+    const next = pendingViewport.current;
+    pendingViewport.current = null;
+    if (next && containerRef.current && artboardFrameRef.current) {
+      containerRef.current.scrollLeft = next.left;
+      containerRef.current.scrollTop = next.top;
+      artboardFrameRef.current.style.transform = `translate3d(${next.x}px, ${next.y}px, 0)`;
+    }
+    if (pendingZoom.current !== null) {
+      const nextZoom = pendingZoom.current;
+      pendingZoom.current = null;
+      setZoom(nextZoom);
+    }
+  };
+  useEffect(() => () => {
+    if (viewportFrame.current !== null) cancelAnimationFrame(viewportFrame.current);
+    pendingViewport.current = null;
+    pendingZoom.current = null;
+  }, []);
   const panOrigin = useRef({ x: 0, y: 0, freeX: false, freeY: false });
   const beginViewportPan = () => {
+    flushViewport();
     const el = containerRef.current!;
-    panOrigin.current = { ...panOffsetRef.current, freeX: el.scrollWidth <= el.clientWidth, freeY: el.scrollHeight <= el.clientHeight };
+    panOrigin.current = { ...panOffsetRef.current, freeX: panOffsetRef.current.x !== 0 || el.scrollWidth <= el.clientWidth, freeY: panOffsetRef.current.y !== 0 || el.scrollHeight <= el.clientHeight };
   };
   const moveViewport = (left: number, top: number, dx: number, dy: number) => {
-    const el = containerRef.current!;
     if (pendingSelection.current && Math.hypot(dx, dy) > 6) pendingSelection.current.moved = true;
     const origin = panOrigin.current;
-    if (!origin.freeX) el.scrollLeft = left - dx;
-    if (!origin.freeY) el.scrollTop = top - dy;
+
     const next = { x: origin.x + (origin.freeX ? dx : 0), y: origin.y + (origin.freeY ? dy : 0) };
     panOffsetRef.current = next;
-    setPanOffset(next);
+    pendingViewport.current = { ...next, left: origin.freeX ? left : left - dx, top: origin.freeY ? top : top - dy };
+    if (viewportFrame.current === null) viewportFrame.current = requestAnimationFrame(flushViewport);
   };
 
   // Pinch-to-zoom & Touch Pan refs
@@ -270,6 +295,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // 2. Global Event Listener to PREVENT ANY DRAG HANGING when mouse leaves canvas or window
   useEffect(() => {
     const handleGlobalRelease = (e: MouseEvent | TouchEvent | PointerEvent) => {
+      flushViewport();
       setIsPanning(false);
       touchPanning.current = false;
       if (e.type === 'blur') setIsSpacePressed(false);
@@ -469,7 +495,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         beginViewportPan();
         initialPinchDistRef.current = dist;
-        initialZoomRef.current = zoom;
+        initialZoomRef.current = fabricCanvasRef.current?.getZoom() || zoom;
 
         const midX = (touch1.clientX + touch2.clientX) / 2;
         const midY = (touch1.clientY + touch2.clientY) / 2;
@@ -508,7 +534,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         const scale = dist / initialPinchDistRef.current;
         const newZoom = Math.max(0.15, Math.min(3.0, +(initialZoomRef.current * scale).toFixed(2)));
-        setZoom(newZoom);
+        pendingZoom.current = newZoom;
 
         const midX = (touch1.clientX + touch2.clientX) / 2;
         const midY = (touch1.clientY + touch2.clientY) / 2;
@@ -526,6 +552,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     };
 
     const handleTouchEnd = () => {
+      flushViewport();
       initialPinchDistRef.current = null;
       touchPanning.current = false;
       setIsPanning(false);
@@ -542,7 +569,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       container.removeEventListener('touchend', handleTouchEnd);
       container.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [zoom, isPanMode, isSpacePressed, isPanning, setZoom]);
+  }, [isPanMode, isSpacePressed, setZoom]);
 
   // Panning must never hit-test or transform artwork underneath the hand.
   useEffect(() => {
@@ -594,8 +621,9 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // Fit to screen helper
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) return;
+    flushViewport();
     panOffsetRef.current = { x: 0, y: 0 };
-    setPanOffset({ x: 0, y: 0 });
+    if (artboardFrameRef.current) artboardFrameRef.current.style.transform = 'translate3d(0, 0, 0)';
     const cWidth = containerRef.current.clientWidth - 40;
     const cHeight = containerRef.current.clientHeight - 80;
     const scaleX = cWidth / width;
@@ -663,6 +691,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   return (
+    <div id="canvas-workspace" className="relative flex-1 min-w-0 h-full overflow-hidden">
     <div
       ref={containerRef}
       id="canvas-area-container"
@@ -677,13 +706,15 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         backgroundImage: showGrid
           ? 'radial-gradient(rgba(56, 189, 248, 0.25) 1.5px, transparent 1.5px)'
           : 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
-        backgroundSize: '20px 20px'
+        backgroundSize: '20px 20px',
+        overscrollBehavior: 'contain',
+        touchAction: 'none'
       }}
     >
       {/* Artboard Frame & Canvas Container */}
-      <div className="m-auto shrink-0 flex flex-col items-center justify-center" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}>
-        <div className="text-[10px] font-mono text-slate-400 mb-1 tracking-wider">
-          {t.caCanvasLabel} ({width} × {height} px)
+      <div ref={artboardFrameRef} className="m-auto shrink-0 flex flex-col items-center justify-center" style={{ willChange: 'transform' }}>
+        <div data-testid="canvas-size-label" className="text-[10px] font-mono text-slate-400 mb-1 tracking-wider whitespace-nowrap">
+          {t.caCanvasLabel} <bdi dir="ltr">({formatCanvasDimension(width)} × {formatCanvasDimension(height)} px)</bdi>
         </div>
 
         <div
@@ -695,16 +726,22 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         </div>
       </div>
 
-      {/* Floating Bottom Control Pill (Mobile Safe above bottom nav) */}
+    </div>
+      {/* Outside the scrolling/transforming viewport: controls stay docked. */}
       <div
         id="floating-zoom-pill"
-        className="absolute bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-[#1C2541]/95 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl text-xs"
+        role="group"
+        aria-label={lang === 'ar' ? 'تكبير وعرض اللوحة' : 'Canvas zoom controls'}
+        className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-[#1C2541]/95 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl text-xs max-w-[calc(100%-16px)] whitespace-nowrap"
+        style={{ bottom: 'calc(var(--canvas-controls-bottom, 64px) + env(safe-area-inset-bottom, 0px))' }}
       >
         <button
           type="button"
           onClick={() => setZoom((z) => Math.max(0.1, +(z - 0.1).toFixed(2)))}
-          className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
           title={t.caZoomOut}
+          aria-label={t.caZoomOut}
+          disabled={zoom <= .1}
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
@@ -716,8 +753,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         <button
           type="button"
           onClick={() => setZoom((z) => Math.min(3.0, +(z + 0.1).toFixed(2)))}
-          className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
           title={t.caZoomIn}
+          aria-label={t.caZoomIn}
+          disabled={zoom >= 3}
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
@@ -727,8 +766,9 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         <button
           type="button"
           onClick={fitToScreen}
-          className="p-1 text-slate-300 hover:text-sky-300 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-medium"
+          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-300 hover:text-sky-300 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-medium"
           title={t.caFitScreen}
+          aria-label={t.caFitScreen}
         >
           <Maximize2 className="w-3 h-3" />
           <span className="hidden sm:inline">{t.caFitLabel}</span>
@@ -737,7 +777,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         <button
           type="button"
           onClick={() => setZoom(1)}
-          className="px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 rounded font-mono transition"
+          className="min-h-9 sm:min-h-0 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 rounded font-mono transition"
           title={t.caActualSize}
         >
           100%
