@@ -31,7 +31,7 @@ test("eight scroll-directed chapters cover every workspace and animate with real
       chapter.href,
     );
   }
-  const pdf = page.locator("#journey-pdf"),
+  const pdf = page.locator("#journey-storage"),
     top = await pdf.evaluate((el) => el.getBoundingClientRect().top + scrollY);
   await scroll(page, top - 750);
   await expect
@@ -83,7 +83,7 @@ test("pause and live reduced-motion preference settle all scenes without hiding 
   page,
 }) => {
   await page.goto(base);
-  const pdf = page.locator("#journey-pdf");
+  const pdf = page.locator("#journey-storage");
   await page.getByRole("button", { name: "إيقاف الحركة", exact: true }).click();
   await expect(pdf).toHaveCSS("--enter", "1");
   const first = await pdf.evaluate((el) =>

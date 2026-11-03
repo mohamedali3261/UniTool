@@ -45,7 +45,8 @@ export default function App() {
 
   useEffect(()=>{if(String(currentPage)==="excelStudio")window.location.replace("/excel-studio/");},[currentPage]);
 
-  useEffect(()=>{if(currentPage==="textStudio")window.location.replace("/text-studio/");},[currentPage]);
+
+  useEffect(() => { if (currentPage === "siteStorage") window.location.replace("/storage.html"); }, [currentPage]);
 
   // Keep the logo-video splash visible long enough to be seen
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'queue' | 'workstation' | 'settings'>('workstation');
 
   const navigateToPage = (page: string) => {
-    if(page === "textStudio"){window.location.assign("/text-studio/");return;}
+    if(page === "siteStorage"){window.location.assign("/storage.html");return;}
     if(page === "excelStudio"){window.location.assign("/excel-studio/");return;}
     if (knownPageIds.has(page) && window.location.hash.slice(1) !== page) {
       history.replaceState(null, '', `#${page}`);

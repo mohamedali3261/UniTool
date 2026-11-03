@@ -45,7 +45,6 @@ export const toolCategories: ToolCategory[] = [
     accent: 'from-red-500 to-rose-600',
     soft: 'bg-red-500/10 text-red-300 border-red-500/20',
     tools: [
-      {id:'pdfStudio',href:'/pdf-studio/',icon:FileText,titleAr:'استوديو تعديل PDF',titleEn:'PDF Studio',descAr:'اقرأ العربي وعلّق ورتّب صفحاتك، مع OCR محلي وتصدير نسخة جديدة',descEn:'Read Arabic, annotate and organize pages with local OCR and copy export',gradient:'from-orange-500 to-amber-600',border:'border-orange-500/25 hover:border-orange-400/50',glow:'group-hover:shadow-orange-500/20',badgeAr:'جديد',badgeEn:'New'},
       {
         id: 'imageToPdf', icon: Image,
         titleAr: 'صور → PDF', titleEn: 'Images → PDF',
@@ -315,7 +314,8 @@ export const toolCategories: ToolCategory[] = [
       },
     ],
   },
- {id:'typography',titleAr:'نصوص وخطوط',titleEn:'Text & typography',taglineAr:'كلماتك بتصميم يشبهك، محليًا',taglineEn:'Local typography, your way',icon:Type,accent:'from-lime-500 to-emerald-600',soft:'bg-lime-500/10 text-lime-300 border-lime-500/20',tools:[{id:'textStudio',href:'/text-studio/',icon:Type,titleAr:'استوديو النصوص',titleEn:'Text Studio',descAr:'خطوط عربية وقوالب وتأثيرات وتصدير PNG وSVG بدون رفع النصوص',descEn:'Arabic fonts, templates, effects and PNG/SVG exports without uploading your text',gradient:'from-lime-500 to-emerald-600',border:'border-lime-500/25 hover:border-lime-400/50',glow:'group-hover:shadow-lime-500/20',badgeAr:'جديد',badgeEn:'New'}]},
 ];
+
+toolCategories[toolCategories.length - 1].tools.push({ id: 'siteStorage', href: '/storage.html', icon: FileText, titleAr: 'التخزين والنسخ الاحتياطي', titleEn: 'Storage & backup', descAr: 'نسخة مضغوطة لبيانات الموقع المحفوظة ونقلها بين الأجهزة', descEn: 'Back up and restore saved site data across devices', gradient: 'from-emerald-500 to-cyan-600', border: 'border-emerald-500/25', glow: 'hover:shadow-emerald-500/20' });
 
 export const totalToolCount = toolCategories.reduce((sum, c) => sum + c.tools.length, 0);

@@ -148,6 +148,7 @@ export const StorageManager: React.FC<StorageManagerProps> = ({ projects, onOpen
           </div>
           <div className="min-w-0">
             <h2 className="text-base sm:text-lg font-bold text-white">{t.storageTitle}</h2>
+            <a href="/storage.html" className="text-xs text-emerald-300 underline">{lang === 'ar' ? 'نسخة احتياطية للموقع بالكامل' : 'Back up the entire site'}</a>
             <p className="text-xs text-slate-400 leading-relaxed mt-1 max-w-3xl">{t.storageDesc}</p>
           </div>
         </div>

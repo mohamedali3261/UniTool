@@ -9,28 +9,7 @@ import {
 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
- {id:'text',href:'/text-studio/',icon:Type,name:{ar:'استوديو النصوص',en:'Text Studio'},eyebrow:'WORDS, WITH CHARACTER.',description:{ar:'كلماتك، بشكل يشبهك.',en:'Your words. Beautifully yours.'},detail:{ar:'اكتب جملتك، اختار خط وقالب وتأثير، وصدّر تصميمك. كل المعالجة والخطوط محلية.',en:'Type your words, choose a font, template and effect, and export your design. Local processing and bundled fonts.'},tags:{ar:['خطوط عربية','قوالب وتأثيرات','تصدير PNG وSVG'],en:['Arabic fonts','Templates & effects','PNG & SVG export']},action:{ar:'افتح استوديو النصوص',en:'Open Text Studio'},color:'#cce7a3'},
-  {
-    id: "pdf",
-    href: "/pdf-studio/",
-    icon: FileText,
-    name: { ar: "استوديو PDF", en: "PDF Studio" },
-    eyebrow: "EVERY WORD. EVERY DETAIL.",
-    description: {
-      ar: "مستندك، بكل تفاصيله.",
-      en: "Your document. Every little detail.",
-    },
-    detail: {
-      ar: "اقرأ النص العربي، أضف التعليقات، ورتب الصفحات مع OCR محلي ومراجعة النتائج.",
-      en: "Read Arabic text, annotate and organize pages with local OCR and reviewable results.",
-    },
-    tags: {
-      ar: ["قراءة عربي", "تعليقات وصفحات", "OCR محلي"],
-      en: ["Arabic reading", "Annotations & pages", "Local OCR"],
-    },
-    action: { ar: "افتح استوديو PDF", en: "Open PDF Studio" },
-    color: "#deb58f",
-  },
+  { id: 'storage', href: '/storage.html', icon: FileText, name: {ar:'التخزين والنسخ الاحتياطي', en:'Storage & backup'}, eyebrow:'YOUR WORK, WITH YOU.', description:{ar:'كل شغلك المحفوظ، معاك.',en:'Your saved work. Anywhere.'}, detail:{ar:'نزّل نسخة مضغوطة ومنظمة واستعد بيانات الموقع المحفوظة على جهاز آخر.',en:'Download an organized ZIP backup and restore saved site data on another device.'}, tags:{ar:['نسخة ZIP','مجلد لكل قسم','استعادة آمنة'],en:['ZIP archive','Organized sections','Safe restore']},action:{ar:'افتح التخزين العام',en:'Open site storage'},color:'#a9cfa8'},
   {
     id: "sheets",
     href: "/excel-studio/",

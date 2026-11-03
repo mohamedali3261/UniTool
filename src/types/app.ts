@@ -1,5 +1,5 @@
 export type PageId =
-  | 'textStudio'
+  | 'siteStorage'
   | 'toolsHome'
   | 'compress'
   | 'splitter'

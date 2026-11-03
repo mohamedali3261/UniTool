@@ -40,7 +40,7 @@ test("quick picks cover each category; search and filters reveal tools, studios 
 }) => {
   await page.goto(base);
   await expect(page.locator(".directory-tool")).toHaveCount(10);
-  await expect(page.locator('.directory-tool[href="/text-studio/"]')).toBeVisible();
+  await expect(page.locator('.directory-tool[href="/storage.html"]')).toBeVisible();
   for (const c of toolCategories)
     expect(
       await page.locator(`.directory-tool.tone-${c.id}`).count(),

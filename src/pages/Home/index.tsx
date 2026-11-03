@@ -1,4 +1,4 @@
-import {TextArt} from './components/TextArt';
+import {StorageArt} from './components/StorageArt';
 import { ScrollJourney } from "./components/scroll/ScrollJourney";
 import { useScrollMotion } from "./components/scroll/useScrollMotion";
 import { HeroMotion } from "./components/motion/HeroMotion";
@@ -373,7 +373,7 @@ export default function HomePage() {
                   role="img"
                   aria-label={`${t.illustration}: ${s.name[lang]}`}
                 >
-                  {s.id === "text" ? (<TextArt lang={lang}/>) : s.id === "design" ? (
+                  {s.id === "storage" ? (<StorageArt lang={lang}/>) : s.id === "design" ? (
                     <DesignArt lang={lang} />
                   ) : s.id === "video" ? (
                     <VideoArt />

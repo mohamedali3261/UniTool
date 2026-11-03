@@ -85,7 +85,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
           </g>
         </>
       )}
-      {kind === "pdf" && (
+      {kind === "storage" && (
         <>
           {[0, 1, 2].map((i) => (
             <g
