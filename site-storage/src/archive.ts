@@ -23,11 +23,14 @@ const validPath = (path: string) => typeof path === 'string' && /^(sections\/(de
 export async function exportSite(progress: (text: string) => void = () => {}) {
   const zip = new JSZip();
   const entries: Entry[] = [];
-  let bytes = 0, serial = 0, recordCount = 0;
-  const add = async (path: string, data: Uint8Array, kind: Entry['kind']) => {
+  let bytes = 0, serial = 0, recordCount = 0, logicalBinaryBytes = 0, jsonBytes = 0;
+  const binaryPaths = new Map<string, string>();
+  const add = async (path: string, data: Uint8Array, kind: Entry['kind'], digest?: string) => {
+    if (kind !== 'binary') jsonBytes += data.byteLength;
+    if (jsonBytes + logicalBinaryBytes > LIMIT) throw Error('Backup exceeds 128 MB logical safety limit');
     bytes += data.byteLength;
     if (bytes > LIMIT || entries.length >= MAX_FILES) throw Error('النسخة تتجاوز حد 128 MB. انقل الملفات الكبيرة من أدواتها / Backup exceeds 128 MB safety limit');
-    entries.push({ path, size: data.byteLength, sha256: await hash(data), kind });
+    entries.push({ path, size: data.byteLength, sha256: digest || await hash(data), kind });
     zip.file(path, data);
   };
   const local = new Map<string, [string, string][]>();
@@ -48,9 +51,13 @@ export async function exportSite(progress: (text: string) => void = () => {}) {
       if (recordCount > MAX_RECORDS) throw Error('Too many records');
       const rows = [];
       const binary = async (blob: Blob) => {
-        if (blob.size + bytes > LIMIT) throw Error('Backup exceeds 128 MB safety limit');
+        logicalBinaryBytes += blob.size;
+        if (logicalBinaryBytes + jsonBytes > LIMIT) throw Error('Backup exceeds 128 MB safety limit');
+        const data = new Uint8Array(await blob.arrayBuffer()), digest = await hash(data);
+        const existing = binaryPaths.get(digest);
+        if (existing) return existing;
         const path = `assets/${config.section}/${serial++}.bin`;
-        await add(path, new Uint8Array(await blob.arrayBuffer()), 'binary'); return path;
+        await add(path, data, 'binary', digest); binaryPaths.set(digest, path); return path;
       };
       for (const row of store.records) rows.push({ key: await encode(row.key, binary), value: await encode(row.value, binary) });
       store.records = rows;
@@ -93,8 +100,12 @@ export async function prepareArchive(input: Uint8Array): Promise<Prepared> {
   const databases: DatabaseDump[] = [], local: [string, string][] = [];
   const dbNames = new Set(), localKeys = new Set();
   let records = 0;
+  let decodedBinaryBytes = 0;
+  const metadataBytes = manifest.entries.filter(e => e.kind !== 'binary').reduce((sum,e) => sum + e.size, 0);
   const readBinary = async (path: string) => {
     if (!manifest.entries.some(e => e.path === path && e.kind === 'binary') || !path.startsWith('assets/')) throw Error('Missing binary asset');
+    decodedBinaryBytes += content.get(path)!.byteLength;
+    if (decodedBinaryBytes + metadataBytes > LIMIT) throw Error('Expanded binary references exceed safety limit');
     return content.get(path)!;
   };
   for (const entry of manifest.entries) {

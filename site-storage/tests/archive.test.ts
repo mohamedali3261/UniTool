@@ -130,3 +130,27 @@ test('re-signed archives still reject mismatched record IDs and credential setti
   await assert.rejects(prepareArchive(forbidden), /Unsafe settings/);
   assert.equal(await readDatabase('unitool-video-studio'), null);
 });
+
+test('identical binary bytes are archived once without losing per-file metadata', async () => {
+  await mergeDatabase({name:'unitool-video-studio',stores:[
+    {name:'projects',keyPath:'id',records:[]},
+    {name:'media',keyPath:'key',records:[
+      {key:'one',value:{key:'one',name:'one.mp4',file:new File(['same-media'],'one.mp4',{type:'video/mp4'})}},
+      {key:'two',value:{key:'two',name:'two.bin',file:new File(['same-media'],'two.bin',{type:'application/octet-stream'})}},
+    ]},
+  ]});
+  const archive = await exportSite(), zip = await JSZip.loadAsync(archive);
+  assert.equal(Object.keys(zip.files).filter(p=>p.endsWith('.bin')).length,1);
+  newDevice(); await restoreSite(await prepareArchive(archive));
+  const rows = (await readDatabase('unitool-video-studio'))!.stores.find(s=>s.name==='media')!.records;
+  assert.equal(rows[0].value.name,'one.mp4'); assert.equal(rows[1].value.name,'two.bin');
+  assert.equal(rows[1].value.file.type,'application/octet-stream');
+  assert.equal(await rows[0].value.file.text(),'same-media'); assert.equal(await rows[1].value.file.text(),'same-media');
+});
+
+test('the binary codec retains native file names and modification time', async () => {
+  let bytes = new Uint8Array();
+  const encoded = await encode(new File(['same'], 'source.mp4', { type: 'video/mp4', lastModified: 123 }), async blob => { bytes = new Uint8Array(await blob.arrayBuffer()); return 'assets/video/0.bin'; });
+  const restored = await decode(encoded, async () => bytes);
+  assert.equal(restored.name, 'source.mp4'); assert.equal(restored.lastModified, 123);
+});

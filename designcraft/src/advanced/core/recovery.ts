@@ -1,3 +1,4 @@
+import { retainedRecovery } from '../../utils/recoveryRetention';
 export interface RecoveryPoint {
   id: string;
   projectId: string;
@@ -57,19 +58,25 @@ export async function saveRecovery(projectId: string, data: string) {
     created: Date.now(),
     data,
   };
-  await transact("readwrite", (s) => s.put(point));
-  const all = (await transact("readonly", (s) =>
-      s.getAll(),
-    )) as RecoveryPoint[],
-    sorted = all.sort((a, b) => b.created - a.created);
-  let own = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    if (sorted[i].projectId === projectId) own++;
-    if (i >= 20 || (sorted[i].projectId === projectId && own > 5))
-      await transact("readwrite", (s) => s.delete(sorted[i].id));
-  }
-  notifyRecovery();
-  return point;
+  const database = await db();
+  const saved = await new Promise<RecoveryPoint>((resolve, reject) => {
+    const tx = database.transaction('points', 'readwrite'), store = tx.objectStore('points');
+    let result: RecoveryPoint = point;
+    const request = store.getAll();
+    request.onsuccess = () => {
+      const all = request.result as RecoveryPoint[];
+      const previous = all.filter(p => p.projectId === projectId).sort((a,b) => b.created - a.created)[0];
+      if (previous?.data === data) { result = previous; return; }
+      point.created = Math.max(point.created, (previous?.created || 0) + 1);
+      const kept = new Set(retainedRecovery(all, point).map(p => p.id));
+      store.put(point);
+      for (const old of all) if (!kept.has(old.id)) store.delete(old.id);
+    };
+    tx.oncomplete = () => resolve(result);
+    tx.onabort = tx.onerror = () => reject(tx.error || Error('RECOVERY_WRITE'));
+  });
+  if (saved.id === point.id) notifyRecovery();
+  return saved;
 }
 export async function deleteRecovery(projectId: string) {
   for (const point of await recoveryPoints(projectId))
