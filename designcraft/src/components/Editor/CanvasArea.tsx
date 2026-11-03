@@ -85,7 +85,30 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     scrollTop: 0
   });
 
+  // An unselected object must receive a completed click/tap before Fabric
+  // may transform it on a subsequent gesture. First-drag always navigates.
+  const pendingSelection = useRef<{ target: fabric.Object | null; x: number; y: number; moved: boolean } | null>(null);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const panOffsetRef = useRef(panOffset);
+  const panOrigin = useRef({ x: 0, y: 0, freeX: false, freeY: false });
+  const beginViewportPan = () => {
+    const el = containerRef.current!;
+    panOrigin.current = { ...panOffsetRef.current, freeX: el.scrollWidth <= el.clientWidth, freeY: el.scrollHeight <= el.clientHeight };
+  };
+  const moveViewport = (left: number, top: number, dx: number, dy: number) => {
+    const el = containerRef.current!;
+    if (pendingSelection.current && Math.hypot(dx, dy) > 6) pendingSelection.current.moved = true;
+    const origin = panOrigin.current;
+    if (!origin.freeX) el.scrollLeft = left - dx;
+    if (!origin.freeY) el.scrollTop = top - dy;
+    const next = { x: origin.x + (origin.freeX ? dx : 0), y: origin.y + (origin.freeY ? dy : 0) };
+    panOffsetRef.current = next;
+    setPanOffset(next);
+  };
+
   // Pinch-to-zoom & Touch Pan refs
+  const touchPanning = useRef(false);
+  const wheelAnchor = useRef<{ x: number; y: number; worldX: number; worldY: number } | null>(null);
   const initialPinchDistRef = useRef<number | null>(null);
   const initialZoomRef = useRef<number>(zoom);
   const touchPanStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number }>({
@@ -248,9 +271,22 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   useEffect(() => {
     const handleGlobalRelease = (e: MouseEvent | TouchEvent | PointerEvent) => {
       setIsPanning(false);
+      touchPanning.current = false;
       if (e.type === 'blur') setIsSpacePressed(false);
       const canvas = fabricCanvasRef.current;
       if (!canvas) return;
+
+      if (e.type === 'blur' || e.type === 'pointercancel' || e.type === 'touchcancel') pendingSelection.current = null;
+      if (e.type === 'mouseup' || e.type === 'touchend') {
+        const pending = pendingSelection.current;
+        pendingSelection.current = null;
+        const point = 'changedTouches' in e ? e.changedTouches[0] : e as MouseEvent;
+        if (pending && point && !pending.moved && Math.hypot(point.clientX - pending.x, point.clientY - pending.y) <= 6) {
+          if (pending.target && canvas.getObjects().includes(pending.target)) canvas.setActiveObject(pending.target);
+          else if (!pending.target) canvas.discardActiveObject();
+          canvas.requestRenderAll();
+        }
+      }
 
       // If Fabric was mid-drag or mid-transform when cursor exited canvas bounds, safely finish it
       if ((canvas as any)._currentTransform) {
@@ -267,6 +303,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     window.addEventListener('mouseup', handleGlobalRelease, { passive: true });
     window.addEventListener('touchend', handleGlobalRelease, { passive: true });
+    window.addEventListener('touchcancel', handleGlobalRelease, { passive: true });
     window.addEventListener('pointerup', handleGlobalRelease, { passive: true });
     window.addEventListener('pointercancel', handleGlobalRelease, { passive: true });
     window.addEventListener('blur', handleGlobalRelease);
@@ -274,6 +311,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     return () => {
       window.removeEventListener('mouseup', handleGlobalRelease);
       window.removeEventListener('touchend', handleGlobalRelease);
+      window.removeEventListener('touchcancel', handleGlobalRelease);
       window.removeEventListener('pointerup', handleGlobalRelease);
       window.removeEventListener('pointercancel', handleGlobalRelease);
       window.removeEventListener('blur', handleGlobalRelease);
@@ -295,6 +333,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     });
     canvas.setZoom(zoom);
     canvas.renderAll();
+    const anchor = wheelAnchor.current;
+    if (anchor && containerRef.current) {
+      const rect = canvas.upperCanvasEl.getBoundingClientRect();
+      containerRef.current.scrollLeft += rect.left + anchor.worldX * zoom - anchor.x;
+      containerRef.current.scrollTop += rect.top + anchor.worldY * zoom - anchor.y;
+      wheelAnchor.current = null;
+    }
   }, [width, height, zoom]);
 
   // 4. Update Canvas Background Color
@@ -313,7 +358,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return; // Normal wheel/trackpad scrolls; Ctrl+wheel zooms.
+      if ((e.target as HTMLElement).closest('button, input, textarea, select, #floating-object-hud')) return;
+      if (!e.deltaY) return;
+      const canvas = fabricCanvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.upperCanvasEl.getBoundingClientRect();
+      wheelAnchor.current = { x: e.clientX, y: e.clientY, worldX: (e.clientX - rect.left) / canvas.getZoom(), worldY: (e.clientY - rect.top) / canvas.getZoom() };
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.05 : -0.05;
       setZoom((prev) => {
@@ -411,11 +461,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     const handleTouchStart = (e: TouchEvent) => {
       if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
       if (e.touches.length === 2) {
+        pendingSelection.current = null;
         e.preventDefault();
         e.stopPropagation();
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        beginViewportPan();
         initialPinchDistRef.current = dist;
         initialZoomRef.current = zoom;
 
@@ -427,16 +479,22 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           scrollLeft: container.scrollLeft,
           scrollTop: container.scrollTop
         };
-      } else if (e.touches.length === 1 && (isPanMode || isSpacePressed)) {
+      } else if (e.touches.length === 1) {
+        const canvas = fabricCanvasRef.current;
+        const target = canvas?.findTarget(e, false);
+        if (!isPanMode && !isSpacePressed && target && target === canvas?.getActiveObject()) return;
+        if (!isPanMode && !isSpacePressed) pendingSelection.current = { target: target || null, x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false };
         e.preventDefault();
         e.stopPropagation();
         const touch = e.touches[0];
+        beginViewportPan();
         touchPanStartRef.current = {
           x: touch.clientX,
           y: touch.clientY,
           scrollLeft: container.scrollLeft,
           scrollTop: container.scrollTop
         };
+        touchPanning.current = true;
         setIsPanning(true);
       }
     };
@@ -456,21 +514,20 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         const midY = (touch1.clientY + touch2.clientY) / 2;
         const dx = midX - touchPanStartRef.current.x;
         const dy = midY - touchPanStartRef.current.y;
-        container.scrollLeft = touchPanStartRef.current.scrollLeft - dx;
-        container.scrollTop = touchPanStartRef.current.scrollTop - dy;
-      } else if (e.touches.length === 1 && (isPanning || isPanMode || isSpacePressed)) {
+        moveViewport(touchPanStartRef.current.scrollLeft, touchPanStartRef.current.scrollTop, dx, dy);
+      } else if (e.touches.length === 1 && touchPanning.current) {
         e.preventDefault();
         e.stopPropagation();
         const touch = e.touches[0];
         const dx = touch.clientX - touchPanStartRef.current.x;
         const dy = touch.clientY - touchPanStartRef.current.y;
-        container.scrollLeft = touchPanStartRef.current.scrollLeft - dx;
-        container.scrollTop = touchPanStartRef.current.scrollTop - dy;
+        moveViewport(touchPanStartRef.current.scrollLeft, touchPanStartRef.current.scrollTop, dx, dy);
       }
     };
 
     const handleTouchEnd = () => {
       initialPinchDistRef.current = null;
+      touchPanning.current = false;
       setIsPanning(false);
     };
 
@@ -500,12 +557,16 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
   // 8. Mouse Pan dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isPanMode || isSpacePressed || e.button === 1) {
+    const canvas = fabricCanvasRef.current;
+    const target = canvas?.findTarget(e.nativeEvent, false);
+    if (isPanMode || isSpacePressed || e.button === 1 || (e.button === 0 && (!target || target !== canvas?.getActiveObject()))) {
       if ((e.target as HTMLElement).closest('button, input, select, textarea')) return;
       e.preventDefault();
       e.stopPropagation();
+      if (e.button === 0 && !isPanMode && !isSpacePressed) pendingSelection.current = { target: target || null, x: e.clientX, y: e.clientY, moved: false };
       setIsPanning(true);
       if (containerRef.current) {
+        beginViewportPan();
         panStartRef.current = {
           x: e.clientX,
           y: e.clientY,
@@ -521,8 +582,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       e.preventDefault();
       const dx = e.clientX - panStartRef.current.x;
       const dy = e.clientY - panStartRef.current.y;
-      containerRef.current.scrollLeft = panStartRef.current.scrollLeft - dx;
-      containerRef.current.scrollTop = panStartRef.current.scrollTop - dy;
+      moveViewport(panStartRef.current.scrollLeft, panStartRef.current.scrollTop, dx, dy);
     }
   };
 
@@ -534,6 +594,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // Fit to screen helper
   const fitToScreen = useCallback(() => {
     if (!containerRef.current) return;
+    panOffsetRef.current = { x: 0, y: 0 };
+    setPanOffset({ x: 0, y: 0 });
     const cWidth = containerRef.current.clientWidth - 40;
     const cHeight = containerRef.current.clientHeight - 80;
     const scaleX = cWidth / width;
@@ -604,7 +666,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     <div
       ref={containerRef}
       id="canvas-area-container"
-      title={lang==='ar'?'H لتحريك اللوحة، V للتحديد، مسافة مع السحب للتحريك مؤقتًا. Ctrl مع عجلة الماوس للتكبير؛ Alt لتجاهل الالتقاط.':'H: pan; V: select; Space + drag: temporary pan. Ctrl + wheel: zoom; Alt: bypass snapping.'}
+      title={lang==='ar'?'H لتحريك اللوحة، V للتحديد، مسافة مع السحب للتحريك مؤقتًا. عجلة الماوس للتكبير؛ اسحب المساحة الفارغة لتحريك اللوحة؛ Alt لتجاهل الالتقاط.':'H: pan; V: select; Space + drag: temporary pan. Wheel: zoom; drag empty space: pan; Alt: bypass snapping.'}
       onMouseDownCapture={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -618,105 +680,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         backgroundSize: '20px 20px'
       }}
     >
-      <div className="absolute bottom-3 start-3 z-30 flex items-center gap-1 rounded-xl border border-slate-600 bg-slate-900 p-1 text-xs text-white" role="group" aria-label={lang === 'ar' ? 'أدوات التحريك والتحديد' : 'Canvas tools'}>
-        <button type="button" aria-pressed={!isPanMode} onClick={() => onPanModeChange?.(false)} className={`rounded-lg px-2 py-2 ${!isPanMode ? 'bg-sky-600' : ''}`} title={lang === 'ar' ? 'تحديد العناصر (V)' : 'Select objects (V)'}>{lang === 'ar' ? 'تحديد' : 'Select'}</button>
-        <button type="button" aria-pressed={!!isPanMode} onClick={() => onPanModeChange?.(true)} className={`rounded-lg px-2 py-2 ${isPanMode ? 'bg-sky-600' : ''}`} title={lang === 'ar' ? 'سحب اللوحة (H) أو اضغط مسافة مؤقتًا' : 'Pan canvas (H), or hold Space temporarily'}>{lang === 'ar' ? 'تحريك اللوحة' : 'Pan'}</button>
-      </div>
-      {/* Floating Smart Action Bar for Selected Object */}
-      {hasSelection && (
-        <div
-          id="floating-object-hud"
-          className="absolute top-2.5 sm:top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 sm:gap-1 bg-[#1C2541]/95 backdrop-blur-md px-2 py-1 rounded-2xl border border-sky-500/40 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 max-w-[95vw] overflow-x-auto no-scrollbar"
-        >
-          <span className="text-[10px] font-bold text-sky-400 px-1 sm:px-1.5 uppercase font-mono tracking-wider max-w-[70px] sm:max-w-[80px] truncate">
-            {selectedType}
-          </span>
-
-          <div className="h-3.5 w-px bg-slate-700 mx-0.5" />
-
-          {/* Quick Properties Toggle (Great on Mobile) */}
-          {onOpenProperties && (
-            <button
-              type="button"
-              onClick={onOpenProperties}
-              title={t.caPropsTitle}
-              className="p-1 sm:p-1.5 text-amber-300 hover:text-amber-200 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-bold"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.caProps}</span>
-            </button>
-          )}
-
-          {/* Duplicate */}
-          <button
-            type="button"
-            onClick={onDuplicate}
-            title={t.caDuplicateTitle}
-            className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Center */}
-          <button
-            type="button"
-            onClick={handleQuickAlignCenter}
-            title={t.caCenterTitle}
-            className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          >
-            <AlignCenter className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Bring Forward */}
-          <button
-            type="button"
-            onClick={handleQuickBringForward}
-            title={t.caForwardTitle}
-            className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          >
-            <ChevronsUp className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Send Backward */}
-          <button
-            type="button"
-            onClick={handleQuickSendBackward}
-            title={t.caBackwardTitle}
-            className="p-1 sm:p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          >
-            <ChevronsDown className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Lock */}
-          <button
-            type="button"
-            onClick={handleQuickToggleLock}
-            title={isLocked ? t.caUnlock : t.caLock}
-            className={`p-1 sm:p-1.5 rounded-lg transition ${
-              isLocked
-                ? 'text-amber-400 bg-amber-950/60'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-          </button>
-
-          <div className="h-3.5 w-px bg-slate-700 mx-0.5" />
-
-          {/* Delete */}
-          <button
-            type="button"
-            onClick={onDelete}
-            title={t.caDeleteTitle}
-            className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
       {/* Artboard Frame & Canvas Container */}
-      <div className="m-auto shrink-0 flex flex-col items-center justify-center">
+      <div className="m-auto shrink-0 flex flex-col items-center justify-center" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}>
         <div className="text-[10px] font-mono text-slate-400 mb-1 tracking-wider">
           {t.caCanvasLabel} ({width} × {height} px)
         </div>
