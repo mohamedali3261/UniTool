@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs/promises";
+import { saveAndWait, storedProject, storedProjects } from "./helpers/storage";
 const base = process.env.DESIGN_QA_URL || "http://localhost:3000";
 function fixture(objects: any[]) {
   return {
@@ -25,12 +26,8 @@ async function load(page: Page, objects: any[]) {
   await expect(page.locator("canvas.upper-canvas")).toBeVisible();
 }
 async function saved(page: Page) {
-  await page.getByRole("button", { name: "حفظ", exact: true }).first().click();
-  return page.evaluate(() =>
-    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-      (p: any) => p.title === "Tools QA",
-    ),
-  );
+  await saveAndWait(page, true);
+  return storedProject(page, "Tools QA");
 }
 async function exportFile(page: Page, name: RegExp) {
   await page.getByRole('button', { name: 'استيراد / تصدير', exact: true }).click();
@@ -74,11 +71,8 @@ test("editable JSON reimports as a new project and rejects unsafe resources", as
   });
   await expect
     .poll(() =>
-      page.evaluate(
-        () =>
-          JSON.parse(
-            localStorage.getItem("designcraft_saved_projects_v1")!,
-          ).filter((p: any) => p.title === "Tools QA").length,
+      storedProjects(page).then((projects) =>
+        projects.filter((p: any) => p.title === "Tools QA").length,
       ),
     )
     .toBe(2);

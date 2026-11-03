@@ -1,7 +1,7 @@
 import { deviceRasterBudget, rasterWithinBudget } from '../../utils/rasterBudget';
 import { downloadFile } from '../../utils/download';
 import { boundedHistory } from '../../utils/mobilePerformance';
-import { clearFormatting } from '../../advanced/core/text';
+import { clearFormatting, EXTRA_PROPS } from '../../advanced/core/text';
 import { shortcutKey } from '../../utils/keyboard';
 import {AdvancedTools} from '../../advanced/AdvancedTools';
 import {CanvasOverlays} from '../../advanced/CanvasOverlays';
@@ -82,7 +82,6 @@ import {
   applyTextGradient,
   applyTextCurve,
   saveProjectToStorage,
-  getSavedProjects,
   applyImageClipPathAndEdges,
   applyImageEdgeFade,
   setCanvasPatternBackground,
@@ -108,7 +107,7 @@ interface EditorLayoutProps {
 export interface EditorLayoutHandle {
   // Persists the live canvas synchronously; used before switching/closing tabs.
   flushSave: () => ProjectItem | undefined;
-  confirmLeave:()=>boolean;
+  confirmLeave:()=>Promise<boolean>;
 }
 
 export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutProps>(function EditorLayout({
@@ -155,6 +154,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [isIconsModalOpen, setIsIconsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const lastSaveRef = useRef<Promise<boolean>>(Promise.resolve(true));
   
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions>({
@@ -590,33 +590,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const canvas = fabricCanvasRef.current;
     if (!canvas) return undefined;
 
-    const canvasJson = withCartonPrecision(()=>canvas.toJSON([
-      'textFitMode','textFitHeight','textFitMaxSize',
-        'id',
-      'name',
-      'locked',
-      'lockRotation',
-      'lockMovementX',
-      'lockMovementY',
-      'lockScalingX',
-      'lockScalingY',
-      'selectable',
-      'evented',
-      'clipCornerTL',
-      'clipCornerTR',
-      'clipCornerBR',
-      'clipCornerBL',
-      'cropTop',
-      'cropBottom',
-      'cropLeft',
-      'cropRight',
-      'fadeTop',
-      'fadeBottom',
-      'fadeLeft',
-      'fadeRight',
-      'fadeRadial',
-      '_originalSrc'
-    ]));
+    const canvasJson = withCartonPrecision(()=>canvas.toJSON(EXTRA_PROPS));
 
     // Render the thumbnail from the full design, not the zoomed viewport,
     // otherwise saved design cards look pixelated.
@@ -637,32 +611,48 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       }
     };
 
-    saveProjectToStorage(updated);
-    const stored=getSavedProjects().find(p=>p.id===updated.id);
-    const ok=!!stored&&JSON.stringify(stored.canvasData)===JSON.stringify(updated.canvasData)&&stored.title===updated.title&&JSON.stringify(stored.studio)===JSON.stringify(updated.studio);
-    window.dispatchEvent(new CustomEvent('designcraft:saved',{detail:{id:updated.id,ok}}));
-    if(!ok)throw Error('تعذر الحفظ المحلي / Local save failed');
+    const fingerprint = JSON.stringify({ title: updated.title, width: updated.width, height: updated.height, studio: updated.studio, canvasData: updated.canvasData });
+    window.dispatchEvent(new CustomEvent('designcraft:saving', { detail: { id: updated.id } }));
+    lastSaveRef.current = saveProjectToStorage(updated).then((ok) => {
+      window.dispatchEvent(new CustomEvent('designcraft:saved', { detail: { id: updated.id, ok, fingerprint } }));
+      return ok;
+    });
     onProjectUpdated?.(updated);
     return updated;
   }, [initialProject, projectTitle, canvasWidth, canvasHeight, backgroundColor, studioSettings,onProjectUpdated]);
 
   // Save Project Action
-  const handleSaveProject = useCallback(() => {
-    if (!fabricCanvasRef.current) return;
-
+  const handleSaveProject = useCallback(async () => {
+    if (!fabricCanvasRef.current || isSaving) return;
     setIsSaving(true);
-    try{persistProject();}catch{setIsSaving(false);onShowToast(lang==='ar'?'تعذر الحفظ؛ نزّل ملف المشروع':'Save failed; download project',undefined,'error');return;}
+    let ok = false;
+    try { persistProject(); ok = await lastSaveRef.current; }
+    catch { ok = false; }
+    setIsSaving(false);
+    if (ok) onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
+    else onShowToast(lang==='ar'?'تعذر الحفظ في المتصفح':'Could not save in this browser', lang==='ar'?'التصميم ما زال مفتوحًا. نزّل ملف المشروع أو حرّر مساحة ثم أعد المحاولة.':'The design is still open. Download the project file or free space, then retry.', 'error');
+  }, [persistProject, onShowToast, isSaving, t, lang]);
 
-    setTimeout(() => {
-      setIsSaving(false);
-      onShowToast(t.elSavedTitle, t.elSavedMsg, 'success');
-    }, 400);
-  }, [persistProject, onShowToast]);
+  useEffect(() => {
+    const saveShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && shortcutKey(event) === 's') {
+        event.preventDefault();
+        void handleSaveProject();
+      }
+    };
+    window.addEventListener('keydown', saveShortcut);
+    return () => window.removeEventListener('keydown', saveShortcut);
+  }, [handleSaveProject]);
 
   useImperativeHandle(ref, () => ({
     flushSave: () => {try{return persistProject();}catch{return undefined;}},
-    confirmLeave:()=>{try{persistProject();return true;}catch{return window.confirm(lang==='ar'?'تعذر حفظ آخر التعديلات. هل تريد المغادرة وفقدها؟':'Latest changes could not be saved. Leave and lose them?');}}
-  }), [persistProject]);
+    confirmLeave: async () => {
+      try { persistProject(); }
+      catch { return window.confirm(lang==='ar'?'تعذر حفظ آخر التعديلات. هل تريد المغادرة وفقدها؟':'Latest changes could not be saved. Leave and lose them?'); }
+      if (await lastSaveRef.current) return true;
+      return window.confirm(lang==='ar'?'تعذر حفظ آخر التعديلات. هل تريد المغادرة وفقدها؟':'Latest changes could not be saved. Leave and lose them?');
+    }
+  }), [persistProject, lang]);
 
   // Open Export Modal
   const handleOpenExport = useCallback(() => {

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import fs from 'node:fs/promises';
+import { saveAndWait, storedProject } from './helpers/storage';
 const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
 const fixture = {
   format: 'unitool-designcraft', version: 1,
@@ -15,7 +16,7 @@ async function closeDrawers(page: Page, ar = false) {
     await buttons.last().click();
   }
 }
-for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile imports despite ${storageError}, warns honestly, exports and can later save`, async ({ page }) => {
+for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile import stays durable when legacy localStorage throws ${storageError}`, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => localStorage.setItem('unitool-lang', 'en'));
   await page.goto(base + '/designcraft.html');
@@ -24,18 +25,16 @@ for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile
   await chooser;
   await page.evaluate((errorName) => {
     const original = Storage.prototype.setItem;
-    (window as any).restoreStorage = () => { Storage.prototype.setItem = original; };
     Storage.prototype.setItem = function(key, value) {
-      if (key === 'designcraft_saved_projects_v1') throw new DOMException('Browser storage refused', errorName);
+      if (key === 'designcraft_saved_projects_v1' || key === 'designcraft_open_tabs_v1') throw new DOMException('Legacy storage refused', errorName);
       return original.call(this, key, value);
     };
   }, storageError);
   await upload(page);
   await expect(page.locator('#editor-layout')).toBeVisible();
-  await expect(page.getByRole('alert')).toContainText('Project opened for editing without a durable save');
-  await expect(page.getByTestId('design-save-status')).toHaveText('Unsaved changes');
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('designcraft_saved_projects_v1') || '[]').some((p: any) => p.title === 'Mobile imported design'))).toBe(false);
-  expect(await page.evaluate(() => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented; })).toBe(true);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
+  expect((await storedProject(page, 'Mobile imported design')).sessionOnly).toBe(false);
   await closeDrawers(page);
   await page.getByRole('button', { name: 'Import / Export', exact: true }).click();
   await page.getByRole('button', { name: 'Export', exact: true }).click();
@@ -44,11 +43,13 @@ for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile
   await page.getByRole('button', { name: 'Download Image Now', exact: true }).click();
   const raw = JSON.parse(await fs.readFile((await (await pending).path())!, 'utf8'));
   expect(raw.project.canvasData.objects[0].text).toBe('Imported عربي');
-  await page.evaluate(() => (window as any).restoreStorage());
-  await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+  await saveAndWait(page);
   await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
+  await page.reload();
+  await page.getByText('My Projects', { exact: true }).click();
+  await page.getByRole('heading', { name: 'Mobile imported design', exact: true }).click();
+  await expect(page.locator('#editor-layout')).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('designcraft_saved_projects_v1') || '[]').some((p: any) => p.title === 'Mobile imported design' && p.sessionOnly === false))).toBe(true);
 });
 
 for (const ar of [false, true]) test(`file dropdown stays inside mobile viewport in ${ar ? 'Arabic RTL' : 'English LTR'}`, async ({ page }) => {

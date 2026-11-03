@@ -1,3 +1,4 @@
+import { saveAndWait, storedProject } from "./helpers/storage";
 import { test, expect, type Page } from '@playwright/test';
 const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
 const objects = ['A', 'B', 'C'].map((id, i) => ({ id, name: `Layer ${id}`, type: 'rect', left: 50 + i * 110, top: 100, width: 80, height: 80, fill: ['#ff0000', '#00ff00', '#0000ff'][i] }));
@@ -11,8 +12,8 @@ async function load(page: Page, mobile = false, ar = false, custom = objects) {
   return page.locator('[data-layer-panel]:visible');
 }
 async function saved(page: Page, ar = false) {
-  await page.getByRole('button', { name: ar ? 'حفظ' : 'Save', exact: true }).first().click();
-  return page.evaluate(() => JSON.parse(localStorage.getItem('designcraft_saved_projects_v1')!).find((p: any) => p.title === 'Layers QA'));
+  await saveAndWait(page, ar);
+  return storedProject(page, 'Layers QA');
 }
 for (const mobile of [false, true]) test(`pointer layer reorder and single-step undo on ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
   const panel = await load(page, mobile);

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { saveAndWait, storedProject } from './helpers/storage';
 const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
 async function loadText(page: Page, ar: boolean, mobile: boolean) {
   await page.setViewportSize(mobile ? { width: 390, height: 720 } : { width: 1440, height: 1100 });
@@ -19,8 +20,8 @@ async function loadText(page: Page, ar: boolean, mobile: boolean) {
   await expect(page.locator('#editor-properties-panel:visible')).toBeVisible();
 }
 async function saved(page: Page, ar: boolean) {
-  await page.getByRole('button', { name: ar ? 'حفظ' : 'Save', exact: true }).first().click();
-  return page.evaluate(() => JSON.parse(localStorage.getItem('designcraft_saved_projects_v1')!).find((p: any) => p.title === 'Properties QA'));
+  await saveAndWait(page, ar);
+  return storedProject(page, 'Properties QA');
 }
 for (const ar of [false, true]) for (const mobile of [false, true]) test(`color controls stay above sections and inside viewport: ${ar ? 'Arabic' : 'English'} ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
   const errors: string[] = [];

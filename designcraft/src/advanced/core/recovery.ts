@@ -68,9 +68,36 @@ export async function saveRecovery(projectId: string, data: string) {
     if (i >= 20 || (sorted[i].projectId === projectId && own > 5))
       await transact("readwrite", (s) => s.delete(sorted[i].id));
   }
+  notifyRecovery();
   return point;
 }
 export async function deleteRecovery(projectId: string) {
   for (const point of await recoveryPoints(projectId))
     await transact("readwrite", (s) => s.delete(point.id));
+  notifyRecovery();
+}
+
+export const RECOVERY_CHANGED_EVENT = "designcraft:recovery-changed";
+
+function notifyRecovery() {
+  try { window.dispatchEvent(new CustomEvent(RECOVERY_CHANGED_EVENT)); } catch { /* Node tests */ }
+}
+
+export async function recoveryStats(): Promise<{ count: number; bytes: number; byProject: Record<string, { count: number; bytes: number }> }> {
+  const all = (await transact("readonly", (s) => s.getAll())) as RecoveryPoint[];
+  const byProject: Record<string, { count: number; bytes: number }> = Object.create(null);
+  let bytes = 0;
+  for (const point of all) {
+    const size = new Blob([point.data]).size;
+    bytes += size;
+    const entry = byProject[point.projectId] ||= { count: 0, bytes: 0 };
+    entry.count++;
+    entry.bytes += size;
+  }
+  return { count: all.length, bytes, byProject };
+}
+
+export async function clearAllRecovery(): Promise<void> {
+  await transact("readwrite", (s) => s.clear());
+  notifyRecovery();
 }

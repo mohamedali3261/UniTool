@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs/promises";
 import { PDFDocument, PDFRawStream, PDFName } from "pdf-lib";
+import { saveAndWait, setStoredBackground, storedProject, storedProjects } from "./helpers/storage";
 const base = process.env.DESIGN_QA_URL || "http://localhost:3000";
 async function open(page: Page) {
   await page.goto(base + "/designcraft.html");
@@ -52,11 +53,7 @@ test("native carton metadata survives reopening the designer", async ({
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-      (p: any) => p.category === "packaging",
-    ),
-  );
+  const saved = (await storedProjects(page)).find((p: any) => p.category === "packaging");
   expect(saved.canvasData.objects).toHaveLength(13);
   expect(saved.packaging.size.width).toBe(80);
   await page.reload();
@@ -118,21 +115,12 @@ test("artwork exports as physical SVG with locked native guides", async ({
   await page.getByRole("button", { name: "حفظ", exact: true }).first().click();
   await expect
     .poll(() =>
-      page.evaluate(
-        () =>
-          JSON.parse(
-            localStorage.getItem("designcraft_saved_projects_v1")!,
-          ).find((p: any) => p.category === "packaging").canvasData.objects
-            .length,
+      storedProjects(page).then((projects) =>
+        projects.find((p: any) => p.category === "packaging").canvasData.objects.length,
       ),
     )
     .toBe(14);
-  const objects = await page.evaluate(
-    () =>
-      JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-        (p: any) => p.category === "packaging",
-      ).canvasData.objects,
-  );
+  const objects = (await storedProjects(page)).find((p: any) => p.category === "packaging").canvasData.objects;
   expect(objects[0].type).toBe("textbox");
   expect(
     objects
@@ -160,8 +148,10 @@ test("storage failure does not pretend a project was created", async ({
 }) => {
   await open(page);
   await page.evaluate(() => {
-    Storage.prototype.setItem = function () {
-      throw new DOMException("Full", "QuotaExceededError");
+    const original = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args: any[]) {
+      if (this.name === "projects") throw new DOMException("Full", "QuotaExceededError");
+      return original.apply(this, args);
     };
   });
   await page
@@ -197,13 +187,7 @@ test("print downloads preserve full artwork, silhouette, DPI and actual physical
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
   // Native project fixture: a full-sheet background, deliberately extending beyond every cut edge.
-  await page.evaluate(() => {
-    const key = "designcraft_saved_projects_v1",
-      items = JSON.parse(localStorage.getItem(key)!);
-    const p = items.find((p: any) => p.title === "Print QA");
-    p.canvasData.background = "#ef2345";
-    localStorage.setItem(key, JSON.stringify(items));
-  });
+  await setStoredBackground(page, "Print QA", "#ef2345");
   await page.reload();
   await page.getByRole("button", { name: /مشاريعي/ }).click();
   await page.getByRole("heading", { name: "Print QA", exact: true }).click();
@@ -376,11 +360,7 @@ test("perfume starter sizes remain editable and measured-bottle sizing persists"
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-      (p: any) => p.title === "علبة عطر 100 مل",
-    ),
-  );
+  const saved = await storedProject(page, "علبة عطر 100 مل");
   expect(saved.packaging.size.height).toBe(116);
   expect(saved.packaging.size.width).toBe(52);
   expect(saved.packaging.size.depth).toBe(37);
@@ -416,11 +396,7 @@ test("designed perfume templates preview, customize and save editable artwork", 
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
   await expect(page.locator("#editor-layout")).toBeVisible();
-  const p = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("designcraft_saved_projects_v1")!).find(
-      (p: any) => p.title === "علبة عطر 50 مل",
-    ),
-  );
+  const p = await storedProject(page, "علبة عطر 50 مل");
   expect(
     p.canvasData.objects.filter((o: any) => o.id.startsWith("art-")).length,
   ).toBeGreaterThan(20);
