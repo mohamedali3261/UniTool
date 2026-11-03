@@ -1,5 +1,6 @@
+import { enqueueToast } from './utils/toastQueue';
 import {ProjectImport} from './components/Common/ProjectImport';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ProjectItem, DimensionPreset, ToastMessage } from './types';
 import { NewDesignScreen } from './components/Dashboard/NewDesignScreen';
 import { EditorLayout, EditorLayoutHandle } from './components/Editor/EditorLayout';
@@ -56,7 +57,7 @@ export default function App() {
   }, []);
 
   // Toast Notification Trigger
-  const showToast = (
+  const showToast = useCallback((
     title: string,
     message?: string,
     type: 'success' | 'info' | 'warning' | 'error' = 'success'
@@ -67,12 +68,12 @@ export default function App() {
       message,
       type
     };
-    setToasts((prev) => [...prev, newToast]);
-  };
+    setToasts((prev) => enqueueToast(prev, newToast));
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
   // Open a design in its own tab (or focus its existing tab) and enter the editor.
   const openProjectInTab = async (project: ProjectItem, skipLeaveCheck = false) => {
