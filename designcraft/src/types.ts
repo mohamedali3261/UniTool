@@ -143,6 +143,7 @@ export interface ActiveObjectProperties {
 }
 
 export interface ToastMessage {
+  count?: number;
   id: string;
   type: 'success' | 'info' | 'warning' | 'error';
   title: string;
