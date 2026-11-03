@@ -1,3 +1,4 @@
+import { storageUsage, type UsageReport } from './usage';
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { exportSite, prepareArchive, restoreSite, LIMIT, type Prepared } from './archive';
@@ -5,6 +6,13 @@ import { DATABASES } from './registry';
 import './style.css';
 function App() {
   const [ar, setAr] = useState(() => { try { return localStorage.getItem('unitool-lang') !== 'en'; } catch { return true; } });
+  const [usage, setUsage] = useState<UsageReport | null>(null), [usageError, setUsageError] = useState(''), [usageLoading, setUsageLoading] = useState(false);
+  const refreshUsage = async () => {
+    setUsageLoading(true); setUsageError('');
+    try { setUsage(await storageUsage()); } catch (err) { setUsageError(String(err)); }
+    finally { setUsageLoading(false); }
+  };
+  useEffect(() => { void refreshUsage(); }, []);
   const [busy, setBusy] = useState(false), [status, setStatus] = useState('');
   const [error, setError] = useState(''), [preview, setPreview] = useState<Prepared | null>(null);
   const [confirmed, setConfirmed] = useState(false), [done, setDone] = useState(false);
@@ -40,6 +48,27 @@ function App() {
       <h1>{text('التخزين والنسخ الاحتياطي للموقع', 'Site storage & backup')}</h1>
       <p className="lead">{text('مشروعاتك المحفوظة وإعداداتك في ملف ZIP واحد، منظّم لمجلدات حسب الأقسام. انقله لجهاز آخر واستعد شغلك من نفس موقع UniTool.', 'Saved projects and settings in one ZIP, organized by section. Move it to another device and restore it on the same UniTool site.')}</p>
       <aside className="notice">{text('احفظ شغلك في كل أداة واقفل تبويبات الموقع الأخرى أولًا. النسخة تشمل البيانات المحفوظة فقط، مش الملفات المفتوحة في الذاكرة أو كل عملياتك السابقة. لا تشمل كلمات المرور أو مفاتيح API المعروفة، ولا ملفات الكاش أو الكوكيز. ملف ZIP غير مشفّر وقد يحتوي صورًا ونصوصًا خاصة.', 'Save your work in each tool and close other site tabs first. Only persisted data is included, not unsaved files or a history of everything you did. Known passwords/API keys, caches and cookies are excluded. The ZIP is not encrypted and may contain private images or text.')}</aside>
+      <section className="card storage-overview" aria-label={text('استهلاك المساحة وما يتم حفظه', 'Storage usage and saving coverage')}>
+        <h2>{text('المساحة والحفظ الفعلي', 'Storage usage & saving coverage')}</h2>
+        <p>{text('المشروعات المحفوظة لا تُحذف لتوفير المساحة. نقلّل التكرار فقط، ونحدّ نسخ استرداد التصميم المؤقتة إلى 24 MB، مع الاحتفاظ بأحدث نسخة.', 'Saved projects are never deleted to save space. We reduce duplicates and bound temporary design recovery history to 24 MB, always retaining the latest snapshot.')}</p>
+        <div className="usage-numbers" data-testid="storage-usage">
+          <span>{text('استهلاك الموقع التقريبي: ', 'Estimated site usage: ')}<b>{usage?.usage === undefined ? '—' : (usage.usage / 1024 / 1024).toFixed(2) + ' MB'}</b></span>
+          <span>{text('حصة المتصفح التقريبية: ', 'Estimated browser quota: ')}<b>{usage?.quota === undefined ? '—' : (usage.quota / 1024 / 1024).toFixed(0) + ' MB'}</b></span>
+          <span>{text('بيانات الأدوات المسجّلة: ', 'Registered tool records: ')}<b>{usage ? usage.databases.reduce((n,d) => n+d.records,0) : '—'}</b></span>
+        </div>
+        <p>{text('تقدير المتصفح قد يشمل الكاش، وليس حجم ملفات ZIP أو الملفات الأصلية بالضبط. قيم localStorage أدناه تقديرات نصية فقط. لا يمكن ضغط فيديو أو صورة بلا حدود من غير فقدان جودة.', 'Browser estimates may include caches; they are not exact ZIP or original-file sizes. localStorage sizes below are text estimates only. Images/videos cannot be shrunk indefinitely without quality loss.')}</p>
+        {usage && <ul data-testid="storage-sections">{usage.local.map(g => <li key={g.section}><b>{g.section}</b> · {g.count} {text('إعداد/مسودة', 'settings/drafts')} · {(g.bytes / 1024).toFixed(1)} KB</li>)}{usage.databases.map(d => <li key={d.name} dir="ltr">{d.name} · {d.records} {text('سجل', 'records')}</li>)}</ul>}
+        <div className="coverage-grid">
+          <p><b>{text('التصميم والشعارات', 'Design & logos')}</b><br/>{text('مشروعات محفوظة واسترداد تلقائي؛ راقب حالة الحفظ قبل الإغلاق.', 'Saved projects and automatic recovery; check save status before closing.')}</p>
+          <p><b>{text('الفيديو', 'Video')}</b><br/>{text('المشروع والوسائط المستخدمة المحفوظة؛ الملفات الأصلية الكبيرة تحتاج مساحة حقيقية.', 'Saved project and referenced media; large original files require real space.')}</p>
+          <p><b>{text('الجداول', 'Spreadsheets')}</b><br/>{text('حفظ تلقائي للمصنف الحالي. صدّر ملفًا قبل استبداله بمصنف آخر.', 'Autosaves the current workbook. Export before replacing it with another workbook.')}</p>
+          <p><b>{text('القارئ الصوتي', 'Audio reader')}</b><br/>{text('إعدادات وعلامات وتقدم القراءة وآخر 5 كتب؛ ليست مكتبة غير محدودة.', 'Settings, bookmarks, progress and the last 5 books, not an unlimited library.')}</p>
+          <p><b>{text('SVG والتفضيلات', 'SVG & preferences')}</b><br/>{text('البيانات التي يحفظها المحرر بالفعل. ملف لم تحفظه لا يدخل النسخة.', 'Data the editor actually persists. Unsaved files are not included.')}</p>
+          <p><b>{text('التحويل والضغط والمسح', 'Conversion, compression & scanning')}</b><br/>{text('غالبًا إعدادات فقط. ملفات الإدخال والنتائج المؤقتة لازم تنزّلها بنفسك قبل الإغلاق.', 'Usually settings only. Download input/output working files yourself before closing.')}</p>
+        </div>
+        {usageError && <p className="error" role="alert">{usageError}</p>}
+        <button className="primary" disabled={usageLoading || busy} onClick={() => void refreshUsage()}>{usageLoading ? text('جارٍ الحساب…', 'Calculating…') : text('تحديث استهلاك المساحة', 'Refresh storage usage')}</button>
+      </section>
       <div className="cards">
         <section className="card"><span className="step">01 / EXPORT</span><h2>{text('خذ نسخة من شغلك', 'Take your work with you')}</h2><p>{text('التصميم، الشعارات، الفيديو ووسائطه المحفوظة، الجداول، القراءة الصوتية، SVG وتفضيلات الأدوات.', 'Designs, logos, saved video projects/media, spreadsheets, audio-reader data, SVG and tool preferences.')}</p>
           <ul>{['design / designcraft', 'logos / projects & assets', 'video / projects & media', 'sheets · audio · svg · settings'].map(s => <li key={s} dir="ltr">{s}</li>)}</ul>
@@ -55,7 +84,7 @@ function App() {
           {preview && <div data-testid="backup-preview" className="preview"><h3>{text('معاينة النسخة', 'Backup preview')}</h3><p>{new Date(preview.manifest.created).toLocaleString(ar ? 'ar-EG' : 'en-US')}</p><p>{text('سجلات المشروعات والوسائط: ', 'Project/media records: ')}<b>{preview.records}</b> · {text('إعدادات: ', 'Settings: ')}<b>{preview.local.length}</b></p><p>{(preview.bytes / 1024 / 1024).toFixed(2)} MB</p><ul>{preview.databases.map(db => <li key={db.name} dir="ltr">{DATABASES[db.name].section} / {db.name} · {db.stores.reduce((n,s) => n + s.records.length, 0)}</li>)}</ul>
             <p>{text('الاستعادة تضيف الناقص فقط؛ أي سجل أو إعداد موجود بنفس المفتاح يُترك كما هو. لا نحذف بياناتك الحالية. لو حصل فشل بين الأقسام قد تكون بعض البيانات اتضافت؛ تقدر تعيد المحاولة بأمان بعد حل السبب.', 'Restore adds missing records only; existing keys/settings are kept. Nothing is deleted. A failure between sections can leave some records restored; you can safely retry after fixing the cause.')}</p>
             <label className="confirm"><input type="checkbox" checked={confirmed} disabled={busy} onChange={e => setConfirmed(e.target.checked)} />{text('حفظت شغلي وأغلقت التبويبات الأخرى وأوافق على الإضافة بدون استبدال.', 'I saved my work, closed other tabs, and approve adding without replacing existing data.')}</label>
-            <button className="primary" disabled={busy || !confirmed} onClick={() => run(async () => { const result = await restoreSite(preview, setStatus); setStatus(text(`اكتملت الاستعادة: أُضيف ${result.added} وتُرك ${result.skipped} موجودًا. أعد فتح أدواتك لتحميل البيانات.`, `Restore complete: ${result.added} added, ${result.skipped} existing records kept. Reopen tools to load restored data.`)); setPreview(null); setConfirmed(false); setDone(true); })}>{text('تأكيد الاستعادة الآمنة', 'Confirm safe restore')}</button>
+            <button className="primary" disabled={busy || !confirmed} onClick={() => run(async () => { const result = await restoreSite(preview, setStatus); setStatus(text(`اكتملت الاستعادة: أُضيف ${result.added} وتُرك ${result.skipped} موجودًا. أعد فتح أدواتك لتحميل البيانات.`, `Restore complete: ${result.added} added, ${result.skipped} existing records kept. Reopen tools to load restored data.`)); setPreview(null); setConfirmed(false); setDone(true); void refreshUsage(); })}>{text('تأكيد الاستعادة الآمنة', 'Confirm safe restore')}</button>
           </div>}
         </section>
       </div>
