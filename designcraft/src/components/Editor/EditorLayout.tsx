@@ -489,12 +489,34 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Property Updater
   const handleUpdateProperty = useCallback(
-    (key: keyof ActiveObjectProperties | 'transform', value: any) => {
+    (key: keyof ActiveObjectProperties | 'transform' | 'objectStyle' | 'groupColor', value: any) => {
       const canvas = fabricCanvasRef.current;
       if (!canvas) return;
 
       const active = canvas.getActiveObject();
       if (!active) return;
+
+      if (key === 'objectStyle' || key === 'groupColor') {
+        if (active.lockMovementX || active.lockMovementY || active.lockRotation) return;
+        if (key === 'groupColor') {
+          if (!/^#[0-9a-f]{6}$/i.test(value)) return;
+          const recolor = (obj:any) => {
+            if (obj.type === 'image') return;
+            if (obj.getObjects) { obj.getObjects().forEach(recolor); obj.dirty=true; return; }
+            if (obj.fill && obj.fill !== 'none' && obj.fill !== 'transparent') obj.set('fill',value);
+            if (obj.stroke && obj.stroke !== 'none' && obj.stroke !== 'transparent') obj.set('stroke',value);
+            obj.dirty=true;
+          };
+          recolor(active);
+        } else {
+          const allowed=['fontSize','fontWeight','lineHeight','charSpacing','stroke','strokeWidth','strokeDashArray','strokeLineCap','strokeUniform','paintFirst','globalCompositeOperation','shadow'];
+          const patch:any={}; for(const name of allowed) if(Object.prototype.hasOwnProperty.call(value,name)) patch[name]=name==='shadow'&&value[name]?new fabric.Shadow(value[name]):value[name];
+          active.set(patch);
+        }
+        active.setCoords(); canvas.requestRenderAll();
+        canvas.fire('selection:updated', {selected:[active]} as any);
+        updateLayersList(); recordHistory(); return;
+      }
 
       if (key === 'transform') {
         const patch: Record<string, any> = {};

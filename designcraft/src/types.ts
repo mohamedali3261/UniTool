@@ -76,6 +76,9 @@ export interface TextPreset {
 }
 
 export interface ActiveObjectProperties {
+  strokeUniform?: boolean;
+  strokeLineCap?: string;
+  globalCompositeOperation?: string;
   imageWidth?: number;
   imageHeight?: number;
   flipX?: boolean;

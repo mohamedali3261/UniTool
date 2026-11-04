@@ -1,3 +1,4 @@
+import { EXTRA_SHAPES } from './extraShapes';
 export interface ShapeItem {
   id: string;
   name: string;
@@ -42,6 +43,7 @@ const getStarPoints = (points: number, outerRadius: number, innerRadius: number)
 };
 
 export const SHAPES_CATALOG: ShapeItem[] = [
+  ...EXTRA_SHAPES,
   // 1. Basic & Geometric (1-25)
   { id: 'sq-1', name: 'Square', nameAr: 'مربع متساوي', category: 'basic', categoryAr: 'أشكال أساسية', type: 'rect', defaultWidth: 160, defaultHeight: 160, defaultFill: '#0284C7' },
   { id: 'rec-1', name: 'Rounded Rectangle', nameAr: 'مستطيل بحواف دائرية', category: 'basic', categoryAr: 'أشكال أساسية', type: 'rect', defaultWidth: 220, defaultHeight: 120, defaultFill: '#0EA5E9' },

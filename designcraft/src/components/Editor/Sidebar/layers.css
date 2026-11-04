@@ -1,0 +1,43 @@
+.dc-layer-card {
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+  contain: layout style;
+}
+.dc-layer-card > div:first-child {
+  height: 28px;
+}
+.dc-layer-card > div:nth-child(2) {
+  height: 24px;
+}
+.dc-layer-action {
+  width: 25px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dc-layer-list {
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
+  touch-action: pan-y;
+}
+.dc-layer-card [aria-pressed='true'] {
+  color: #7dd3fc;
+}
+@media (pointer: coarse) {
+  .dc-layer-card > div:first-child,
+  .dc-layer-card > div:nth-child(2) {
+    height: 32px;
+  }
+  .dc-layer-action {
+    width: 32px;
+    height: 32px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-layer-card {
+    transition: none;
+  }
+}

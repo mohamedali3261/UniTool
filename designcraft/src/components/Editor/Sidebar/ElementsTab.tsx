@@ -1,3 +1,4 @@
+import {SHAPES_CATALOG} from '../../../data/shapesCatalog';
 import React, { useState } from 'react';
 import {
   Square,
@@ -114,7 +115,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
             className="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-1 rounded-lg border border-sky-500/30 transition"
           >
             <Maximize2 className="w-3 h-3" />
-            <span>{t.elemPlus200}</span>
+            <span>{SHAPES_CATALOG.length}</span>
           </button>
         )}
       </div>
@@ -133,7 +134,7 @@ export const ElementsTab: React.FC<ElementsTabProps> = ({
             <span>{t.elemOpenShapes}</span>
           </div>
           <span className="text-[10px] font-mono bg-sky-500/30 text-sky-300 px-2 py-0.5 rounded-full font-bold">
-            +200
+            {SHAPES_CATALOG.length}
           </span>
         </button>
       )}
