@@ -1,3 +1,5 @@
+import { CanvasImageCrop } from './CanvasImageCrop';
+import type {CropInsets} from '../../utils/imageCrop';
 import { formatCanvasDimension, fittedInitialZoom } from '../../utils/mobilePerformance';
 import { shortcutKey } from '../../utils/keyboard';
 import {applyTextFit} from '../../advanced/core/text';
@@ -23,6 +25,9 @@ import {
 } from 'lucide-react';
 
 interface CanvasAreaProps {
+  cropRequest: number;
+  onRequestCrop: () => void;
+  onApplyCrop: (crop: CropInsets) => void;
   width: number;
   height: number;
   backgroundColor: string;
@@ -46,6 +51,7 @@ interface CanvasAreaProps {
 }
 
 export const CanvasArea: React.FC<CanvasAreaProps> = ({
+  cropRequest, onRequestCrop, onApplyCrop,
   width,
   height,
   backgroundColor,
@@ -641,6 +647,39 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     setZoom(Math.max(0.15, Math.min(+autoZoom.toFixed(2), 1)));
   }, [width, height, setZoom]);
 
+  // Focus the selected image after inspector panels close, without moving artwork.
+  useEffect(() => {
+    let first=0, second=0;
+    const focus = () => {
+      cancelAnimationFrame(first); cancelAnimationFrame(second);
+      const canvas=fabricCanvasRef.current, container=containerRef.current, active=canvas?.getActiveObject();
+      if(!canvas || !container || active?.type!=='image') return;
+      flushViewport(); panOffsetRef.current={x:0,y:0};
+      if(artboardFrameRef.current)artboardFrameRef.current.style.transform='translate3d(0,0,0)';
+      const box=active.getBoundingRect(true,true);
+      const desiredZoom=Math.max(.1,Math.min(2.5,(container.clientWidth-64)/Math.max(1,box.width),(container.clientHeight-104)/Math.max(1,box.height)));
+      setZoom(desiredZoom);
+      let attempts=0;
+      const waitForZoom=()=>{
+        if(fabricCanvasRef.current!==canvas)return;
+        if(Math.abs(canvas.getZoom()-desiredZoom)>.00001 && attempts++<30){first=requestAnimationFrame(waitForZoom);return;}
+        second=requestAnimationFrame(()=>{
+        if(fabricCanvasRef.current!==canvas || canvas.getActiveObject()!==active || !canvas.upperCanvasEl)return;
+        const rect=canvas.upperCanvasEl.getBoundingClientRect(), outer=container.getBoundingClientRect(), center=fabric.util.transformPoint(active.getCenterPoint(),canvas.viewportTransform!);
+        const dx=outer.left+outer.width/2-rect.left-center.x,dy=outer.top+outer.height/2-rect.top-center.y;
+        const oldX=container.scrollLeft,oldY=container.scrollTop;
+        container.scrollLeft-=dx;container.scrollTop-=dy;
+        const x=dx+container.scrollLeft-oldX,y=dy+container.scrollTop-oldY;
+        panOffsetRef.current={x,y};
+        if(artboardFrameRef.current)artboardFrameRef.current.style.transform=`translate3d(${x}px,${y}px,0)`;
+        window.dispatchEvent(new Event('scroll'));
+      });};
+      first=requestAnimationFrame(waitForZoom);
+    };
+    window.addEventListener('designcraft:focus-crop-image',focus);
+    return()=>{window.removeEventListener('designcraft:focus-crop-image',focus);cancelAnimationFrame(first);cancelAnimationFrame(second);};
+  },[setZoom]);
+
   // Quick Action Handlers
   const handleQuickAlignCenter = () => {
     const canvas = fabricCanvasRef.current;
@@ -736,6 +775,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       </div>
 
     </div>
+      {fabricCanvasRef.current && <CanvasImageCrop canvas={fabricCanvasRef.current} request={cropRequest} onRequest={onRequestCrop} onApply={onApplyCrop} onDelete={onDelete}/>}
       {/* Outside the scrolling/transforming viewport: controls stay docked. */}
       <div
         id="floating-zoom-pill"

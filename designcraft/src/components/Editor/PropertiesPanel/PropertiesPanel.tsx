@@ -1,8 +1,5 @@
 import {ElementStyleExtras} from './ElementStyleExtras';
 import {elementKind} from '../../../utils/elementStyle';
-import { TransformProperties } from './TransformProperties';
-import { ImageCropEditor } from './ImageCropEditor';
-import type { CropInsets } from '../../../utils/imageCrop';
 import './properties-panel.css';
 import React from 'react';
 import { ActiveObjectProperties } from '../../../types';
@@ -15,7 +12,7 @@ import { X, ChevronLeft, Type, Image as ImageIcon, Shapes, Layers, Palette } fro
 import { useDcLang } from '../../../hooks/useDcLang';
 
 interface PropertiesPanelProps {
-  onCropImage: (crop: CropInsets) => void;
+  onStartCrop: () => void;
   activeProperties: ActiveObjectProperties | null;
   canvasWidth: number;
   canvasHeight: number;
@@ -39,7 +36,7 @@ interface PropertiesPanelProps {
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
-  activeProperties, onCropImage,
+  activeProperties, onStartCrop,
   canvasWidth,
   canvasHeight,
   backgroundColor,
@@ -164,7 +161,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
-            {isImage && <ImageCropEditor properties={activeProperties} onApply={onCropImage}/>}
+            {isImage && <button type="button" className="dc-start-crop" disabled={isLocked} onClick={onStartCrop}>{lang === 'ar' ? 'قص الصورة مباشرة' : 'Crop image on canvas'}</button>}
             {isImage && (
               <ImageProperties
                 properties={activeProperties}
@@ -175,7 +172,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             <ElementStyleExtras properties={activeProperties} onUpdate={onUpdateProperty}/>
 
-            <TransformProperties properties={activeProperties} onUpdate={onUpdateProperty}/>
             {/* 2. Global Alignment & Ordering Tools */}
             <AlignProperties
               onAlign={onAlign}

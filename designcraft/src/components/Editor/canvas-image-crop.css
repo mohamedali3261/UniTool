@@ -1,0 +1,134 @@
+.dc-canvas-crop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  z-index: 75;
+  overflow: hidden;
+  touch-action: none;
+  isolation: isolate;
+}
+.dc-canvas-crop > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+.dc-canvas-crop-region {
+  position: absolute;
+  box-sizing: border-box;
+  border: calc(2 * var(--crop-unit)) solid #a8f3d3;
+  box-shadow: 0 0 0 20000px #0009;
+  cursor: move;
+  touch-action: none;
+}
+.dc-canvas-crop-region:before,
+.dc-canvas-crop-region:after {
+  content: '';
+  position: absolute;
+  inset: 33.333% 0;
+  border-block: var(--crop-unit) solid #fffa;
+  pointer-events: none;
+}
+.dc-canvas-crop-region:after {
+  inset: 0 33.333%;
+  border: 0;
+  border-inline: var(--crop-unit) solid #fffa;
+}
+.dc-canvas-crop-handle {
+  position: absolute;
+  width: calc(32 * var(--crop-unit));
+  height: calc(32 * var(--crop-unit));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  z-index: 1;
+}
+.dc-canvas-crop-handle:after {
+  content: '';
+  position: absolute;
+  inset: 30%;
+  background: #fff;
+  box-shadow: 0 0 0 var(--crop-unit) #173a31;
+}
+.handle-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.handle-n {
+  left: 50%;
+  top: 0;
+  cursor: ns-resize;
+}
+.handle-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.handle-e {
+  left: 100%;
+  top: 50%;
+  cursor: ew-resize;
+}
+.handle-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.handle-s {
+  left: 50%;
+  top: 100%;
+  cursor: ns-resize;
+}
+.handle-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.handle-w {
+  left: 0;
+  top: 50%;
+  cursor: ew-resize;
+}
+.dc-image-actions {
+  position: fixed;
+  z-index: 76;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #3a5a50;
+  border-radius: 10px;
+  background: #0e1c20ed;
+  box-shadow: 0 3px 12px #0005;
+}
+.dc-image-actions button {
+  width: 30px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #d9eee7;
+  background: transparent;
+  cursor: pointer;
+}
+.dc-image-actions button:hover {
+  background: #28483e;
+}
+.dc-image-actions button.is-cropping {
+  color: #10271e;
+  background: #9ce5be;
+}
+.dc-image-actions :focus-visible {
+  outline: 2px solid #a8f3d3;
+  outline-offset: 2px;
+}
+.dc-canvas-crop-region:focus-visible,
+.dc-canvas-crop-handle:focus-visible {
+  outline: calc(2 * var(--crop-unit)) solid #fff;
+  outline-offset: calc(2 * var(--crop-unit));
+}
