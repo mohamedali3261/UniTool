@@ -17,6 +17,8 @@ async function saved(page: Page, ar = false) {
 }
 for (const mobile of [false, true]) test(`pointer layer reorder and single-step undo on ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
   const panel = await load(page, mobile);
+  expect((await panel.locator('[data-layer-id]').first().boundingBox())!.height).toBeLessThanOrEqual(70);
+  await expect(panel.getByRole('combobox')).toHaveCount(0);
   const source = panel.locator('[data-layer-id="A"]').getByRole('button', { name: 'Drag layer Layer A', exact: true });
   await source.scrollIntoViewIfNeeded();
   const a = (await source.boundingBox())!, c = (await panel.locator('[data-layer-id="C"]').boundingBox())!;
@@ -44,7 +46,7 @@ test('real touch drag reorders Arabic mobile layers and cancel leaves order unch
   await session.detach();
 });
 
-test('row actions target their layer; rename, search, filters, locks and duplication persist', async ({ page }) => {
+test('compact rows keep actions, rename, visibility, locks and duplication without filters', async ({ page }) => {
   const panel = await load(page);
   await panel.getByRole('button', { name: 'Layer C', exact: true }).click();
   await panel.locator('[data-layer-id="A"]').getByRole('button', { name: 'Move layer up', exact: true }).click();
@@ -53,12 +55,11 @@ test('row actions target their layer; rename, search, filters, locks and duplica
   await row.getByRole('button', { name: 'Rename layer', exact: true }).click();
   await row.getByRole('textbox', { name: 'Layer name', exact: true }).fill('Logo'); await page.keyboard.press('Enter');
   expect((await saved(page)).canvasData.objects.find((o: any) => o.id === 'A').name).toBe('Logo');
-  await panel.getByRole('textbox', { name: 'Search layers', exact: true }).fill('logo');
-  await expect(panel.locator('[data-layer-id]')).toHaveCount(1);
+  await expect(panel.getByRole('textbox', { name: 'Search layers', exact: true })).toHaveCount(0);
+  await expect(panel.getByRole('combobox')).toHaveCount(0);
+  expect((await row.boundingBox())!.height).toBeLessThan(70);
   await row.getByRole('button', { name: 'Hide layer', exact: true }).click();
-  await panel.getByRole('combobox', { name: 'Filter layers', exact: true }).selectOption('visible');
-  await expect(panel.locator('[data-layer-id]')).toHaveCount(0);
-  await panel.getByRole('combobox', { name: 'Filter layers', exact: true }).selectOption('all');
+  await expect(panel.locator('[data-layer-id]')).toHaveCount(3);
   await row.getByRole('button', { name: 'Show layer', exact: true }).click();
   await row.getByRole('button', { name: 'Lock layer', exact: true }).click();
   await expect(row.getByRole('button', { name: 'Delete layer', exact: true })).toBeDisabled();

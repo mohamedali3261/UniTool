@@ -62,12 +62,12 @@ export const ShapeProperties: React.FC<ShapePropertiesProps> = ({ properties, on
         icon={<Droplet className="w-3 h-3 text-emerald-300" />}
         iconBg="bg-emerald-500/15"
       >
-        <ColorPickerPopover
+        {!['line','polyline'].includes(properties.type) && <ColorPickerPopover
           label={t.spFill}
           color={properties.fill || '#0284C7'}
           onChange={(color) => onUpdate('fill', color)}
           allowTransparent={true}
-        />
+        />}
 
         <ColorPickerPopover
           label={t.spStroke}

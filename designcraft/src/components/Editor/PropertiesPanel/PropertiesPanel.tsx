@@ -1,3 +1,5 @@
+import {ElementStyleExtras} from './ElementStyleExtras';
+import {elementKind} from '../../../utils/elementStyle';
 import { TransformProperties } from './TransformProperties';
 import { ImageCropEditor } from './ImageCropEditor';
 import type { CropInsets } from '../../../utils/imageCrop';
@@ -69,9 +71,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     activeProperties?.type === 'triangle' ||
     activeProperties?.type === 'polygon' ||
     activeProperties?.type === 'line' ||
-    activeProperties?.type === 'path';
+    activeProperties?.type === 'path' || activeProperties?.type === 'ellipse' || activeProperties?.type === 'polyline';
   const isGroupOrIcon = activeProperties?.type === 'group' || activeProperties?.type === 'activeSelection';
-  const isKnownType = isText || isImage || isShape || isGroupOrIcon;
 
   const isLocked = !!(
     activeProperties?.lockMovementX ||
@@ -103,7 +104,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
           <div>
             <h3 className="text-xs font-bold text-white leading-tight">
-              {activeProperties ? t.propsElement : t.propsCanvas}
+              {activeProperties ? `${t.propsElement} · ${{text:lang==='ar'?'نص':'Text',image:lang==='ar'?'صورة':'Image',line:lang==='ar'?'خط':'Line',group:lang==='ar'?'مجموعة':'Group',shape:lang==='ar'?'شكل':'Shape',object:lang==='ar'?'عنصر':'Object'}[elementKind(activeProperties.type)]}` : t.propsCanvas}
             </h3>
             <p className="text-[9px] text-slate-400 font-mono leading-none">
               {activeProperties ? (isText ? (lang === 'ar' ? 'نص قابل للتعديل' : 'Editable text') : isImage ? (lang === 'ar' ? 'صورة' : 'Image') : isGroupOrIcon ? (lang === 'ar' ? 'مجموعة عناصر' : 'Object group') : (lang === 'ar' ? 'شكل' : 'Shape')) : `${canvasWidth} × ${canvasHeight} PX`}
@@ -172,12 +173,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
-            {(isGroupOrIcon || !isKnownType) && (
-              <ShapeProperties
-                properties={activeProperties}
-                onUpdate={onUpdateProperty}
-              />
-            )}
+            <ElementStyleExtras properties={activeProperties} onUpdate={onUpdateProperty}/>
 
             <TransformProperties properties={activeProperties} onUpdate={onUpdateProperty}/>
             {/* 2. Global Alignment & Ordering Tools */}

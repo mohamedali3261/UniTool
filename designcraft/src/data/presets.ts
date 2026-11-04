@@ -1,3 +1,4 @@
+import { EXTRA_TEXT_PRESETS } from './extraTextPresets';
 import { DimensionPreset, StockPhoto, TextPreset, ProjectItem } from '../types';
 
 export const DIMENSION_PRESETS: DimensionPreset[] = [
@@ -191,6 +192,7 @@ export const STOCK_PHOTOS: StockPhoto[] = [
 ];
 
 export const TEXT_PRESETS: TextPreset[] = [
+  ...EXTRA_TEXT_PRESETS,
   // 1. Headings & Structures
   {
     id: 'preset-h1',
