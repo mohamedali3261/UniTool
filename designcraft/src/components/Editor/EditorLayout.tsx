@@ -140,8 +140,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [zoom, setZoom] = useState(0.85);
   const [showGrid, setShowGrid] = useState(false);
   const [isPanMode, setIsPanMode] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('templates');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('media');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [cropRequest, setCropRequest] = useState(0);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const [activeProperties, setActiveProperties] = useState<ActiveObjectProperties | null>(null);
   const [layersList, setLayersList] = useState<any[]>([]);
@@ -1387,9 +1388,15 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     updateLayersList(); recordHistory();
   };
 
+  const startImageCrop = () => {
+    const active = fabricCanvasRef.current?.getActiveObject();
+    if (!active || active.type !== 'image' || active.lockMovementX || active.lockMovementY || active.lockRotation) return;
+    setIsPropertiesOpen(false); setIsSidebarOpen(false); setCropRequest(n=>n+1);
+  };
+
   const renderPropertiesPanelContent = () => (
     <PropertiesPanel
-      onCropImage={handleCropImage}
+      onStartCrop={startImageCrop}
       activeProperties={activeProperties}
       canvasWidth={canvasWidth}
       canvasHeight={canvasHeight}
@@ -1615,6 +1622,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             }}
           />
           <CanvasArea
+            cropRequest={cropRequest}
+            onRequestCrop={startImageCrop}
+            onApplyCrop={handleCropImage}
             overlays={initialProject.packaging?<CanvasOverlays size={initialProject.packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
             width={canvasWidth}
             height={canvasHeight}

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { saveAndWait, storedProject } from './helpers/storage';
 const base = process.env.DESIGN_QA_URL || 'http://localhost:3000';
-async function load(page: Page, lang = 'en') {
+async function load(page: Page, lang = 'en', extra: any = {}) {
   await page.addInitScript(
     (lang) => localStorage.setItem('unitool-lang', lang),
     lang,
@@ -18,69 +18,80 @@ async function load(page: Page, lang = 'en') {
     ctx.fillRect(200, 0, 200, 200);
     return c.toDataURL();
   });
-  const project = {
-    format: 'unitool-designcraft',
-    version: 1,
-    project: {
-      title: 'Crop QA',
-      width: 600,
-      height: 400,
-      canvasData: {
-        background: '#fff',
-        objects: [
-          {
-            id: 'image-qa',
-            type: 'image',
-            src,
-            width: 400,
-            height: 200,
-            left: 60,
-            top: 60,
-            scaleX: 0.75,
-            scaleY: 0.75,
+  await page.locator('#designer-project-input').setInputFiles({
+    name: 'crop.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        format: 'unitool-designcraft',
+        version: 1,
+        project: {
+          title: 'Crop QA',
+          width: 600,
+          height: 400,
+          canvasData: {
+            background: '#fff',
+            objects: [
+              {
+                id: 'crop-target',
+                name: 'Crop target',
+                type: 'image',
+                src,
+                width: 400,
+                height: 200,
+                left: 60,
+                top: 60,
+                scaleX: 0.75,
+                scaleY: 0.75,
+                ...extra,
+              },
+            ],
           },
-        ],
-      },
-    },
-  };
-  await page
-    .locator('#designer-project-input')
-    .setInputFiles({
-      name: 'crop.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(project)),
-    });
+        },
+      }),
+    ),
+  });
   await expect(page.locator('canvas.upper-canvas')).toBeVisible();
-  for (let i = 0; i < 4; i++) {
-    const close = page.getByRole('button', {
-      name: lang === 'ar' ? 'إغلاق' : 'Close',
-      exact: true,
-    });
-    if (!(await close.count())) break;
-    await close.last().click();
-  }
-  const b = (await page.locator('canvas.upper-canvas').boundingBox())!;
-  await page.mouse.click(
-    b.x + (b.width * 200) / 600,
-    b.y + (b.height * 120) / 400,
-  );
-  if ((await page.viewportSize())!.width < 768)
-    await page
-      .locator('#mobile-bottom-nav')
-      .getByRole('button', {
-        name: lang === 'ar' ? 'الخصائص' : 'Properties',
-        exact: true,
-      })
-      .click();
-  await expect(page.locator('.dc-crop-editor:visible')).toBeVisible();
   return src;
 }
-async function saved(page: Page) {
-  await saveAndWait(page);
+async function select(page: Page, lang = 'en') {
+  await page
+    .getByRole('button', {
+      name: lang === 'ar' ? 'الطبقات' : 'Layers',
+      exact: true,
+    })
+    .click();
+  await page
+    .locator('[data-layer-panel]:visible')
+    .getByRole('button', { name: 'Crop target', exact: true })
+    .click();
+  await expect(
+    page.getByRole('toolbar', {
+      name: lang === 'ar' ? 'أدوات الصورة' : 'Image actions',
+    }),
+  ).toBeVisible();
+}
+async function saved(page: Page, ar = false) {
+  await saveAndWait(page, ar);
   return (await storedProject(page, 'Crop QA')).canvasData.objects[0];
 }
+async function start(page: Page, lang = 'en') {
+  await page
+    .getByRole('button', {
+      name: lang === 'ar' ? 'قص الصورة' : 'Crop image',
+      exact: true,
+    })
+    .click();
+  await expect(page.getByTestId('canvas-image-crop')).toBeVisible();
+  const handle = page.getByRole('button', {
+    name: lang === 'ar' ? 'تغيير حافة القص w' : 'Resize crop w',
+    exact: true,
+  });
+  await handle.hover();
+  return handle;
+}
 for (const width of [390, 900, 1440])
-  test(`crop is previewed, applied atomically, undoable and saved at ${width}px`, async ({
+  test(`direct drag crop applies once, preserves source, and supports undo at ${width}px`, async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -89,118 +100,134 @@ for (const width of [390, 900, 1440])
         hasTouch: width < 768,
       }),
       page = await context.newPage();
-    const src = await load(page),
-      crop = page.locator('.dc-crop-editor:visible');
-    if (width < 768) {
-      const dock = (await page
-          .locator('#mobile-properties-dock')
-          .boundingBox())!,
-        canvas = (await page.locator('#canvas-area-container').boundingBox())!;
-      expect(dock.height).toBeLessThan(900 * 0.45);
-      expect(canvas.height).toBeGreaterThan(200);
-      expect(canvas.y + canvas.height).toBeLessThanOrEqual(dock.y + 1);
-    }
-    await crop.getByRole('button', { name: '1:1', exact: true }).click();
-    await expect(crop.locator('output')).toHaveText('200 × 200 px');
-    let image = await saved(page);
-    expect(image.cropLeft || 0).toBe(0);
-    await crop.getByRole('button', { name: 'Apply crop', exact: true }).click();
-    image = await saved(page);
-    expect(image.cropLeft).toBe(100);
-    expect(image.cropRight).toBe(100);
+    const src = await load(page);
+    await select(page);
+    const handle = await start(page),
+      box = (await handle.boundingBox())!,
+      overlay = (await page.getByTestId('canvas-image-crop').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      box.x + box.width / 2 + overlay.width * 0.25,
+      box.y + box.height / 2,
+      { steps: 8 },
+    );
+    await page.mouse.up();
+    expect((await saved(page)).cropLeft || 0).toBe(0);
+    await page.getByRole('button', { name: 'Apply crop', exact: true }).click();
+    await expect(page.getByTestId('canvas-image-crop')).toHaveCount(0);
+    const image = await saved(page);
+    expect(image.cropLeft).toBeCloseTo(100, 0);
     expect(image.src).toBe(src);
     expect(image.clipPath).toBeTruthy();
     expect(image.scaleX).toBe(0.75);
     await page.keyboard.press('Control+z');
     await expect.poll(async () => (await saved(page)).cropLeft || 0).toBe(0);
     await page.keyboard.press('Control+y');
-    await expect.poll(async () => (await saved(page)).cropLeft).toBe(100);
+    await expect
+      .poll(async () => (await saved(page)).cropLeft)
+      .toBeCloseTo(100, 0);
     await page.reload();
     await page.getByRole('button', { name: /^My Projects/ }).click();
     await page.getByRole('heading', { name: 'Crop QA', exact: true }).click();
     await expect(page.locator('canvas.upper-canvas')).toBeVisible();
-    expect((await saved(page)).cropRight).toBe(100);
+    expect((await saved(page)).cropLeft).toBeCloseTo(100, 0);
     await context.close();
   });
-test('cancel discards the draft, keyboard moves the region, and reset restores the original', async ({
+test('mobile focus brings an off-center large image fully into view', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await load(page, 'en', { left: 250, top: 160 });
+  await select(page);
+  await start(page);
+  await expect
+    .poll(async () => {
+      const box = await page.getByTestId('canvas-image-crop').boundingBox();
+      return !!box && box.x >= 0 && box.x + box.width <= 390;
+    })
+    .toBe(true);
+});
+
+test('removed crop fields and transform section are absent; property button focuses the actual image', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await load(page);
-  const crop = page.locator('.dc-crop-editor:visible');
-  await crop.getByRole('button', { name: '1:1', exact: true }).click();
-  const region = crop.getByRole('group', { name: /Crop region/ });
-  await region.focus();
+  await select(page);
+  await expect(page.locator('.dc-crop-editor')).toHaveCount(0);
+  await expect(page.locator('.dc-transform')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: 'Crop image on canvas', exact: true })
+    .click();
+  await expect(page.getByTestId('canvas-image-crop')).toBeInViewport({
+    ratio: 1,
+  });
+  await expect(page.locator('.dc-properties:visible')).toHaveCount(0);
+  const tools = page.getByRole('toolbar', { name: 'Image actions' });
+  await expect(tools.getByRole('button')).toHaveCount(3);
+  await tools.getByRole('button', { name: 'Cancel crop' }).click();
+  expect((await saved(page)).cropLeft || 0).toBe(0);
+});
+test('Escape discards draft; delete from crop toolbar is undoable', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await load(page);
+  await select(page);
+  const handle = await start(page);
+  await handle.focus();
   await page.keyboard.press('Shift+ArrowRight');
-  await expect(crop.getByLabel('Left %', { exact: true })).toHaveValue('27.5');
-  await crop
-    .getByRole('button', { name: 'Cancel changes', exact: true })
-    .click();
-  await expect(crop.locator('output')).toHaveText('400 × 200 px');
-  await crop.getByRole('button', { name: '9:16', exact: true }).click();
-  await crop.getByRole('button', { name: 'Apply crop', exact: true }).click();
-  await crop
-    .getByRole('button', { name: 'Restore full image', exact: true })
-    .click();
-  const image = await saved(page);
-  expect(image.cropLeft).toBe(0);
-  expect(image.cropRight).toBe(0);
-  expect(image.clipPath).toBeFalsy();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('canvas-image-crop')).toHaveCount(0);
+  expect((await saved(page)).cropLeft || 0).toBe(0);
+  await start(page);
+  await page.getByRole('button', { name: 'Delete image', exact: true }).click();
+  await saveAndWait(page);
+  expect(
+    (await storedProject(page, 'Crop QA')).canvasData.objects,
+  ).toHaveLength(0);
+  await page.keyboard.press('Control+z');
+  await expect
+    .poll(async () => {
+      await saveAndWait(page);
+      return (await storedProject(page, 'Crop QA')).canvasData.objects.length;
+    })
+    .toBe(1);
 });
-test('linked dimensions resize proportionally; rotate and flip survive saving', async ({
-  page,
+test('mobile starts without a drawer, and the library is first on mobile and desktop', async ({
+  browser,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await load(page);
-  const panel = page.locator('.dc-properties:visible'),
-    transform = panel.locator('.dc-transform');
-  await transform.locator('summary').click();
-  await transform.getByLabel('Width', { exact: true }).fill('240');
-  let image = await saved(page);
-  expect(image.scaleX).toBe(0.6);
-  expect(image.scaleY).toBe(0.6);
-  await transform
-    .getByRole('button', { name: 'Rotate 90°', exact: true })
-    .click();
-  await transform
-    .getByRole('button', { name: 'Flip horizontally', exact: true })
-    .click();
-  image = await saved(page);
-  expect(image.angle).toBe(90);
-  expect(image.flipX).toBe(true);
+  for (const width of [390, 1440]) {
+    const context = await browser.newContext({
+        viewport: { width, height: 900 },
+      }),
+      page = await context.newPage();
+    await load(page);
+    const nav = page.locator(
+      width < 768 ? '#mobile-bottom-nav' : '#sidebar-nav-tabs',
+    );
+    await expect(nav.getByRole('button').first()).toHaveText('Media');
+    await expect(
+      page.getByRole('button', { name: /Apply template/i }),
+    ).toHaveCount(0);
+    if (width < 768) {
+      await expect(
+        page.getByText('Media Library · Photos · Icons · Ornaments', {
+          exact: true,
+        }),
+      ).not.toBeVisible();
+      await nav.getByRole('button').first().click();
+    }
+    await expect(
+      page
+        .locator('span:visible')
+        .filter({ hasText: 'Media Library · Photos · Icons · Ornaments' }),
+    ).toBeVisible();
+    await context.close();
+  }
 });
-test('an off-center crop shows the chosen source pixels rather than recentering the mask', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await load(page);
-  const crop = page.locator('.dc-crop-editor:visible');
-  await crop.getByLabel('Left %', { exact: true }).fill('75');
-  await crop.getByRole('button', { name: 'Apply crop', exact: true }).click();
-  const pixel = async (x: number) =>
-    page
-      .locator('canvas.lower-canvas')
-      .evaluate(
-        (el: HTMLCanvasElement, x) =>
-          Array.from(
-            el
-              .getContext('2d')!
-              .getImageData(
-                Math.round((x * el.width) / 600),
-                Math.round((100 * el.height) / 400),
-                1,
-                1,
-              ).data,
-          ),
-        x,
-      );
-  await expect.poll(() => pixel(200)).toEqual([255, 255, 255, 255]);
-  await expect.poll(() => pixel(300)).toEqual([0, 0, 255, 255]);
-  const image = await saved(page);
-  expect(image.cropLeft).toBe(300);
-  expect(image.clipPath.left).toBe(150);
-});
-test('Arabic mobile crop supports touch dragging while leaving a usable canvas preview', async ({
+test('Arabic touch drag changes the crop without dragging artwork', async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -210,37 +237,44 @@ test('Arabic mobile crop supports touch dragging while leaving a usable canvas p
     }),
     page = await context.newPage();
   await load(page, 'ar');
-  const crop = page.locator('.dc-crop-editor:visible');
-  await crop.getByRole('button', { name: '1:1', exact: true }).click();
-  const region = crop.getByRole('group', { name: /منطقة القص/ });
-  await region.scrollIntoViewIfNeeded();
-  const b = (await region.boundingBox())!,
-    cdp = await context.newCDPSession(page),
-    x = b.x + b.width / 2,
-    y = b.y + b.height / 2;
+  await select(page, 'ar');
+  const handle = await start(page, 'ar'),
+    box = (await handle.boundingBox())!,
+    x = box.x + box.width / 2,
+    y = box.y + box.height / 2,
+    cdp = await context.newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
     touchPoints: [{ x, y, id: 1 }],
   });
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchMove',
-    touchPoints: [{ x: x + 20, y, id: 1 }],
+    touchPoints: [{ x: x + 45, y, id: 1 }],
   });
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchEnd',
     touchPoints: [],
   });
-  expect(
-    Number(await crop.getByLabel('يسار %', { exact: true }).inputValue()),
-  ).toBeGreaterThan(25);
-  await crop.getByRole('button', { name: 'تطبيق القص', exact: true }).click();
-  await saveAndWait(page, true);
-  expect(
-    (await storedProject(page, 'Crop QA')).canvasData.objects[0].cropLeft,
-  ).toBeGreaterThan(100);
-  await region.scrollIntoViewIfNeeded();
-  await page.screenshot({
-    path: '.cache/touch-browser/inspector-mobile-ar.png',
-  });
+  await page.getByRole('button', { name: 'تطبيق القص', exact: true }).click();
+  const image = await saved(page, true);
+  expect(image.cropLeft).toBeGreaterThan(10);
+  expect(image.left).toBe(60);
+  expect(image.top).toBe(60);
   await context.close();
+});
+test('rotated and flipped images keep crop interaction in source coordinates', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await load(page, 'en', { angle: 30, flipX: true });
+  await select(page);
+  const handle = await start(page);
+  await handle.focus();
+  await page.keyboard.press('Shift+ArrowRight');
+  await page.getByRole('button', { name: 'Apply crop', exact: true }).click();
+  const image = await saved(page);
+  expect(image.cropLeft).toBe(10);
+  expect(image.angle).toBe(30);
+  expect(image.flipX).toBe(true);
+  expect(image.left).toBe(60);
 });

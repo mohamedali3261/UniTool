@@ -41,10 +41,10 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
 
   // Order follows usage flow: add content first, then control the page itself
   const TABS: TabItem[] = [
+    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: true },
     { id: 'templates', label: t.tabTemplates, labelEn: 'Templates', icon: <LayoutTemplate className="w-4 h-4 text-violet-400" /> },
     { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
     { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
-    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: true },
     { id: 'background', label: t.tabBackground, labelEn: 'Background', icon: <Palette className="w-4 h-4 text-amber-400" /> },
     { id: 'layers', label: t.tabLayers, labelEn: 'Layers', icon: <Layers className="w-4 h-4" /> }
   ];
