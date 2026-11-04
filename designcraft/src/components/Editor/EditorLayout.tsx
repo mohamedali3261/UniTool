@@ -111,6 +111,8 @@ export interface EditorLayoutHandle {
   confirmLeave:()=>Promise<boolean>;
 }
 
+const Carton3DDialog = React.lazy(() => import('../../packaging/preview3d/Carton3DDialog'));
+
 export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutProps>(function EditorLayout({
   initialProject,
   onBackToDashboard,
@@ -129,6 +131,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [activeFace,setActiveFace]=useState<number|null>(null);
   const [isPackagingOpen,setIsPackagingOpen]=useState(false);
   const [isPrintOpen,setIsPrintOpen]=useState(false);
+  const [isCarton3DOpen,setIsCarton3DOpen]=useState(false);
 
   // State
   const [projectTitle, setProjectTitle] = useState(initialProject.title);
@@ -1526,7 +1529,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
       />
 
-      {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · {initialProject.packaging.size.height} × {initialProject.packaging.size.width} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
+      {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · {initialProject.packaging.size.height} × {initialProject.packaging.size.width} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button><button type="button" onClick={()=>setIsCarton3DOpen(true)}>{lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
       <AdvancedTools onEditStart={()=>{isHistoryLockedRef.current=true;}} onEditEnd={()=>{isHistoryLockedRef.current=false;}} canvas={liveCanvas} project={{...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}}} settings={studioSettings} onSettings={value=>setStudioSettings(value)} onChanged={()=>{updateLayersList();recordHistory();}} onSave={handleSaveProject} onRestore={async project=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('Canvas');isHistoryLockedRef.current=true;try{canvas.discardActiveObject();await new Promise<void>(resolve=>canvas.loadFromJSON(project.canvasData,()=>resolve()));setCanvasWidth(project.width);setCanvasHeight(project.height);setBackgroundColor(project.canvasData.background||'#FFFFFF');setProjectTitle(project.title);setStudioSettings(project.studio||DEFAULT_PRINT);canvas.setDimensions({width:project.width*zoom,height:project.height*zoom});canvas.setZoom(zoom);canvas.renderAll();}finally{isHistoryLockedRef.current=false;}updateLayersList();recordHistory();canvas.fire('studio:changed' as any);}} onFace={index=>{if(!initialProject.packaging)return;setActiveFace(index);const canvas=fabricCanvasRef.current,area=document.getElementById('canvas-area-container');if(!canvas||!area)return;const face=facePixels(faces(initialProject.packaging.size)[index]);const z=Math.max(.15,Math.min(3,(area.clientWidth-70)/face.width,(area.clientHeight-100)/face.height));setZoom(z);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!canvas.upperCanvasEl || fabricCanvasRef.current!==canvas)return;const rect=canvas.upperCanvasEl.getBoundingClientRect(),outer=area.getBoundingClientRect();area.scrollTo({left:area.scrollLeft+rect.left-outer.left+(face.left+face.width/2)*z-area.clientWidth/2,top:area.scrollTop+rect.top-outer.top+(face.top+face.height/2)*z-area.clientHeight/2,behavior:'auto'});}));}}/>
       {/* 2. Open Design Tabs */}
       <DesignTabs
@@ -1723,6 +1726,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       )}
 
       {/* Modals */}
+      {isCarton3DOpen && initialProject.packaging && fabricCanvasRef.current && <React.Suspense fallback={<div role="status">{lang === 'ar' ? 'جاري تحميل المعاينة…' : 'Loading preview…'}</div>}><Carton3DDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} onClose={()=>setIsCarton3DOpen(false)}/></React.Suspense>}
       {isPrintOpen && initialProject.packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} bleedMm={studioSettings.bleedMm} onClose={()=>setIsPrintOpen(false)}/>}
       {isPackagingOpen && initialProject.packaging && <PackagingDialog initial={initialProject.packaging.size} onClose={()=>setIsPackagingOpen(false)} onCreate={p=>{persistProject();setIsPackagingOpen(false);onOpenPackagingProject?.(p);}}/>}
       <ExportModal
