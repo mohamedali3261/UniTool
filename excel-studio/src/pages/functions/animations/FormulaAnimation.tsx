@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play,
   Pause,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useStudio } from "../../../app/context";
 import { exampleRows, type FormulaLesson } from "./types";
+import { lessonResult } from "./examples";
 import { demoFrame } from "./demoModel";
 import "./animations.css";
 export function FormulaAnimation({
@@ -28,6 +29,7 @@ export function FormulaAnimation({
   const cellInput = useRef<HTMLInputElement>(null),
     action = lesson.demo[index],
     last = index === lesson.demo.length - 1;
+  const result = useMemo(() => lessonResult(lesson), [lesson]);
   const frame = demoFrame(lesson, index, progress);
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -114,7 +116,7 @@ export function FormulaAnimation({
             </tr>
           </thead>
           <tbody>
-            {exampleRows.map((row, i) => (
+            {(lesson.rows || exampleRows).map((row, i) => (
               <tr key={i}>
                 <th scope="row">{i + 1}</th>
                 {[...row, ""].map((value, j) => {
@@ -124,7 +126,12 @@ export function FormulaAnimation({
                     <td
                       key={ref}
                       data-cell={ref}
-                      className={output ? "xs-demo-output" : ""}
+                      className={
+                        (output ? "xs-demo-output " : "") +
+                        (ref === (visible.done ? "D2" : "D1")
+                          ? "xs-demo-active"
+                          : "")
+                      }
                     >
                       {output ? (
                         visible.done ? (
@@ -132,7 +139,7 @@ export function FormulaAnimation({
                             className="xs-demo-result"
                             data-testid="demo-cell-result"
                           >
-                            {String(lesson.result)}
+                            {String(result)}
                           </strong>
                         ) : (
                           <input
@@ -188,7 +195,9 @@ export function FormulaAnimation({
             <div
               className={
                 "xs-demo-pointer " +
-                (action.kind === "select" ? "is-dragging" : "") +
+                (action.kind === "select" && visible.range
+                  ? "is-dragging"
+                  : "") +
                 (action.kind === "click" && progress > 0.7
                   ? " is-clicking"
                   : "")
@@ -244,7 +253,7 @@ export function FormulaAnimation({
         <p>{action.caption[locale]}</p>
         {visible.done && (
           <strong className="xs-animation-final">
-            {t("الناتج النهائي", "Final result")}: {String(lesson.result)}
+            {t("الناتج النهائي", "Final result")}: {String(result)}
           </strong>
         )}
       </div>

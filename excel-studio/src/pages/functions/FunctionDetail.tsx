@@ -1,3 +1,4 @@
+import { lessonBook, lessonExamples } from "./animations/examples";
 import { useMemo, useState } from "react";
 import { Copy, ArrowUpLeft, Play, ExternalLink } from "lucide-react";
 import { Modal } from "../../components/Modal";
@@ -5,7 +6,7 @@ import { useStudio } from "../../app/context";
 import { calculator, errorHelp } from "../../core/calculate";
 import { FormulaAnimation } from "./animations/FormulaAnimation";
 import { formulaLessons } from "./animations";
-import { exampleBook, type FormulaEntry, categoryAr } from "./catalog";
+import { type FormulaEntry, categoryAr } from "./catalog";
 export function FunctionDetail({
   entry,
   onClose,
@@ -15,11 +16,17 @@ export function FunctionDetail({
 }) {
   const { t, lang, insertFormula, notice } = useStudio(),
     [draft, setDraft] = useState(entry.example),
+    [exampleIndex, setExampleIndex] = useState(0),
+    examples = useMemo(
+      () => lessonExamples(formulaLessons[entry.name]),
+      [entry.name],
+    ),
+    lesson = examples[exampleIndex],
     book = useMemo(() => {
-      const b = exampleBook();
+      const b = lessonBook(lesson.rows);
       b.sheets[0].cells.J10 = { raw: draft };
       return b;
-    }, [draft]),
+    }, [draft, lesson]),
     res = useMemo(() => calculator(book).cell(book.active, "J10"), [book]);
   return (
     <Modal
@@ -65,9 +72,35 @@ export function FunctionDetail({
         <div className="xs-example-layout">
           <div>
             <h3>{t("بيانات المثال", "Example data")}</h3>
+            {examples.length > 1 && (
+              <label className="xs-lesson-picker">
+                {t("اختار مثال الشرح", "Choose a demonstration")}
+                <select
+                  aria-label={t("اختار مثال الشرح", "Choose a demonstration")}
+                  value={exampleIndex}
+                  onChange={(e) => {
+                    const i = Number(e.target.value);
+                    setExampleIndex(i);
+                    setDraft(examples[i].formula);
+                  }}
+                >
+                  {examples.map((example, i) => (
+                    <option key={i} value={i}>
+                      {i + 1}.{" "}
+                      {
+                        (example.title ||
+                          (i === 0
+                            ? ["المثال الأساسي", "Original example"]
+                            : example.goal))[lang === "ar" ? 0 : 1]
+                      }
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <FormulaAnimation
-              key={entry.name}
-              lesson={formulaLessons[entry.name]}
+              key={entry.name + exampleIndex}
+              lesson={lesson}
               onUseExample={setDraft}
             />
           </div>

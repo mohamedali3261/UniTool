@@ -1,3 +1,4 @@
+import { SiteNavbar } from '../../src/components/SiteNavbar';
 import { storageUsage, type UsageReport } from './usage';
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -42,7 +43,8 @@ function App() {
     setStatus(text('تم تجهيز ملف ZIP وبدء التنزيل. احتفظ به في مكان آمن.', 'ZIP prepared and download started. Keep it somewhere safe.'));
   };
   return <div className="storage-app" dir={ar ? 'rtl' : 'ltr'}>
-    <header><a href="/index.html" className="brand"><img src="/favicon.svg" alt="" />UniTool</a><nav><a href="/index.html">{text('الرئيسية', 'Home')}</a><a href="/app.html">{text('الأدوات', 'Tools')}</a><button onClick={() => setAr(!ar)}>{ar ? 'English' : 'العربية'}</button></nav></header>
+    <SiteNavbar lang={ar ? 'ar' : 'en'} onToggleLang={() => setAr(!ar)}/>
+
     <main>
       <p className="eyebrow">YOUR WORK. WITH YOU.</p>
       <h1>{text('التخزين والنسخ الاحتياطي للموقع', 'Site storage & backup')}</h1>

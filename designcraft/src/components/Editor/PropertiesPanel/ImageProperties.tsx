@@ -44,16 +44,9 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
   const rBR = properties.clipCornerBR ?? 0;
   const rBL = properties.clipCornerBL ?? 0;
 
-  // Inset crops
-  const cropT = properties.cropTop ?? 0;
-  const cropB = properties.cropBottom ?? 0;
-  const cropL = properties.cropLeft ?? 0;
-  const cropR = properties.cropRight ?? 0;
-
   const hasBorders = properties.hasBorders !== false;
-  const maxDimension = Math.max(properties.width || 400, properties.height || 400);
+  const maxDimension = Math.max(properties.imageWidth || properties.width || 400, properties.imageHeight || properties.height || 400);
   const maxRadius = Math.round(maxDimension / 2);
-  const maxCrop = Math.round(maxDimension * 0.45);
 
   const handleResetAllFades = () => {
     onUpdate('fadeTop', 0);
@@ -75,13 +68,6 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
     onUpdate('clipCornerTR', 0);
     onUpdate('clipCornerBR', 0);
     onUpdate('clipCornerBL', 0);
-  };
-
-  const handleResetHardCrops = () => {
-    onUpdate('cropTop', 0);
-    onUpdate('cropBottom', 0);
-    onUpdate('cropLeft', 0);
-    onUpdate('cropRight', 0);
   };
 
   return (
@@ -510,48 +496,6 @@ export const ImageProperties: React.FC<ImagePropertiesProps> = ({
             </div>
           </div>
 
-          {/* Hard edge crop */}
-          <div className="space-y-2 pt-2 border-t border-slate-800/80">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300">{t.ipCropTitle}</label>
-              {(cropT > 0 || cropB > 0 || cropL > 0 || cropR > 0) && (
-                <button
-                  type="button"
-                  onClick={handleResetHardCrops}
-                  className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 transition"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>{t.ipCropReset}</span>
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {[
-                { label: t.ipCropTop, key: 'cropTop' as const, value: cropT },
-                { label: t.ipCropBottom, key: 'cropBottom' as const, value: cropB },
-                { label: t.ipCropLeft, key: 'cropLeft' as const, value: cropL },
-                { label: t.ipCropRight, key: 'cropRight' as const, value: cropR }
-              ].map((crop) => (
-                <div
-                  key={crop.key}
-                  className="bg-[#0B132B] p-2.5 rounded-xl border border-slate-800 space-y-1"
-                >
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>{crop.label}</span>
-                    <span className="font-mono text-sky-400">{crop.value}px</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxCrop}
-                    value={crop.value}
-                    onChange={(e) => onUpdate(crop.key, parseInt(e.target.value) || 0)}
-                    className="w-full accent-sky-400 cursor-pointer"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

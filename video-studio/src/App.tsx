@@ -1,3 +1,4 @@
+import { SiteNavbar } from '../../src/components/SiteNavbar';
 import "./elements/elements.css";
 import { mediaAccept, releaseMediaURL } from "./media/files";
 import { durationOf } from "./types";
@@ -184,7 +185,7 @@ export default function App() {
     }
   }
   return (
-    <>
+    <div className="video-site-shell"><SiteNavbar/>
       {page === "home" &&
         new URLSearchParams(location.search).has("element") && (
           <div className="element-handoff" role="status">
@@ -410,6 +411,6 @@ export default function App() {
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }

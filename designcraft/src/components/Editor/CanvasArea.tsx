@@ -199,6 +199,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
       const props: ActiveObjectProperties = {
         type: rawType,
+        src: rawType === 'image' ? (active as fabric.Image).getSrc() : undefined,
+        imageWidth: rawType === 'image' ? active.width : undefined,
+        imageHeight: rawType === 'image' ? active.height : undefined,
+        flipX: !!active.flipX,
+        flipY: !!active.flipY,
         left: Math.round(active.left || 0),
         top: Math.round(active.top || 0),
         width: Math.round((active.width || 0) * (active.scaleX || 1)),

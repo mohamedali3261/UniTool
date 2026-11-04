@@ -1,3 +1,7 @@
+import { TransformProperties } from './TransformProperties';
+import { ImageCropEditor } from './ImageCropEditor';
+import type { CropInsets } from '../../../utils/imageCrop';
+import './properties-panel.css';
 import React from 'react';
 import { ActiveObjectProperties } from '../../../types';
 import { TextProperties } from './TextProperties';
@@ -9,6 +13,7 @@ import { X, ChevronLeft, Type, Image as ImageIcon, Shapes, Layers, Palette } fro
 import { useDcLang } from '../../../hooks/useDcLang';
 
 interface PropertiesPanelProps {
+  onCropImage: (crop: CropInsets) => void;
   activeProperties: ActiveObjectProperties | null;
   canvasWidth: number;
   canvasHeight: number;
@@ -32,7 +37,7 @@ interface PropertiesPanelProps {
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
-  activeProperties,
+  activeProperties, onCropImage,
   canvasWidth,
   canvasHeight,
   backgroundColor,
@@ -88,7 +93,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     <aside
       id="editor-properties-panel"
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
-      className="w-full max-w-full min-w-0 md:w-64 lg:w-72 bg-[#101a30] md:border-l border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
+      className="w-full max-w-full min-w-0 md:w-64 lg:w-72 dc-properties bg-[#101a30] md:border-l border-slate-700/70 flex flex-col h-full shrink-0 select-none z-20"
     >
       {/* Panel Header */}
       <div className="min-h-14 py-2 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
@@ -158,6 +163,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
+            {isImage && <ImageCropEditor properties={activeProperties} onApply={onCropImage}/>}
             {isImage && (
               <ImageProperties
                 properties={activeProperties}
@@ -173,6 +179,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
+            <TransformProperties properties={activeProperties} onUpdate={onUpdateProperty}/>
             {/* 2. Global Alignment & Ordering Tools */}
             <AlignProperties
               onAlign={onAlign}

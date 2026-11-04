@@ -441,7 +441,7 @@ test("advanced tools fit an Arabic mobile viewport", async ({ page }) => {
   await load(page);
   await closeIfOpen(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByTitle('Switch Language / تبديل اللغة').click();
+  await page.locator('[data-site-navbar]').getByRole('button', { name: 'التحويل إلى العربية', exact: true }).click();
   while (await page.getByRole('button', { name: 'إغلاق', exact: true }).count()) {
     await page.getByRole('button', { name: 'إغلاق', exact: true }).last().click();
   }

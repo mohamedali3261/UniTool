@@ -5413,3 +5413,8 @@ input[type="range"]::-webkit-slider-thumb {
   pointer-events: none;
   overflow: hidden;
 }
+
+.video-site-shell{min-height:100dvh}.video-site-shell>.editor-shell{height:calc(100dvh - 64px);min-height:0}
+/* Keep the shared site bar visible above the fixed mobile workspace. */
+.video-site-shell>.editor-shell{height:calc(var(--studio-viewport, 100dvh) - 64px)}
+@media(max-width:650px),(max-width:900px) and (pointer:coarse),(max-height:500px) and (pointer:coarse){.video-site-shell>.editor-shell{top:64px;bottom:auto}}
