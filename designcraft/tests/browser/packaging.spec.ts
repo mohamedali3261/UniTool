@@ -8,6 +8,9 @@ async function open(page: Page) {
   await page
     .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
     .click();
+await page
+    .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
+    .click();
   await expect(page.getByRole("dialog")).toBeVisible();
 }
 test("custom preview downloads actual physical SVG and PDF files", async ({
@@ -65,7 +68,7 @@ test("native carton metadata survives reopening the designer", async ({
     "120 × 80 × 35 mm",
   );
   await page
-    .getByRole("button", { name: "مقاسات وقالب العلبة", exact: true })
+    .getByRole("button", { name: "تعديل المقاسات", exact: true })
     .click();
   await expect(
     page.getByRole("spinbutton", {
@@ -166,6 +169,9 @@ test("English controls retain physical units", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("unitool-lang", "en"));
   await page.goto(base + "/designcraft.html");
   await page
+    .getByRole("button", { name: "Carton templates & dimensions", exact: true })
+    .click();
+await page
     .getByRole("button", { name: "Carton templates & dimensions", exact: true })
     .click();
   await page

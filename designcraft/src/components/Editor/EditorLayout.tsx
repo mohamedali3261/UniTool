@@ -1,12 +1,15 @@
 import { normalizeCrop, type CropInsets } from '../../utils/imageCrop';
 import { deviceRasterBudget, rasterWithinBudget } from '../../utils/rasterBudget';
 import { downloadFile } from '../../utils/download';
-import { boundedHistory } from '../../utils/mobilePerformance';
+import { boundedHistory, fittedInitialZoom } from '../../utils/mobilePerformance';
 import { clearFormatting, EXTRA_PROPS } from '../../advanced/core/text';
 import { shortcutKey } from '../../utils/keyboard';
-import {AdvancedTools} from '../../advanced/AdvancedTools';
+import {useStudio} from '../../advanced/useStudio';
+import {CartonResizeDialog} from '../../packaging/CartonResizeDialog';
+import {resizeCarton} from '../../packaging/resize';
+import {cartonGeometry,MM_TO_PX,type CartonSize} from '../../packaging/geometry';
 import {CanvasOverlays} from '../../advanced/CanvasOverlays';
-import {DEFAULT_PRINT,faces,facePixels} from '../../advanced/core/faces';
+import {DEFAULT_PRINT} from '../../advanced/core/faces';
 import {applyTextFit} from '../../advanced/core/text';
 import {resetEmptyText,normalTextFill} from '../../utils/textReset';
 import {withoutGuides} from '../../packaging/print';
@@ -15,7 +18,6 @@ import {withCartonPrecision} from '../../packaging/precision';
 import {PackagingPrintDialog} from '../../packaging/PackagingPrintDialog';
 import {applyCartonBoundary,isCartonGuide} from '../../packaging/boundary';
 import {packagingPrint} from '../../packaging/print';
-import {PackagingDialog} from "../../packaging/PackagingDialog";
 import {physicalCartonSvg} from "../../packaging/physicalSvg";
 import React, { useState, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
@@ -127,9 +129,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 }, ref) {
   const { t, lang } = useDcLang();
   const [liveCanvas,setLiveCanvas]=useState<fabric.Canvas|null>(null);
-  const [studioSettings,setStudioSettings]=useState(initialProject.studio||DEFAULT_PRINT);
-  const [activeFace,setActiveFace]=useState<number|null>(null);
+  const [studioSettings]=useState(initialProject.studio||DEFAULT_PRINT);
+  const [activeFace]=useState<number|null>(null);
   const [isPackagingOpen,setIsPackagingOpen]=useState(false);
+  const [packaging,setPackaging]=useState(initialProject.packaging);
+  const packagingRef=useRef(initialProject.packaging);
   const [isPrintOpen,setIsPrintOpen]=useState(false);
   const [isCarton3DOpen,setIsCarton3DOpen]=useState(false);
 
@@ -161,6 +165,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [isSaving, setIsSaving] = useState(false);
   const lastSaveRef = useRef<Promise<boolean>>(Promise.resolve(true));
   
+  // Keep background recovery/dirty protection without the removed advanced-tools strip.
+  useStudio(liveCanvas,{...initialProject,packaging,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}});
+
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions>({
     visible: false,
@@ -183,11 +190,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const recordHistory = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || isHistoryLockedRef.current) return;
-    if(initialProject.packaging) applyCartonBoundary(canvas,initialProject.packaging.size);
+    if(packagingRef.current) applyCartonBoundary(canvas,packagingRef.current.size);
     canvas.getObjects().filter((o:any)=>o.lockMovementX && o.lockMovementY && String(o.id||'').startsWith('packaging-')).forEach(o=>canvas.bringToFront(o));
 
     const json = withCartonPrecision(()=>JSON.stringify(
-      canvas.toJSON([
+      {...canvas.toJSON([
         'textFitMode','textFitHeight','textFitMaxSize',
         'id',
         'name',
@@ -216,13 +223,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         'hasBorders',
         'hasControls',
         'clipPath'
-      ])
+      ]), _cartonSize:packagingRef.current?.size}
     ));
     const newStack = boundedHistory(historyStackRef.current, historyIndexRef.current, json);
     historyStackRef.current = newStack;
     historyIndexRef.current = newStack.length - 1;
     canvas.fire('studio:changed' as any);
-  }, [initialProject.packaging]);
+  }, []);
 
   // Update Layers helper
   const updateLayersList = useCallback(() => {
@@ -268,6 +275,35 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     setLayersList(list);
   }, []);
 
+  // Nominal metadata, sheet dimensions and rendering must always move together.
+  const applyCartonSize = useCallback((size:CartonSize) => {
+    const canvas=fabricCanvasRef.current;
+    if(!canvas||!packagingRef.current)return;
+    const next={...packagingRef.current,size},g=cartonGeometry(size);
+    packagingRef.current=next;setPackaging(next);
+    setCanvasWidth(g.width*MM_TO_PX);setCanvasHeight(g.height*MM_TO_PX);
+    canvas.setDimensions({width:g.width*MM_TO_PX*canvas.getZoom(),height:g.height*MM_TO_PX*canvas.getZoom()});
+  },[]);
+
+  const handleCartonResize = useCallback(async (size:CartonSize) => {
+    const canvas=fabricCanvasRef.current,previous=packagingRef.current;
+    if(!canvas||!previous)throw Error('Canvas');
+    const backup=withCartonPrecision(()=>canvas.toJSON(EXTRA_PROPS));
+    recordHistory();isHistoryLockedRef.current=true;
+    try {
+      await resizeCarton(canvas,previous.size,size);
+      applyCartonSize(size);setActiveProperties(null);updateLayersList();
+      const area=document.getElementById('canvas-area-container'),g=cartonGeometry(size);
+      if(area)setZoom(fittedInitialZoom(g.width*MM_TO_PX,g.height*MM_TO_PX,Math.max(100,area.clientWidth-64),Math.max(100,area.clientHeight-100)));
+      canvas.requestRenderAll();
+    } catch(error) {
+      await new Promise<void>(resolve=>canvas.loadFromJSON(backup,()=>resolve()));
+      applyCartonSize(previous.size);updateLayersList();canvas.requestRenderAll();
+      throw error;
+    } finally {isHistoryLockedRef.current=false;}
+    recordHistory();
+  },[applyCartonSize,recordHistory,updateLayersList]);
+
   // Handle Undo
   const handleUndo = useCallback(() => {
     if (isHistoryLockedRef.current || historyIndexRef.current <= 0) return;
@@ -279,6 +315,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     historyIndexRef.current -= 1;
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
+    const size=JSON.parse(jsonState)._cartonSize;
+    if(size)applyCartonSize(size);
     canvas.loadFromJSON(jsonState, () => {
       if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
       canvas.renderAll();
@@ -287,7 +325,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.fire('studio:changed' as any);
       onShowToast(t.elUndoTitle, t.elUndoMsg, 'info');
     });
-  }, [updateLayersList, onShowToast]);
+  }, [updateLayersList, onShowToast, applyCartonSize]);
 
   // Handle Redo
   const handleRedo = useCallback(() => {
@@ -300,6 +338,8 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     historyIndexRef.current += 1;
     const jsonState = historyStackRef.current[historyIndexRef.current];
 
+    const size=JSON.parse(jsonState)._cartonSize;
+    if(size)applyCartonSize(size);
     canvas.loadFromJSON(jsonState, () => {
       if (fabricCanvasRef.current !== canvas || !canvas.contextContainer) return;
       canvas.renderAll();
@@ -308,7 +348,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvas.fire('studio:changed' as any);
       onShowToast(t.elRedoTitle, t.elRedoMsg, 'info');
     });
-  }, [updateLayersList, onShowToast]);
+  }, [updateLayersList, onShowToast, applyCartonSize]);
 
   // Context Menu Handlers
   const handleCopy = useCallback(() => {
@@ -640,6 +680,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       sessionOnly: false,
       title: projectTitle,
       studio:studioSettings,
+      packaging:packagingRef.current,
       width: canvasWidth,
       height: canvasHeight,
       thumbnail: thumb,
@@ -650,7 +691,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       }
     };
 
-    const fingerprint = JSON.stringify({ title: updated.title, width: updated.width, height: updated.height, studio: updated.studio, canvasData: updated.canvasData });
+    const fingerprint = JSON.stringify({ title: updated.title, width: updated.width, height: updated.height, studio: updated.studio, packaging:updated.packaging, canvasData: updated.canvasData });
     window.dispatchEvent(new CustomEvent('designcraft:saving', { detail: { id: updated.id } }));
     lastSaveRef.current = saveProjectToStorage(updated).then((ok) => {
       window.dispatchEvent(new CustomEvent('designcraft:saved', { detail: { id: updated.id, ok, fingerprint } }));
@@ -712,13 +753,13 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    if(initialProject.packaging){onShowToast(lang==='ar'?'مقاسات العلبة محمية':'Carton size is protected',lang==='ar'?'أنشئ قالبًا جديدًا من مقاسات العلبة؛ تغيير البكسل يفسد المقياس الطباعي.':'Create a fresh carton template rather than resizing pixels.','warning');return;}
+    if(packaging){onShowToast(lang==='ar'?'مقاسات العلبة محمية':'Carton size is protected',lang==='ar'?'استخدم تعديل المقاسات في شريط العلبة للحفاظ على التصميم والمقياس الطباعي.':'Use Edit dimensions in the carton bar to adapt the design at the correct physical scale.','warning');return;}
     setCanvasWidth(w);
     setCanvasHeight(h);
     canvas.setDimensions({ width: w * zoom, height: h * zoom });
     canvas.renderAll();
     onShowToast(t.elResizeTitle, `${t.elResizeMsg} ${w} × ${h} px`, 'info');
-  }, [zoom, onShowToast, initialProject.packaging,lang]);
+  }, [zoom, onShowToast, packaging,lang]);
 
   // Background Setters
   const handleSetBackgroundColor = useCallback((color: string) => {
@@ -880,7 +921,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
     // If the canvas already has objects, ask to REPLACE them with the template
     const sizeChanged = !!tpl.exactSize && (cW !== tpl.baseW || cH !== tpl.baseH);
-    if(initialProject.packaging && sizeChanged){onShowToast(lang==='ar'?'مقاس القالب غير مطابق':'Template size mismatch',lang==='ar'?'هذا القالب يغيّر المقاس الطباعي؛ استخدم عناصر لا تغيّر أبعاد العلبة.':'This template changes the physical sheet size. Use artwork that preserves carton dimensions.','warning');return;}
+    if(packaging && sizeChanged){onShowToast(lang==='ar'?'مقاس القالب غير مطابق':'Template size mismatch',lang==='ar'?'هذا القالب يغيّر المقاس الطباعي؛ استخدم عناصر لا تغيّر أبعاد العلبة.':'This template changes the physical sheet size. Use artwork that preserves carton dimensions.','warning');return;}
     const existing = canvas.getObjects();
     if (existing.length > 0) {
       const message = sizeChanged
@@ -894,7 +935,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     isHistoryLockedRef.current = true;
     try {
     canvas.discardActiveObject();
-    canvas.remove(...existing.filter((o:any)=>!initialProject.packaging || !String(o.id||'').startsWith('packaging-')));
+    canvas.remove(...existing.filter((o:any)=>!packaging || !String(o.id||'').startsWith('packaging-')));
 
     // Exact-size templates adopt their design dimensions.
 
@@ -1320,7 +1361,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
               if (!canvas) return;
               const found = layersList.find((l) => l.id === id);
               if (found && found.rawObject) {
-                if(initialProject.packaging&&isCartonGuide(found.rawObject)){onShowToast(lang==='ar'?'خطوط المقاسات محمية':'Dimension guides are protected',undefined,'info');return;}
+                if(packaging&&isCartonGuide(found.rawObject)){onShowToast(lang==='ar'?'خطوط المقاسات محمية':'Dimension guides are protected',undefined,'info');return;}
                 const next = !found.locked;
                 found.rawObject.set({
                   locked: next,
@@ -1529,8 +1570,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
       />
 
-      {initialProject.packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · {initialProject.packaging.size.height} × {initialProject.packaging.size.width} × {initialProject.packaging.size.depth} mm</span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'مقاسات وقالب العلبة':'Carton dimensions & template'}</button><button type="button" onClick={()=>setIsCarton3DOpen(true)}>{lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
-      <AdvancedTools onEditStart={()=>{isHistoryLockedRef.current=true;}} onEditEnd={()=>{isHistoryLockedRef.current=false;}} canvas={liveCanvas} project={{...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:{background:backgroundColor}}} settings={studioSettings} onSettings={value=>setStudioSettings(value)} onChanged={()=>{updateLayersList();recordHistory();}} onSave={handleSaveProject} onRestore={async project=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('Canvas');isHistoryLockedRef.current=true;try{canvas.discardActiveObject();await new Promise<void>(resolve=>canvas.loadFromJSON(project.canvasData,()=>resolve()));setCanvasWidth(project.width);setCanvasHeight(project.height);setBackgroundColor(project.canvasData.background||'#FFFFFF');setProjectTitle(project.title);setStudioSettings(project.studio||DEFAULT_PRINT);canvas.setDimensions({width:project.width*zoom,height:project.height*zoom});canvas.setZoom(zoom);canvas.renderAll();}finally{isHistoryLockedRef.current=false;}updateLayersList();recordHistory();canvas.fire('studio:changed' as any);}} onFace={index=>{if(!initialProject.packaging)return;setActiveFace(index);const canvas=fabricCanvasRef.current,area=document.getElementById('canvas-area-container');if(!canvas||!area)return;const face=facePixels(faces(initialProject.packaging.size)[index]);const z=Math.max(.15,Math.min(3,(area.clientWidth-70)/face.width,(area.clientHeight-100)/face.height));setZoom(z);requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!canvas.upperCanvasEl || fabricCanvasRef.current!==canvas)return;const rect=canvas.upperCanvasEl.getBoundingClientRect(),outer=area.getBoundingClientRect();area.scrollTo({left:area.scrollLeft+rect.left-outer.left+(face.left+face.width/2)*z-area.clientWidth/2,top:area.scrollTop+rect.top-outer.top+(face.top+face.height/2)*z-area.clientHeight/2,behavior:'auto'});}));}}/>
+      {packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{lang==='ar'?'طول × عرض × عمق':'Length × width × depth'} · <bdi dir="ltr">{packaging.size.height} × {packaging.size.width} × {packaging.size.depth} mm</bdi></span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'تعديل المقاسات':'Edit dimensions'}</button><button type="button" aria-label={lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'} title={lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'} onClick={()=>setIsCarton3DOpen(true)}>{lang==='ar'?'معاينة 3D':'3D · 360°'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
       {/* 2. Open Design Tabs */}
       <DesignTabs
         tabs={tabs}
@@ -1627,7 +1667,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           <CanvasArea
             cropRequest={cropRequest}
             onApplyCrop={handleCropImage}
-            overlays={initialProject.packaging?<CanvasOverlays size={initialProject.packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
+            overlays={packaging?<CanvasOverlays size={packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
             width={canvasWidth}
             height={canvasHeight}
             backgroundColor={backgroundColor}
@@ -1726,33 +1766,33 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       )}
 
       {/* Modals */}
-      {isCarton3DOpen && initialProject.packaging && fabricCanvasRef.current && <React.Suspense fallback={<div role="status">{lang === 'ar' ? 'جاري تحميل المعاينة…' : 'Loading preview…'}</div>}><Carton3DDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} onClose={()=>setIsCarton3DOpen(false)}/></React.Suspense>}
-      {isPrintOpen && initialProject.packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={initialProject.packaging.size} width={canvasWidth} height={canvasHeight} bleedMm={studioSettings.bleedMm} onClose={()=>setIsPrintOpen(false)}/>}
-      {isPackagingOpen && initialProject.packaging && <PackagingDialog initial={initialProject.packaging.size} onClose={()=>setIsPackagingOpen(false)} onCreate={p=>{persistProject();setIsPackagingOpen(false);onOpenPackagingProject?.(p);}}/>}
+      {isCarton3DOpen && packaging && fabricCanvasRef.current && <React.Suspense fallback={<div role="status">{lang === 'ar' ? 'جاري تحميل المعاينة…' : 'Loading preview…'}</div>}><Carton3DDialog canvas={fabricCanvasRef.current} size={packaging.size} width={canvasWidth} height={canvasHeight} onClose={()=>setIsCarton3DOpen(false)}/></React.Suspense>}
+      {isPrintOpen && packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={packaging.size} width={canvasWidth} height={canvasHeight} bleedMm={studioSettings.bleedMm} onClose={()=>setIsPrintOpen(false)}/>}
+      {isPackagingOpen && packaging && <CartonResizeDialog size={packaging.size} onClose={()=>setIsPackagingOpen(false)} onApply={handleCartonResize}/>}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        isPackaging={!!initialProject.packaging}
+        isPackaging={!!packaging}
         onExportProject={async()=>{const canvas=fabricCanvasRef.current;if(!canvas)throw Error('NO_CANVAS');return portableProject({...initialProject,title:projectTitle,width:canvasWidth,height:canvasHeight,studio:studioSettings,canvasData:withCartonPrecision(()=>canvas.toJSON(['id','name','locked','lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','selectable','evented','_originalSrc','textFitMode','textFitHeight','textFitMaxSize','cropTop','cropBottom','cropLeft','cropRight','fadeTop','fadeBottom','fadeLeft','fadeRight','fadeRadial','clipCornerTL','clipCornerTR','clipCornerBL','clipCornerBR']))},canvas);}}
         onExportBlob={(format, quality, multiplier, guides=true) => {
           const canvas = fabricCanvasRef.current;
           if (!canvas) return Promise.reject(Error('NO_CANVAS'));
-          return withoutGuides(canvas, !!initialProject.packaging && !guides, () => exportCanvasBlob(canvas, format, quality, multiplier, canvasWidth, canvasHeight));
+          return withoutGuides(canvas, !!packaging && !guides, () => exportCanvasBlob(canvas, format, quality, multiplier, canvasWidth, canvasHeight));
         }}
         onExport={(format, quality, multiplier, guides=true) => {
           if (!fabricCanvasRef.current) return '';
-          return withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>exportCanvasImage(fabricCanvasRef.current!,format,quality,multiplier,canvasWidth,canvasHeight));
+          return withoutGuides(fabricCanvasRef.current,!!packaging&&!guides,()=>exportCanvasImage(fabricCanvasRef.current!,format,quality,multiplier,canvasWidth,canvasHeight));
         }}
         onExportSvg={(guides=true) => {
           if (!fabricCanvasRef.current) return '';
-          const svg=withoutGuides(fabricCanvasRef.current,!!initialProject.packaging&&!guides,()=>withCartonPrecision(()=>exportCanvasSvg(fabricCanvasRef.current!, canvasWidth, canvasHeight)));
-          return initialProject.packaging ? physicalCartonSvg(svg,initialProject.packaging.size,canvasWidth,canvasHeight):svg;
+          const svg=withoutGuides(fabricCanvasRef.current,!!packaging&&!guides,()=>withCartonPrecision(()=>exportCanvasSvg(fabricCanvasRef.current!, canvasWidth, canvasHeight)));
+          return packaging ? physicalCartonSvg(svg,packaging.size,canvasWidth,canvasHeight):svg;
         }}
         onExportPdf={async (filename,guides=true) => {
           if (!fabricCanvasRef.current) return;
-          if(initialProject.packaging){
+          if(packaging){
             await document.fonts.ready;
-            const blob=await packagingPrint(fabricCanvasRef.current,initialProject.packaging.size,canvasWidth,canvasHeight,'pdf',300,guides),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${filename}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+            const blob=await packagingPrint(fabricCanvasRef.current,packaging.size,canvasWidth,canvasHeight,'pdf',300,guides),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${filename}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
           }else await exportCanvasPdf(fabricCanvasRef.current, filename, canvasWidth, canvasHeight);
         }}
         defaultTitle={projectTitle}

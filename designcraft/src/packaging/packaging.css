@@ -281,24 +281,29 @@
 .carton-editor-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
   background: #1c2140;
-  padding: 7px 18px;
+  padding: 4px 10px;
   color: #d6d3ff;
-  font-size: 11px;
+  font-size: 10px;
   flex-shrink: 0;
 }
 .carton-editor-bar button {
   border: 1px solid #7770ca;
   background: #383367;
   color: #fff;
-  padding: 6px 10px;
-  border-radius: 7px;
-  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.5;
+  min-height: 26px;
+  white-space: nowrap;
 }
 .carton-editor-bar span {
   overflow-wrap: anywhere;
+  margin-inline-end: auto;
 }
 @media (max-width: 700px) {
   .carton-entry {
@@ -734,4 +739,75 @@
 .carton-art-controls,
 .carton-preview-column {
   scroll-margin-top: 18px;
+}
+.carton-resize-dialog {
+  margin: auto;
+  width: min(500px, 94vw);
+  max-height: 90dvh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid #555580;
+  border-radius: 16px;
+  background: #171d32;
+  color: #e7e9ff;
+  box-shadow: 0 24px 80px #0009;
+}
+.carton-resize-dialog::backdrop {
+  background: #050916b9;
+  backdrop-filter: blur(4px);
+}
+.carton-resize-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.carton-resize-dialog p,
+.carton-resize-dialog small {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #b9c3de;
+}
+.carton-resize-fields {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+.carton-resize-fields label {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+}
+.carton-resize-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 7px;
+  padding: 10px 7px;
+  background: #101627;
+  border: 1px solid #596280;
+  color: white;
+  border-radius: 8px;
+  direction: ltr;
+}
+.carton-resize-dialog footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.carton-resize-dialog button {
+  padding: 8px 14px;
+  border: 1px solid #68649e;
+  border-radius: 8px;
+  background: #393267;
+  color: white;
+  font-size: 12px;
+}
+.carton-resize-dialog button:disabled {
+  opacity: 0.5;
+}
+.carton-resize-dialog [role="alert"] {
+  color: #ffb3b3;
+}
+.carton-resize-dialog :focus-visible {
+  outline: 2px solid #b5abff;
+  outline-offset: 2px;
 }

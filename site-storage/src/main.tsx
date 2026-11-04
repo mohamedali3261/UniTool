@@ -1,3 +1,4 @@
+import {Download,Upload,HardDrive,ShieldCheck} from 'lucide-react';
 import { SiteNavbar } from '../../src/components/SiteNavbar';
 import { storageUsage, type UsageReport } from './usage';
 import React, { useState, useEffect } from 'react';
@@ -47,37 +48,16 @@ function App() {
 
     <main>
       <p className="eyebrow">YOUR WORK. WITH YOU.</p>
-      <h1>{text('التخزين والنسخ الاحتياطي للموقع', 'Site storage & backup')}</h1>
-      <p className="lead">{text('مشروعاتك المحفوظة وإعداداتك في ملف ZIP واحد، منظّم لمجلدات حسب الأقسام. انقله لجهاز آخر واستعد شغلك من نفس موقع UniTool.', 'Saved projects and settings in one ZIP, organized by section. Move it to another device and restore it on the same UniTool site.')}</p>
-      <aside className="notice">{text('احفظ شغلك في كل أداة واقفل تبويبات الموقع الأخرى أولًا. النسخة تشمل البيانات المحفوظة فقط، مش الملفات المفتوحة في الذاكرة أو كل عملياتك السابقة. لا تشمل كلمات المرور أو مفاتيح API المعروفة، ولا ملفات الكاش أو الكوكيز. ملف ZIP غير مشفّر وقد يحتوي صورًا ونصوصًا خاصة.', 'Save your work in each tool and close other site tabs first. Only persisted data is included, not unsaved files or a history of everything you did. Known passwords/API keys, caches and cookies are excluded. The ZIP is not encrypted and may contain private images or text.')}</aside>
-      <section className="card storage-overview" aria-label={text('استهلاك المساحة وما يتم حفظه', 'Storage usage and saving coverage')}>
-        <h2>{text('المساحة والحفظ الفعلي', 'Storage usage & saving coverage')}</h2>
-        <p>{text('المشروعات المحفوظة لا تُحذف لتوفير المساحة. نقلّل التكرار فقط، ونحدّ نسخ استرداد التصميم المؤقتة إلى 24 MB، مع الاحتفاظ بأحدث نسخة.', 'Saved projects are never deleted to save space. We reduce duplicates and bound temporary design recovery history to 24 MB, always retaining the latest snapshot.')}</p>
-        <div className="usage-numbers" data-testid="storage-usage">
-          <span>{text('استهلاك الموقع التقريبي: ', 'Estimated site usage: ')}<b>{usage?.usage === undefined ? '—' : (usage.usage / 1024 / 1024).toFixed(2) + ' MB'}</b></span>
-          <span>{text('حصة المتصفح التقريبية: ', 'Estimated browser quota: ')}<b>{usage?.quota === undefined ? '—' : (usage.quota / 1024 / 1024).toFixed(0) + ' MB'}</b></span>
-          <span>{text('بيانات الأدوات المسجّلة: ', 'Registered tool records: ')}<b>{usage ? usage.databases.reduce((n,d) => n+d.records,0) : '—'}</b></span>
-        </div>
-        <p>{text('تقدير المتصفح قد يشمل الكاش، وليس حجم ملفات ZIP أو الملفات الأصلية بالضبط. قيم localStorage أدناه تقديرات نصية فقط. لا يمكن ضغط فيديو أو صورة بلا حدود من غير فقدان جودة.', 'Browser estimates may include caches; they are not exact ZIP or original-file sizes. localStorage sizes below are text estimates only. Images/videos cannot be shrunk indefinitely without quality loss.')}</p>
-        {usage && <ul data-testid="storage-sections">{usage.local.map(g => <li key={g.section}><b>{g.section}</b> · {g.count} {text('إعداد/مسودة', 'settings/drafts')} · {(g.bytes / 1024).toFixed(1)} KB</li>)}{usage.databases.map(d => <li key={d.name} dir="ltr">{d.name} · {d.records} {text('سجل', 'records')}</li>)}</ul>}
-        <div className="coverage-grid">
-          <p><b>{text('التصميم والشعارات', 'Design & logos')}</b><br/>{text('مشروعات محفوظة واسترداد تلقائي؛ راقب حالة الحفظ قبل الإغلاق.', 'Saved projects and automatic recovery; check save status before closing.')}</p>
-          <p><b>{text('الفيديو', 'Video')}</b><br/>{text('المشروع والوسائط المستخدمة المحفوظة؛ الملفات الأصلية الكبيرة تحتاج مساحة حقيقية.', 'Saved project and referenced media; large original files require real space.')}</p>
-          <p><b>{text('الجداول', 'Spreadsheets')}</b><br/>{text('حفظ تلقائي للمصنف الحالي. صدّر ملفًا قبل استبداله بمصنف آخر.', 'Autosaves the current workbook. Export before replacing it with another workbook.')}</p>
-          <p><b>{text('القارئ الصوتي', 'Audio reader')}</b><br/>{text('إعدادات وعلامات وتقدم القراءة وآخر 5 كتب؛ ليست مكتبة غير محدودة.', 'Settings, bookmarks, progress and the last 5 books, not an unlimited library.')}</p>
-          <p><b>{text('SVG والتفضيلات', 'SVG & preferences')}</b><br/>{text('البيانات التي يحفظها المحرر بالفعل. ملف لم تحفظه لا يدخل النسخة.', 'Data the editor actually persists. Unsaved files are not included.')}</p>
-          <p><b>{text('التحويل والضغط والمسح', 'Conversion, compression & scanning')}</b><br/>{text('غالبًا إعدادات فقط. ملفات الإدخال والنتائج المؤقتة لازم تنزّلها بنفسك قبل الإغلاق.', 'Usually settings only. Download input/output working files yourself before closing.')}</p>
-        </div>
-        {usageError && <p className="error" role="alert">{usageError}</p>}
-        <button className="primary" disabled={usageLoading || busy} onClick={() => void refreshUsage()}>{usageLoading ? text('جارٍ الحساب…', 'Calculating…') : text('تحديث استهلاك المساحة', 'Refresh storage usage')}</button>
-      </section>
+      <h1>{text('التخزين والنسخ الاحتياطي', 'Storage & backup')}</h1>
+      <p className="lead">{text('كل شغلك المحفوظ. نسخة واحدة. معاك في أي مكان.', 'All your saved work. One backup. Anywhere you go.')}</p>
+      <aside className="notice"><ShieldCheck size={18}/><span>{text('احفظ عملك وأغلق التبويبات الأخرى أولًا. النسخة غير مشفّرة؛ احتفظ بها بأمان.', 'Save your work and close other tabs first. Backups are not encrypted; keep them safe.')}</span></aside>
       <div className="cards">
-        <section className="card"><span className="step">01 / EXPORT</span><h2>{text('خذ نسخة من شغلك', 'Take your work with you')}</h2><p>{text('التصميم، الشعارات، الفيديو ووسائطه المحفوظة، الجداول، القراءة الصوتية، SVG وتفضيلات الأدوات.', 'Designs, logos, saved video projects/media, spreadsheets, audio-reader data, SVG and tool preferences.')}</p>
-          <ul>{['design / designcraft', 'logos / projects & assets', 'video / projects & media', 'sheets · audio · svg · settings'].map(s => <li key={s} dir="ltr">{s}</li>)}</ul>
-          <p className="muted">{text('حد أمان: 128 MB قبل الضغط؛ النسخ الأكبر تتوقف برسالة واضحة ولا تُنزّل نسخة ناقصة. احتفظ بملفات الوسائط الكبيرة الأصلية منفصلة.', 'Safety limit: 128 MB before compression. Larger backups stop with an error, not an incomplete download. Keep large original media files separately.')}</p>
+        <section className="card"><span className="step">01 / EXPORT</span><h2><Download size={22}/>{text('خذ نسخة من شغلك', 'Take your work with you')}</h2><p>{text('ملف ZIP واحد، بمجلد مستقل لكل قسم.', 'One ZIP, with a folder for every section.')}</p>
+          <ul>{[['تصميمات','Designs'],['شعارات','Logos'],['فيديو','Video'],['جداول','Sheets'],['صوت','Audio'],['SVG','SVG']].map(([a,e])=><li key={e}>{text(a,e)}</li>)}</ul>
+          <p className="muted">{text('حتى 128 MB قبل الضغط. احتفظ بالوسائط الكبيرة منفصلة.', 'Up to 128 MB before compression. Keep large media files separately.')}</p>
           <button className="primary" disabled={busy} onClick={() => run(download)}>{text('تنزيل نسخة ZIP كاملة', 'Download full ZIP backup')}</button>
         </section>
-        <section className="card"><span className="step">02 / RESTORE</span><h2>{text('رجّع شغلك على الجهاز', 'Restore on this device')}</h2><p>{text('اختر نسخة أنشأتها بنفسك أو تثق بمصدرها فقط. هنراجع سلامتها ونُظهر محتواها قبل كتابة أي بيانات.', 'Only use a backup you made or trust. We validate it and preview its contents before writing any data.')}</p>
+        <section className="card"><span className="step">02 / RESTORE</span><h2><Upload size={22}/>{text('رجّع شغلك على الجهاز', 'Restore on this device')}</h2><p>{text('اختر نسخة موثوقة. راجع محتواها قبل الاستعادة.', 'Choose a trusted backup. Review its contents before restoring.')}</p>
           <label className="file-button">{text('اختيار ملف النسخة الاحتياطية', 'Choose backup ZIP')}<input data-testid="backup-input" type="file" accept=".zip,application/zip" disabled={busy} onChange={e => {
             const file = e.target.files?.[0]; e.target.value = ''; setPreview(null); setConfirmed(false);
             if (!file) return;
@@ -90,10 +70,33 @@ function App() {
           </div>}
         </section>
       </div>
+      <section className="card storage-overview" aria-label={text('استهلاك المساحة وما يتم حفظه', 'Storage usage and saving coverage')}>
+        <h2><HardDrive size={19}/>{text('مساحة جهازك', 'Your device storage')}</h2>
+        <div className="usage-numbers" data-testid="storage-usage">
+          <span>{text('استهلاك الموقع التقريبي: ', 'Estimated site usage: ')}<b>{usage?.usage === undefined ? '—' : (usage.usage / 1024 / 1024).toFixed(2) + ' MB'}</b></span>
+          <span>{text('حصة المتصفح التقريبية: ', 'Estimated browser quota: ')}<b>{usage?.quota === undefined ? '—' : (usage.quota / 1024 / 1024).toFixed(0) + ' MB'}</b></span>
+          <span>{text('بيانات الأدوات المسجّلة: ', 'Registered tool records: ')}<b>{usage ? usage.databases.reduce((n,d) => n+d.records,0) : '—'}</b></span>
+        </div>
+        {usageError && <p className="error" role="alert">{usageError}</p>}
+        <button className="primary" disabled={usageLoading || busy} onClick={() => void refreshUsage()}>{usageLoading ? text('جارٍ الحساب…', 'Calculating…') : text('تحديث استهلاك المساحة', 'Refresh storage usage')}</button>
+      </section>
+      <details className="storage-details"><summary>{text('ما الذي تشملُه النسخة؟', 'What is included in a backup?')}</summary><div className="storage-help">      <aside className="notice">{text('احفظ شغلك في كل أداة واقفل تبويبات الموقع الأخرى أولًا. النسخة تشمل البيانات المحفوظة فقط، مش الملفات المفتوحة في الذاكرة أو كل عملياتك السابقة. لا تشمل كلمات المرور أو مفاتيح API المعروفة، ولا ملفات الكاش أو الكوكيز. ملف ZIP غير مشفّر وقد يحتوي صورًا ونصوصًا خاصة.', 'Save your work in each tool and close other site tabs first. Only persisted data is included, not unsaved files or a history of everything you did. Known passwords/API keys, caches and cookies are excluded. The ZIP is not encrypted and may contain private images or text.')}</aside>
+        <p>{text('المشروعات المحفوظة لا تُحذف لتوفير المساحة. نقلّل التكرار فقط، ونحدّ نسخ استرداد التصميم المؤقتة إلى 24 MB، مع الاحتفاظ بأحدث نسخة.', 'Saved projects are never deleted to save space. We reduce duplicates and bound temporary design recovery history to 24 MB, always retaining the latest snapshot.')}</p>
+        <p>{text('تقدير المتصفح قد يشمل الكاش، وليس حجم ملفات ZIP أو الملفات الأصلية بالضبط. قيم localStorage أدناه تقديرات نصية فقط. لا يمكن ضغط فيديو أو صورة بلا حدود من غير فقدان جودة.', 'Browser estimates may include caches; they are not exact ZIP or original-file sizes. localStorage sizes below are text estimates only. Images/videos cannot be shrunk indefinitely without quality loss.')}</p>
+        {usage && <ul data-testid="storage-sections">{usage.local.map(g => <li key={g.section}><b>{g.section}</b> · {g.count} {text('إعداد/مسودة', 'settings/drafts')} · {(g.bytes / 1024).toFixed(1)} KB</li>)}{usage.databases.map(d => <li key={d.name} dir="ltr">{d.name} · {d.records} {text('سجل', 'records')}</li>)}</ul>}
+        <div className="coverage-grid">
+          <p><b>{text('التصميم والشعارات', 'Design & logos')}</b><br/>{text('مشروعات محفوظة واسترداد تلقائي؛ راقب حالة الحفظ قبل الإغلاق.', 'Saved projects and automatic recovery; check save status before closing.')}</p>
+          <p><b>{text('الفيديو', 'Video')}</b><br/>{text('المشروع والوسائط المستخدمة المحفوظة؛ الملفات الأصلية الكبيرة تحتاج مساحة حقيقية.', 'Saved project and referenced media; large original files require real space.')}</p>
+          <p><b>{text('الجداول', 'Spreadsheets')}</b><br/>{text('حفظ تلقائي للمصنف الحالي. صدّر ملفًا قبل استبداله بمصنف آخر.', 'Autosaves the current workbook. Export before replacing it with another workbook.')}</p>
+          <p><b>{text('القارئ الصوتي', 'Audio reader')}</b><br/>{text('إعدادات وعلامات وتقدم القراءة وآخر 5 كتب؛ ليست مكتبة غير محدودة.', 'Settings, bookmarks, progress and the last 5 books, not an unlimited library.')}</p>
+          <p><b>{text('SVG والتفضيلات', 'SVG & preferences')}</b><br/>{text('البيانات التي يحفظها المحرر بالفعل. ملف لم تحفظه لا يدخل النسخة.', 'Data the editor actually persists. Unsaved files are not included.')}</p>
+          <p><b>{text('التحويل والضغط والمسح', 'Conversion, compression & scanning')}</b><br/>{text('غالبًا إعدادات فقط. ملفات الإدخال والنتائج المؤقتة لازم تنزّلها بنفسك قبل الإغلاق.', 'Usually settings only. Download input/output working files yourself before closing.')}</p>
+        </div>
+<p>{text('الأقسام الجديدة تحتاج تسجيل دعم التخزين. استوديو النصوص وPDF متوقفان؛ أدوات PDF المستقلة متاحة.', 'New sections need a storage adapter. Text Studio and PDF Studio are retired; independent PDF tools remain available.')}</p></div></details>
       <div role="status" aria-live="polite" className="status">{busy && <span className="busy-dot" />}{status}</div>
       {error && <p role="alert" className="error">{error}</p>}
       {done && <a className="primary" href="/index.html">{text('افتح الموقع بعد الاستعادة', 'Open the site after restore')}</a>}
-      <footer>{text('معالجة محلية بالكامل — لا يتم رفع النسخة إلى سيرفر. تخص البيانات المحفوظة على هذا العنوان والمتصفح فقط. الأقسام الجديدة تحتاج تسجيل دعم التخزين لها. تم إيقاف صفحتي استوديو النصوص وPDF؛ أدوات PDF المنفصلة ما زالت متاحة.', 'Entirely local — archives are not uploaded. Covers data saved on this site origin/browser only. New sections need a storage adapter. Text Studio and PDF Studio pages are retired; individual PDF tools remain available.')}</footer>
+      <footer>{text('معالجة محلية · بلا رفع للملفات · بيانات هذا الموقع والمتصفح فقط', 'Processed locally · No uploads · This site and browser only')}</footer>
     </main>
   </div>;
 }

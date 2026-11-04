@@ -21,7 +21,7 @@ async function importProject(page: Page, title: string, canvasExtra: Record<stri
     })),
   });
   await expect(page.locator('#editor-layout')).toBeVisible();
-  await expect(page.getByTestId('design-save-status')).toHaveText('لا توجد تعديلات غير محفوظة');
+  await expect.poll(async()=>!!(await storedProjects(page)).find(p=>p.title===title)).toBe(true);
 }
 
 async function backToStorage(page: Page) {
@@ -31,12 +31,11 @@ async function backToStorage(page: Page) {
 }
 
 async function createRecovery(page: Page) {
-  await page.getByRole('button', { name: 'أدوات المصمم المتقدمة', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'أدوات المصمم المتقدمة', exact: true });
-  await dialog.getByRole('button', { name: 'استرداد النسخ', exact: true }).click();
-  await dialog.getByRole('button', { name: 'حفظ نقطة استرداد الآن', exact: true }).click();
-  await expect(dialog.locator('.adv-message')).toHaveText('تمت العملية.');
-  await dialog.getByRole('button', { name: 'إغلاق الأدوات', exact: true }).click();
+  // Background recovery remains active without the deleted tools section.
+  const box=(await page.locator('canvas.upper-canvas').boundingBox())!;
+  await page.mouse.click(box.x+2,box.y+2);
+  await page.keyboard.press('Control+a');await page.keyboard.press('ArrowRight');
+  await expect.poll(()=>recoveryCount(page)).toBeGreaterThan(0);
 }
 
 async function recoveryCount(page: Page) {
@@ -60,7 +59,7 @@ test('storage page saves a large project in IndexedDB, survives reload, and down
   await page.goto(base + '/designcraft.html');
   await page.getByRole('button', { name: 'الحفظ والتخزين', exact: true }).click();
   await expect(page.getByTestId('storage-manager')).toBeVisible();
-  await expect(page.getByText('IndexedDB — حفظ محلي واسع المساحة', { exact: true })).toBeVisible();
+  await expect(page.getByText('IndexedDB', { exact: true })).toBeVisible();
 
   // The old single localStorage blob would exceed its typical ~5 MB quota.
   await importProject(page, 'مشروع كبير محفوظ', { payload: 'x'.repeat(6 * 1024 * 1024) });

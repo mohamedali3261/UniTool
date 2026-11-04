@@ -33,7 +33,7 @@ for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile
   await upload(page);
   await expect(page.locator('#editor-layout')).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
+  await expect(page.locator('.adv-toolbar')).toHaveCount(0);
   expect((await storedProject(page, 'Mobile imported design')).sessionOnly).toBe(false);
   await closeDrawers(page);
   await page.getByRole('button', { name: 'Import / Export', exact: true }).click();
@@ -44,7 +44,7 @@ for (const storageError of ['QuotaExceededError', 'SecurityError']) test(`mobile
   const raw = JSON.parse(await fs.readFile((await (await pending).path())!, 'utf8'));
   expect(raw.project.canvasData.objects[0].text).toBe('Imported عربي');
   await saveAndWait(page);
-  await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
+  await expect(page.locator('.adv-toolbar')).toHaveCount(0);
   await page.reload();
   await page.getByText('My Projects', { exact: true }).click();
   await page.getByRole('heading', { name: 'Mobile imported design', exact: true }).click();

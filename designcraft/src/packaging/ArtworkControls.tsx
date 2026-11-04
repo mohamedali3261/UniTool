@@ -37,7 +37,8 @@ export function ArtworkControls({
                 ...value,
                 style: key as keyof typeof ART_STYLES,
                 accent: t.accent,
-                product: t.product,
+                product:
+                  value.descriptor === undefined ? t.product : value.product,
               })
             }
           >
@@ -53,7 +54,7 @@ export function ArtworkControls({
               <i>✧</i>
               <b>MAISON</b>
               <em>{t.product}</em>
-              <small>EAU DE PARFUM</small>
+              <small>{value.descriptor ?? "EAU DE PARFUM"}</small>
             </span>
             <strong>{ar ? t.ar : t.en}</strong>
             <small>
@@ -82,7 +83,13 @@ export function ArtworkControls({
             />
           </label>
           <label>
-            {ar ? "اسم العطر" : "Fragrance name"}
+            {value.descriptor !== undefined
+              ? ar
+                ? "اسم المنتج"
+                : "Product name"
+              : ar
+                ? "اسم العطر"
+                : "Fragrance name"}
             <input
               maxLength={32}
               value={value.product}
@@ -98,21 +105,34 @@ export function ArtworkControls({
                 onChange={(e) => onChange({ ...value, accent: e.target.value })}
               />
             </label>
-            <label>
-              {ar ? "السعة على التصميم" : "Printed capacity"}
-              <select
-                value={value.ml}
-                onChange={(e) =>
-                  onChange({ ...value, ml: Number(e.target.value) })
-                }
-              >
-                {[30, 50, 100].map((n) => (
-                  <option value={n} key={n}>
-                    {n} ml
-                  </option>
-                ))}
-              </select>
-            </label>
+            {value.descriptor !== undefined ? (
+              <label>
+                {ar ? "عبارة على التصميم" : "Printed label"}
+                <input
+                  maxLength={28}
+                  value={value.quantity || ""}
+                  onChange={(e) =>
+                    onChange({ ...value, quantity: e.target.value })
+                  }
+                />
+              </label>
+            ) : (
+              <label>
+                {ar ? "السعة على التصميم" : "Printed capacity"}
+                <select
+                  value={value.ml}
+                  onChange={(e) =>
+                    onChange({ ...value, ml: Number(e.target.value) })
+                  }
+                >
+                  {[30, 50, 100].map((n) => (
+                    <option value={n} key={n}>
+                      {n} ml
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <p className="carton-new-note">
             {ar

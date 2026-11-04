@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import type { PreviewQuality } from "./quality";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import type { CartonSize } from "../geometry";
 import type { cartonAtlas } from "./atlas";
@@ -9,6 +11,7 @@ export function createCartonPreview(
   host: HTMLDivElement,
   atlas: Awaited<ReturnType<typeof cartonAtlas>>,
   size: CartonSize,
+  quality: PreviewQuality = "high",
 ) {
   const scene = new THREE.Scene(),
     camera = new THREE.PerspectiveCamera(35, 1, 0.01, 10000);
@@ -17,10 +20,13 @@ export function createCartonPreview(
     alpha: true,
     powerPreference: "low-power",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1;
   renderer.domElement.setAttribute(
     "aria-label",
     "Interactive carton model / نموذج العلبة التفاعلي",
@@ -30,18 +36,38 @@ export function createCartonPreview(
   host.appendChild(renderer.domElement);
   const texture = new THREE.CanvasTexture(atlas.image);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
   const model = buildCarton(size, texture, {
     width: atlas.image.width / atlas.pixelsPerMm,
     height: atlas.image.height / atlas.pixelsPerMm,
   });
   scene.add(model.root);
-  scene.add(new THREE.HemisphereLight(0xf5f8ff, 0x8a806c, 2));
-  const key = new THREE.DirectionalLight(0xfff6e7, 3);
-  key.position.set(150, 240, 220);
+  const room = new RoomEnvironment(),
+    pmrem = new THREE.PMREMGenerator(renderer);
+  const environment = pmrem.fromScene(room, 0.04, 0.1, 100, { size: 128 });
+  room.dispose();
+  pmrem.dispose();
+  scene.environment = environment.texture;
+  scene.environmentIntensity = 0.25;
+  scene.add(new THREE.HemisphereLight(0xf5f8ff, 0x938674, 0.75));
+  const extent = Math.max(
+    size.height + size.depth * 2 + size.tuck * 2,
+    size.width * 2 + size.depth * 2 + size.glue,
+  );
+  const key = new THREE.DirectionalLight(0xfff5e7, 1.7);
+  key.position.set(0.8, 1.2, 1).multiplyScalar(extent * 2);
+  key.castShadow = true;
+  key.shadow.mapSize.setScalar(quality === "high" ? 2048 : 1024);
+  key.shadow.camera.left = key.shadow.camera.bottom = -extent;
+  key.shadow.camera.right = key.shadow.camera.top = extent;
+  key.shadow.camera.near = 0.1;
+  key.shadow.camera.far = extent * 8;
+  key.shadow.bias = -0.00002;
+  key.shadow.normalBias = 0.015;
+  key.shadow.radius = 3;
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xd9eaff, 1.5);
-  fill.position.set(-200, 70, -160);
+  const fill = new THREE.DirectionalLight(0xdfeaff, 0.6);
+  fill.position.set(-1, 0.4, -0.8).multiplyScalar(extent * 2);
   scene.add(fill);
   const controls = new TrackballControls(camera, renderer.domElement);
   controls.rotateSpeed = 3;
@@ -118,6 +144,18 @@ export function createCartonPreview(
   const resize = () => {
     const w = Math.max(1, host.clientWidth),
       h = Math.max(1, host.clientHeight);
+    const mobile = window.innerWidth < 768,
+      desired =
+        quality === "high"
+          ? Math.max(window.devicePixelRatio || 1, mobile ? 1.5 : 2)
+          : Math.min(window.devicePixelRatio || 1, 1.5);
+    renderer.setPixelRatio(
+      Math.min(
+        2.5,
+        desired,
+        Math.sqrt((mobile ? 2_500_000 : 4_000_000) / (w * h)),
+      ),
+    );
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -180,9 +218,14 @@ export function createCartonPreview(
   return {
     setFold: (value: number) => {
       model.setFold(value);
+      renderer.shadowMap.needsUpdate = true;
       fit("current");
     },
     view: fit,
+    setFinish: (finish: "matte" | "satin") => {
+      model.setFinish(finish);
+      request();
+    },
     dispose: () => {
       disposed = true;
       if (frame !== null) cancelAnimationFrame(frame);
@@ -198,6 +241,8 @@ export function createCartonPreview(
       renderer.domElement.removeEventListener("keydown", keydown);
       model.dispose();
       texture.dispose();
+      key.shadow.dispose();
+      environment.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       renderer.domElement.remove();

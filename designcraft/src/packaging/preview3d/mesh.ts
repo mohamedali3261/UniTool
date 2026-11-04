@@ -74,15 +74,36 @@ export function buildCarton(
     pieces = cartonAssembly(size),
     groups = new Map<string, THREE.Group>();
   const materials = [
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshPhysicalMaterial({
       map: texture,
       color: 0xffffff,
-      roughness: 0.86,
+      roughness: 0.68,
+      clearcoat: 0,
+      clearcoatRoughness: 0.35,
       metalness: 0,
     }),
     new THREE.MeshStandardMaterial({ color: 0xeee9dc, roughness: 1 }),
     new THREE.MeshStandardMaterial({ color: 0xbfb49d, roughness: 1 }),
   ];
+  // Deterministic micro-grain height map; no download or persisted material image.
+  const noise = new Uint8Array(128 * 128 * 4);
+  let seed = 137;
+  for (let i = 0; i < noise.length; i += 4) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const value = 118 + (seed >>> 27);
+    noise[i] = noise[i + 1] = noise[i + 2] = value;
+    noise[i + 3] = 255;
+  }
+  const grain = new THREE.DataTexture(noise, 128, 128, THREE.RGBAFormat);
+  grain.wrapS = grain.wrapT = THREE.RepeatWrapping;
+  grain.repeat.set(atlas.width / 8, atlas.height / 8);
+  grain.magFilter = THREE.LinearFilter;
+  grain.minFilter = THREE.LinearMipmapLinearFilter;
+  grain.generateMipmaps = true;
+  grain.needsUpdate = true;
+  const printed = materials[0] as THREE.MeshPhysicalMaterial;
+  printed.bumpMap = grain;
+  printed.bumpScale = 0.025;
   const geometries: THREE.BufferGeometry[] = [];
   for (const piece of pieces) {
     const group = new THREE.Group();
@@ -93,6 +114,8 @@ export function buildCarton(
     geometries.push(geometry);
     const mesh = new THREE.Mesh(geometry, materials);
     mesh.name = piece.id + "-paper";
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     group.add(mesh);
   }
   const setFold = (progress: number) =>
@@ -109,7 +132,13 @@ export function buildCarton(
     pieces,
     groups,
     setFold,
+    setFinish: (finish: "matte" | "satin") => {
+      printed.roughness = finish === "satin" ? 0.36 : 0.68;
+      printed.clearcoat = finish === "satin" ? 0.32 : 0;
+      printed.needsUpdate = true;
+    },
     dispose: () => {
+      grain.dispose();
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
     },

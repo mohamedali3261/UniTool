@@ -1,4 +1,5 @@
 import { SiteNavbar } from '../../../../src/components/SiteNavbar';
+import {PackagingPage} from '../../packaging/PackagingPage';
 import {PackagingEntry} from "../../packaging/PackagingEntry";
 import { StorageManager } from './StorageManager';
 import { STORAGE_CHANGED_EVENT, removeProject } from '../../utils/projectStorage';
@@ -52,7 +53,11 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
 }) => {
   const { lang, t } = useDcLang();
 
-  const [activeTab, setActiveTab] = useState<'create' | 'projects' | 'storage'>('create');
+  type DashboardPage='create'|'projects'|'storage'|'packaging';
+  const pageFromHash=():DashboardPage=>{const page=window.location.hash.slice(1);return ['projects','storage','packaging'].includes(page)?page as DashboardPage:'create';};
+  const [activeTab,setTab]=useState<DashboardPage>(pageFromHash);
+  const setActiveTab=(page:DashboardPage)=>{window.location.hash=page;setTab(page);window.scrollTo(0,0);};
+  useEffect(()=>{const changed=()=>setTab(pageFromHash());window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed);},[]);
   const [customWidth, setCustomWidth] = useState<number>(1080);
   const [customHeight, setCustomHeight] = useState<number>(1080);
   const [customTitle, setCustomTitle] = useState<string>('');
@@ -81,7 +86,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [activeTab]);
   const pw = Math.max(1, customWidth);
   const ph = Math.max(1, customHeight);
   const previewPad = 10;
@@ -236,7 +241,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
         {/* Main Container */}
         <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
           {/* Page Header */}
-          <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
+          {activeTab!=='packaging' && activeTab!=='storage' && <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
             <div className="absolute -top-16 -end-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-20 -start-10 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -274,10 +279,10 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                 </div>
               </div>
             </div>
-          </header>
+          </header>}
 
           {/* Tab Switcher */}
-          <div className="flex items-center gap-2 bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70 w-full sm:w-fit">
+          <div className="dc-page-tabs flex items-center gap-2 flex-wrap bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70 w-full sm:w-fit">
             <button
               type="button"
               onClick={() => setActiveTab('create')}
@@ -309,6 +314,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                 </span>
               )}
             </button>
+            <button type="button" onClick={()=>setActiveTab('packaging')} aria-current={activeTab==='packaging'?'page':undefined} className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border ${activeTab==='packaging'?'bg-emerald-500/15 text-emerald-200 border-emerald-400/40':'text-slate-400 border-transparent'}`}>{lang==='ar'?'تصميم العلب':'Packaging studio'}</button>
             <button
               type="button"
               onClick={() => setActiveTab('storage')}
@@ -323,6 +329,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             </button>
           </div>
 
+          {activeTab === 'packaging' && <PackagingPage onCreate={onOpenProject}/>}
           {activeTab === 'storage' && (
             <StorageManager projects={projects} onOpenProject={onOpenProject} onShowToast={onShowToast} />
           )}
@@ -330,7 +337,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
           {/* Create New Design */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <PackagingEntry onCreate={onOpenProject}/>
+              <PackagingEntry onCreate={onOpenProject} onNavigate={()=>setActiveTab('packaging')}/>
               {/* Custom Dimension Box */}
               <section className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />

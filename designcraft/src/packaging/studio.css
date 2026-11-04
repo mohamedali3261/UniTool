@@ -1,0 +1,305 @@
+.packaging-studio {
+  color: #e9eef2;
+  display: grid;
+  gap: 26px;
+}
+.packaging-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  min-height: 310px;
+  padding: 38px 42px;
+  border: 1px solid #5a695344;
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse at 85% 20%, #56755944, transparent 60%),
+    linear-gradient(120deg, #1b302a, #16221f 65%, #242a22);
+}
+.packaging-eyebrow {
+  font: 10px monospace;
+  letter-spacing: 2.5px;
+  color: #bcd2ab;
+}
+.packaging-hero h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 15px 0 8px;
+  letter-spacing: -1px;
+}
+.packaging-hero p {
+  font-size: 13px;
+  color: #b7c6bd;
+  margin: 0 0 24px;
+}
+.packaging-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #d5e5bd;
+  color: #213327;
+  border: 0;
+  border-radius: 11px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.packaging-benefits {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 23px;
+  color: #afc5b7;
+  font-size: 10px;
+}
+.packaging-benefits span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.packaging-hero-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  direction: ltr;
+  filter: drop-shadow(12px 25px 18px #0005);
+}
+.packaging-hero-art svg {
+  width: 60%;
+  margin: -35px;
+}
+.packaging-hero-art svg + svg {
+  width: 52%;
+  transform: translateY(48px);
+}
+.packaging-catalog-bar {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.packaging-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.packaging-filters button,
+.packaging-empty button {
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid #33413f;
+  background: #141e25;
+  color: #aabbb8;
+  font-size: 11px;
+  cursor: pointer;
+}
+.packaging-filters button[aria-pressed="true"] {
+  color: #d9ebcb;
+  background: #304239;
+  border-color: #73866b;
+}
+.packaging-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #354346;
+  border-radius: 11px;
+  padding: 9px 12px;
+  color: #89a29c;
+  background: #111d24;
+}
+.packaging-search input {
+  outline: none;
+  background: none;
+  border: 0;
+  color: #e4eeeb;
+  font-size: 12px;
+  min-width: 0;
+  width: 180px;
+}
+.packaging-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.packaging-template {
+  overflow: hidden;
+  border: 1px solid #344345;
+  border-radius: 17px;
+  background: #111e27;
+  transition: border-color 0.2s;
+}
+.packaging-template:hover {
+  border-color: #a9bc93;
+}
+.packaging-template-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 230px;
+  border: 0;
+  cursor: pointer;
+  background: radial-gradient(ellipse at 50% 30%, #c9ccbe, #8b9d8f);
+  overflow: hidden;
+}
+.packaging-theme-rose .packaging-template-preview {
+  background: radial-gradient(ellipse at 50% 30%, #eee1dc, #bba9a2);
+}
+.packaging-theme-noir .packaging-template-preview {
+  background: radial-gradient(ellipse at 50% 30%, #cfcbc0, #969b91);
+}
+.packaging-template-preview > svg {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  transition: transform 0.25s;
+  filter: drop-shadow(6px 10px 8px #0003);
+}
+.packaging-template-preview:hover > svg {
+  transform: translateY(-5px) rotate(-2deg);
+}
+.packaging-template-preview > span {
+  position: absolute;
+  bottom: 9px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #12221ce0;
+  color: #edf4de;
+  font-size: 9px;
+}
+.packaging-template-meta {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: #9bb6a5;
+}
+.packaging-template h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e4ece9;
+}
+.packaging-template-meta p {
+  font: 10px monospace;
+  color: #9eaaa6;
+  margin: 7px 0 0;
+}
+.packaging-footnote {
+  color: #8b9c98;
+  font-size: 10px;
+  text-align: center;
+  margin: 0;
+}
+.packaging-empty {
+  padding: 36px;
+  text-align: center;
+  display: grid;
+  gap: 15px;
+  justify-content: center;
+}
+.packaging-studio :focus-visible {
+  outline: 2px solid #d2e8b8;
+  outline-offset: 3px;
+}
+@media (max-width: 1000px) {
+  .packaging-catalog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .packaging-hero {
+    padding: 28px;
+  }
+}
+@media (max-width: 700px) {
+  .packaging-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .packaging-template-preview {
+    height: 190px;
+  }
+  .packaging-template-meta {
+    padding: 12px;
+  }
+  .packaging-hero {
+    grid-template-columns: 1fr;
+    padding: 25px;
+    min-height: auto;
+  }
+  .packaging-hero-art {
+    display: none;
+  }
+  .packaging-benefits {
+    gap: 10px;
+  }
+  .packaging-catalog-bar {
+    gap: 12px;
+  }
+  .packaging-search {
+    width: 100%;
+  }
+  .packaging-search input {
+    width: 100%;
+  }
+  .packaging-filters button {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .packaging-template h2 {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .packaging-template,
+  .packaging-template-preview > svg {
+    transition: none;
+  }
+  .packaging-template-preview:hover > svg {
+    transform: none;
+  }
+}
+@media (max-width: 700px) {
+  .dc-page-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    gap: 4px !important;
+  }
+  .dc-page-tabs > button {
+    padding: 8px 4px !important;
+    min-width: 0;
+    min-height: 45px;
+    gap: 4px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .dc-page-tabs > button > svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+  .packaging-hero-art {
+    display: flex;
+    position: absolute;
+    bottom: -55px;
+    left: -70px;
+    width: 200px;
+    opacity: 0.1;
+    pointer-events: none;
+  }
+  .packaging-hero > div:first-child {
+    position: relative;
+    z-index: 1;
+  }
+}
