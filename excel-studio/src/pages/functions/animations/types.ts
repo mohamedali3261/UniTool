@@ -16,6 +16,8 @@ export type DemoAction = {
   text?: string;
 };
 export type FormulaLesson = {
+  rows?: readonly (readonly (string | number)[])[];
+  title?: Bilingual;
   demo: DemoAction[];
   name: string;
   formula: string;

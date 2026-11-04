@@ -76,6 +76,10 @@ export interface TextPreset {
 }
 
 export interface ActiveObjectProperties {
+  imageWidth?: number;
+  imageHeight?: number;
+  flipX?: boolean;
+  flipY?: boolean;
   type: string;
   left: number;
   top: number;

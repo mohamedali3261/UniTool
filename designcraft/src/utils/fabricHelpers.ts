@@ -1,3 +1,4 @@
+import { normalizeCrop } from './imageCrop';
 import { downloadFile } from './download';
 import { deviceRasterBudget, rasterWithinBudget } from './rasterBudget';
 import { fabric } from 'fabric';
@@ -748,11 +749,13 @@ export const applyImageClipPathAndEdges = (
   const minY = -origH / 2;
   const maxY = origH / 2;
 
-  // Max edge cut is 48% of dimension to preserve non-empty visible area
-  const insetTop = Math.max(0, Math.min(origH * 0.48, options.cropTop ?? (img as any).cropTop ?? 0));
-  const insetBottom = Math.max(0, Math.min(origH * 0.48, options.cropBottom ?? (img as any).cropBottom ?? 0));
-  const insetLeft = Math.max(0, Math.min(origW * 0.48, options.cropLeft ?? (img as any).cropLeft ?? 0));
-  const insetRight = Math.max(0, Math.min(origW * 0.48, options.cropRight ?? (img as any).cropRight ?? 0));
+  const crop = normalizeCrop(origW, origH, {
+    cropTop: options.cropTop ?? (img as any).cropTop,
+    cropBottom: options.cropBottom ?? (img as any).cropBottom,
+    cropLeft: options.cropLeft ?? (img as any).cropLeft,
+    cropRight: options.cropRight ?? (img as any).cropRight,
+  });
+  const { cropTop: insetTop, cropBottom: insetBottom, cropLeft: insetLeft, cropRight: insetRight } = crop;
 
   const left = minX + insetLeft;
   const right = maxX - insetRight;
@@ -810,8 +813,8 @@ export const applyImageClipPathAndEdges = (
     const clipPath = new fabric.Path(pathString, {
       originX: 'center',
       originY: 'center',
-      left: 0,
-      top: 0,
+      left: (left + right) / 2,
+      top: (top + bottom) / 2,
       fill: '#000000',
       strokeWidth: 0
     });

@@ -39,7 +39,8 @@ export const LayersTab: React.FC<LayersTabProps> = ({ layers, activeLayerId, onS
     const tick = () => {
       const g = gesture.current, root = list.current; if (!g || !root) return;
       const box = root.getBoundingClientRect();
-      if (g.moved && g.y > box.top && g.y < box.bottom) {
+      // The cancel row can shrink the list after drag starts; retain the edge-scroll zone.
+      if (g.moved && g.y > box.top - 40 && g.y < box.bottom + 40) {
         if (g.y < box.top + 40) root.scrollTop -= 8;
         if (g.y > box.bottom - 40) root.scrollTop += 8;
         locate(g, root);

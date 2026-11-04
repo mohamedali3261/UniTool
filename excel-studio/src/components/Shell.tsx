@@ -1,6 +1,6 @@
+import { SiteNavbar } from "../../../src/components/SiteNavbar";
 import {
   BarChart3,
-  ArrowUpRight,
   BookOpen,
   Table2,
   LayoutTemplate,
@@ -11,7 +11,6 @@ import {
   Upload,
   Undo2,
   Redo2,
-  PanelLeftClose,
 } from "lucide-react";
 import { useStudio } from "../app/context";
 export function Shell({
@@ -36,22 +35,7 @@ export function Shell({
   const { lang, t, book, update, page, navigate, toggleLang } = useStudio();
   return (
     <div className="xs-app" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <header className="xs-sitebar">
-        <a href="/index.html" className="xs-brand">
-          <img src="/UniTool_logo.png" alt="UniTool" />
-        </a>
-        <span className="xs-site-separator" />
-        <a href="/index.html">
-          {t("كل الأدوات", "All tools")}
-          <ArrowUpRight size={13} />
-        </a>
-        <span className="xs-private">
-          ● {t("ملفاتك على جهازك", "Your files stay on your device")}
-        </span>
-        <button className="xs-lang" onClick={toggleLang}>
-          {lang === "ar" ? "EN" : "عربي"}
-        </button>
-      </header>
+      <SiteNavbar lang={lang} onToggleLang={toggleLang} />
       <div className="xs-workspace">
         <aside className="xs-sidebar">
           <a className="xs-product" href="#editor">

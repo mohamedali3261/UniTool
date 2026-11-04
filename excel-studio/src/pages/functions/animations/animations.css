@@ -323,7 +323,7 @@
   position: relative;
   overflow: hidden;
 }
-.xs-demo-grid td.xs-demo-output {
+.xs-demo-grid td.xs-demo-active {
   outline: 2px solid #48815e;
   outline-offset: -2px;
   background: #f4fbf0;
@@ -525,3 +525,5 @@
   margin-top: -12px;
   margin-left: -3px;
 }
+
+.xs-lesson-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-weight:600}.xs-lesson-picker select{width:100%;padding:10px;border:1px solid var(--xs-line,#a8b9b0);border-radius:10px;color:inherit;background:var(--xs-panel,#fff);font:inherit}

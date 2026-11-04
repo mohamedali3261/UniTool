@@ -1,3 +1,4 @@
+import { SiteNavbar } from '../../../../src/components/SiteNavbar';
 import { FileMenu } from './FileMenu';
 import React, { useState } from 'react';
 import {
@@ -6,22 +7,15 @@ import {
   Redo2,
   ZoomIn,
   ZoomOut,
-  Maximize,
   Eye,
-  Download,
   Save,
   Check,
   Edit2,
   Grid,
-  Keyboard,
-  Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
-  SlidersHorizontal,
-  Hand,
-  Globe,
-  Zap
-} from 'lucide-react';
+  SlidersHorizontal
+} from "lucide-react";
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 
 interface TopBarProps {
@@ -97,7 +91,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <nav
+    <><SiteNavbar lang={lang} onToggleLang={() => setDcLang(lang === 'ar' ? 'en' : 'ar')}/><nav
       id="editor-top-bar"
       dir={dir}
       style={{
@@ -109,11 +103,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         borderBottom: '1px solid #1e2028', userSelect: 'none',
       }}
     >
-      {/* Logo — always the far-RIGHT element */}
-      <a href="/index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', margin: 0, padding: 0, lineHeight: 0, flexShrink: 0 }}>
-        <img src="/UniTool_logo.png" alt="UniTool" className="w-[80px] md:w-[104px]" style={{ height: 'auto', objectFit: 'contain', margin: 0, padding: 0, border: 0, outline: 'none', display: 'block' }} />
-      </a>
-
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       {/* Left Section: Navigation (home + sidebar toggle in a segmented pill) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -319,30 +308,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right Section: Actions (lang, props, preview, save in a segmented pill + Export CTA) */}
+      {/* Right Section: Actions (props, preview, save in a segmented pill + Export CTA) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 3 }}>
-        {/* Language Toggle */}
-        <button
-          type="button"
-          onClick={() => setDcLang(lang === 'ar' ? 'en' : 'ar')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
-            borderRadius: 8, border: 'none', background: 'transparent',
-            color: '#7c7f8a', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-            transition: 'all .2s', fontFamily: 'inherit',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; e.currentTarget.style.color = '#e4e6eb'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7c7f8a'; }}
-          title={t.switchLang}
-          aria-label={t.switchLang}
-        >
-          <Globe style={{ width: 14, height: 14, opacity: 0.6 }} />
-          <span className="hidden sm:inline">{lang === 'ar' ? 'EN' : 'عربي'}</span>
-        </button>
-
-        <div style={{ width: 1, height: 14, background: '#262b36' }} />
-
         {onToggleProperties && (
           <button
             type="button"
@@ -406,6 +374,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         <FileMenu onExport={onOpenExport} onQuickDownload={onQuickDownload} />
       </div>
       </div>
-    </nav>
+    </nav></>
   );
 };

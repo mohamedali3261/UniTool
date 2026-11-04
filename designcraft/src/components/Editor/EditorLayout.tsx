@@ -1,3 +1,4 @@
+import { normalizeCrop, type CropInsets } from '../../utils/imageCrop';
 import { deviceRasterBudget, rasterWithinBudget } from '../../utils/rasterBudget';
 import { downloadFile } from '../../utils/download';
 import { boundedHistory } from '../../utils/mobilePerformance';
@@ -482,17 +483,29 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     setActiveProperties(props);
     if (props && window.innerWidth >= 768) {
       setIsPropertiesOpen(true);
+      if (window.innerWidth < 1100) setIsSidebarOpen(false);
     }
   }, []);
 
   // Property Updater
   const handleUpdateProperty = useCallback(
-    (key: keyof ActiveObjectProperties, value: any) => {
+    (key: keyof ActiveObjectProperties | 'transform', value: any) => {
       const canvas = fabricCanvasRef.current;
       if (!canvas) return;
 
       const active = canvas.getActiveObject();
       if (!active) return;
+
+      if (key === 'transform') {
+        const patch: Record<string, any> = {};
+        for (const name of ['left','top','angle','opacity']) if (Number.isFinite(value[name])) patch[name] = name === 'opacity' ? Math.max(0, Math.min(1, value[name])) : value[name];
+        for (const name of ['flipX','flipY']) if (typeof value[name] === 'boolean') patch[name] = value[name];
+        if (Number.isFinite(value.width) && value.width > 0) patch.scaleX = value.width / (active.width || 1);
+        if (Number.isFinite(value.height) && value.height > 0) patch.scaleY = value.height / (active.height || 1);
+        active.set(patch); active.setCoords(); canvas.requestRenderAll();
+        setActiveProperties(prev => prev ? {...prev,...patch,width:(active.width||0)*(active.scaleX||1),height:(active.height||0)*(active.scaleY||1)} : null);
+        updateLayersList(); recordHistory(); return;
+      }
 
       if (
         key === 'cropTop' ||
@@ -988,7 +1001,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     }
     recordHistory();
     onShowToast(t.tplToastTitle, `${lang === 'ar' ? tpl.nameAr : tpl.nameEn} · ${cW} × ${cH}`, 'success');
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
+    if (window.innerWidth < 1100) setIsSidebarOpen(false);
     // scroll canvas into view on mobile
     setTimeout(() => {
       document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1016,7 +1029,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   // Sidebar Tab Select
   const handleSelectSidebarTab = (tab: SidebarTabType) => {
-    if (window.innerWidth < 768) setIsPropertiesOpen(false);
+    if (window.innerWidth < 1100) setIsPropertiesOpen(false);
     if (activeSidebarTab === tab && isSidebarOpen) {
       setIsSidebarOpen(false);
     } else {
@@ -1049,7 +1062,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addTextToCanvas(fabricCanvasRef.current, options.text, options);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddHeading={() => {
@@ -1057,7 +1070,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addTextToCanvas(fabricCanvasRef.current, t.defaultHeading, { fontSize: 44, fontWeight: 'bold' });
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddSubheading={() => {
@@ -1065,7 +1078,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addTextToCanvas(fabricCanvasRef.current, t.defaultSubheading, { fontSize: 28, fontWeight: '600' });
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddBodyText={() => {
@@ -1073,7 +1086,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addTextToCanvas(fabricCanvasRef.current, t.defaultBody, { fontSize: 18 });
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
           />
@@ -1086,7 +1099,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addRectangleToCanvas(fabricCanvasRef.current, { fill, rx });
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddCircle={(fill) => {
@@ -1094,7 +1107,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addCircleToCanvas(fabricCanvasRef.current, fill);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddTriangle={(fill) => {
@@ -1102,7 +1115,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addTriangleToCanvas(fabricCanvasRef.current, fill);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddStar={(fill) => {
@@ -1110,7 +1123,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addStarToCanvas(fabricCanvasRef.current, fill);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddLine={(stroke) => {
@@ -1118,7 +1131,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addLineToCanvas(fabricCanvasRef.current, stroke);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddArrow={(stroke) => {
@@ -1126,7 +1139,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addArrowToCanvas(fabricCanvasRef.current, stroke);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddBadge={(fill) => {
@@ -1134,7 +1147,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addBadgeToCanvas(fabricCanvasRef.current, fill);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onAddHeart={(fill) => {
@@ -1142,7 +1155,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 addHeartToCanvas(fabricCanvasRef.current, fill);
                 updateLayersList();
                 recordHistory();
-                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
             onOpenShapesModal={() => setIsShapesModalOpen(true)}
@@ -1162,7 +1175,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                     addImageToCanvas(fabricCanvasRef.current, url);
                     updateLayersList();
                     recordHistory();
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    if (window.innerWidth < 1100) setIsSidebarOpen(false);
                     setTimeout(() => {
                       document.getElementById('canvas-area-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 100);
@@ -1175,7 +1188,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                     updateLayersList();
                     recordHistory();
                     onShowToast(t.elPhoneTitle, t.elPhoneMsg, 'success');
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    if (window.innerWidth < 1100) setIsSidebarOpen(false);
                   }
                 }}
               />
@@ -1187,7 +1200,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                     addIconToCanvas(fabricCanvasRef.current, iconName, color);
                     updateLayersList();
                     recordHistory();
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    if (window.innerWidth < 1100) setIsSidebarOpen(false);
                   }
                 }}
                 onOpenIconsModal={() => setIsIconsModalOpen(true)}
@@ -1208,7 +1221,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                     updateLayersList();
                     recordHistory();
                     onShowToast(t.elOrnamentTitle, `${t.elShapeAdded} ${item.nameAr} ${t.elToBoard}`, 'success');
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    if (window.innerWidth < 1100) setIsSidebarOpen(false);
                   }
                 }}
                 canvasBackgroundColor={backgroundColor}
@@ -1343,8 +1356,18 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     }
   };
 
+  const handleCropImage = (input: CropInsets) => {
+    const canvas = fabricCanvasRef.current, active = canvas?.getActiveObject();
+    if (!canvas || !active || active.type !== 'image' || active.lockMovementX || active.lockMovementY || active.lockRotation) return;
+    const crop = normalizeCrop(active.width || 1, active.height || 1, input);
+    active.set(crop); applyImageClipPathAndEdges(active); active.setCoords();
+    canvas.requestRenderAll(); setActiveProperties(prev => prev ? {...prev,...crop} : null);
+    updateLayersList(); recordHistory();
+  };
+
   const renderPropertiesPanelContent = () => (
     <PropertiesPanel
+      onCropImage={handleCropImage}
       activeProperties={activeProperties}
       canvasWidth={canvasWidth}
       canvasHeight={canvasHeight}
@@ -1469,7 +1492,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isPropertiesOpen={isPropertiesOpen}
-        onToggleProperties={() => setIsPropertiesOpen(!isPropertiesOpen)}
+        onToggleProperties={() => { setIsPropertiesOpen(!isPropertiesOpen); if (window.innerWidth < 1100) setIsSidebarOpen(false); }}
         isPanMode={isPanMode}
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
       />
@@ -1487,7 +1510,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       />
 
       {/* 3. Workspace Body: Rail + Drawer + Canvas Area + Properties Panel */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 min-h-0 flex overflow-hidden relative">
         {/* Leftmost Sidebar Icon Rail (Desktop only) */}
         <SidebarTabs
           activeTab={isSidebarOpen ? activeSidebarTab : null}
@@ -1601,7 +1624,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
             onUndo={handleUndo}
             onRedo={handleRedo}
             onSave={handleSaveProject}
-            onOpenProperties={() => setIsPropertiesOpen(true)}
+            onOpenProperties={() => { setIsPropertiesOpen(true); if (window.innerWidth < 1100) setIsSidebarOpen(false); }}
           />
         </div>
 
@@ -1619,7 +1642,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onSelectTab={handleSelectSidebarTab}
         variant="bottom-bar"
         hasSelection={!!activeProperties}
-        onToggleProperties={() => setIsPropertiesOpen(!isPropertiesOpen)}
+        onToggleProperties={() => { setIsPropertiesOpen(!isPropertiesOpen); if (window.innerWidth < 1100) setIsSidebarOpen(false); }}
         isPropertiesOpen={isPropertiesOpen}
       />
 
@@ -1661,24 +1684,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         </div>
       )}
 
-      {/* 5. Mobile Bottom Sheet for Properties Panel */}
+      {/* In-flow inspector: reserve canvas space instead of covering the preview. */}
       {isPropertiesOpen && (
-        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setIsPropertiesOpen(false)}
-          />
-
-          {/* Bottom Sheet Modal */}
-          <div className="fixed inset-x-0 bottom-14 z-50 h-[75vh] max-h-[560px] bg-[#1C2541] rounded-t-3xl border-t border-sky-500/40 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
-            {/* Sheet Handle */}
-            <div className="w-8 h-1 bg-slate-600 rounded-full mx-auto my-2" />
-            <div className="flex-1 overflow-hidden">
-              {renderPropertiesPanelContent()}
-            </div>
-          </div>
-        </div>
+        <section id="mobile-properties-dock" className="md:hidden shrink-0 overflow-hidden" aria-label={t.propsElement}>
+          {renderPropertiesPanelContent()}
+        </section>
       )}
 
       {/* Modals */}

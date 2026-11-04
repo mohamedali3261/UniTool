@@ -1,3 +1,4 @@
+import { SiteNavbar } from '../../components/SiteNavbar';
 import {StorageArt} from './components/StorageArt';
 import { ScrollJourney } from "./components/scroll/ScrollJourney";
 import { useScrollMotion } from "./components/scroll/useScrollMotion";
@@ -7,9 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpLeft,
   ArrowUp,
-  Menu,
-  X,
-  Globe,
   Pause,
   Play,
   Plus,
@@ -17,7 +15,7 @@ import {
   MousePointer2,
   Layers3,
   Sparkles,
-  Command,
+  Command
 } from "lucide-react";
 import { sitePages } from "../../config/sitePages";
 import { totalToolCount } from "../ToolsHome/data";
@@ -41,13 +39,11 @@ export default function HomePage() {
   const [lang, setLang] = useState<Language>(() =>
     stored("unitool-lang") === "en" ? "en" : "ar",
   );
-  const [mobileOpen, setMobileOpen] = useState(false),
-    [paused, setPaused] = useState(
+  const [paused, setPaused] = useState(
       () => stored("unitool-home-motion") === "paused",
     );
   const pageRef = useRef<HTMLDivElement>(null);
   useScrollMotion(pageRef, paused);
-  const menuRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const t = copy[lang];
   useEffect(() => {
@@ -81,11 +77,6 @@ export default function HomePage() {
   }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMobileOpen(false);
-        if (document.getElementById("home-mobile-nav"))
-          menuRef.current?.focus();
-      }
       if (
         ((e.key === "/" && !e.ctrlKey && !e.metaKey) ||
           ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) &&
@@ -120,79 +111,7 @@ export default function HomePage() {
       <a href="#main" className="skip-link">
         {t.skip}
       </a>
-      <header className="home-header">
-        <div className="home-container header-inner">
-          <a className="home-brand" href="/index.html" aria-label="UniTool">
-            <img
-              src="/UniTool_logo.png"
-              alt="UniTool"
-              width="128"
-              height="32"
-              className="restored-brand-logo"
-            />
-          </a>
-          <nav className="desktop-home-nav" aria-label={t.menu}>
-            <a href="#tools">{t.navTools}</a>
-            <a href="#studios">{t.navStudios}</a>
-            <a href="/video-studio.html#elements">
-              {lang === "ar" ? "العناصر" : "Elements"}
-            </a>
-            <a href="#how">{t.navHow}</a>
-          </nav>
-          <div className="header-actions">
-            <button
-              className="icon-action motion-toggle"
-              aria-label={paused ? t.resume : t.pause}
-              title={paused ? t.resume : t.pause}
-              aria-pressed={paused}
-              onClick={() => setPaused((v) => !v)}
-            >
-              {paused ? <Play size={16} /> : <Pause size={16} />}
-            </button>
-            <button
-              className="language-toggle"
-              aria-label={
-                lang === "ar" ? "Switch to English" : "التحويل إلى العربية"
-              }
-              onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            >
-              <Globe size={14} />
-              {lang === "ar" ? "EN" : "عربي"}
-            </button>
-            <a className="header-start" href="#studios">
-              {t.start}
-              <ArrowUpLeft size={15} />
-            </a>
-            <button
-              ref={menuRef}
-              className="mobile-home-toggle icon-action"
-              aria-label={t.menu}
-              aria-expanded={mobileOpen}
-              aria-controls="home-mobile-nav"
-              onClick={() => setMobileOpen((v) => !v)}
-            >
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-        </div>
-        {mobileOpen && (
-          <nav
-            id="home-mobile-nav"
-            className="home-mobile-nav"
-            aria-label={t.menu}
-          >
-            {sitePages.map((p) => (
-              <a
-                href={p.href}
-                key={p.href}
-                onClick={() => setMobileOpen(false)}
-              >
-                {p[lang]}
-              </a>
-            ))}
-          </nav>
-        )}
-      </header>
+      <SiteNavbar home lang={lang} onToggleLang={() => setLang(lang === 'ar' ? 'en' : 'ar')} actions={<button className="motion-toggle" aria-label={paused ? t.resume : t.pause} title={paused ? t.resume : t.pause} aria-pressed={paused} onClick={() => setPaused(v=>!v)}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button>} />
       <main id="main">
         <section
           className="home-hero home-container hero-workspace-layout"

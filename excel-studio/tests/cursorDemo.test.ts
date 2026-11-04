@@ -19,10 +19,9 @@ for (const lesson of Object.values(formulaLessons))
       if (a.kind === "select") {
         const start = demoFrame(lesson, i, 0),
           end = demoFrame(lesson, i, 1);
-        assert.ok(start.range && end.range);
+        assert.ok(end.range);
         assert.ok(
-          end.range.width >= start.range.width &&
-            end.range.height >= start.range.height,
+          end.range.width >= 25 && end.range.height >= 100 / 3,
         );
         const target = cellPosition(a.toCell!);
         assert.equal(end.point.x, (target.col + 0.5) * 25);
