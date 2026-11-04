@@ -189,6 +189,9 @@ test("ordinary carton export can hide manufacturing guides without deleting them
   await page
     .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
     .click();
+await page
+    .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "إنشاء تصميم جديد بالقالب", exact: true })
     .click();
@@ -273,6 +276,9 @@ test("hiding carton lines removes their actual raster pixels and project metadat
 }) => {
   await page.goto(base + "/designcraft.html");
   await page
+    .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
+    .click();
+await page
     .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
     .click();
   await page

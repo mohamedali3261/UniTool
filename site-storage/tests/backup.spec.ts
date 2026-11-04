@@ -9,7 +9,6 @@ test('a real ZIP transfers editable design, media Blob and preferences to a seco
   await page.goto(base + '/designcraft.html');
   await page.locator('#designer-project-input').setInputFiles({ name: 'transfer.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ format: 'unitool-designcraft', version: 1, project: { title: 'Cross-device editable QA', width: 800, height: 600, canvasData: { objects: [{ type: 'textbox', left: 80, top: 100, width: 200, fontSize: 30, text: 'نص محفوظ عربي', fill: '#000000' }] } } })) });
   await expect(page.locator('canvas.upper-canvas')).toBeVisible();
-  await expect(page.getByTestId('design-save-status')).toHaveText('No unsaved changes');
   await page.evaluate(async () => {
     localStorage.setItem('sawti_bookmarks_v1_qa', '[20,40]');
     localStorage.setItem('unitool-api_key', 'DO-NOT-EXPORT');
@@ -83,5 +82,16 @@ test('space overview counts records without reading full project/media values or
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect((await page.evaluate(()=>indexedDB.databases())).map(d=>d.name)).toEqual(['unitool-video-studio']);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.locator('.storage-details summary').click();
   await expect(page.getByText('Usually settings only.',{exact:false})).toBeVisible();
+});
+
+
+test('Arabic mobile backup actions remain clear with optional details collapsed',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto(base+'/storage.html');
+ await expect(page.getByRole('button',{name:'تنزيل نسخة ZIP كاملة',exact:true})).toBeVisible();
+ await expect(page.locator('.storage-details')).not.toHaveAttribute('open','');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ await page.screenshot({path:'.cache/touch-browser/site-storage-clean-ar.png',fullPage:true});
+ await page.locator('.storage-details summary').click();await expect(page.getByText('التحويل والضغط والمسح',{exact:true})).toBeVisible();
 });

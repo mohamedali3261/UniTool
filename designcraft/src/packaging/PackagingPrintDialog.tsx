@@ -118,8 +118,8 @@ export function PackagingPrintDialog({
           {ar ? "النزيف عند التصدير (mm): " : "Export bleed (mm): "}
           {bleedMm} ·{" "}
           {ar
-            ? "يُضبط من أدوات المصمم المتقدمة. النصائح والخطوط الإرشادية لا تصدّر."
-            : "Set in advanced tools. Editor-only guides are not exported."}
+            ? "تضاف مساحة نزيف حول حدود القالب؛ خطوط المحرر المساعدة لا تصدّر."
+            : "Bleed adds space around the dieline. Editor-only guides are not exported."}
         </p>
         <label className="carton-check">
           <input

@@ -69,6 +69,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
         width: p.width,
         height: p.height,
         studio: p.studio,
+        packaging:p.packaging,
         canvasData: p.canvasData,
       });
     };
@@ -153,6 +154,7 @@ export function useStudio(canvas: fabric.Canvas | null, project: ProjectItem) {
     project.width,
     project.height,
     JSON.stringify(project.studio),
+    JSON.stringify(project.packaging),
     project.canvasData?.background,
   ]);
   useEffect(() => {

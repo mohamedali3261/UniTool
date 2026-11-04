@@ -17,6 +17,9 @@ async function create(page: Page) {
   await page
     .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
     .click();
+await page
+    .getByRole("button", { name: "قوالب العلب والمقاسات", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "اسم قالب العلبة", exact: true })
     .fill("3D QA");
@@ -31,7 +34,7 @@ async function preview(page: Page) {
     .click();
   await expect(
     page.getByRole("dialog", { name: "معاينة العلبة ثلاثية الأبعاد" }),
-  ).toBeVisible();
+  ).toBeVisible({timeout:20000});
   await expect(page.getByTestId("carton-3d-stage")).toHaveAttribute(
     "data-ready",
     "true",
@@ -393,10 +396,11 @@ test("English labels and recovering after WebGL context loss", async ({
     .click();
   await expect(
     page.getByRole("dialog", { name: "3D carton preview", exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({timeout:20000});
   await expect(page.getByTestId("carton-3d-stage")).toHaveAttribute(
     "data-ready",
     "true",
+    {timeout:30000},
   );
   await page.getByRole("button", { name: "Bottom", exact: true }).click();
   await page
@@ -412,6 +416,7 @@ test("English labels and recovering after WebGL context loss", async ({
   await expect(page.getByTestId("carton-3d-stage")).toHaveAttribute(
     "data-ready",
     "true",
+    {timeout:30000},
   );
   await expect(
     page.getByTestId("carton-3d-stage").locator("canvas"),

@@ -3,6 +3,7 @@ import type { fabric } from "fabric";
 import { X, RotateCcw, Box, Maximize2 } from "lucide-react";
 import { useDcLang } from "../../hooks/useDcLang";
 import type { CartonSize } from "../geometry";
+import { previewTextureLimit, type PreviewQuality } from "./quality";
 import { cartonAtlas } from "./atlas";
 import { createCartonPreview, type View } from "./scene";
 import "./preview3d.css";
@@ -28,6 +29,11 @@ export default function Carton3DDialog({
     [error, setError] = useState(""),
     [fold, setFold] = useState(100),
     [revision, setRevision] = useState(0);
+  const [quality, setQuality] = useState<PreviewQuality>("high"),
+    [finish, setFinish] = useState<"matte" | "satin">("matte");
+  const finishRef = useRef(finish),
+    foldRef = useRef(1);
+  finishRef.current = finish;
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
     dialog.current?.showModal();
@@ -37,11 +43,12 @@ export default function Carton3DDialog({
     };
   }, []);
   useEffect(() => {
+    let paintFrame: number | undefined;
     let canceled = false,
       atlas: Awaited<ReturnType<typeof cartonAtlas>> | undefined;
     setBusy(true);
     setError("");
-    setFold(100);
+
     const element = host.current!;
     const lost = () => {
       engine.current?.dispose();
@@ -53,15 +60,29 @@ export default function Carton3DDialog({
       );
     };
     element.addEventListener("carton-webgl-lost", lost);
-    void cartonAtlas(canvas, size, width, height)
+    const limit = previewTextureLimit(quality, window.innerWidth < 768);
+    // Paint the modal/loading state before CPU/GPU texture and studio-light setup.
+    void (async () => {
+      await new Promise<void>(
+        (resolve) =>
+          (paintFrame = requestAnimationFrame(() => {
+            paintFrame = requestAnimationFrame(() => resolve());
+          })),
+      );
+      if (canceled) return;
+      return cartonAtlas(canvas, size, width, height, limit.edge, limit.pixels);
+    })()
       .then((result) => {
+        if (!result) return;
         atlas = result;
         if (canceled) {
           result.dispose();
           return;
         }
         try {
-          engine.current = createCartonPreview(element, result, size);
+          engine.current = createCartonPreview(element, result, size, quality);
+          engine.current.setFold(foldRef.current);
+          engine.current.setFinish(finishRef.current);
           setBusy(false);
         } catch {
           result.dispose();
@@ -86,14 +107,16 @@ export default function Carton3DDialog({
       });
     return () => {
       canceled = true;
+      if (paintFrame !== undefined) cancelAnimationFrame(paintFrame);
       element.removeEventListener("carton-webgl-lost", lost);
       engine.current?.dispose();
       engine.current = null;
       atlas?.dispose();
     };
-  }, [canvas, size, width, height, revision, ar]);
+  }, [canvas, size, width, height, revision, ar, quality]);
   const changeFold = (percent: number) => {
     setFold(percent);
+    foldRef.current = percent / 100;
     engine.current?.setFold(percent / 100);
   };
   const names: Record<View, [string, string]> = {
@@ -140,6 +163,7 @@ export default function Carton3DDialog({
         data-testid="carton-3d-stage"
         data-ready={!busy && !error}
         data-fold={fold}
+        data-quality={quality}
       >
         {busy && (
           <div className="carton-3d-message" role="status">
@@ -158,6 +182,46 @@ export default function Carton3DDialog({
         )}
       </div>
       <div className="carton-3d-controls">
+        <div className="carton-3d-quality">
+          <label>
+            {ar ? "وضوح المعاينة" : "Preview clarity"}
+            <select
+              aria-label={ar ? "جودة المعاينة" : "Preview quality"}
+              value={quality}
+              onChange={(e) => setQuality(e.target.value as PreviewQuality)}
+            >
+              <option value="high">
+                {ar ? "عالية · حتى 4K" : "High · up to 4K"}
+              </option>
+              <option value="balanced">
+                {ar ? "متوازنة · أخف" : "Balanced · lighter"}
+              </option>
+            </select>
+          </label>
+          <label>
+            {ar ? "ملمس الورق" : "Paper finish"}
+            <select
+              aria-label={ar ? "خامة العلبة" : "Carton finish"}
+              value={finish}
+              disabled={busy || !!error}
+              onChange={(e) => {
+                const next = e.target.value as "matte" | "satin";
+                setFinish(next);
+                engine.current?.setFinish(next);
+              }}
+            >
+              <option value="matte">{ar ? "مطفي" : "Matte"}</option>
+              <option value="satin">
+                {ar ? "ساتان · لمعان خفيف" : "Satin · soft sheen"}
+              </option>
+            </select>
+          </label>
+          <span>
+            {ar
+              ? "الصور الأصلية منخفضة الدقة تظل محدودة التفاصيل."
+              : "Low-resolution source images remain limited in detail."}
+          </span>
+        </div>
         <p>
           {ar
             ? "اسحب لتدوير العلبة بحرية 360° من كل الاتجاهات، بما فيها الأسفل. قرّب بإصبعين أو عجلة الماوس؛ حرّك بزر الماوس الأيمن. الأسهم للتدوير، + و − للتقريب، Home لإعادة المنظور."

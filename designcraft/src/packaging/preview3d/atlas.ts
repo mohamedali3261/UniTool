@@ -1,3 +1,4 @@
+import { atlasPixelsPerMm } from "./quality";
 import { fabric } from "fabric";
 import { EXTRA_PROPS } from "../../advanced/core/text";
 import { withCartonPrecision } from "../precision";
@@ -10,18 +11,19 @@ export async function cartonAtlas(
   width: number,
   height: number,
   maxEdge = 2048,
+  maxPixels = 16_000_000,
 ) {
   assertPhysicalCanvas(size, width, height);
   const g = cartonGeometry(size);
-  // Allow preview upsampling up to 2048 for crisp text on small cartons; never change saved artwork.
-  const atlasScale = Math.min(maxEdge / g.width, maxEdge / g.height, 16);
+  // Bounded screen-only supersampling; never change original artwork or print dimensions.
+  const atlasScale = atlasPixelsPerMm(g.width, g.height, maxEdge, maxPixels);
   const json = withCartonPrecision(() => canvas.toJSON(EXTRA_PROPS));
   json.objects = json.objects.filter(
     (o: any) => !String(o.id || "").startsWith("packaging-"),
   );
   const surface = new fabric.StaticCanvas(null, {
-    width: Math.min(maxEdge, Math.max(1, Math.ceil(g.width * atlasScale))),
-    height: Math.min(maxEdge, Math.max(1, Math.ceil(g.height * atlasScale))),
+    width: Math.min(maxEdge, Math.max(1, Math.floor(g.width * atlasScale))),
+    height: Math.min(maxEdge, Math.max(1, Math.floor(g.height * atlasScale))),
     enableRetinaScaling: false,
     renderOnAddRemove: false,
   });
@@ -42,6 +44,9 @@ export async function cartonAtlas(
         dimensions;
       surface.clipPath.dirty = true;
     }
+    surface
+      .getObjects()
+      .forEach((object) => object.set("objectCaching", false));
     surface.renderAll();
     const image = surface.getElement();
     // WebGL textures require an origin-clean source. Fail clearly rather than render a blank box.

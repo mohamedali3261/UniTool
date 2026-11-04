@@ -35,22 +35,30 @@ export function PackagingDialog({
   onClose,
   onCreate,
   initial = DEFAULT_CARTON,
+  initialArtwork,
+  initialTitle,
 }: {
   onClose: () => void;
   onCreate: (p: ProjectItem) => void;
   initial?: CartonSize;
+  initialArtwork?: ArtworkOptions;
+  initialTitle?: string;
 }) {
   const { lang } = useDcLang(),
     ar = lang === "ar",
     ref = useRef<HTMLDialogElement>(null),
-    [title, setTitle] = useState(ar ? "قالب علبة جديد" : "New carton template"),
+    [title, setTitle] = useState(
+      initialTitle || (ar ? "قالب علبة جديد" : "New carton template"),
+    ),
     [draft, setDraft] = useState(
       () =>
         Object.fromEntries(
           fields.map(([k]) => [k, String(initial[k])]),
         ) as Record<keyof CartonSize, string>,
     ),
-    [artwork, setArtwork] = useState<ArtworkOptions>({ ...DEFAULT_ARTWORK }),
+    [artwork, setArtwork] = useState<ArtworkOptions>({
+      ...(initialArtwork || DEFAULT_ARTWORK),
+    }),
     [resetKey, setResetKey] = useState(0),
     [safeArea, setSafeArea] = useState(false),
     [previewMode, setPreviewMode] = useState<"art" | "cut">("art"),
@@ -65,7 +73,7 @@ export function PackagingDialog({
     g = issue ? null : cartonGeometry(size);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
-    const dialog=ref.current;
+    const dialog = ref.current;
     dialog?.showModal();
     return () => {
       dialog?.close();
@@ -185,8 +193,8 @@ export function PackagingDialog({
           </div>
           <p>
             {ar
-              ? "علبة مستطيلة بغطاء علوي وقفل سفلي متعاكس، مثل المرجع. كل القياسات بالملّيمتر."
-              : "Rectangular reverse-tuck carton, like the reference. All dimensions are in millimetres."}
+              ? "قفل متعاكس · أبعاد فعلية بالملليمتر."
+              : "Reverse-tuck construction · physical dimensions in millimetres."}
           </p>
           <label>
             {ar ? "اسم التصميم" : "Design name"}
@@ -202,31 +210,36 @@ export function PackagingDialog({
               ? "طول × عرض × عمق — مقاسات العلبة بعد التجميع بالملليمتر، وليست مقاسات الورقة المفرودة."
               : "Length × width × depth — assembled box dimensions in millimetres, not the unfolded sheet size."}
           </p>
-          <PerfumeTemplates
-            key={resetKey}
-            ar={ar}
-            size={size}
-            onApply={(next, name, ml) => {
-              if (ml) {
-                const style =
-                  ml === 30 ? "rose" : ml === 50 ? "emerald" : "noir";
-                setArtwork({
-                  ...artwork,
-                  ml,
-                  style,
-                  accent: ART_STYLES[style].accent,
-                  product: ART_STYLES[style].product,
-                });
-              }
-              setDraft(
-                Object.fromEntries(
-                  fields.map(([key]) => [key, String(next[key])]),
-                ) as Record<keyof CartonSize, string>,
-              );
-              if (name) setTitle(name);
-              setError("");
-            }}
-          />
+          {artwork.descriptor === undefined && (
+            <PerfumeTemplates
+              key={resetKey}
+              ar={ar}
+              size={size}
+              onApply={(next, name, ml) => {
+                if (ml) {
+                  const style =
+                    ml === 30 ? "rose" : ml === 50 ? "emerald" : "noir";
+                  setArtwork({
+                    ...artwork,
+                    ml,
+                    descriptor: undefined,
+                    quantity: undefined,
+                    sideLabel: undefined,
+                    style,
+                    accent: ART_STYLES[style].accent,
+                    product: ART_STYLES[style].product,
+                  });
+                }
+                setDraft(
+                  Object.fromEntries(
+                    fields.map(([key]) => [key, String(next[key])]),
+                  ) as Record<keyof CartonSize, string>,
+                );
+                if (name) setTitle(name);
+                setError("");
+              }}
+            />
+          )}
           <div className="carton-fields">
             {fields.slice(0, 3).map(([k, arabic, en, min, max]) => (
               <label key={k}>

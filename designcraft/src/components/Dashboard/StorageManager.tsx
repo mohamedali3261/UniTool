@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Database, Download, FolderOpen, HardDrive, History, ShieldCheck, Trash2 } from 'lucide-react';
+import { Database, Download, FolderOpen, HardDrive, History, ShieldCheck, Trash2, Search } from 'lucide-react';
 import type { ProjectItem } from '../../types';
 import { useDcLang } from '../../hooks/useDcLang';
 import {
@@ -16,6 +16,7 @@ import {
 import { RECOVERY_CHANGED_EVENT, clearAllRecovery, recoveryStats } from '../../advanced/core/recovery';
 import { parseProjectFile } from '../../utils/projectFile';
 import { downloadFile } from '../../utils/download';
+import './storage.css';
 import { PresetSilhouette } from './PresetSilhouette';
 
 type Stats = Awaited<ReturnType<typeof recoveryStats>>;
@@ -43,6 +44,9 @@ export const StorageManager: React.FC<StorageManagerProps> = ({ projects, onOpen
   const [recovery, setRecovery] = useState<Stats>(EMPTY_STATS);
   const [persisted, setPersisted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [query,setQuery]=useState('');
+  const [sort,setSort]=useState<'newest'|'size'>('newest');
+  const visibleProjects=projects.filter(p=>p.title.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>sort==='size'?projectBytes(b)-projectBytes(a):(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt));
   const [action, setAction] = useState<ConfirmAction | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const engine = getStorageEngine();
@@ -140,114 +144,21 @@ export const StorageManager: React.FC<StorageManagerProps> = ({ projects, onOpen
   const confirmBody = action?.kind === 'delete' ? t.storageConfirmDeleteBody : action?.kind === 'recovery' ? t.storageConfirmRecoveryBody : t.storageConfirmClearBody;
 
   return (
-    <section data-testid="storage-manager" className="space-y-5 animate-in fade-in duration-200">
-      <div className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30">
-        <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-sky-500/15 text-sky-300 flex items-center justify-center shrink-0">
-            <Database className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-base sm:text-lg font-bold text-white">{t.storageTitle}</h2>
-            <a href="/storage.html" className="text-xs text-emerald-300 underline">{lang === 'ar' ? 'نسخة احتياطية للموقع بالكامل' : 'Back up the entire site'}</a>
-            <p className="text-xs text-slate-400 leading-relaxed mt-1 max-w-3xl">{t.storageDesc}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-          <div className="rounded-2xl bg-[#0B132B] border border-slate-700/70 p-4">
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]"><HardDrive className="w-3.5 h-3.5" />{t.storageEngine}</div>
-            <div className={`mt-2 text-xs font-bold leading-relaxed ${engine === 'memory' ? 'text-amber-300' : 'text-emerald-300'}`}>{engineLabel}</div>
-            <div className="mt-1 text-[10px] text-slate-500">{t.storageLocalOnly}</div>
-          </div>
-          <div className="rounded-2xl bg-[#0B132B] border border-slate-700/70 p-4">
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]"><FolderOpen className="w-3.5 h-3.5" />{t.storageProjectsSize}</div>
-            <div className="mt-2 text-lg font-bold text-white font-mono" dir="ltr">{formatStorageBytes(totalProjectBytes)}</div>
-            <div className="mt-1 text-[10px] text-slate-500">{projects.length} {t.statProjects}</div>
-          </div>
-          <div className="rounded-2xl bg-[#0B132B] border border-slate-700/70 p-4">
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]"><History className="w-3.5 h-3.5" />{t.storageRecovery}</div>
-            <div className="mt-2 text-lg font-bold text-white font-mono" dir="ltr">{formatStorageBytes(recovery.bytes)}</div>
-            <div className="mt-1 text-[10px] text-slate-500">{recovery.count} · {t.storageRecoveryHint}</div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-2xl bg-[#0B132B] border border-slate-700/70 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="text-slate-300 font-semibold">{t.storageBrowserUsage}</span>
-            {estimate ? (
-              <span className="text-slate-400 font-mono" dir="ltr">{formatStorageBytes(estimate.usage)} / {formatStorageBytes(estimate.quota)}</span>
-            ) : (
-              <span className="text-slate-500 text-[11px]">{t.storageUsageUnknown}</span>
-            )}
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden" role="progressbar" aria-label={t.storageBrowserUsage} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(usagePercent)}>
-            <div className="h-full rounded-full bg-sky-400 transition-all" style={{ width: `${usagePercent}%` }} />
-          </div>
-          <p className="mt-2 text-[10px] text-slate-500">{t.storageBrowserUsageHint}</p>
-        </div>
-
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-          {persisted ? (
-            <span className="inline-flex items-center gap-2 text-xs text-emerald-300"><ShieldCheck className="w-4 h-4" />{t.storageProtected}</span>
-          ) : (
-            <button type="button" disabled={busy || engine === 'memory'} onClick={protectStorage} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-sky-500/40 bg-sky-500/10 text-sky-200 text-xs font-semibold hover:bg-sky-500/20 disabled:opacity-50 transition">
-              <ShieldCheck className="w-4 h-4" />{t.storageProtect}
-            </button>
-          )}
-          <p className="text-[10px] text-slate-500 leading-relaxed flex-1">{t.storageProtectHint}</p>
-        </div>
+    <section data-testid="storage-manager" className="storage-workspace" dir={ar?'rtl':'ltr'}>
+      <header className="storage-heading"><div><span className="storage-eyebrow">YOUR CREATIVE LIBRARY</span><h1>{ar?'مساحتك الإبداعية':'Your creative space'}</h1><span className="storage-local" data-temporary={engine==='memory'}><span/> {engine==='memory'?(ar?'مؤقت — احفظ نسخة احتياطية':'Temporary — download a backup'):(ar?'محفوظ على هذا الجهاز':'Saved on this device')}</span></div><a href="/storage.html" title={ar?'نسخة احتياطية للموقع بالكامل':'Back up the entire site'}><Download size={16}/>{ar?'نسخة احتياطية':'Site backup'}</a></header>
+      <div className="storage-overview">
+        <article><div className="storage-stat-icon"><FolderOpen size={19}/></div><div><span>{t.storageSavedProjects}</span><strong>{projects.length}</strong><small dir="ltr">{formatStorageBytes(totalProjectBytes)}</small></div></article>
+        <article><div className="storage-stat-icon storage-mint"><History size={19}/></div><div><span>{t.storageRecovery}</span><strong>{recovery.count}</strong><small dir="ltr">{formatStorageBytes(recovery.bytes)}</small></div></article>
+        <article className="storage-device"><div className="storage-stat-icon"><HardDrive size={19}/></div><div><span title={engineLabel}>{engine==='indexeddb'?'IndexedDB':engine==='localstorage'?'LocalStorage':(ar?'مؤقت — احفظ نسخة':'Temporary — back up now')}</span><strong className="storage-device-value" dir="ltr">{estimate?formatStorageBytes(estimate.usage):'—'}</strong><small>{ar?'استخدام المتصفح':'Browser usage'}</small></div></article>
       </div>
-
-      <div className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h3 className="text-sm font-bold text-white">{t.storageSavedProjects} <span className="text-sky-300 font-mono">({projects.length})</span></h3>
-        </div>
-        {projects.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-700 p-8 text-center text-xs text-slate-400">{t.storageNoProjects}</div>
-        ) : (
-          <ul className="space-y-3">
-            {projects.map((project) => {
-              const copies = recovery.byProject[project.id]?.count || 0;
-              const objects = Array.isArray(project.canvasData?.objects) ? project.canvasData.objects.length : 0;
-              return (
-                <li key={project.id} data-testid="storage-project" className="flex flex-col md:flex-row md:items-center gap-3 rounded-2xl bg-[#0B132B] border border-slate-700/70 p-3">
-                  <button type="button" onClick={() => onOpenProject(project)} title={t.storageOpen} className="w-full md:w-20 h-20 shrink-0 rounded-xl bg-white/[0.04] border border-slate-700/60 overflow-hidden flex items-center justify-center">
-                    {project.thumbnail ? <img src={project.thumbnail} alt="" className="w-full h-full object-contain p-1.5" /> : <PresetSilhouette width={project.width} height={project.height} category={project.category} className="w-10 h-10" />}
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <button type="button" onClick={() => onOpenProject(project)} className="block max-w-full text-start text-sm font-bold text-white hover:text-sky-300 truncate transition">{project.title}</button>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
-                      <span dir="ltr" className="font-mono">{Math.round(project.width)} × {Math.round(project.height)} px</span>
-                      <span>{objects} {t.storageObjects}</span>
-                      <span dir="ltr" className="font-mono text-sky-300">{formatStorageBytes(projectBytes(project))}</span>
-                      <span>{t.storageRecoveryCount}: {copies}</span>
-                    </div>
-                    <div className="mt-1 text-[10px] text-slate-500">{t.storageLastSaved}: {dateLabel(project.updatedAt || project.createdAt)}</div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
-                    <button type="button" onClick={() => onOpenProject(project)} title={t.storageOpen} aria-label={`${t.storageOpen}: ${project.title}`} className="p-2 rounded-lg text-slate-300 hover:text-sky-300 hover:bg-slate-800 transition"><FolderOpen className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => downloadBackup(project)} title={t.storageDownload} aria-label={`${t.storageDownload}: ${project.title}`} className="p-2 rounded-lg text-slate-300 hover:text-emerald-300 hover:bg-slate-800 transition"><Download className="w-4 h-4" /></button>
-                    <button type="button" disabled={busy} onClick={() => setAction({ kind: 'delete', project })} title={t.storageDelete} aria-label={`${t.storageDelete}: ${project.title}`} className="p-2 rounded-lg text-slate-300 hover:text-rose-300 hover:bg-slate-800 disabled:opacity-50 transition"><Trash2 className="w-4 h-4" /></button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      <div className="bg-[#141E38] border border-rose-500/25 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30">
-        <p className="text-xs text-slate-400 leading-relaxed mb-4">{t.storageBackupHint}</p>
-        <div className="flex flex-col lg:flex-row gap-3">
-          <button type="button" disabled={busy || recovery.count === 0} onClick={() => setAction({ kind: 'recovery' })} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-600 text-slate-200 text-xs font-semibold hover:bg-slate-800 disabled:opacity-40 transition">
-            <History className="w-4 h-4" />{t.storageClearRecovery}
-          </button>
-          <button type="button" disabled={busy} onClick={() => setAction({ kind: 'all' })} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-500/50 bg-rose-500/10 text-rose-200 text-xs font-bold hover:bg-rose-500/20 disabled:opacity-50 transition">
-            <Trash2 className="w-4 h-4" />{t.storageClearAll}
-          </button>
-        </div>
-        <p className="mt-3 text-[10px] text-slate-500 leading-relaxed">{t.storageClearAllHint}</p>
-      </div>
+      <div className="storage-capacity"><div><span title={t.storageBrowserUsageHint}>{t.storageBrowserUsage}</span><span dir="ltr">{estimate?`${formatStorageBytes(estimate.usage)} / ${formatStorageBytes(estimate.quota)}`:t.storageUsageUnknown}</span></div><div className="storage-meter" role="progressbar" aria-label={t.storageBrowserUsage} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(usagePercent)}><i style={{width:`${usagePercent}%`}}/></div><div className="storage-protection">{persisted?<span><ShieldCheck size={14}/>{t.storageProtected}</span>:<button type="button" title={t.storageProtectHint} disabled={busy||engine==='memory'} onClick={protectStorage}><ShieldCheck size={14}/>{t.storageProtect}</button>}<span>{ar?'الحفظ محلي، وليس سحابيًا':'Local storage, not cloud sync'}</span></div></div>
+      <section className="storage-library"><div className="storage-library-head"><h2>{ar?'تصميماتك':'Your designs'} <span>{projects.length}</span></h2><div className="storage-library-tools"><label><Search size={15}/><input type="search" value={query} onChange={e=>setQuery(e.target.value)} aria-label={ar?'بحث في التصميمات المحفوظة':'Search saved designs'} placeholder={ar?'بحث…':'Search…'}/></label><select aria-label={ar?'ترتيب التصميمات':'Sort designs'} value={sort} onChange={e=>setSort(e.target.value as 'newest'|'size')}><option value="newest">{ar?'الأحدث':'Newest'}</option><option value="size">{ar?'الأكبر حجمًا':'Largest first'}</option></select></div></div>
+      {projects.length===0?<div className="storage-empty"><FolderOpen size={30}/><p>{t.storageNoProjects}</p></div>:visibleProjects.length===0?<div className="storage-empty">{ar?'لا توجد نتائج':'No matching designs'}</div>:<ul className="storage-project-grid">{visibleProjects.map(project=>{
+        const copies=recovery.byProject[project.id]?.count||0;
+        return <li key={project.id} data-testid="storage-project" className="storage-project-card"><button type="button" className="storage-thumbnail" onClick={()=>onOpenProject(project)} aria-label={`${t.storageOpen}: ${project.title}`}>{project.thumbnail?<img src={project.thumbnail} alt="" loading="lazy"/>:<PresetSilhouette width={project.width} height={project.height} category={project.category} className="w-16 h-16"/>}<span dir="ltr">{project.packaging?`${project.packaging.size.height} × ${project.packaging.size.width} × ${project.packaging.size.depth} mm`:`${Math.round(project.width)} × ${Math.round(project.height)} px`}</span></button><div className="storage-project-info"><button type="button" className="storage-project-title" onClick={()=>onOpenProject(project)}>{project.title}</button><div className="storage-project-details"><span dir="ltr">{formatStorageBytes(projectBytes(project))}</span><span title={t.storageRecoveryCount}><History size={12}/>{copies}</span></div><footer><time title={t.storageLastSaved} dateTime={new Date(project.updatedAt||project.createdAt).toISOString()}>{dateLabel(project.updatedAt||project.createdAt)}</time><div className="storage-project-actions"><button type="button" onClick={()=>downloadBackup(project)} title={t.storageDownload} aria-label={`${t.storageDownload}: ${project.title}`}><Download size={15}/></button><button type="button" disabled={busy} onClick={()=>setAction({kind:'delete',project})} title={t.storageDelete} aria-label={`${t.storageDelete}: ${project.title}`}><Trash2 size={15}/></button></div></footer></div></li>;
+      })}</ul>}
+      </section>
+      <section className="storage-cleanup"><div><Trash2 size={17}/><h2>{ar?'تنظيف المساحة':'Free up space'}</h2></div><div><button type="button" disabled={busy||recovery.count===0} onClick={()=>setAction({kind:'recovery'})}><History size={15}/>{t.storageClearRecovery}</button><button type="button" className="storage-danger" disabled={busy} onClick={()=>setAction({kind:'all'})}><Trash2 size={15}/>{t.storageClearAll}</button></div></section>
 
       <dialog
         ref={dialogRef}

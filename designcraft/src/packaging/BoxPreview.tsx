@@ -101,7 +101,7 @@ export function BoxPreview({
             fill={artwork.accent}
             fontSize={w * 0.07}
           >
-            {artwork.ml} ml
+            {artwork.quantity ?? `${artwork.ml} ml`}
           </text>
         </g>
       )}

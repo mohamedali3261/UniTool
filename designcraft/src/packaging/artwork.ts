@@ -36,6 +36,9 @@ export type ArtworkOptions = {
   product: string;
   accent: string;
   ml: number;
+  descriptor?: string;
+  quantity?: string;
+  sideLabel?: string;
 };
 export const DEFAULT_ARTWORK: ArtworkOptions = {
   style: "blank",
@@ -181,7 +184,7 @@ export function cartonArtwork(
       );
       text(
         "Concentration / نوع العطر",
-        "EAU DE PARFUM",
+        options.descriptor ?? "EAU DE PARFUM",
         x + w * 0.1,
         y + h * 0.68,
         w * 0.8,
@@ -190,7 +193,7 @@ export function cartonArtwork(
       );
       text(
         "Capacity / السعة",
-        `${options.ml} ml`,
+        options.quantity ?? `${options.ml} ml`,
         x + w * 0.1,
         y + h * 0.86,
         w * 0.8,
@@ -200,7 +203,7 @@ export function cartonArtwork(
     } else {
       text(
         "Side label / نص جانبي",
-        "EAU\nDE\nPARFUM",
+        options.sideLabel ?? "EAU\nDE\nPARFUM",
         x + 3,
         y + h * 0.35,
         w - 6,

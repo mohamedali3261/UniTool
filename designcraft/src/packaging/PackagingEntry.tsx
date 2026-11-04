@@ -5,9 +5,10 @@ import { useDcLang } from "../hooks/useDcLang";
 import { PackagingDialog } from "./PackagingDialog";
 import { cartonSvg, DEFAULT_CARTON } from "./geometry";
 export function PackagingEntry({
-  onCreate,
+  onCreate,onNavigate,
 }: {
   onCreate: (p: ProjectItem) => void;
+  onNavigate?:()=>void;
 }) {
   const [open, setOpen] = useState(false),
     { lang } = useDcLang(),
@@ -26,7 +27,7 @@ export function PackagingEntry({
               ? "طول × عرض × عمق. قالب قصّ وطيّ بألسنة قفل ولصق، جاهز لتصميمك."
               : "Length × width × depth. A cut-and-fold template, ready for your artwork."}
           </p>
-          <button type="button" onClick={() => setOpen(true)}>
+          <button type="button" onClick={() => onNavigate?onNavigate():setOpen(true)}>
             {ar ? "قوالب العلب والمقاسات" : "Carton templates & dimensions"}
             <ArrowUpLeft size={18} />
           </button>
