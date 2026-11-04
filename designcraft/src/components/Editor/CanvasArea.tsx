@@ -26,7 +26,6 @@ import {
 
 interface CanvasAreaProps {
   cropRequest: number;
-  onRequestCrop: () => void;
   onApplyCrop: (crop: CropInsets) => void;
   width: number;
   height: number;
@@ -51,7 +50,7 @@ interface CanvasAreaProps {
 }
 
 export const CanvasArea: React.FC<CanvasAreaProps> = ({
-  cropRequest, onRequestCrop, onApplyCrop,
+  cropRequest, onApplyCrop,
   width,
   height,
   backgroundColor,
@@ -775,7 +774,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       </div>
 
     </div>
-      {fabricCanvasRef.current && <CanvasImageCrop canvas={fabricCanvasRef.current} request={cropRequest} onRequest={onRequestCrop} onApply={onApplyCrop} onDelete={onDelete}/>}
+      {fabricCanvasRef.current && <CanvasImageCrop canvas={fabricCanvasRef.current} request={cropRequest} onApply={onApplyCrop} onDelete={onDelete}/>}
       {/* Outside the scrolling/transforming viewport: controls stay docked. */}
       <div
         id="floating-zoom-pill"

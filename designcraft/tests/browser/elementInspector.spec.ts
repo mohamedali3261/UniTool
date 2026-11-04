@@ -69,13 +69,36 @@ async function select(page: Page, lang = 'en') {
     page.getByRole('toolbar', {
       name: lang === 'ar' ? 'أدوات الصورة' : 'Image actions',
     }),
-  ).toBeVisible();
+  ).toHaveCount(0);
 }
 async function saved(page: Page, ar = false) {
   await saveAndWait(page, ar);
   return (await storedProject(page, 'Crop QA')).canvasData.objects[0];
 }
 async function start(page: Page, lang = 'en') {
+  if (!(await page.locator('.dc-properties:visible').count())) {
+    if ((page.viewportSize()?.width || 1440) < 768)
+      await page
+        .locator('#mobile-bottom-nav')
+        .getByRole('button', {
+          name: lang === 'ar' ? 'الخصائص' : 'Properties',
+          exact: true,
+        })
+        .click();
+    else
+      await page
+        .getByRole('button', {
+          name: lang === 'ar' ? 'إظهار الخصائص' : 'Show properties',
+          exact: true,
+        })
+        .click();
+  }
+  const section = page.getByRole('region', {
+    name: lang === 'ar' ? 'قص الصورة' : 'Crop image',
+    exact: true,
+  });
+  await expect(section.getByRole('button')).toHaveCount(1);
+
   await page
     .getByRole('button', {
       name: lang === 'ar' ? 'قص الصورة' : 'Crop image',
@@ -157,9 +180,7 @@ test('removed crop fields and transform section are absent; property button focu
   await select(page);
   await expect(page.locator('.dc-crop-editor')).toHaveCount(0);
   await expect(page.locator('.dc-transform')).toHaveCount(0);
-  await page
-    .getByRole('button', { name: 'Crop image on canvas', exact: true })
-    .click();
+  await start(page);
   await expect(page.getByTestId('canvas-image-crop')).toBeInViewport({
     ratio: 1,
   });
@@ -167,6 +188,7 @@ test('removed crop fields and transform section are absent; property button focu
   const tools = page.getByRole('toolbar', { name: 'Image actions' });
   await expect(tools.getByRole('button')).toHaveCount(3);
   await tools.getByRole('button', { name: 'Cancel crop' }).click();
+  await expect(tools).toHaveCount(0);
   expect((await saved(page)).cropLeft || 0).toBe(0);
 });
 test('Escape discards draft; delete from crop toolbar is undoable', async ({
