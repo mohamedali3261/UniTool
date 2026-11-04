@@ -1623,7 +1623,6 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           />
           <CanvasArea
             cropRequest={cropRequest}
-            onRequestCrop={startImageCrop}
             onApplyCrop={handleCropImage}
             overlays={initialProject.packaging?<CanvasOverlays size={initialProject.packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
             width={canvasWidth}

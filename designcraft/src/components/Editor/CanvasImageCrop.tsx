@@ -21,13 +21,11 @@ type Geometry = {
 export function CanvasImageCrop({
   canvas,
   request,
-  onRequest,
   onApply,
   onDelete,
 }: {
   canvas: fabric.Canvas;
   request: number;
-  onRequest: () => void;
   onApply: (crop: CropInsets) => void;
   onDelete: () => void;
 }) {
@@ -175,7 +173,7 @@ export function CanvasImageCrop({
     window.addEventListener('keydown', escape, true);
     return () => window.removeEventListener('keydown', escape, true);
   }, [editing]);
-  if (!image || !geometry) return null;
+  if (!editing || !image || !geometry) return null;
   const g = geometry,
     local = (e: { clientX: number; clientY: number }) => {
       const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(
@@ -396,7 +394,7 @@ export function CanvasImageCrop({
             if (editing) {
               if (canvas.getActiveObject() === image) onApply(draft);
               setEditing(false);
-            } else onRequest();
+            }
           }}
         >
           <Crop size={15} />

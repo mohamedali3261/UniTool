@@ -161,7 +161,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
-            {isImage && <button type="button" className="dc-start-crop" disabled={isLocked} onClick={onStartCrop}>{lang === 'ar' ? 'قص الصورة مباشرة' : 'Crop image on canvas'}</button>}
+            {isImage && <section className="dc-element-extras" aria-label={lang === 'ar' ? 'قص الصورة' : 'Crop image'}>
+              <h4>{lang === 'ar' ? 'قص الصورة' : 'Crop image'}</h4>
+              <button type="button" className="dc-start-crop" disabled={isLocked} onClick={onStartCrop}>{lang === 'ar' ? 'قص الصورة' : 'Crop image'}</button>
+            </section>}
             {isImage && (
               <ImageProperties
                 properties={activeProperties}
