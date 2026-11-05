@@ -1,6 +1,7 @@
 import { toolCategories } from "../../../ToolsHome/data";
 import { studios } from "../../data";
-import { Layers3 } from "lucide-react";
+import { Layers3, Sparkles } from "lucide-react";
+
 export const heroScenes = toolCategories.flatMap((c) =>
   Array.from({ length: Math.ceil(c.tools.length / 6) }, (_, i) => ({
     id: `${c.id}-${i}`,
@@ -16,32 +17,43 @@ export const heroScenes = toolCategories.flatMap((c) =>
     })),
   })),
 );
-const studioScene = {
-  id: "studios",
-  ar: "استوديوهات الإبداع",
-  en: "Creative studios",
-  icon: Layers3,
-  items: [
-    ...studios.map((s) => ({
+
+const seenHrefs = new Set(
+  heroScenes.flatMap((s) => s.items.map((item) => item.href)),
+);
+
+const studioItems = [
+  ...studios
+    .filter((s) => !seenHrefs.has(s.href))
+    .map((s) => ({
       id: s.id,
       ar: s.name.ar,
       en: s.name.en,
       icon: s.icon,
       href: s.href,
     })),
-    {
-      id: "elements",
-      ar: "مكتبة العناصر",
-      en: "Elements library",
-      icon: Layers3,
-      href: "/video-studio.html#elements",
-    },
-  ],
-};
+  {
+    id: "logoDesigner",
+    ar: "مصمم الشعارات",
+    en: "Logo Designer",
+    icon: Sparkles,
+    href: "/logo-designer/",
+  },
+  {
+    id: "elements",
+    ar: "مكتبة العناصر",
+    en: "Elements library",
+    icon: Layers3,
+    href: "/video-studio.html#elements",
+  },
+];
 
-for (let i = 0; i < studioScene.items.length; i += 6)
+for (let i = 0; i < studioItems.length; i += 6) {
   heroScenes.push({
-    ...studioScene,
     id: i === 0 ? "studios" : `studios-${i / 6}`,
-    items: studioScene.items.slice(i, i + 6),
+    ar: "استوديوهات الإبداع",
+    en: "Creative studios",
+    icon: Layers3,
+    items: studioItems.slice(i, i + 6),
   });
+}

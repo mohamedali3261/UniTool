@@ -1,3 +1,4 @@
+import { validMotion } from "./motion";
 import { type Project } from "./types";
 /** IndexedDB يحفظ الصور المضمّنة بدون حد localStorage الصغير. */
 let connection: Promise<IDBDatabase>;
@@ -58,6 +59,43 @@ export function validateProject(value: unknown): Project {
     p.nodes.length > 500
   )
     throw new Error("Invalid project");
+  if (p.motion !== undefined && !validMotion(p.motion))
+    throw new Error("Invalid motion settings");
+  if (p.motionVersions !== undefined) {
+    if (
+      !Array.isArray(p.motionVersions) ||
+      p.motionVersions.length < 1 ||
+      p.motionVersions.length > 6 ||
+      new Set(p.motionVersions.map((v) => v?.id)).size !==
+        p.motionVersions.length ||
+      !p.motionVersions.some((v) => v.id === p.activeMotionVersion)
+    )
+      throw new Error("Invalid motion alternatives");
+    for (const v of p.motionVersions) {
+      if (
+        !v ||
+        typeof v.id !== "string" ||
+        !v.id ||
+        typeof v.name !== "string" ||
+        !v.name.trim() ||
+        v.name.length > 60
+      )
+        throw new Error("Invalid alternative");
+      validateProject({
+        ...p,
+        variants: undefined,
+        activeVariant: undefined,
+        motionVersions: undefined,
+        activeMotionVersion: undefined,
+        width: v.width,
+        height: v.height,
+        background: v.background,
+        nodes: v.nodes,
+        motion: v.motion,
+      });
+    }
+  } else if (p.activeMotionVersion !== undefined)
+    throw new Error("Missing motion alternatives");
   if (p.variants !== undefined) {
     if (
       !Array.isArray(p.variants) ||
@@ -87,6 +125,7 @@ export function validateProject(value: unknown): Project {
   for (const n of p.nodes) {
     if (
       !n ||
+      "motionVisual" in n ||
       typeof n.id !== "string" ||
       ids.has(n.id) ||
       !["shape", "icon", "text", "image", "vector"].includes(n.kind) ||

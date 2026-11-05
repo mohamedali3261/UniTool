@@ -62,7 +62,7 @@ export function DesignArt({
                   />
                 ))}
               </g>
-              <circle cx="90" cy="90" r="22" fill="#202c24" />
+              <circle cx="90" cy="90" r="22" fill="#24795e" />
             </svg>
           </div>
           <div className="art-design-title">
@@ -282,6 +282,109 @@ export function ReaderArt({ lang }: { lang: Language }) {
         <b>1.5×</b>
       </div>
     </div>
+  );
+}
+export function SheetsArt({ lang }: { lang: Language }) {
+  return (
+    <svg
+      className="sheets-art-svg"
+      viewBox="0 0 500 300"
+      width="100%"
+      height="100%"
+      aria-hidden="true"
+    >
+      <rect
+        x="46"
+        y="34"
+        width="408"
+        height="232"
+        rx="18"
+        fill="var(--art-surface, #eef5f0)"
+        stroke="var(--art-border, #cfe0d4)"
+        strokeWidth="2"
+      />
+      <rect
+        x="68"
+        y="54"
+        width="234"
+        height="32"
+        rx="8"
+        fill="var(--art-accent-soft, #d7ede3)"
+      />
+      <text
+        x="82"
+        y="75"
+        fontSize="14"
+        fontWeight="700"
+        fill="var(--art-accent, #24795e)"
+      >
+        fx =SUM(C2:C6)
+      </text>
+      {[0, 1, 2].map((r) =>
+        [0, 1, 2].map((c) => (
+          <rect
+            key={`${r}-${c}`}
+            x={68 + c * 80}
+            y={98 + r * 40}
+            width="72"
+            height="32"
+            rx="6"
+            fill={
+              r === 2 && c === 2
+                ? "var(--art-accent-soft, #d7ede3)"
+                : "var(--site-panel, #ffffff)"
+            }
+            stroke={
+              r === 2 && c === 2
+                ? "var(--art-accent, #24795e)"
+                : "var(--art-border, #cfe0d4)"
+            }
+            strokeWidth="1.5"
+          />
+        )),
+      )}
+      <text
+        x="264"
+        y="199"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="700"
+        fill="var(--art-accent, #24795e)"
+      >
+        24,850
+      </text>
+      <rect
+        x="316"
+        y="54"
+        width="116"
+        height="156"
+        rx="10"
+        fill="var(--site-panel, #ffffff)"
+        stroke="var(--art-border, #cfe0d4)"
+      />
+      {[48, 76, 62, 108].map((h, i) => (
+        <rect
+          key={i}
+          x={332 + i * 23}
+          y={196 - h}
+          width="15"
+          height={h}
+          rx="4"
+          fill={i === 3 ? "var(--art-accent, #24795e)" : "#8cc8b0"}
+        />
+      ))}
+      <text
+        x="250"
+        y="246"
+        textAnchor="middle"
+        fontSize="13"
+        fill="var(--site-muted, #586f60)"
+      >
+        {lang === "ar"
+          ? "جداول منظمة · معادلات واضحة · تصدير Excel"
+          : "CLEAN TABLES · LIVE FORMULAS · EXCEL EXPORT"}
+      </text>
+    </svg>
   );
 }
 export function ToolsArt() {

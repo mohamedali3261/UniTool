@@ -170,3 +170,65 @@ test("new SVG overlays insert on top and new compositions retain editable text",
     .click();
   await expect(page.locator("#studio-inspector")).toBeVisible();
 });
+
+test("every hero motion tool renders a unique non-empty visual and light mode has no dark cards", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(base);
+  const mode = await page.locator("html").getAttribute("data-site-theme");
+  if (mode !== "light") {
+    await page.locator('[data-testid$="theme-toggle"]').first().click();
+  }
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-theme",
+    "light",
+  );
+
+  // Verify zero dark card/stage backgrounds (>=48x48px) on homepage in light mode
+  const darkElements = await page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll("body *")) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 48 || r.height < 48) continue;
+      const bg = getComputedStyle(el).backgroundColor;
+      const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (!m) continue;
+      const red = Number(m[1]),
+        g = Number(m[2]),
+        b = Number(m[3]),
+        a = m[4] === undefined ? 1 : Number(m[4]);
+      if (a < 0.35) continue;
+      const lum = (0.2126 * red + 0.7152 * g + 0.0722 * b) / 255;
+      if (lum < 0.28) bad.push(`${el.tagName}.${el.className} (${bg})`);
+    }
+    return bad;
+  });
+  expect(darkElements).toEqual([]);
+
+  // Verify every chapter's tools display a distinct, non-empty SVG preview
+  const chapters = page.locator(".hero-motion .film-chapters button");
+  const chapterCount = await chapters.count();
+  const seenSvgs = new Map<string, string>();
+  for (let c = 0; c < chapterCount; c++) {
+    await chapters.nth(c).click();
+    const tools = page.locator(".hero-motion .film-tool");
+    const toolCount = await tools.count();
+    for (let t = 0; t < toolCount; t++) {
+      await tools.nth(t).hover();
+      const preview = page.locator(".hero-motion .film-preview");
+      await expect(preview).toBeVisible();
+      const id = (await preview.getAttribute("data-tool")) || "";
+      const svg = preview.locator("svg.preview-unique-svg");
+      await expect(svg).toBeVisible();
+      const html = (await svg.innerHTML()).trim();
+      expect(html.length).toBeGreaterThan(40);
+      expect(
+        seenSvgs.has(html),
+        `Duplicate preview visual between ${seenSvgs.get(html)} and ${id}`,
+      ).toBe(false);
+      seenSvgs.set(html, id);
+    }
+  }
+  expect(seenSvgs.size).toBe(39);
+});

@@ -1,3 +1,6 @@
+import MotionPanel, { MotionStage } from "./Motion";
+import MotionExport from "./MotionExport";
+import { Modal } from "./ui";
 import QuickEdit from "./QuickEdit";
 /** مجمّع الأقسام والاختصارات؛ المشروع نفسه يأتي من الحالة المشتركة. */
 import { useEffect, useState, lazy, Suspense, type ComponentType } from "react";
@@ -48,6 +51,7 @@ const tabs = [
     icon: LayoutTemplate,
     view: Templates,
   },
+  { id: "motion", ar: "حركة", en: "Motion", icon: Sparkles, view: MotionPanel },
   { id: "text", ar: "نصوص", en: "Text", icon: Type, view: TextSection },
   { id: "colors", ar: "ألوان", en: "Colors", icon: Palette, view: Colors },
   { id: "layers", ar: "طبقات", en: "Layers", icon: LayersIcon, view: Layers },
@@ -249,8 +253,16 @@ function Workspace() {
               01 / {s.doc.width} × {s.doc.height}
             </span>
           </div>
-          <QuickEdit />
-          <Canvas />
+          {s.tab === "motion" ? (
+            <MotionStage
+              key={`${s.doc.id}-${s.doc.motion?.preset}-${s.doc.motion?.duration}`}
+            />
+          ) : (
+            <>
+              <QuickEdit />
+              <Canvas />
+            </>
+          )}
           <div className="ld-workspace-caption">
             <span>MADE TO BE YOURS.</span>
             <button onClick={() => s.setModal("help")}>
@@ -292,6 +304,11 @@ function Workspace() {
         </div>
       )}
       {s.modal === "export" && <Export />}
+      {s.modal === "motion-export" && (
+        <Modal title={s.t("تصدير شعار متحرك", "Animated logo export")}>
+          <MotionExport />
+        </Modal>
+      )}
       {s.modal === "help" && <Help />}
     </div>
   );

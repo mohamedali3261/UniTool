@@ -4,6 +4,7 @@ import { ArrowUpLeft, Layers3, MousePointer2 } from "lucide-react";
 import type { Language } from "../../data";
 import { heroScenes } from "./scenes";
 import "./motion.css";
+
 export function HeroMotion({
   lang,
   paused,
@@ -22,6 +23,7 @@ export function HeroMotion({
   const stage = useRef<HTMLDivElement>(null),
     ar = lang === "ar";
   const scene = heroScenes[index];
+
   useEffect(() => {
     const q = matchMedia("(prefers-reduced-motion: reduce)"),
       change = () => setReduced(q.matches),
@@ -39,7 +41,9 @@ export function HeroMotion({
       observer.disconnect();
     };
   }, []);
+
   const running = !interacting && !paused && !reduced && !hidden && visible;
+
   useEffect(() => {
     if (!running) return;
     const id = setTimeout(
@@ -55,10 +59,11 @@ export function HeroMotion({
           }
         }
       },
-      phase === "move" ? 850 : phase === "click" ? 400 : 2300,
+      phase === "move" ? 650 : phase === "click" ? 350 : 2200,
     );
     return () => clearTimeout(id);
   }, [running, index, tool, phase, scene.items.length]);
+
   useEffect(() => {
     const place = () => {
       const node = stage.current?.querySelector(".film-scene"),
@@ -76,17 +81,14 @@ export function HeroMotion({
     if (stage.current) observer.observe(stage.current);
     return () => observer.disconnect();
   }, [index, tool]);
+
   const active = scene.items[tool] || scene.items[0];
+
   return (
     <div
       ref={stage}
       onMouseEnter={() => setInteracting(true)}
       onMouseLeave={() => setInteracting(false)}
-      onFocusCapture={() => setInteracting(true)}
-      onBlurCapture={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node))
-          setInteracting(false);
-      }}
       className={`hero-motion ${running ? "is-running" : "is-still"} phase-${phase}`}
       aria-label={
         ar ? "عرض موشن جرافيك لأدوات UniTool" : "UniTool tools motion showcase"
@@ -98,7 +100,10 @@ export function HeroMotion({
           <i />
           <i />
         </span>
-        <small>UNITOOL / CREATIVE OPERATING SYSTEM</small>
+        <strong className="motion-scene-pill" dir={ar ? "rtl" : "ltr"}>
+          <scene.icon size={13} />
+          {ar ? scene.ar : scene.en}
+        </strong>
         <b>
           SCENE {String(index + 1).padStart(2, "0")} /{" "}
           {String(heroScenes.length).padStart(2, "0")}
@@ -121,32 +126,19 @@ export function HeroMotion({
         </span>
         <span className="film-coordinate coord-b">∞ POSSIBILITIES</span>
         <div key={scene.id} className="film-scene" data-scene={scene.id}>
-          <div
-            className={"film-hub " + (phase === "open" ? "preview-behind" : "")}
-          >
-            <span className="film-hub-icon">
-              <scene.icon size={42} />
-            </span>
-            <small>ONE WORKSPACE. NO LIMITS.</small>
-            <h2>{ar ? scene.ar : scene.en}</h2>
-            <span className="film-hub-caption">
-              {ar
-                ? "من أول فكرة… لآخر تفصيلة."
-                : "From first spark to final frame."}
-            </span>
-            <div className="film-hub-pills">
-              <span>{ar ? "ارفع" : "IMPORT"}</span>
-              <b>↗</b>
-              <span>{ar ? "عدّل" : "CREATE"}</span>
-              <b>↗</b>
-              <span>{ar ? "صدّر" : "EXPORT"}</span>
-            </div>
-          </div>
           {scene.items.map((item, i) => (
             <a
               key={item.id}
               className={`film-tool film-slot-${i} ${i === tool ? "tool-current" : ""}`}
               href={item.href}
+              onPointerEnter={() => {
+                setTool(i);
+                setPhase("open");
+              }}
+              onFocus={() => {
+                setTool(i);
+                setPhase("open");
+              }}
               style={
                 {
                   "--delay": `${i * 90}ms`,
@@ -160,16 +152,14 @@ export function HeroMotion({
               <div>
                 <small>
                   {String(i + 1).padStart(2, "0")} /{" "}
-                  {scene.id === "studios" ? "STUDIO" : "TOOL"}
+                  {scene.id.startsWith("studios") ? "STUDIO" : "TOOL"}
                 </small>
                 <strong>{ar ? item.ar : item.en}</strong>
               </div>
               <ArrowUpLeft size={13} />
             </a>
           ))}
-          {phase === "open" && (
-            <ToolPreview key={active.id} item={active} ar={ar} />
-          )}
+          <ToolPreview key={active.id} item={active} ar={ar} />
           <span
             className="film-cursor"
             style={{ left: cursor.x + "%", top: cursor.y + "%" }}
@@ -199,17 +189,18 @@ export function HeroMotion({
           {heroScenes.map((s, i) => (
             <button
               key={s.id}
+              type="button"
               aria-label={`${ar ? "عرض" : "Show"} ${ar ? s.ar : s.en} ${i + 1}`}
               aria-pressed={i === index}
               onClick={() => {
                 setIndex(i);
                 setTool(0);
-                setPhase("move");
+                setPhase("open");
               }}
             >
               <i
-                key={`${index}-${running}`}
-                style={{ animationDuration: `${scene.items.length * 3550}ms` }}
+                key={index}
+                style={{ animationDuration: `${scene.items.length * 3200}ms` }}
               />
             </button>
           ))}

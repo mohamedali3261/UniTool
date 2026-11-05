@@ -1,3 +1,4 @@
+import MotionExport from "./MotionExport";
 /** تنزيل فعلي بصيغ متعددة مع تحميل أدوات PDF وZIP عند الطلب. */
 import { useState } from "react";
 import { Download, PackageCheck } from "lucide-react";
@@ -117,7 +118,7 @@ export default function Export() {
           )}
         </p>
         <div className="ld-format-tabs">
-          {["png", "svg", "jpg", "pdf", "json"].map((f) => (
+          {["png", "svg", "jpg", "pdf", "json", "gif/video"].map((f) => (
             <button
               key={f}
               aria-pressed={format === f}
@@ -127,81 +128,88 @@ export default function Export() {
             </button>
           ))}
         </div>
-        {["png", "jpg", "pdf"].includes(format) && (
+        {format === "gif/video" ? (
+          <MotionExport />
+        ) : (
           <>
-            <div className="ld-chips">
-              {[512, 1024, 2048].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => {
-                    const dims = exportSize(s.doc, size);
-                    setWidth(dims.width);
-                    setHeight(dims.height);
-                  }}
-                >
-                  {size}px
-                </button>
-              ))}
+            {["png", "jpg", "pdf"].includes(format) && (
+              <>
+                <div className="ld-chips">
+                  {[512, 1024, 2048].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        const dims = exportSize(s.doc, size);
+                        setWidth(dims.width);
+                        setHeight(dims.height);
+                      }}
+                    >
+                      {size}px
+                    </button>
+                  ))}
+                </div>
+                <div className="ld-two">
+                  <NumberField
+                    label={s.t("عرض التصدير", "Export width")}
+                    value={width}
+                    min={32}
+                    max={4096}
+                    onChange={setWidth}
+                  />
+                  <NumberField
+                    label={s.t("ارتفاع التصدير", "Export height")}
+                    value={height}
+                    min={32}
+                    max={4096}
+                    onChange={setHeight}
+                  />
+                </div>
+                <p>
+                  {s.t(
+                    "للنتيجة الطبيعية اختار مقاس جاهز بنفس نسبة اللوحة. PDF صورة عالية الدقة داخل مستند، مش مسارات متجهة.",
+                    "Presets preserve the artboard ratio. Custom dimensions stretch to fit. PDF contains a high-resolution raster, not vector outlines.",
+                  )}
+                </p>
+              </>
+            )}
+            {["png", "svg"].includes(format) && (
+              <label className="ld-check">
+                <input
+                  type="checkbox"
+                  checked={transparent}
+                  onChange={(e) => setTransparent(e.target.checked)}
+                />
+                {s.t("خلفية شفافة", "Transparent background")}
+              </label>
+            )}
+            <button
+              className="ld-primary ld-full"
+              disabled={busy}
+              onClick={() => void run()}
+            >
+              <Download size={18} />
+              {busy
+                ? s.t("جاري تجهيز الملفات…", "Preparing files…")
+                : s.t("تنزيل الملف", "Download file")}
+            </button>
+            <div className="ld-kit">
+              <PackageCheck size={28} />
+              <h3>{s.t("حزمة العلامة كاملة", "The whole brand kit")}</h3>
+              <p>
+                SVG · PNG · B&W · Favicon · Profile · Horizontal · Vertical ·
+                JSON
+              </p>
+              <button
+                className="ld-secondary"
+                disabled={busy}
+                onClick={() => void run(true)}
+              >
+                {s.t("تنزيل حزمة ZIP", "Download ZIP kit")}
+              </button>
             </div>
-            <div className="ld-two">
-              <NumberField
-                label={s.t("عرض التصدير", "Export width")}
-                value={width}
-                min={32}
-                max={4096}
-                onChange={setWidth}
-              />
-              <NumberField
-                label={s.t("ارتفاع التصدير", "Export height")}
-                value={height}
-                min={32}
-                max={4096}
-                onChange={setHeight}
-              />
-            </div>
-            <p>
-              {s.t(
-                "للنتيجة الطبيعية اختار مقاس جاهز بنفس نسبة اللوحة. PDF صورة عالية الدقة داخل مستند، مش مسارات متجهة.",
-                "Presets preserve the artboard ratio. Custom dimensions stretch to fit. PDF contains a high-resolution raster, not vector outlines.",
-              )}
-            </p>
+            <p role="status">{message}</p>
           </>
         )}
-        {["png", "svg"].includes(format) && (
-          <label className="ld-check">
-            <input
-              type="checkbox"
-              checked={transparent}
-              onChange={(e) => setTransparent(e.target.checked)}
-            />
-            {s.t("خلفية شفافة", "Transparent background")}
-          </label>
-        )}
-        <button
-          className="ld-primary ld-full"
-          disabled={busy}
-          onClick={() => void run()}
-        >
-          <Download size={18} />
-          {busy
-            ? s.t("جاري تجهيز الملفات…", "Preparing files…")
-            : s.t("تنزيل الملف", "Download file")}
-        </button>
-        <div className="ld-kit">
-          <PackageCheck size={28} />
-          <h3>{s.t("حزمة العلامة كاملة", "The whole brand kit")}</h3>
-          <p>
-            SVG · PNG · B&W · Favicon · Profile · Horizontal · Vertical · JSON
-          </p>
-          <button
-            className="ld-secondary"
-            disabled={busy}
-            onClick={() => void run(true)}
-          >
-            {s.t("تنزيل حزمة ZIP", "Download ZIP kit")}
-          </button>
-        </div>
-        <p role="status">{message}</p>
       </div>
     </Modal>
   );

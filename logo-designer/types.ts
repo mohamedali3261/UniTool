@@ -38,6 +38,9 @@ export type Element = {
   recolor?: boolean;
 };
 export type Project = {
+  motionVersions?: import("./motion-versions").MotionVersion[];
+  activeMotionVersion?: string;
+  motion?: import("./motion").LogoMotion;
   variants?: DesignVariant[];
   activeVariant?: string;
   version: 1;
