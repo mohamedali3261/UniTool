@@ -100,9 +100,9 @@
   display: flex;
   gap: 2px;
   padding: 3px;
-  border: 1px solid #3a5a50;
+  border: 1px solid var(--studio-ui-line, #3a5a50);
   border-radius: 10px;
-  background: #0e1c20ed;
+  background: var(--studio-ui-glass, #0e1c20ed);
   box-shadow: 0 3px 12px #0005;
 }
 .dc-image-actions button {
@@ -112,12 +112,12 @@
   border-radius: 7px;
   display: grid;
   place-items: center;
-  color: #d9eee7;
+  color: var(--studio-ui-ink, #d9eee7);
   background: transparent;
   cursor: pointer;
 }
 .dc-image-actions button:hover {
-  background: #28483e;
+  background: var(--studio-ui-surface, #28483e);
 }
 .dc-image-actions button.is-cropping {
   color: #10271e;

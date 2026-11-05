@@ -257,7 +257,7 @@ test("language switch and local reload preserve workbook edits", async ({
 }) => {
   await boot(page);
   await cell(page, "B2", "35");
-  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await page.getByRole("button", { name: "Switch to English", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Export file", exact: true }),
   ).toBeVisible();

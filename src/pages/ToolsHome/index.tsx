@@ -48,7 +48,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
   ];
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div data-tools-catalog className="flex flex-col flex-1 overflow-hidden">
       <style>{`
         .tools-home-scroll {
           direction: ltr;
@@ -81,7 +81,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
             className="pointer-events-none absolute inset-0 opacity-70"
             style={{
               background:
-                'radial-gradient(600px 240px at 15% -20%, rgba(99,102,241,.22), transparent 70%), radial-gradient(500px 220px at 85% 0%, rgba(244,63,94,.16), transparent 70%)',
+                'radial-gradient(600px 240px at 15% -20%, #24795e18, transparent 70%), radial-gradient(500px 220px at 85% 0%, #24795e10, transparent 70%)',
             }}
           />
           <div

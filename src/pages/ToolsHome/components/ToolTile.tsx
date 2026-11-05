@@ -13,6 +13,7 @@ interface Props {
 export function ToolTile({ tool, lang, delay, onNavigate }: Props) {
   return (
     <motion.button
+      data-tool-card
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, type: 'spring', stiffness: 320, damping: 26 }}

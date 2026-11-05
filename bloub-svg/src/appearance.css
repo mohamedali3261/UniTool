@@ -1,0 +1,28 @@
+/* UI variables only. SVG artwork, user palette, capture/export colors and
+   timeline thumbnails keep their native rendering inputs. */
+:root {
+  --paper: #f5f7f4;
+  --ink: #243d31;
+  --line: #e2e8e1;
+  --muted: #586f60;
+  --carte: #fff;
+  color-scheme: light;
+}
+:root[data-theme='nuit'] {
+  --paper: #101010;
+  --ink: #ededed;
+  --line: #383838;
+  --muted: #adadad;
+  --carte: #171717;
+  color-scheme: dark;
+}
+button { touch-action: manipulation; border-radius: 8px; }
+button:focus-visible { outline: 2px solid #438c6f; outline-offset: 2px; }
+button:not(:disabled):active { box-shadow: inset 0 0 0 1px #438c6f88; }
+:is(.unitool-svg-primary,button[class~='bg-[var(--ink)]']) { background: #24795e; color: #fff; border-radius: 8px; }
+.unitool-svg-primary button { font-size: 11px; font-weight: 700; min-height: 36px; }
+:is(.unitool-svg-primary button,button[class~='bg-[var(--ink)]']):hover:not(:disabled) { background: #1d634b; }
+:is(.unitool-svg-primary button,button[class~='bg-[var(--ink)]']):active:not(:disabled) { background: #174e3a; }
+input[type='range'] { accent-color: #24795e; }
+input[type='range']::-webkit-slider-thumb { background: #24795e; }
+input[type='range']::-moz-range-thumb { background: #24795e; }

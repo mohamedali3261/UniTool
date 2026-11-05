@@ -1,0 +1,289 @@
+/* Shared graphic/video interface palette, matched to Excel Studio's
+   --xs-accent, --xs-ink and .xs-button. Never applied to rendered artwork. */
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme]) {
+  --studio-action: #24795e;
+  --studio-action-hover: #1d634b;
+  --studio-control-border: #dae4db;
+  --studio-control-hover: #f0f5ee;
+  --studio-control-ink: #243d31;
+  --studio-control-paper: #fff;
+  --studio-control-active: #e8f1e8;
+  --studio-active-ink: #33714f;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"]) {
+  --studio-ui-surface: #fff;
+  --studio-ui-glass: #fffffff2;
+  --studio-ui-ink: #243d31;
+  --studio-ui-muted: #586f60;
+  --studio-ui-line: #e2e8e1;
+  --dc-ink: #243d31;
+  --dc-muted: #586f60;
+  --dc-panel: #fff;
+  --dc-line: #e2e8e1;
+  --dc-toolbar: #f5f7f4;
+  --dc-toolbar-item: #fff;
+  --dc-toolbar-muted: #586f60;
+  --dc-toolbar-ink: #243d31;
+  --dc-loading-background: #f5f7f4;
+  --dc-loading-foreground: #243d31;
+  --video-ink: #243d31;
+  --video-muted: #586f60;
+  --video-line: #e2e8e1;
+  --video-panel: #fff;
+  --video-accent: #24795e;
+  --muted: #586f60;
+  --line: #e2e8e1;
+  background: #f5f7f4;
+}
+html:is([data-dc-theme="dark"], [data-video-theme="dark"], [data-tools-theme="dark"], [data-site-theme="dark"]) {
+  --studio-control-paper: #1c2b25;
+  --studio-control-border: #3d5548;
+  --studio-control-ink: #e4eee6;
+  --studio-control-hover: #293e31;
+  --studio-control-active: #304c3a;
+  --studio-active-ink: #b9dcc3;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(body, .dc-studio-root, .video-site-shell) {
+  background: #f5f7f4;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(
+    .ut-site-nav,
+    .editor-header,
+    .tool-rail,
+    .timeline-toolbar,
+    .workspace-tools,
+    .player-controls,
+    .dc-page-tabs,
+    .packaging-hero,
+    .packaging-projects,
+    .storage-protection,
+    .storage-capacity,
+    .carton-editor-bar
+  ) {
+  background: #fff;
+  border-color: #e2e8e1;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(.dc-canvas-workspace, .preview-area, .timeline-scroll, .track-labels) {
+  background-color: #f0f4ee;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(
+    .dc-dashboard header[class*="from-[#"],
+    .dc-dashboard [class*="from-[#101A33]"]
+  ) {
+  background: #fff;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(
+    .packaging-template,
+    .storage-project-card,
+    .storage-library,
+    .home-nav,
+    .export-dialog,
+    .carton-dialog,
+    .carton-resize-dialog,
+    .carton-3d-dialog
+  ) {
+  background-color: #fff;
+  border-color: #e2e8e1;
+}
+/* Secondary controls: white, 8px corners, subtle border and pale hover. Icons
+   and timeline tools retain their compact dimensions; no layout-wide padding. */
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .secondary,
+    .packaging-filters button,
+    .packaging-family-tabs button,
+    .packaging-empty button,
+    .packaging-search,
+    .dc-page-tabs > button,
+    .carton-editor-bar button,
+    .carton-dialog button,
+    .carton-resize-dialog button,
+    .storage-workspace button,
+    .ut-site-nav button,
+    .ut-nav-start,
+    [data-studio-button="secondary"]
+  ) {
+  background: var(--studio-control-paper);
+  color: var(--studio-control-ink);
+  border: 1px solid var(--studio-control-border);
+  border-radius: 8px;
+  box-shadow: none;
+  font-weight: 700;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .secondary,
+    .packaging-filters button,
+    .packaging-family-tabs button,
+    .dc-page-tabs > button,
+    .carton-editor-bar button,
+    .carton-dialog button,
+    .storage-workspace button,
+    .ut-site-nav button,
+    [data-studio-button="secondary"]
+  ):hover:not(:disabled) {
+  background: var(--studio-control-hover);
+  border-color: #b6cbbb;
+  color: var(--studio-control-ink);
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .packaging-filters button[aria-pressed="true"],
+    .packaging-family-tabs button[aria-pressed="true"],
+    .dc-page-tabs button[aria-current="page"],
+    .tool-rail button.active,
+    .home-nav > button.active,
+    .mobile-panel-bar button.active
+  ) {
+  background: var(--studio-control-active);
+  color: var(--studio-active-ink);
+  border-color: #b6cbbb;
+}
+/* Primary actions match .xs-button.primary exactly. Exclude artwork thumbnails;
+   only named UI actions and the explicit semantic marker receive this rule. */
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .video-site-shell .primary,
+    .packaging-primary,
+    .carton-dialog .carton-primary,
+    [data-studio-button="primary"],
+    .dc-dashboard button[class*="from-sky-600"]
+  ) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--studio-action) !important;
+  color: #fff !important;
+  border: 1px solid var(--studio-action) !important;
+  border-radius: 8px !important;
+  padding: 9px 14px !important;
+  min-height: 36px;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.6;
+  box-shadow: 0 3px 7px #1d5f4612;
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .video-site-shell .primary,
+    .packaging-primary,
+    .carton-dialog .carton-primary,
+    [data-studio-button="primary"],
+    .dc-dashboard button[class*="from-sky-600"]
+  ):hover:not(:disabled) {
+  background: var(--studio-action-hover) !important;
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .primary,
+    .packaging-primary,
+    .carton-primary,
+    [data-studio-button="primary"]
+  )
+  :is(svg, span) {
+  color: inherit !important;
+}
+html:is([data-dc-theme="light"], [data-video-theme="light"], [data-tools-theme="light"], [data-site-theme="light"])
+  :is(
+    input:not([type="color"]):not([type="range"]):not([type="checkbox"]),
+    textarea,
+    select
+  ) {
+  background-color: #fff;
+  color: #243d31;
+  border-color: #dfe6df;
+  border-radius: 8px;
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #64b094;
+  outline-offset: 2px;
+}
+html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme])
+  :is(
+    .storage-workspace .storage-danger,
+    .storage-project-actions button:last-child,
+    .danger-link
+  ) {
+  color: #a43848;
+  border-color: #d9b9bd;
+}
+html[data-dc-theme='light'] .packaging-studio :is(.packaging-hero,.packaging-projects,.packaging-template) { background: #fff; border-color: #e2e8e1; }
+html[data-dc-theme='light'] .packaging-daylight .carton-dialog:not(.carton-print) > header { background: #f4f8ef; }
+/* Fast, stable pointer/keyboard feedback: no positional transforms on controls
+   or draggable timeline cards, and no listeners that could double-fire actions. */
+html:is([data-dc-theme],[data-video-theme], [data-tools-theme], [data-site-theme]) :is(button,[role='button']) { touch-action: manipulation; }
+html:is([data-dc-theme],[data-video-theme], [data-tools-theme], [data-site-theme]) button:not(:disabled):active {
+  box-shadow: inset 0 0 0 2px #24795e80;
+  outline: 2px solid #64b094;
+  outline-offset: -2px;
+}
+html:is([data-dc-theme],[data-video-theme], [data-tools-theme], [data-site-theme]) :is(.primary,.packaging-primary,.carton-primary,[data-studio-button='primary']):not(:disabled):active { background: #174e3a !important; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) {
+  --studio-night-accent-ink: #85ccac;
+  --studio-night-accent-line: #438c6f;
+  --studio-night-accent-fill: #24795e;
+  --studio-night-accent-wash: #24795e33;
+  --studio-action: #24795e;
+  --studio-action-hover: #1d634b;
+  --video-accent: #85ccac;
+}
+html[data-dc-theme='dark'] :is([class*='text-sky-'],[class*='text-blue-'],[class*='text-cyan-'],[class*='text-indigo-']) { color: #85ccac; }
+html[data-dc-theme='dark'] :is([class*='border-sky-'],[class*='border-blue-'],[class*='border-cyan-'],[class*='border-indigo-']) { border-color: #438c6f; }
+html[data-dc-theme='dark'] :is([class*='bg-sky-'],[class*='bg-blue-'],[class*='bg-cyan-'],[class*='bg-indigo-']) { background-color: #24795e33; }
+html[data-dc-theme='dark'] button[class*='bg-gradient-to-r'] { background-image: linear-gradient(110deg,#24795e,#1d634b); color: #fff; }
+html[data-dc-theme='dark'] .dc-dashboard :is([class*='from-sky-'],[class*='from-blue-'],[class*='from-indigo-']) { --tw-gradient-from: #24795e; --tw-gradient-to: #1d634b; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) :is(input,button,select,textarea):focus-visible { outline-color: #64b094; }
+html[data-dc-theme='dark'] :is([class*='ring-sky-'],[class*='ring-blue-'],[class*='ring-indigo-']) { --tw-ring-color: #438c6f; }
+html[data-dc-theme='dark'] :is([class*='shadow-sky-'],[class*='shadow-blue-']) { --tw-shadow-color: #24795e33; }
+/* Explicit press/selected precedence over the shared secondary/hover rules. */
+html:is([data-dc-theme],[data-video-theme], [data-tools-theme], [data-site-theme]) :is(.dc-studio-root button.packaging-primary,.video-site-shell button.primary,.carton-dialog button.carton-primary,[data-studio-button='primary']):not(:disabled):active { background: #174e3a !important; }
+html[data-dc-theme='dark'] :is([class*='text-sky-'],[class*='text-blue-'],[class*='text-cyan-'],[class*='text-indigo-']) { color: #85ccac !important; }
+html[data-dc-theme='dark'] :is([class*='border-sky-'],[class*='border-blue-'],[class*='border-cyan-'],[class*='border-indigo-']) { border-color: #438c6f !important; }
+/* Night surfaces are achromatic black/charcoal, never the legacy navy palette.
+   Green is reserved for actions/selection; authored media keeps its own colors. */
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) {
+  --studio-ui-surface: #171717;
+  --studio-ui-glass: #171717ed;
+  --studio-ui-ink: #ededed;
+  --studio-ui-muted: #adadad;
+  --studio-ui-line: #383838;
+  --studio-control-paper: #202020;
+  --studio-control-border: #383838;
+  --studio-control-hover: #2b2b2b;
+  --studio-control-ink: #ededed;
+  --dc-panel: #171717;
+  --dc-line: #383838;
+  --dc-toolbar: #101010;
+  --dc-toolbar-item: #202020;
+  --dc-toolbar-muted: #adadad;
+  --dc-toolbar-ink: #ededed;
+  --dc-loading-background: #101010;
+  --dc-loading-foreground: #ededed;
+  --video-panel: #171717;
+  --panel: #171717;
+  --line: #383838;
+  --muted: #adadad;
+  color: #ededed;
+  background: #101010;
+}
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) :is(body,.dc-studio-root,.dc-dashboard,.video-site-shell,.home-main,.editor-shell,.dc-canvas-workspace,.preview-area) { background: #101010; }
+html[data-dc-theme='dark'] :is([class*='bg-[#0B132B]'],[class*='bg-[#1C2541]'],[class*='bg-[#141E38]'],[class*='bg-[#070D1E]'],[class*='bg-[#152042]'],[class*='bg-[#151e36]'],[class*='bg-[#16223F]'],[class*='bg-[#131d38]'],[class*='bg-[#192444]'],[class*='bg-[#101b32]'],[class*='bg-[#0F1730]'],[class*='bg-[#0A1024]'],[class*='bg-[#101a30]']) { background-color: #171717; }
+html[data-dc-theme='dark'] :is([class*='from-[#16223F]'],[class*='from-[#101A33]']) { background: #171717; }
+html[data-dc-theme='dark'] :is([class*='bg-slate-'],[class*='bg-gray-'],[class*='bg-violet-'],[class*='bg-purple-']) { background-color: #202020; }
+html[data-dc-theme='dark'] :is([class*='border-slate-'],[class*='border-gray-']) { border-color: #383838; }
+html[data-dc-theme='dark'] :is([class*='text-slate-'],[class*='text-gray-']) { color: #bdbdbd; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) :is(.ut-site-nav,.editor-header,.tool-rail,.workspace-tools,.player-controls,.timeline-toolbar,.home-nav,.packaging-template,.packaging-projects,.packaging-hero,.storage-project-card,.carton-editor-bar) { background: #171717; border-color: #383838; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) .ut-site-nav :is(.ut-nav-mobile,.ut-nav-sections > div) { background: #202020; border-color: #383838; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) :is(input:not([type='color']):not([type='range']):not([type='checkbox']),textarea,select) { background-color: #202020; color: #ededed; border-color: #383838; }
+html[data-dc-theme='dark'] :is(.dc-studio-root,.dc-dashboard,.dc-canvas-workspace) { background-color: #101010; }
+html:is([data-dc-theme='dark'],[data-video-theme='dark'], [data-tools-theme='dark'], [data-site-theme='dark']) :is(input,textarea)::placeholder { color: #8c8c8c; }

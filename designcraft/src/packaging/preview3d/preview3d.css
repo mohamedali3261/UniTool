@@ -5,10 +5,10 @@
   max-height: 94dvh;
   margin: auto;
   padding: 0;
-  border: 1px solid #425852;
+  border: 1px solid var(--studio-ui-line, #425852);
   border-radius: 22px;
-  background: #101c1b;
-  color: #e6f0e9;
+  background: var(--studio-ui-surface, #101c1b);
+  color: var(--studio-ui-ink, #e6f0e9);
   box-shadow: 0 30px 100px #0009;
   overflow: hidden;
   font:
@@ -29,9 +29,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  background: #142421;
+  background: var(--studio-ui-surface, #142421);
   flex-shrink: 0;
-  border-bottom: 1px solid #ffffff18;
+  border-bottom: 1px solid var(--studio-ui-line, #ffffff18);
 }
 .carton-3d-dialog h2 {
   display: flex;
@@ -42,7 +42,7 @@
 }
 .carton-3d-dialog header p {
   margin: 4px 0 0;
-  color: #9edfc6;
+  color: var(--studio-ui-ink, #9edfc6);
   font: 12px monospace;
 }
 .carton-3d-dialog button {
@@ -53,16 +53,16 @@
   gap: 6px;
   min-height: 34px;
   padding: 6px 10px;
-  border: 1px solid #456055;
+  border: 1px solid var(--studio-ui-line, #456055);
   border-radius: 10px;
-  background: #1b302b;
-  color: #def4e8;
+  background: var(--studio-ui-surface, #1b302b);
+  color: var(--studio-ui-ink, #def4e8);
   font: inherit;
   font-size: 11px;
 }
 .carton-3d-dialog button:hover {
-  background: #29483e;
-  border-color: #8bc9a9;
+  background: var(--studio-ui-surface, #29483e);
+  border-color: var(--studio-ui-line, #8bc9a9);
 }
 .carton-3d-dialog button:disabled {
   cursor: default;
@@ -76,8 +76,8 @@
   background: radial-gradient(
     ellipse at 50% 40%,
     #596c63,
-    #273b34 60%,
-    #1b2c27
+    var(--studio-ui-surface, #273b34) 60%,
+    var(--studio-ui-surface, #1b2c27)
   );
 }
 .carton-3d-stage > canvas {
@@ -96,7 +96,7 @@
   justify-content: center;
   text-align: center;
   padding: 24px;
-  background: #142421ed;
+  background: var(--studio-ui-glass, #142421ed);
   z-index: 1;
   gap: 14px;
 }
@@ -106,13 +106,13 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-top: 1px solid #ffffff18;
+  border-top: 1px solid var(--studio-ui-line, #ffffff18);
   max-height: 42dvh;
   overflow: auto;
 }
 .carton-3d-controls p {
   margin: 0;
-  color: #b5ccc1;
+  color: var(--studio-ui-ink, #b5ccc1);
   font-size: 11px;
   line-height: 1.7;
 }
@@ -141,7 +141,7 @@
 }
 .carton-3d-controls small {
   font-size: 10px;
-  color: #a5b8ab;
+  color: var(--studio-ui-muted, #a5b8ab);
   line-height: 1.6;
 }
 .carton-3d-dialog :focus-visible {
@@ -190,19 +190,19 @@
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #c4d4c9;
+  color: var(--studio-ui-ink, #c4d4c9);
 }
 .carton-3d-quality select {
   padding: 6px 9px;
-  border: 1px solid #526b5b;
-  background: #1a3029;
-  color: #e1ecdc;
+  border: 1px solid var(--studio-ui-line, #526b5b);
+  background: var(--studio-ui-surface, #1a3029);
+  color: var(--studio-ui-ink, #e1ecdc);
   border-radius: 8px;
   font-size: 10px;
 }
 .carton-3d-quality > span {
   font-size: 9px;
-  color: #92a89c;
+  color: var(--studio-ui-muted, #92a89c);
   margin-inline-start: auto;
 }
 @media (max-width: 600px) {

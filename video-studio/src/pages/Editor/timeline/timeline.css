@@ -46,13 +46,13 @@
   height: 30px;
   padding: 0 10px;
   gap: 8px;
-  background: #181b1e;
+  background: var(--studio-ui-surface, #181b1e);
 }
 .editor-shell .timeline-pro .timeline-meta > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #9ba8ab;
+  color: var(--studio-ui-muted, #9ba8ab);
   font-size: 10px;
 }
 .editor-shell .timeline-pro .timeline-meta > div {
@@ -106,9 +106,9 @@
 }
 .editor-shell .timeline-pro button[aria-pressed="true"],
 .timeline-settings button[aria-pressed="true"] {
-  background: #25c9ce18;
-  color: #71e3df;
-  border-color: #25c9ce66;
+  background: var(--studio-night-accent-wash, #25c9ce18);
+  color: var(--studio-night-accent-ink, #71e3df);
+  border-color: var(--studio-night-accent-line, #25c9ce66);
 }
 .timeline-settings {
   position: fixed;
@@ -119,9 +119,9 @@
   scrollbar-width: thin;
   scrollbar-color: #52666b #1b2024;
   padding: 12px;
-  background: #1c2226;
-  color: #dbe3e6;
-  border: 1px solid #405056;
+  background: var(--studio-ui-surface, #1c2226);
+  color: var(--studio-ui-ink, #dbe3e6);
+  border: 1px solid var(--studio-ui-line, #405056);
   border-radius: 12px;
   box-shadow: 0 12px 48px #0009;
   font-family: inherit;
@@ -146,9 +146,9 @@
   gap: 6px;
   min-height: 36px;
   padding: 7px 9px;
-  border: 1px solid #ffffff16;
+  border: 1px solid var(--studio-ui-line, #ffffff16);
   border-radius: 6px;
-  color: #c4d1d5;
+  color: var(--studio-ui-ink, #c4d1d5);
   background: #ffffff05;
   font-size: 11px;
   cursor: pointer;
@@ -184,7 +184,7 @@
   min-width: 0;
 }
 .timeline-settings legend {
-  color: #8eabad;
+  color: var(--studio-ui-muted, #8eabad);
   font-size: 10px;
   padding: 0;
 }
@@ -196,7 +196,7 @@
 .timeline-settings p {
   font-size: 10px;
   line-height: 1.8;
-  color: #829399;
+  color: var(--studio-ui-muted, #829399);
   margin: 10px 0 0;
 }
 @media (max-width: 650px),
@@ -258,9 +258,9 @@
   width: 100%;
   min-height: 38px;
   padding: 8px 10px;
-  background: #11191e;
-  color: #e4eeee;
-  border: 1px solid #405056;
+  background: var(--studio-ui-surface, #11191e);
+  color: var(--studio-ui-ink, #e4eeee);
+  border: 1px solid var(--studio-ui-line, #405056);
   border-radius: 7px;
   font-size: 12px;
 }
@@ -282,7 +282,7 @@
   text-overflow: ellipsis;
 }
 .timeline-search-results small {
-  color: #77d8da;
+  color: var(--studio-night-accent-ink, #77d8da);
   flex-shrink: 0;
   font-family: monospace;
 }

@@ -1,3 +1,4 @@
+import { SiteAppearanceToggle } from '../../../src/hooks/useSiteAppearance';
 import { SiteNavbar } from "../../../src/components/SiteNavbar";
 import React from "react";
 import {
@@ -25,6 +26,7 @@ interface NavbarProps {
   onResetBook: () => void;
   currentTheme: ThemeMode;
   onToggleTheme: () => void;
+  onToggleAppearance: () => void;
   onToggleMobileDrawer?: () => void;
 }
 
@@ -85,6 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onResetBook,
   currentTheme,
   onToggleTheme,
+  onToggleAppearance,
   onToggleMobileDrawer,
 }) => {
   const t = getTranslation(uiLang);
@@ -92,7 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <SiteNavbar fixed lang={uiLang} onToggleLang={onToggleLang} />
+      <SiteNavbar fixed lang={uiLang} onToggleLang={onToggleLang} actions={<SiteAppearanceToggle theme={currentTheme === "light" ? "light" : "dark"} onToggle={onToggleAppearance} lang={uiLang}/>} />
       <nav
         style={{ ...navStyle, position: "relative", top: 0, zIndex: 90 }}
         aria-label={uiLang === "ar" ? "أدوات القراءة" : "Reading tools"}

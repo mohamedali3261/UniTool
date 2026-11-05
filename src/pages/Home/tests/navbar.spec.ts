@@ -131,3 +131,48 @@ for (const width of [390, 1440])
     ).toBeGreaterThan(150);
     await context.close();
   });
+
+for (const lang of ['ar', 'en'] as const) {
+  for (const width of [320, 390, 768, 960, 1440]) {
+    test(`grouped navbar ${lang} at ${width}px removes Elements only from navigation`, async ({ page }) => {
+      await page.setViewportSize({width,height:900});
+      await page.addInitScript(lang => localStorage.setItem('unitool-lang',lang),lang);
+      await page.goto(base + '/index.html');
+      const bar=page.locator('[data-site-navbar]');
+      if(width<960) {
+        const trigger=bar.getByRole('button',{name:lang==='ar'?'القائمة الرئيسية':'Main menu',exact:true});
+        await trigger.click();
+        await expect(trigger).toHaveAttribute('aria-expanded','true');
+        await expect(bar.locator('.ut-nav-mobile .ut-nav-group')).toHaveCount(3);
+        await expect(bar.locator('.ut-nav-mobile a')).toHaveCount(sitePages.length);
+        await expect(bar.locator('.ut-nav-mobile a[href="/index.html"]')).toHaveAttribute('aria-current','page');
+        await expect.poll(()=>bar.locator('.ut-nav-mobile').evaluate(el=>el.getBoundingClientRect().right<=innerWidth&&el.getBoundingClientRect().left>=0)).toBe(true);
+        await page.keyboard.press('Escape');
+        await expect(trigger).toBeFocused();
+        await trigger.click();
+        await bar.locator('.ut-nav-backdrop').click({position:{x:3,y:700}});
+        await expect(trigger).toHaveAttribute('aria-expanded','false');
+      } else {
+        await expect(bar.locator('.ut-nav-start')).toHaveCSS('background-color','rgb(36, 121, 94)');
+        await bar.locator('summary').click();
+        await expect(bar.locator('.ut-nav-mega .ut-nav-group')).toHaveCount(3);
+        await expect(bar.locator('details a')).toHaveCount(sitePages.length);
+        expect(await bar.locator('.ut-nav-mega').evaluate(el=>el.getBoundingClientRect().right<=innerWidth&&el.getBoundingClientRect().left>=0)).toBe(true);
+        await page.keyboard.press('Escape');
+        await expect(bar.locator('summary')).toBeFocused();
+      }
+      await expect(bar.locator('a[href*="#elements"]')).toHaveCount(0);
+      await expect(page.locator('a.hero-elements-link')).toHaveAttribute('href','/video-studio.html#elements');
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    });
+  }
+}
+
+test('grouped mobile links navigate to the real tools workspace',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(base+'/index.html');
+  await page.getByRole('button',{name:'القائمة الرئيسية',exact:true}).click();
+  await page.locator('.ut-nav-mobile a[href="/app.html"]').click();
+  await expect(page).toHaveURL(/\/app.html$/);
+  await expect(page.locator('.tools-app-shell')).toBeVisible();
+});

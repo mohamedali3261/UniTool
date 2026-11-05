@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 const base = process.env.DESIGN_QA_URL || "http://localhost:3000";
 for (const mobile of [false, true])
-  test(`packaging daylight uses supplied background, readable light surfaces, and stays scoped (${mobile ? "mobile" : "desktop"})`, async ({
+  test(`packaging daylight uses spreadsheet palette, readable light surfaces, and shared theme (${mobile ? "mobile" : "desktop"})`, async ({
     page,
   }) => {
     await page.setViewportSize(
@@ -16,16 +16,14 @@ for (const mobile of [false, true])
     expect(image.ok()).toBe(true);
     expect(image.headers()["content-type"]).toContain("image/jpeg");
     await expect(root).toHaveCSS("color-scheme", "light");
-    expect(
-      await root.evaluate((e) => getComputedStyle(e).backgroundImage),
-    ).toContain("daylight-background.jpg");
+    await expect(root).toHaveCSS('background-color','rgb(245, 247, 244)');
     await expect(page.locator(".packaging-studio")).toHaveCSS(
       "color",
-      "rgb(38, 62, 56)",
+      "rgb(36, 61, 49)",
     );
     await expect(page.locator(".packaging-search input").first()).toHaveCSS(
       "color",
-      "rgb(38, 62, 56)",
+      "rgb(36, 61, 49)",
     );
     expect(
       await page.evaluate(
@@ -44,15 +42,15 @@ for (const mobile of [false, true])
       .click();
     await expect(page.getByRole("dialog")).toHaveCSS(
       "background-color",
-      "rgb(247, 247, 239)",
+      "rgb(255, 255, 255)",
     );
     await page
       .getByRole("button", { name: "إغلاق قالب العلبة", exact: true })
       .click();
     await page.getByRole("button", { name: /^مشاريعي/ }).click();
-    await expect(page.locator(".packaging-daylight")).toHaveCount(0);
+    await expect(page.locator(".packaging-daylight")).toHaveCount(1);
     await expect(page.locator("[data-site-navbar]")).toHaveCSS(
       "background-color",
-      "rgba(16, 19, 18, 0.95)",
+      "rgb(255, 255, 255)",
     );
   });

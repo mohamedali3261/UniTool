@@ -1,3 +1,4 @@
+import { useSiteAppearance, SiteAppearanceToggle } from '../../hooks/useSiteAppearance';
 import { SiteNavbar } from '../../components/SiteNavbar';
 import {StorageArt} from './components/StorageArt';
 import { ScrollJourney } from "./components/scroll/ScrollJourney";
@@ -36,6 +37,7 @@ function stored(key: string) {
   }
 }
 export default function HomePage() {
+  const {theme,toggleTheme}=useSiteAppearance('home');
   const [lang, setLang] = useState<Language>(() =>
     stored("unitool-lang") === "en" ? "en" : "ar",
   );
@@ -111,7 +113,7 @@ export default function HomePage() {
       <a href="#main" className="skip-link">
         {t.skip}
       </a>
-      <SiteNavbar home lang={lang} onToggleLang={() => setLang(lang === 'ar' ? 'en' : 'ar')} actions={<button className="motion-toggle" aria-label={paused ? t.resume : t.pause} title={paused ? t.resume : t.pause} aria-pressed={paused} onClick={() => setPaused(v=>!v)}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button>} />
+      <SiteNavbar home lang={lang} onToggleLang={() => setLang(lang === 'ar' ? 'en' : 'ar')} actions={<><SiteAppearanceToggle theme={theme} onToggle={toggleTheme} lang={lang}/><button className="motion-toggle" aria-label={paused ? t.resume : t.pause} title={paused ? t.resume : t.pause} aria-pressed={paused} onClick={() => setPaused(v=>!v)}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button></>} />
       <main id="main">
         <section
           className="home-hero home-container hero-workspace-layout"

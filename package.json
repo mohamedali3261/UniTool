@@ -18,6 +18,8 @@
     "build:cloudflare-reel": "tsx video-studio/scripts/build-cloudflare-reel.ts",
     "render:unitool": "node video-studio/promos/unitool/render.mjs",
     "test:unitool-promo": "tsx --test video-studio/promos/unitool/film.test.ts",
+    "test:site-appearance": "playwright test --config playwright.site-appearance.config.ts",
+    "test:tools:browser": "playwright test --config playwright.tools.config.ts",
     "test:home": "playwright test --config playwright.home.config.ts",
     "test:elements": "tsx --test src/pages/Elements/tests/*.test.ts",
     "test:logo-designer": "tsx --test logo-designer/tests/*.test.ts",

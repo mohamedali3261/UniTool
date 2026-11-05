@@ -1,6 +1,8 @@
 import { StrictMode, Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./app/App";
+import "../../src/styles/studio-controls.css";
+import "../../src/styles/site-appearance.css";
 class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
   state = { error: false };
   static getDerivedStateFromError() {

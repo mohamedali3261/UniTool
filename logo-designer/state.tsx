@@ -1,3 +1,4 @@
+import { readAppearance } from '../src/hooks/useSiteAppearance';
 import { pasteNodes } from "./clipboard";
 import {
   createContext,
@@ -75,7 +76,7 @@ function useStore() {
       read("logo-designer-lang") === "en" ? "en" : "ar",
     ),
     [theme, setTheme] = useState(
-      read("logo-designer-theme") === "dark" ? "dark" : "light",
+      () => readAppearance("logo-designer-theme"),
     );
   const [history, dispatch] = useReducer(reducer, undefined, () => ({
     doc: templateProject(

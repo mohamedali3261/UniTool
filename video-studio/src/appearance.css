@@ -1,0 +1,375 @@
+/* Interface only. Canvas/video pixels, effect previews, color swatches and
+   timeline clip artwork are deliberately excluded from palette overrides. */
+html[data-video-theme] {
+  --video-ink: #263e36;
+  --video-muted: #4b6358;
+  --video-line: #9bac98;
+}
+html[data-video-theme="light"] {
+  color-scheme: light;
+  color: var(--video-ink);
+  background: #bdcbbd;
+  --video-panel: #dce3d4;
+  --video-accent: #41634c;
+  --mint: var(--video-accent);
+  --muted: var(--video-muted);
+  --panel: var(--video-panel);
+  --line: var(--video-line);
+}
+html[data-video-theme="dark"] {
+  color-scheme: dark;
+  --video-panel: #1c2b25;
+  --video-accent: #bdd6b4;
+  --mint: var(--video-accent);
+  --panel: var(--video-panel);
+}
+html[data-video-theme] .editor-shell {
+  --mint: var(--video-accent);
+  --panel: var(--video-panel);
+}
+html[data-video-theme="light"] .editor-shell {
+  --line: var(--video-line);
+}
+html[data-video-theme="light"] body {
+  color: var(--video-ink);
+  background: #bdcbbd;
+}
+html[data-video-theme="light"] .video-site-shell {
+  background:
+    linear-gradient(#48654e24, #6b5b472e),
+    url("/images/packaging/daylight-background.jpg") center / cover fixed;
+}
+html[data-video-theme="light"] :is(.home-shell, .home-main) {
+  background: transparent;
+}
+html[data-video-theme="light"]
+  :is(
+    .editor-shell,
+    .editor-header,
+    .editor-footer,
+    .tool-rail,
+    .library-panel,
+    .inspector,
+    .timeline,
+    .timeline-toolbar,
+    .track-labels,
+    .ruler,
+    .timeline-scroll,
+    .workspace-tools,
+    .player-controls,
+    .panel-heading,
+    .home-nav,
+    .center-workspace,
+    .preview-area
+  ) {
+  color: var(--video-ink);
+  background-color: var(--video-panel);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"]
+  :is(
+    .home-nav,
+    .editor-header,
+    .tool-rail,
+    .timeline-toolbar,
+    .workspace-tools,
+    .player-controls
+  ) {
+  background-color: #c9d6c4;
+}
+html[data-video-theme="light"]
+  :is(
+    .hero h1,
+    .hero p,
+    .home-header,
+    .breadcrumb,
+    .local-badge,
+    .brand,
+    .brand small,
+    .home-footer,
+    .section-heading,
+    .format-card h3,
+    .quick-actions h3,
+    .resume-card b,
+    .editor-brand,
+    .panel-heading,
+    .panel-heading h3,
+    .field-heading b,
+    .timecode,
+    .clip-name,
+    .empty-preview h3,
+    .asset-card p,
+    .field-label,
+    .slider-label,
+    .text-layer,
+    .editor-footer,
+    .preview-title
+  ) {
+  color: var(--video-ink);
+}
+html[data-video-theme="light"]
+  :is(
+    .muted,
+    .hero-note,
+    .hero p,
+    .nav-caption,
+    .home-nav > button,
+    .home-nav > button small,
+    .privacy-card,
+    .privacy-card p,
+    .local-badge,
+    .quick-actions p,
+    .format-card p,
+    .features-row span,
+    .home-footer,
+    .resume-card p,
+    .panel-description,
+    .panel-tip p,
+    .inspector-empty p,
+    .inspector-note,
+    .preview-title > span,
+    .timecode em,
+    .empty-preview p,
+    .timeline-hint,
+    .editor-footer > span,
+    .field-heading > span
+  ) {
+  color: var(--video-muted);
+}
+html[data-video-theme="light"]
+  :is(
+    .quick-actions > button,
+    .resume-card,
+    .privacy-card,
+    .secondary,
+    .upload-zone,
+    .asset-card,
+    .panel-tip,
+    .format-card,
+    .features-row button,
+    .template-card,
+    .recent-project,
+    .recent-card,
+    .empty-preview,
+    .export-dialog,
+    .settings-menu,
+    .performance-menu,
+    .creative-command,
+    .studio-svg-editor,
+    .text-layer,
+    .studio-elements-filters,
+    .timeline-settings,
+    .timeline-search-results,
+    .mobile-tool-page,
+    .mobile-project-menu,
+    .mobile-panel-bar,
+    .mobile-text-picker
+  ) {
+  color: var(--video-ink);
+  background-color: #e1e7d7;
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"]
+  :is(
+    input:not([type="color"]):not([type="range"]):not([type="checkbox"]),
+    select,
+    textarea
+  ) {
+  background-color: #edf0e5;
+  color: var(--video-ink);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"] :is(input, textarea)::placeholder {
+  color: #586f60;
+  opacity: 1;
+}
+html[data-video-theme="light"]
+  :is(
+    .primary,
+    .play-button,
+    .home-nav > button.active,
+    .tool-rail button.active,
+    .mobile-panel-bar button.active,
+    .mobile-edit-tab.active
+  ) {
+  background: #b4cdbb;
+  color: #243f30;
+  border-color: #829b81;
+}
+html[data-video-theme="light"]
+  :is(
+    .primary:hover,
+    .secondary:hover,
+    .icon-button:hover,
+    .text-button:hover
+  ) {
+  background: #bfd3bd;
+  color: #243f30;
+}
+html[data-video-theme="light"]
+  :is(
+    .text-button,
+    .icon-button,
+    .field-heading > button,
+    .move-buttons button,
+    .filters-grid > button,
+    .text-presets button,
+    .studio-elements-quick button
+  ) {
+  color: var(--video-ink);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"]
+  :is(
+    .timeline-settings,
+    .timeline-search-results,
+    .mobile-project-menu,
+    .creative-command,
+    .studio-svg-editor,
+    .export-dialog
+  )
+  :is(h2, h3, p, label, button) {
+  color: var(--video-ink);
+}
+html[data-video-theme="light"] .export-dialog .error-message {
+  color: #a62f40;
+}
+html[data-video-theme="light"]
+  :is(.ruler > span, .track-labels > span, .empty-track) {
+  color: #4b6358;
+}
+html[data-video-theme="light"] .timeline-search {
+  background: #d7e1cd;
+  border-color: var(--video-line);
+}
+/* The rendered frame retains its own color/background in both modes. */
+html[data-video-theme="light"] .canvas-stage {
+  box-shadow: 0 10px 38px #344d3826;
+}
+html[data-video-theme="light"] .ut-site-nav {
+  background: #f4f7efed;
+  color: var(--video-ink);
+  border-color: #9bac98;
+}
+html[data-video-theme="light"] .ut-site-nav button {
+  color: var(--video-ink);
+  border-color: #9bac98;
+}
+html[data-video-theme="light"]
+  .ut-site-nav
+  :is(.ut-nav-start, .ut-nav-mobile, .ut-nav-sections > div) {
+  background: #dce5d2;
+  color: var(--video-ink);
+  border-color: #9bac98;
+}
+html[data-video-theme="light"] .ut-site-nav a:hover {
+  color: #29553d;
+}
+html[data-video-theme="light"] .ut-site-nav a[aria-current="page"] {
+  color: #254c37;
+  background: #d8e6cf;
+}
+html[data-video-theme="light"] :focus-visible {
+  outline-color: #426b50;
+}
+html[data-video-theme="dark"] .ut-site-nav .ut-nav-start {
+  background: #bdd6b4;
+  color: #193325;
+}
+.video-theme-toggle span {
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .video-theme-toggle span {
+    display: none;
+  }
+  .ut-site-nav .video-theme-toggle {
+    padding: 7px 9px;
+  }
+}
+html[data-video-theme="light"]
+  :is(
+    .studio-select,
+    .performance-popover,
+    .text-panel-modes,
+    .text-active-editor,
+    .text-motion-controls,
+    .layer-editor,
+    .timeline-meta,
+    .timeline-detail-bar,
+    .timeline-context-menu,
+    .track-settings-popover,
+    .preview-edit-toolbar > div,
+    .preview-edit-toolbar > button,
+    .preview-view-toggle
+  ) {
+  background-color: #dce5d2;
+  color: var(--video-ink);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"]
+  :is(
+    .text-object-list > div,
+    .text-preset-search,
+    .text-preset-categories button,
+    .text-preset-card,
+    .motion-card,
+    .track-settings-popover button
+  ) {
+  background-color: #e4eadb;
+  color: var(--video-ink);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"]
+  :is(
+    .text-panel-modes button,
+    .text-panel-modes b,
+    .text-preset-categories button[aria-pressed="true"],
+    .text-preset-count,
+    .text-panel-intro,
+    .text-active-heading,
+    .text-object-name,
+    .performance-popover p,
+    .performance-popover label,
+    .performance-popover span
+  ) {
+  color: var(--video-muted);
+}
+html[data-video-theme="light"]
+  :is(
+    .text-panel-modes button[aria-pressed="true"],
+    .text-object-list > div.active
+  ) {
+  background: #b8cfb5;
+  color: var(--video-ink);
+}
+html[data-video-theme="light"] .float-label {
+  background: #dce5d2f2;
+  color: var(--video-ink);
+  border-color: var(--video-line);
+}
+html[data-video-theme="light"] .timeline-resize {
+  background: #9cac95;
+}
+/* Complete interface tokens: imported tool/catalog/mobile styles use these
+   instead of assuming a dark background. Night mode uses original fallbacks. */
+html[data-video-theme='light'] {
+  --studio-ui-surface: #dce3d4;
+  --studio-ui-glass: #dce3d4ed;
+  --studio-ui-ink: #263e36;
+  --studio-ui-muted: #4b6358;
+  --studio-ui-line: #9bac98;
+}
+/* These are authored preview pictures, not interface surfaces. */
+html[data-video-theme] :is(.hero-art,.template-art,.interface-mini-art,.format-illustration,.motion-picture,.text-preset-picture,.filter-sample,
+    .effect-picture,.asset-thumb,.timeline-clip,.stock-thumbnail) {
+  --studio-ui-surface: initial;
+  --studio-ui-glass: initial;
+  --studio-ui-ink: initial;
+  --studio-ui-muted: initial;
+  --studio-ui-line: initial;
+  color: #efeff1;
+}
+/* Range tracks need contrast against the light inspector, not the panel fill. */
+html[data-video-theme='light'] input[type='range']::-webkit-slider-runnable-track { background: #91a88f; border-radius: 999px; }
+html[data-video-theme='light'] input[type='range']::-moz-range-track { background: #91a88f; border-radius: 999px; }

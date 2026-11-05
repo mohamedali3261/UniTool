@@ -1,3 +1,4 @@
+import {useVideoAppearance,VideoThemeToggle} from './settings/VideoAppearance';
 import { SiteNavbar } from '../../src/components/SiteNavbar';
 import "./elements/elements.css";
 import { mediaAccept, releaseMediaURL } from "./media/files";
@@ -17,6 +18,8 @@ import { Asset, blankProject, uid, newClip } from "./types";
 import { readAsset } from "./lib/media";
 import { loadProject, saveProject } from "./lib/projectIO";
 export default function App() {
+  const {theme,toggleTheme}=useVideoAppearance();
+  const [navLang,setNavLang]=useState<'ar'|'en'>(()=>{try{return localStorage.getItem('unitool-lang')==='en'?'en':'ar';}catch{return 'ar';}});
   const state = useProject();
   const [page, setPage] = useState<"home" | "editor">(() =>
     location.hash === "#elements" ? "editor" : "home",
@@ -185,7 +188,7 @@ export default function App() {
     }
   }
   return (
-    <div className="video-site-shell"><SiteNavbar/>
+    <div className="video-site-shell"><SiteNavbar lang={navLang} onToggleLang={()=>{const next=navLang==='ar'?'en':'ar';setNavLang(next);try{localStorage.setItem('unitool-lang',next);}catch{}}} actions={<VideoThemeToggle theme={theme} onToggle={toggleTheme} lang={navLang}/>}/>
       {page === "home" &&
         new URLSearchParams(location.search).has("element") && (
           <div className="element-handoff" role="status">

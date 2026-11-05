@@ -1,3 +1,4 @@
+import { useSiteAppearance, SiteAppearanceToggle } from '../../../src/hooks/useSiteAppearance';
 import { SiteNavbar } from "../../../src/components/SiteNavbar";
 import {
   BarChart3,
@@ -32,10 +33,11 @@ export function Shell({
   canUndo: boolean;
   canRedo: boolean;
 }) {
+  const { theme, toggleTheme } = useSiteAppearance('excel');
   const { lang, t, book, update, page, navigate, toggleLang } = useStudio();
   return (
     <div className="xs-app" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <SiteNavbar lang={lang} onToggleLang={toggleLang} />
+      <SiteNavbar lang={lang} onToggleLang={toggleLang} actions={<SiteAppearanceToggle theme={theme} onToggle={toggleTheme} lang={lang}/>} />
       <div className="xs-workspace">
         <aside className="xs-sidebar">
           <a className="xs-product" href="#editor">

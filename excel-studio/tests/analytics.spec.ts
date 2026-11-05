@@ -189,7 +189,10 @@ test("source reconnection recovers a report after its source sheet was removed",
   page,
 }) => {
   await boot(page);
-  await page.waitForTimeout(600);
+  await expect.poll(() => page.evaluate(() => {
+    const raw = localStorage.getItem("unitool.excel-studio.workbook.v1");
+    return raw ? !!JSON.parse(raw).dashboard : false;
+  })).toBe(true);
   await page.evaluate(() => {
     const key = "unitool.excel-studio.workbook.v1",
       b = JSON.parse(localStorage.getItem(key)!);

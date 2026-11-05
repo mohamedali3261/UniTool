@@ -1,3 +1,4 @@
+import {DesignerThemeToggle} from '../Common/DesignerThemeToggle';
 import { SiteNavbar } from '../../../../src/components/SiteNavbar';
 import { FileMenu } from './FileMenu';
 import React, { useState } from 'react';
@@ -91,7 +92,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <><SiteNavbar lang={lang} onToggleLang={() => setDcLang(lang === 'ar' ? 'en' : 'ar')}/><nav
+    <><SiteNavbar actions={<DesignerThemeToggle/>} lang={lang} onToggleLang={() => setDcLang(lang === 'ar' ? 'en' : 'ar')}/><nav
       id="editor-top-bar"
       dir={dir}
       style={{
@@ -99,25 +100,25 @@ export const TopBar: React.FC<TopBarProps> = ({
         padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
         /* In normal flow so nothing sits under it; logo pinned to the RIGHT via ltr + row-reverse */
         direction: 'ltr', flexDirection: 'row-reverse',
-        background: 'rgba(7,8,11,.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: '1px solid #1e2028', userSelect: 'none',
+        background: 'var(--dc-toolbar,rgba(7,8,11,.92))', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid var(--dc-line,#1e2028)', userSelect: 'none',
       }}
     >
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       {/* Left Section: Navigation (home + sidebar toggle in a segmented pill) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--dc-toolbar-item,#0d0f14)', border: '1px solid var(--dc-line,#1e2028)', borderRadius: 10, padding: 2 }}>
 
         <button
           type="button"
           onClick={onBackToDashboard}
           style={{
             display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
-            background: 'none', border: 'none', color: '#7c7f8a', borderRadius: 8,
+            background: 'none', border: 'none', color: 'var(--dc-toolbar-muted,#7c7f8a)', borderRadius: 8,
             cursor: 'pointer', transition: 'all .2s', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; e.currentTarget.style.background = 'none'; }}
           title={t.backHome}
 
         >
@@ -135,10 +136,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '5px 8px', borderRadius: 8, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+              color: 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; e.currentTarget.style.background = 'none'; }}
           >
             {isSidebarOpen ? <PanelLeftClose style={{ width: 16, height: 16 }} /> : <PanelLeftOpen style={{ width: 16, height: 16 }} />}
           </button>
@@ -162,8 +163,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                 }
               }}
               style={{
-                background: '#0d0f14', border: '1px solid #6366f1', borderRadius: 6,
-                padding: '2px 8px', fontSize: 12, color: '#e4e6eb', outline: 'none',
+                background: 'var(--dc-toolbar-item,#0d0f14)', border: '1px solid var(--studio-night-accent-line,#6366f1)', borderRadius: 6,
+                padding: '2px 8px', fontSize: 12, color: 'var(--dc-toolbar-ink,#e4e6eb)', outline: 'none',
                 width: 120, fontWeight: 500,
               }}
             />
@@ -195,14 +196,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               alignItems: 'center', gap: 4, cursor: 'pointer',
               padding: '4px 8px', borderRadius: 8, transition: 'background .2s',
-              background: '#0d0f14', border: '1px solid #1e2028',
+              background: 'var(--dc-toolbar-item,#0d0f14)', border: '1px solid var(--dc-line,#1e2028)',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#e4e6eb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
-            <Edit2 style={{ width: 10, height: 10, color: '#7c7f8a', flexShrink: 0 }} className="hidden sm:inline" />
-            <span className="hidden lg:inline" style={{ fontSize: 9, fontFamily: 'monospace', padding: '1px 4px', borderRadius: 4, background: '#0d0f14', color: '#818cf8', flexShrink: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--dc-toolbar-ink,#e4e6eb)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+            <Edit2 style={{ width: 10, height: 10, color: 'var(--dc-toolbar-muted,#7c7f8a)', flexShrink: 0 }} className="hidden sm:inline" />
+            <span className="hidden lg:inline" style={{ fontSize: 9, fontFamily: 'monospace', padding: '1px 4px', borderRadius: 4, background: 'var(--dc-toolbar-item,#0d0f14)', color: 'var(--studio-night-accent-ink,#818cf8)', flexShrink: 0 }}>
               {width}×{height}
             </span>
           </div>
@@ -212,7 +213,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* Center Section: Canvas Tools (Undo/Redo, Zoom, Pan, Grid) — hidden below xl (floating control pill covers these) */}
       <div className="hidden xl:flex items-center" style={{ gap: 4 }}>
         {/* Undo / Redo */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--dc-toolbar-item,#0d0f14)', padding: 2, borderRadius: 8, border: '1px solid var(--dc-line,#1e2028)' }}>
           <button
             type="button"
             onClick={onUndo}
@@ -221,10 +222,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 4, borderRadius: 4, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s', opacity: canUndo ? 1 : 0.25,
+              color: 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s', opacity: canUndo ? 1 : 0.25,
             }}
-            onMouseEnter={e => { if (canUndo) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
+            onMouseEnter={e => { if (canUndo) { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; e.currentTarget.style.background = 'none'; }}
           >
             <Undo2 style={{ width: 14, height: 14 }} />
           </button>
@@ -236,17 +237,17 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 4, borderRadius: 4, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s', opacity: canRedo ? 1 : 0.25,
+              color: 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s', opacity: canRedo ? 1 : 0.25,
             }}
-            onMouseEnter={e => { if (canRedo) { e.currentTarget.style.color = '#e4e6eb'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; e.currentTarget.style.background = 'none'; }}
+            onMouseEnter={e => { if (canRedo) { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; e.currentTarget.style.background = 'rgba(255,255,255,.05)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; e.currentTarget.style.background = 'none'; }}
           >
             <Redo2 style={{ width: 14, height: 14 }} />
           </button>
         </div>
 
         {/* Zoom Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#0d0f14', padding: 2, borderRadius: 8, border: '1px solid #1e2028', fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: 'var(--dc-toolbar-item,#0d0f14)', padding: 2, borderRadius: 8, border: '1px solid var(--dc-line,#1e2028)', fontSize: 12 }}>
           <button
             type="button"
             onClick={onZoomOut}
@@ -254,10 +255,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 4, borderRadius: 4, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+              color: 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; }}
           >
             <ZoomOut style={{ width: 14, height: 14 }} />
           </button>
@@ -267,7 +268,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             title={t.fitScreen}
             style={{
               padding: '2px 4px', fontFamily: 'monospace', fontWeight: 700,
-              color: '#818cf8', background: 'none', border: 'none', borderRadius: 4,
+              color: 'var(--studio-night-accent-ink,#818cf8)', background: 'none', border: 'none', borderRadius: 4,
               cursor: 'pointer', fontSize: 11, transition: 'background .2s',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
@@ -282,10 +283,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 4, borderRadius: 4, background: 'none', border: 'none',
-              color: '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+              color: 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#e4e6eb'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#7c7f8a'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--dc-toolbar-ink,#e4e6eb)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--dc-toolbar-muted,#7c7f8a)'; }}
           >
             <ZoomIn style={{ width: 14, height: 14 }} />
           </button>
@@ -300,8 +301,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 6, borderRadius: 8, fontSize: 12,
             border: `1px solid ${showGrid ? 'rgba(99,102,241,.5)' : '#1e2028'}`,
-            background: showGrid ? 'rgba(99,102,241,.15)' : '#0d0f14',
-            color: showGrid ? '#818cf8' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+            background: showGrid ? 'var(--studio-night-accent-wash,rgba(99,102,241,.15))' : 'var(--dc-toolbar-item,#0d0f14)',
+            color: showGrid ? 'var(--studio-night-accent-ink,#818cf8)' : 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s',
           }}
         >
           <Grid style={{ width: 14, height: 14 }} />
@@ -310,7 +311,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right Section: Actions (props, preview, save in a segmented pill + Export CTA) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#0d0f14', border: '1px solid #1e2028', borderRadius: 10, padding: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--dc-toolbar-item,#0d0f14)', border: '1px solid var(--dc-line,#1e2028)', borderRadius: 10, padding: 3 }}>
         {onToggleProperties && (
           <button
             type="button"
@@ -320,8 +321,8 @@ export const TopBar: React.FC<TopBarProps> = ({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '5px 7px', borderRadius: 8, fontSize: 12,
               border: 'none',
-              background: isPropertiesOpen ? 'rgba(99,102,241,.18)' : 'transparent',
-              color: isPropertiesOpen ? '#818cf8' : '#7c7f8a', cursor: 'pointer', transition: 'all .2s',
+              background: isPropertiesOpen ? 'var(--studio-night-accent-wash,rgba(99,102,241,.18))' : 'transparent',
+              color: isPropertiesOpen ? 'var(--studio-night-accent-ink,#818cf8)' : 'var(--dc-toolbar-muted,#7c7f8a)', cursor: 'pointer', transition: 'all .2s',
             }}
           >
             <SlidersHorizontal style={{ width: 14, height: 14 }} />
@@ -333,6 +334,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Preview Button */}
         <button
           type="button"
+          data-studio-button="secondary"
           onClick={onOpenPreview}
           title={t.previewDesign}
           aria-label={t.preview}
@@ -340,18 +342,19 @@ export const TopBar: React.FC<TopBarProps> = ({
             display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
             border: 'none', background: 'transparent',
-            color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+            color: 'var(--dc-toolbar-ink,#e4e6eb)', cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
         >
-          <Eye style={{ width: 14, height: 14, color: '#818cf8' }} />
+          <Eye style={{ width: 14, height: 14, color: 'var(--studio-night-accent-ink,#818cf8)' }} />
           <span className="hidden sm:inline">{t.preview}</span>
         </button>
 
         {/* Save Button */}
         <button
           type="button"
+          data-studio-button="primary"
           onClick={onSave}
           disabled={isSaving}
           title={t.saveProject}
@@ -360,7 +363,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
             border: 'none', background: 'transparent',
-            color: '#e4e6eb', cursor: 'pointer', transition: 'all .2s',
+            color: 'var(--dc-toolbar-ink,#e4e6eb)', cursor: 'pointer', transition: 'all .2s',
             fontFamily: 'inherit', opacity: isSaving ? 0.5 : 1,
           }}
           onMouseEnter={e => { if (!isSaving) e.currentTarget.style.background = 'rgba(255,255,255,.05)'; }}

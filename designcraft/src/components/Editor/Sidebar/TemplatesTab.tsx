@@ -28,6 +28,7 @@ const gradientOf = (from: string, to?: string) =>
 const TemplatePreview: React.FC<{ tpl: DesignTemplate }> = ({ tpl }) => {
   return (
     <div
+      data-theme-art
       className="relative w-full rounded-lg overflow-hidden border border-white/10 shadow-inner"
       style={{
         aspectRatio: `${tpl.baseW} / ${tpl.baseH}`,

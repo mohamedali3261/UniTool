@@ -82,7 +82,7 @@ export function CompressionTools({ t, lang, onNavigate }: Props) {
   const small = [tools[3], tools[4]];
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div data-tools-catalog className="flex flex-col flex-1 overflow-hidden">
       <style>{`
         .comp-tools-scroll {
           direction: ltr;

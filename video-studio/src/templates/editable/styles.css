@@ -6,13 +6,13 @@
 }
 .template-file-links a {
   padding: 12px 18px;
-  border: 1px solid #776c8a;
+  border: 1px solid var(--studio-ui-line, #776c8a);
   border-radius: 12px;
-  background: #242030;
-  color: #eee7dd;
+  background: var(--studio-ui-surface, #242030);
+  color: var(--studio-ui-ink, #eee7dd);
   text-decoration: none;
   font-size: 13px;
 }
 .template-file-links a:hover {
-  background: #39304b;
+  background: var(--studio-ui-surface, #39304b);
 }

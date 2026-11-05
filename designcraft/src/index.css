@@ -19,19 +19,19 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(11, 19, 43, 0.7);
+  background: var(--studio-ui-glass, rgba(11, 19, 43, 0.7));
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, rgba(56, 189, 248, 0.35), rgba(14, 165, 233, 0.5));
+  background: linear-gradient(to bottom, var(--studio-night-accent-wash, rgba(56, 189, 248, 0.35)), var(--studio-night-accent-wash, rgba(14, 165, 233, 0.5)));
   border-radius: 9999px;
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  border: 1px solid var(--studio-night-accent-line, rgba(56, 189, 248, 0.15));
   transition: all 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, rgba(56, 189, 248, 0.65), rgba(14, 165, 233, 0.85));
+  background: linear-gradient(to bottom, var(--studio-night-accent-fill, rgba(56, 189, 248, 0.65)), var(--studio-night-accent-fill, rgba(14, 165, 233, 0.85)));
   box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
 }
 
@@ -43,8 +43,8 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #070D1E;
-  color: #F8FAFC;
+  background-color: var(--studio-ui-surface, #070D1E);
+  color: var(--studio-ui-ink, #F8FAFC);
   font-family: var(--font-sans);
   overflow-x: hidden;
   overflow-y: auto;
@@ -71,8 +71,8 @@ h1, h2, h3, h4, .font-display {
 
 /* Text selection & caret polish */
 ::selection {
-  background: rgba(56, 189, 248, 0.35);
-  color: #FFFFFF;
+  background: var(--studio-night-accent-wash, rgba(56, 189, 248, 0.35));
+  color: var(--studio-ui-ink, #FFFFFF);
 }
 
 input, textarea {

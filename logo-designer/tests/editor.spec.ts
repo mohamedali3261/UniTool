@@ -67,7 +67,7 @@ test("desktop: editable vectors, undo/redo, typography, layers, autosave and RTL
     page.locator(".ld-artboard text").filter({ hasText: "NOVA BRAND" }),
   ).toHaveCount(1);
   await page
-    .getByRole("button", { name: "التبديل للعربية", exact: true })
+    .getByRole("button", { name: "التحويل إلى العربية", exact: true })
     .click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(
