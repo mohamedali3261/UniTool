@@ -189,7 +189,10 @@ export function MotionStage() {
       </div>
       <MotionTimeline
         key={scene}
-        expanded={scene === "canvas"}
+        expanded={
+          scene === "canvas" &&
+          (typeof window === "undefined" || window.innerWidth > 850)
+        }
         time={time}
         onSeek={(v) => {
           setPlaying(false);

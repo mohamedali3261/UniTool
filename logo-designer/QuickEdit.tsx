@@ -13,7 +13,10 @@ export default function QuickEdit() {
   const s = useDesigner(),
     n = s.doc.nodes.find((n) => s.selected.includes(n.id));
   return (
-    <div className="ld-quick-edit" aria-label={s.t("تعديل سريع", "Quick edit")}>
+    <div
+      className={`ld-quick-edit ${n ? "has-selection" : "no-selection"}`}
+      aria-label={s.t("تعديل سريع", "Quick edit")}
+    >
       <button
         aria-label={s.t(
           s.previewOnly ? "إظهار الأدوات" : "معاينة ملء الشاشة",

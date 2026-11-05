@@ -15,7 +15,7 @@ import type { Project } from "./types";
 export default function MotionTimeline({
   time,
   onSeek,
-  expanded = true,
+  expanded = typeof window === "undefined" || window.innerWidth > 850,
 }: {
   expanded?: boolean;
   time: number;

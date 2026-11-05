@@ -63,6 +63,7 @@ export default function TopBar() {
           </button>
 
           <button
+            className="ld-desktop-panel-toggle"
             aria-label={s.t("طي مكتبة الأدوات", "Toggle library")}
             onClick={() => {
               s.setLeftOpen(!s.leftOpen);
@@ -72,6 +73,7 @@ export default function TopBar() {
             <PanelLeftClose size={18} />
           </button>
           <button
+            className="ld-desktop-panel-toggle"
             aria-label={s.t("طي الخصائص", "Toggle properties")}
             onClick={() => {
               s.setRightOpen(!s.rightOpen);

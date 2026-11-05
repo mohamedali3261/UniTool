@@ -787,6 +787,20 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 850px) {
+  .ld-motion-stage-head {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  .ld-motion-screen {
+    padding: 8px;
+  }
+  .ld-motion-transport {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .ld-motion-note {
+    display: none;
+  }
   .ld-motion-timeline {
     max-height: 38%;
   }

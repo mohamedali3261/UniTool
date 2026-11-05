@@ -114,23 +114,21 @@ export default function ShapeLibrary() {
           `${entries.length} vector elements, including ${vectorMarks.length} original marks. Pick, edit and make them yours.`,
         )}
       </p>
-      <button
-        className="ld-secondary"
-        aria-pressed={personal}
-        onClick={() => {
-          setPersonal(!personal);
-          setShowCombinations(false);
-        }}
-      >
-        {s.t(
-          personal ? "رجوع للمكتبة العامة" : "مكتبتي الشخصية",
-          personal ? "Back to public library" : "My personal library",
-        )}
-      </button>
-      {personal ? (
-        <PersonalLibrary />
-      ) : (
-        <>
+      <div className={`ld-library-shortcuts ${personal ? "is-single" : ""}`}>
+        <button
+          className="ld-secondary"
+          aria-pressed={personal}
+          onClick={() => {
+            setPersonal(!personal);
+            setShowCombinations(false);
+          }}
+        >
+          {s.t(
+            personal ? "رجوع للمكتبة العامة" : "مكتبتي الشخصية",
+            personal ? "Back to public library" : "My personal library",
+          )}
+        </button>
+        {!personal && (
           <button
             className="ld-secondary"
             aria-pressed={showCombinations}
@@ -145,23 +143,50 @@ export default function ShapeLibrary() {
                 : "Editable icon combinations",
             )}
           </button>
+        )}
+      </div>
+      {personal ? (
+        <PersonalLibrary />
+      ) : (
+        <>
           {showCombinations ? (
             <Combinations />
           ) : (
             <>
-              <label className="ld-search">
-                <Search size={17} />
-                <input
-                  type="search"
-                  aria-label={s.t("بحث في الأشكال", "Search symbols")}
-                  placeholder={s.t(
-                    "ورقة، صحة، عقارات…",
-                    "Leaf, health, estate…",
-                  )}
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-              </label>
+              <div className="ld-library-filter-row">
+                <label className="ld-search">
+                  <Search size={17} />
+                  <input
+                    type="search"
+                    aria-label={s.t("بحث في الأشكال", "Search symbols")}
+                    placeholder={s.t(
+                      "ورقة، صحة، عقارات…",
+                      "Leaf, health, estate…",
+                    )}
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                  />
+                </label>
+                <label className="ld-field ld-kind-field">
+                  <span>{s.t("نوع العنصر", "Element type")}</span>
+                  <select
+                    aria-label={s.t("نوع العنصر", "Element type")}
+                    value={kind}
+                    onChange={(e) => setKind(e.target.value)}
+                  >
+                    {[
+                      ["all", "كل العناصر", "All elements"],
+                      ["shape", "أشكال هندسية", "Shapes"],
+                      ["icon", "رموز خطية", "Line icons"],
+                      ["vector", "علامات أصلية", "Original marks"],
+                    ].map(([id, ar, en]) => (
+                      <option key={id} value={id}>
+                        {s.t(ar, en)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               <div className="ld-collection-tabs">
                 {[
                   ["all", "المكتبة", "Library"],
@@ -182,21 +207,6 @@ export default function ShapeLibrary() {
                   </button>
                 ))}
               </div>
-              <label className="ld-field">
-                {s.t("نوع العنصر", "Element type")}
-                <select value={kind} onChange={(e) => setKind(e.target.value)}>
-                  {[
-                    ["all", "كل العناصر", "All elements"],
-                    ["shape", "أشكال هندسية", "Shapes"],
-                    ["icon", "رموز خطية", "Line icons"],
-                    ["vector", "علامات أصلية", "Original marks"],
-                  ].map(([id, ar, en]) => (
-                    <option key={id} value={id}>
-                      {s.t(ar, en)}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <div className="ld-chips">
                 {categories.map(([id, ar, en]) => (
                   <button
