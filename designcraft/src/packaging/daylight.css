@@ -1,0 +1,234 @@
+/* Packaging-only daylight palette. The user's supplied background is kept intact;
+   no filters are applied to artwork, dielines, or native model snapshots. */
+.packaging-daylight {
+  --pkg-ink: #263e38;
+  --pkg-muted: #4d655d;
+  --pkg-line: #9daf9f;
+  --pkg-paper: #f8f8f0;
+  --pkg-sage: #d7e5d7;
+  color-scheme: light;
+  color: var(--pkg-ink);
+  background-color: #deddd3;
+  background-image: url("/images/packaging/daylight-background.jpg");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.packaging-daylight .ut-site-nav {
+  background: #f4f7efed;
+  color: var(--pkg-ink);
+  border-color: #8caa983d;
+  box-shadow: 0 3px 22px #50695709;
+}
+.packaging-daylight .ut-site-nav button {
+  color: var(--pkg-ink);
+  border-color: var(--pkg-line);
+}
+.packaging-daylight .ut-site-nav .ut-nav-start {
+  background: var(--pkg-sage);
+  color: var(--pkg-ink);
+}
+.packaging-daylight .ut-site-nav a:hover {
+  color: #295b4b;
+}
+.packaging-daylight .ut-site-nav :is(.ut-nav-sections > div, .ut-nav-mobile) {
+  background: #f5f7ef;
+  color: var(--pkg-ink);
+  border-color: var(--pkg-line);
+  box-shadow: 0 16px 40px #39584a20;
+}
+.packaging-daylight .dc-page-tabs {
+  background: #fbfcf3ad;
+  border-color: #a6baac;
+  box-shadow: 0 5px 24px #56755e08;
+}
+.packaging-daylight .dc-page-tabs > button {
+  color: var(--pkg-muted);
+  box-shadow: none;
+}
+.packaging-daylight .dc-page-tabs > button[aria-current="page"] {
+  background: #c8dfd1;
+  color: #203f32;
+  border-color: #829c88;
+}
+.packaging-daylight .dc-page-tabs > button > span.rounded-full {
+  background: #d8e2d3;
+  color: #365244;
+}
+.packaging-daylight .packaging-studio {
+  color: var(--pkg-ink);
+}
+.packaging-daylight .packaging-hero {
+  background: linear-gradient(115deg, #faf8f0a6, #eef8ef85 65%, #f4eee1b0);
+  border-color: #b1c2ad;
+  box-shadow:
+    0 16px 50px #63806b0c,
+    inset 0 1px #ffffff9c;
+}
+.packaging-daylight .packaging-eyebrow {
+  color: #47674e;
+}
+.packaging-daylight
+  :is(
+    .packaging-hero p,
+    .packaging-benefits,
+    .packaging-footnote,
+    .packaging-projects-empty,
+    .packaging-template-meta p,
+    .packaging-projects time,
+    .packaging-projects h2 span,
+    .packaging-catalog-title small
+  ) {
+  color: var(--pkg-muted);
+}
+.packaging-daylight .packaging-primary {
+  background: #cedfc7;
+  color: #28402d;
+  box-shadow: 0 5px 16px #49664d0d;
+}
+.packaging-daylight .packaging-primary:hover {
+  background: #bed5b7;
+}
+.packaging-daylight .packaging-family-tabs {
+  border-color: #a4b6a3;
+}
+.packaging-daylight
+  :is(
+    .packaging-family-tabs button,
+    .packaging-filters button,
+    .packaging-empty button
+  ) {
+  background: #f6f7eeb8;
+  color: #3f5847;
+  border-color: #a1b49f;
+}
+.packaging-daylight
+  :is(.packaging-family-tabs, .packaging-filters)
+  button[aria-pressed="true"] {
+  background: #c9ddc8;
+  color: #25412c;
+  border-color: #7c997b;
+}
+.packaging-daylight
+  :is(.packaging-family-tabs, .packaging-filters)
+  button:hover {
+  background: #dce9d5;
+}
+.packaging-daylight .packaging-projects {
+  background: #f9faf2a1;
+  border-color: #a4b6a3;
+  box-shadow: inset 0 1px #ffffffb3;
+}
+.packaging-daylight .packaging-search {
+  background: #fbfcf5d6;
+  color: #56715f;
+  border-color: #95ab99;
+}
+.packaging-daylight .packaging-search input {
+  color: var(--pkg-ink);
+}
+.packaging-daylight .packaging-search input::placeholder {
+  color: #5c7063;
+  opacity: 1;
+}
+.packaging-daylight .packaging-template {
+  background: #faf9f1e8;
+  border-color: #a3b29f;
+  box-shadow: 0 8px 24px #3d65400a;
+}
+.packaging-daylight .packaging-template:hover {
+  border-color: #68886d;
+  box-shadow: 0 10px 26px #3d654016;
+}
+.packaging-daylight :is(.packaging-template h2, .packaging-projects h3) {
+  color: var(--pkg-ink);
+}
+.packaging-daylight .packaging-template-meta {
+  color: #5d7860;
+}
+.packaging-daylight .packaging-template-preview {
+  background: radial-gradient(ellipse at 45% 20%, #e5efe2, #d5d4c8);
+}
+.packaging-daylight .packaging-template-preview > span {
+  background: #f4f7edf2;
+  color: #2e4b35;
+  border: 1px solid #8ba181;
+}
+.packaging-daylight :focus-visible {
+  outline: 2px solid #3e6851;
+  outline-offset: 3px;
+}
+/* Keep template setup in the same daylight mode, without touching the editor. */
+.packaging-daylight .carton-dialog {
+  color: var(--pkg-ink);
+  background: #f7f7ef;
+  border-color: #a2b39d;
+  box-shadow: 0 25px 100px #37524340;
+}
+.packaging-daylight .carton-dialog::backdrop {
+  background: #34544952;
+}
+.packaging-daylight .carton-dialog :is(header, footer) {
+  border-color: #a9bba05c;
+}
+.packaging-daylight
+  .carton-dialog
+  :is(p, label, small, .carton-new-note, summary) {
+  color: var(--pkg-muted);
+}
+.packaging-daylight .carton-dialog button {
+  background: #e6eddc;
+  color: #2c4531;
+  border-color: #a5b69a;
+}
+.packaging-daylight .carton-dialog :is(input:not([type="checkbox"]), select) {
+  background: #fffef9;
+  color: var(--pkg-ink);
+  border-color: #a2b39b;
+}
+.packaging-daylight
+  .carton-dialog
+  :is(.carton-primary, button[aria-pressed="true"]) {
+  background: #cbdcc1;
+  color: #27422b;
+  border-color: #7e9c71;
+}
+.packaging-daylight .carton-dialog .carton-error {
+  color: #9a2837;
+}
+@media (max-width: 700px) {
+  .packaging-daylight {
+    background-attachment: scroll;
+  }
+}
+
+.packaging-daylight .ut-site-nav a[aria-current="page"] {
+  color: #254c37;
+  background: #d8e6cf;
+}
+.packaging-daylight .carton-dialog:not(.carton-print) > header {
+  background: linear-gradient(110deg, #e2eee3, #eee9dc);
+}
+.packaging-daylight .carton-section-title h3 {
+  color: var(--pkg-ink);
+}
+.packaging-daylight .carton-section-title > span {
+  color: #3e654e;
+  background: #e0ebd9;
+  border-color: #a4b698;
+}
+.packaging-daylight .carton-section-title p {
+  color: var(--pkg-muted) !important;
+}
+.packaging-daylight .carton-dialog :is(details, .carton-note) {
+  background: #e9eee0;
+  border-color: #adbea1;
+}
+.packaging-daylight .carton-dialog .carton-capacity-card {
+  background: #edf1e4;
+  border-color: #a5b798;
+}
+.packaging-daylight
+  :is(.carton-bottle-icon, .carton-capacity-card > span[dir]) {
+  color: #4c6c50;
+}

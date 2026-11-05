@@ -1,5 +1,8 @@
+import { hingedGeometry } from "./hinged";
 /** Nominal millimetre geometry; prototype before production. */
 export interface CartonSize {
+  construction?: "hinged-lid";
+  family?: "pizza" | "bakery" | "mailer";
   width: number;
   height: number;
   depth: number;
@@ -22,6 +25,28 @@ export function cartonError(s: CartonSize): string | null {
     ![s.width, s.height, s.depth, s.glue, s.tuck].every(Number.isFinite)
   )
     return "finite";
+  if (s.construction !== undefined && s.construction !== "hinged-lid")
+    return "construction";
+  if (
+    s.family !== undefined &&
+    (!["pizza", "bakery", "mailer"].includes(s.family) ||
+      s.construction !== "hinged-lid")
+  )
+    return "construction";
+  if (s.construction === "hinged-lid") {
+    if (
+      s.width < 100 ||
+      s.width > 650 ||
+      s.depth < 100 ||
+      s.depth > 650 ||
+      s.height < 20 ||
+      s.height > 150
+    )
+      return "dimensions";
+    if (s.glue < 5 || s.glue > 30) return "glue";
+    if (s.tuck < 5 || s.tuck > Math.min(30, s.height * 0.7)) return "tuck";
+    return null;
+  }
   if (
     s.width < 20 ||
     s.width > 300 ||
@@ -39,6 +64,7 @@ export function cartonError(s: CartonSize): string | null {
 export function cartonGeometry(s: CartonSize) {
   const error = cartonError(s);
   if (error) throw Error(`Invalid carton: ${error}`);
+  if (s.construction === "hinged-lid") return hingedGeometry(s);
   const { width: w, height: h, depth: d, glue: g, tuck: t } = s;
   const x0 = 10,
     x1 = x0 + g,

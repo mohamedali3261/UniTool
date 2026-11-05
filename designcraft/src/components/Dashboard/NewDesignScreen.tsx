@@ -1,3 +1,4 @@
+import {isPackagingProject} from '../../packaging/projectScope';
 import { SiteNavbar } from '../../../../src/components/SiteNavbar';
 import {PackagingPage} from '../../packaging/PackagingPage';
 import {PackagingEntry} from "../../packaging/PackagingEntry";
@@ -196,7 +197,8 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     return DIMENSION_PRESETS.filter((p) => p.id !== 'custom' && p.category === catId).length;
   };
 
-  const filteredProjects = projects
+  const designProjects=projects.filter(p=>!isPackagingProject(p));
+  const filteredProjects = designProjects
     .filter((p) => {
       if (!projectSearch.trim()) return true;
       const q = projectSearch.toLowerCase().trim();
@@ -232,7 +234,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   };
 
   return (
-    <div dir={dir} className="min-h-screen bg-[#070D1E] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white antialiased" style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+    <div dir={dir} className={`min-h-screen bg-[#070D1E] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white antialiased ${activeTab === 'packaging' ? 'packaging-daylight' : ''}`} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
       <SiteNavbar fixed lang={lang} onToggleLang={toggleLang}/>
 
 
@@ -306,11 +308,11 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             >
               <FolderOpen className="w-4 h-4" />
               <span>{t.myProjects}</span>
-              {projects.length > 0 && (
+              {designProjects.length > 0 && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
                   activeTab === 'projects' ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-300'
                 }`}>
-                  {projects.length}
+                  {designProjects.length}
                 </span>
               )}
             </button>
@@ -329,7 +331,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             </button>
           </div>
 
-          {activeTab === 'packaging' && <PackagingPage onCreate={onOpenProject}/>}
+          {activeTab === 'packaging' && <PackagingPage onCreate={onOpenProject} projects={projects}/>}
           {activeTab === 'storage' && (
             <StorageManager projects={projects} onOpenProject={onOpenProject} onShowToast={onShowToast} />
           )}
@@ -756,13 +758,13 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-sky-400" />
                   <div>
-                    <h3 className="text-sm font-bold text-white">{t.savedProjects} ({projects.length})</h3>
+                    <h3 className="text-sm font-bold text-white">{t.savedProjects} ({designProjects.length})</h3>
                     <p className="text-xs text-slate-400">{t.savedProjectsDesc}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  {projects.length > 0 && (
+                  {designProjects.length > 0 && (
                     <div className="relative min-w-[200px]">
                       <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
                       <input
@@ -775,7 +777,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                     </div>
                   )}
 
-                  {projects.length > 0 && (
+                  {designProjects.length > 0 && (
                     <div className="relative">
                       <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <select
@@ -792,7 +794,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                     </div>
                   )}
 
-                  {projects.length > 0 && (
+                  {designProjects.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setActiveTab('create')}
@@ -805,7 +807,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                 </div>
               </div>
 
-              {projects.length === 0 ? (
+              {designProjects.length === 0 ? (
                 <div className="p-12 text-center rounded-3xl bg-[#141E38] border border-dashed border-slate-700/80 space-y-4">
                   <div className="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mx-auto">
                     <FolderOpen className="w-8 h-8" />

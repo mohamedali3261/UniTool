@@ -30,7 +30,19 @@ export function validatePrint(value: unknown): PrintSettings {
   return { safeMm: p.safeMm, bleedMm: p.bleedMm, showGuides: p.showGuides };
 }
 export function faces(size: CartonSize) {
-  const g = cartonGeometry(size),
+  const geometry = cartonGeometry(size);
+  if ("faces" in geometry && geometry.faces) {
+    const rectangles = geometry.faces;
+    return (["front", "right", "back", "left", "top", "bottom"] as const).map(
+      (id, i) => ({
+        ...rectangles[id],
+        id,
+        ar: ["الأمام", "اليمين", "الخلف", "اليسار", "الأعلى", "الأسفل"][i],
+        en: ["Front", "Right", "Back", "Left", "Top", "Bottom"][i],
+      }),
+    );
+  }
+  const g = geometry,
     p = g.panels;
   return [
     ...p.map((r, i) => ({

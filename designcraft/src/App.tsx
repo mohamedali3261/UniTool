@@ -200,6 +200,7 @@ export default function App() {
   // 6. Back to Dashboard / New Tab (both keep the current design saved)
   const handleBackToDashboard = async () => {
     if(editorRef.current && !(await editorRef.current.confirmLeave()))return;
+    window.location.hash=activeProject?.packaging?'packaging':'projects';
     setCurrentView('dashboard');
   };
 
