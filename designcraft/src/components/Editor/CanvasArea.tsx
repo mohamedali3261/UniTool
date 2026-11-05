@@ -746,12 +746,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       onMouseDownCapture={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      className={`flex-1 h-full overflow-auto bg-[#070D1E] flex items-start justify-start p-3 sm:p-8 pb-20 md:pb-8 relative select-none ${
+      className={`dc-canvas-workspace flex-1 h-full overflow-auto bg-[#070D1E] flex items-start justify-start p-3 sm:p-8 pb-20 md:pb-8 relative select-none ${
         isPanMode || isSpacePressed || isPanning ? 'cursor-grab active:cursor-grabbing' : ''
       }`}
       style={{
         backgroundImage: showGrid
-          ? 'radial-gradient(rgba(56, 189, 248, 0.25) 1.5px, transparent 1.5px)'
+          ? 'radial-gradient(var(--studio-night-accent-wash, rgba(56, 189, 248, 0.25)) 1.5px, transparent 1.5px)'
           : 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
         backgroundSize: '20px 20px',
         overscrollBehavior: 'contain',

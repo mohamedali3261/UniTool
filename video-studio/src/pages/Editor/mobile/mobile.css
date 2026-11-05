@@ -34,7 +34,7 @@
     padding: 0 10px;
     gap: 0;
     overflow: visible;
-    border-bottom: 1px solid #30372e;
+    border-bottom: 1px solid var(--studio-ui-line, #30372e);
   }
   .editor-brand {
     height: 44px;
@@ -79,8 +79,8 @@
     flex-direction: column;
     width: 100%;
     scroll-margin: 0;
-    border-bottom: 1px solid #35432e;
-    background: #0b100d;
+    border-bottom: 1px solid var(--studio-ui-line, #35432e);
+    background: var(--studio-ui-surface, #0b100d);
   }
   .center-workspace .workspace-tools {
     height: 40px;
@@ -167,9 +167,9 @@
     align-items: center;
     min-width: 0;
     padding: 0 8px;
-    background: #1c251d;
-    border-top: 1px solid #496037;
-    border-bottom: 1px solid #303d2b;
+    background: var(--studio-ui-surface, #1c251d);
+    border-top: 1px solid var(--studio-ui-line, #496037);
+    border-bottom: 1px solid var(--studio-ui-line, #303d2b);
     z-index: 6;
   }
   .mobile-panel-bar > button {
@@ -181,7 +181,7 @@
     flex: 1;
     min-width: 0;
     font-size: 11px;
-    color: #aebda7;
+    color: var(--studio-ui-muted, #aebda7);
     border-bottom: 2px solid transparent;
   }
   .mobile-panel-bar > button[aria-pressed="true"] {
@@ -214,7 +214,7 @@
     overscroll-behavior: contain;
     scroll-margin: 0;
     border: 0;
-    background: #151c17;
+    background: var(--studio-ui-surface, #151c17);
   }
   .editor-shell[data-mobile-panel="timeline"] .library-panel,
   .editor-shell[data-mobile-panel="inspector"] .library-panel,
@@ -289,7 +289,7 @@
     gap: 4px;
     align-items: center;
     padding: 3px 6px max(3px, env(safe-area-inset-bottom));
-    background: #111b15;
+    background: var(--studio-ui-surface, #111b15);
     z-index: 10;
     scrollbar-width: none;
   }
@@ -318,7 +318,7 @@
   .editor-shell .catalog-sticky {
     position: sticky;
     top: -14px;
-    background: #151c17;
+    background: var(--studio-ui-surface, #151c17);
     z-index: 3;
   }
   .editor-shell .back-to-preview {
@@ -495,7 +495,7 @@
     min-height: 44px;
     display: grid;
     place-items: center;
-    border: 1px solid #3e5735;
+    border: 1px solid var(--studio-ui-line, #3e5735);
     border-radius: 9px;
   }
   .text-editor-fields > .text-active-editor {
@@ -576,8 +576,8 @@
     width: 44px;
     height: 44px;
     padding: 0;
-    background: #172217e8;
-    border: 1px solid #4b6936;
+    background: var(--studio-ui-glass, #172217e8);
+    border: 1px solid var(--studio-ui-line, #4b6936);
     border-radius: 8px;
     margin: 5px;
   }

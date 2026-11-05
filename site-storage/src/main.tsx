@@ -1,3 +1,4 @@
+import { useSiteAppearance, SiteAppearanceToggle } from '../../src/hooks/useSiteAppearance';
 import {Download,Upload,HardDrive,ShieldCheck} from 'lucide-react';
 import { SiteNavbar } from '../../src/components/SiteNavbar';
 import { storageUsage, type UsageReport } from './usage';
@@ -6,7 +7,10 @@ import { createRoot } from 'react-dom/client';
 import { exportSite, prepareArchive, restoreSite, LIMIT, type Prepared } from './archive';
 import { DATABASES } from './registry';
 import './style.css';
+import '../../src/styles/studio-controls.css';
+import '../../src/styles/site-appearance.css';
 function App() {
+  const {theme,toggleTheme}=useSiteAppearance('storage');
   const [ar, setAr] = useState(() => { try { return localStorage.getItem('unitool-lang') !== 'en'; } catch { return true; } });
   const [usage, setUsage] = useState<UsageReport | null>(null), [usageError, setUsageError] = useState(''), [usageLoading, setUsageLoading] = useState(false);
   const refreshUsage = async () => {
@@ -44,7 +48,7 @@ function App() {
     setStatus(text('تم تجهيز ملف ZIP وبدء التنزيل. احتفظ به في مكان آمن.', 'ZIP prepared and download started. Keep it somewhere safe.'));
   };
   return <div className="storage-app" dir={ar ? 'rtl' : 'ltr'}>
-    <SiteNavbar lang={ar ? 'ar' : 'en'} onToggleLang={() => setAr(!ar)}/>
+    <SiteNavbar lang={ar ? 'ar' : 'en'} onToggleLang={() => setAr(!ar)} actions={<SiteAppearanceToggle theme={theme} onToggle={toggleTheme} lang={ar?'ar':'en'}/>}/>
 
     <main>
       <p className="eyebrow">YOUR WORK. WITH YOU.</p>

@@ -2,6 +2,9 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import '../../src/styles/tools-appearance.css';
+import '../../src/styles/studio-controls.css';
+import '../../src/styles/site-appearance.css';
 
 // Polyfill ReadableStream async iterator and values() for Safari & web runtimes
 if (typeof ReadableStream !== 'undefined') {

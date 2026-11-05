@@ -32,7 +32,9 @@ export const theme = computed<Theme>({
   get: () => courant.value,
   set: (valeur) => {
     if (!estTheme(valeur)) return
+    const changed = courant.value !== valeur
     courant.value = valeur
+    if (changed && window.parent !== window) window.parent.postMessage({ type: 'unitool-svg-theme-change', theme: valeur === 'nuit' ? 'dark' : 'light' }, window.location.origin)
     ecris('theme', valeur)
   }
 })
@@ -53,4 +55,12 @@ export const theme = computed<Theme>({
  * `suitTheme: false` de capture.ts).
  */
 export const ENCRE_NUIT = '#edeff5'
-export const PAPIER_NUIT = '#10141f'
+export const PAPIER_NUIT = '#101010'
+
+// The embedding UniTool header is authoritative on load. Accept messages only
+// from that same-origin parent; native settings changes notify it in return.
+window.addEventListener('message', (event: MessageEvent) => {
+  if (window.parent === window || event.source !== window.parent || event.origin !== window.location.origin) return
+  if (event.data?.type !== 'unitool-appearance-change') return
+  if (event.data.theme === 'light' || event.data.theme === 'dark') theme.value = event.data.theme === 'dark' ? 'nuit' : 'jour'
+})

@@ -85,7 +85,8 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
 
   // Load FFmpeg on mount
   useEffect(() => {
-    loadFFmpeg();
+    // Optional warm-up may fail offline; processing has its own error handling.
+    void loadFFmpeg().catch(() => {});
   }, []);
 
   // Cleanup URLs on unmount

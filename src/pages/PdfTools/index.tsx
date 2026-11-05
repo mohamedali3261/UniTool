@@ -17,7 +17,7 @@ export function PdfTools({ t, lang, onNavigate }: Props) {
   const row3 = [tools[5], tools[6]];
   const row4 = [tools[7], tools[8]];
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div data-tools-catalog className="flex flex-col flex-1 overflow-hidden">
       <style>{`
         .pdf-tools-scroll {
           direction: ltr;

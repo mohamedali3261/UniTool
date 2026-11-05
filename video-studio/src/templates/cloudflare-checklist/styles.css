@@ -6,7 +6,7 @@
   margin: 24px 0;
   border: 1px solid #754725;
   border-radius: 22px;
-  background: linear-gradient(125deg, #141b25, #281c15);
+  background: linear-gradient(125deg, var(--studio-ui-surface, #141b25), var(--studio-ui-surface, #281c15));
   overflow: hidden;
 }
 .cloudflare-eyebrow {
@@ -26,7 +26,7 @@
 .cloudflare-featured p {
   font-size: 13px;
   line-height: 1.9;
-  color: #a8b2c1;
+  color: var(--studio-ui-ink, #a8b2c1);
 }
 .cloudflare-tags {
   display: flex;
@@ -36,7 +36,7 @@
 }
 .cloudflare-tags span {
   padding: 6px 10px;
-  border: 1px solid #69503a;
+  border: 1px solid var(--studio-ui-line, #69503a);
   border-radius: 50px;
   color: #edc5a4;
   font-size: 11px;
@@ -61,11 +61,11 @@
 }
 .cloudflare-featured small {
   font-size: 10px;
-  color: #a5adba;
+  color: var(--studio-ui-muted, #a5adba);
 }
 .cloudflare-code {
-  background: #10161e;
-  border: 1px solid #3b4656;
+  background: var(--studio-ui-surface, #10161e);
+  border: 1px solid var(--studio-ui-line, #3b4656);
   border-radius: 16px;
   padding: 24px;
   align-self: center;
@@ -75,20 +75,20 @@
 .cloudflare-code pre {
   font-size: clamp(10px, 1.2vw, 15px);
   white-space: pre-wrap;
-  color: #d4dce8;
+  color: var(--studio-ui-ink, #d4dce8);
 }
 .cloudflare-code b {
-  color: #69e5a0;
+  color: var(--studio-night-accent-ink, #69e5a0);
   font-size: 12px;
 }
 .cloudflare-code span {
   font-size: 10px;
-  color: #8999af;
+  color: var(--studio-ui-muted, #8999af);
 }
 .cloudflare-code hr {
   margin: 20px 0;
   border: 0;
-  border-top: 1px solid #2a3749;
+  border-top: 1px solid var(--studio-ui-line, #2a3749);
 }
 .cloudflare-code p {
   font: 13px/2.4 monospace;

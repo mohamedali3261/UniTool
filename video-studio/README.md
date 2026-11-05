@@ -499,3 +499,13 @@ Play وSpace يجهزان عناصر الصوت والفيديو الحالية 
 
 ## Motion pack 2
 60 additional native animated elements are available under **الإضافات الجديدة · 60**; **حركات إبداعية · 96** includes both creative packs. See `video-studio/src/creative/pack2/README.md` for designs, editable settings, illustrative-data limitations and tests.
+
+## Light and dark appearance
+
+The shared navbar includes a sun/moon toggle on the home page and throughout the editor, on desktop and mobile. Light mode uses the same slightly darkened mint, sage and warm-beige palette and local background as the graphic designer. Night mode retains a dark workspace with soft mint accents. The video preference is stored separately as `unitool.video.theme.v1`; first use follows an existing graphic-designer preference, otherwise defaults to light. A blocked browser preference store still permits in-memory switching. The navbar theme labels follow its Arabic/English language selection.
+
+`settings/VideoAppearance.tsx` changes only the document UI attribute and preference. It never calls project/history/media/render/export APIs. `appearance.css` colors interface chrome, inputs, menus and panels, deliberately excluding canvas pixels, video effects, swatches and actual thumbnail artwork. Appearance does not change exported videos, native project JSON or the playhead. Browser tests cover desktop/mobile persistence, frame pixel equality and exported native project equality across toggles, English labels, separate preferences and blocked storage.
+
+The component CSS, including responsive tool pages, stock and sound catalogs, text/element properties, motion menus, template file actions, timeline controls and import/export panels, now consumes the shared `--studio-ui-*` surface/ink/border tokens. Original night colors remain the per-declaration fallback. Authored preview art explicitly resets these UI tokens to preserve its palette. `daylightAudit.spec.ts` and the shared `scripts/qa/darkSurfaces.ts` inspect visible interface surfaces on desktop and mobile and visit every desktop library tab. Authored preview pictures, canvas/video, timeline artwork and dimming backdrops are deliberately excluded, not recolored to hide an audit failure.
+
+The latest shared interface palette follows **spreadsheet studio** via `src/styles/studio-controls.css`: green `#24795e` primary buttons, darker green hover, white secondary controls, 8px corners, thin borders and white/light-gray daylight surfaces. This supersedes the earlier mint/beige background treatment. Dark mode retains its dark surfaces and uses the same primary green. Preview media/clip artwork is excluded.

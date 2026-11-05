@@ -15,6 +15,8 @@ import "./pages/Editor/mobile/tool-pages.css";
 import "./pages/Editor/desktop/desktop.css";
 import "./pages/Editor/timeline/timeline.css";
 import "./pages/Editor/preview/preview.css";
+import "./appearance.css";
+import "../../src/styles/studio-controls.css";
 createRoot(document.getElementById("root")!).render(
   <StudioSettings>
     <App />

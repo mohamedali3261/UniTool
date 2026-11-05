@@ -1,0 +1,220 @@
+/* UI-only palette: never filter/recolor canvas pixels, SVG artwork, swatches,
+   templates or 3D textures. data-dc-theme also covers body-mounted UI portals. */
+html[data-dc-theme="light"] {
+  color-scheme: light;
+  --dc-ink: #263e36;
+  --dc-muted: #4b6358;
+  --dc-panel: #dce3d4;
+  --dc-line: #9bac98;
+  background: #bdcbbd;
+}
+html[data-dc-theme="dark"] {
+  color-scheme: dark;
+}
+html[data-dc-theme="light"] body {
+  background: #bdcbbd;
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"] .dc-studio-root {
+  background:
+    linear-gradient(#48654e24, #6b5b472e),
+    url("/images/packaging/daylight-background.jpg") center / cover fixed;
+  --pkg-ink: var(--dc-ink);
+  --pkg-muted: var(--dc-muted);
+}
+html[data-dc-theme="light"] .dc-dashboard {
+  background: transparent !important;
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"]
+  :is(
+    [class*="bg-[#0B132B]"],
+    [class*="bg-[#1C2541]"],
+    [class*="bg-[#141E38]"],
+    [class*="bg-[#070D1E]"],
+    [class*="bg-[#152042]"],
+    [class*="bg-[#151e36]"],
+    [class*="bg-[#16223F]"],
+    [class*="bg-[#131d38]"],
+    [class*="bg-[#192444]"],
+    [class*="bg-[#101b32]"],
+    [class*="bg-[#0F1730]"],
+    [class*="bg-[#0A1024]"],
+    [class*="bg-[#101a30]"]
+  ) {
+  background-color: var(--dc-panel);
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"]
+  :is([class*="bg-slate-9"], [class*="bg-slate-8"], [class*="bg-slate-7"]) {
+  background-color: #c9d5c6;
+}
+html[data-dc-theme="light"]
+  :is(.text-white, [class*="text-slate-"], [class*="text-gray-"]) {
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"]
+  :is(
+    [class*="text-sky-"],
+    [class*="text-blue-"],
+    [class*="text-emerald-"],
+    [class*="text-violet-"],
+    [class*="text-purple-"]
+  ) {
+  color: #365c4e;
+}
+html[data-dc-theme="light"]
+  :is([class*="border-slate-"], [class*="border-gray-"]) {
+  border-color: var(--dc-line);
+}
+html[data-dc-theme="light"] :is(input, textarea)::placeholder {
+  color: #5c7162;
+  opacity: 1;
+}
+html[data-dc-theme="light"]
+  :is(input, select, textarea):not([type="color"]):not([type="checkbox"]):not(
+    [type="range"]
+  ) {
+  color-scheme: light;
+}
+html[data-dc-theme="light"]
+  :is(
+    [class*="bg-sky-5"],
+    [class*="bg-sky-6"],
+    [class*="bg-blue-5"],
+    [class*="bg-blue-6"],
+    [class*="bg-emerald-5"]
+  ) {
+  background-color: #b4cdbb;
+  color: #243f30;
+}
+html[data-dc-theme="light"] .dc-canvas-workspace {
+  background-color: #bac8b8;
+}
+html[data-dc-theme="light"] :focus-visible {
+  outline-color: #426b50;
+}
+html[data-dc-theme="light"] .carton-editor-bar {
+  background: #cbd9c2;
+  color: #35533c;
+}
+html[data-dc-theme="light"] .carton-editor-bar button {
+  background: #e2e9d8;
+  color: #294832;
+  border-color: #809d76;
+}
+html[data-dc-theme="light"] :is(.carton-resize-dialog, .carton-3d-dialog) {
+  background: #dfe5d7;
+  color: var(--dc-ink);
+  border-color: var(--dc-line);
+}
+html[data-dc-theme="light"] .carton-resize-dialog :is(input, button) {
+  background: #edf0e5;
+  color: var(--dc-ink);
+  border-color: var(--dc-line);
+}
+html[data-dc-theme="light"] .carton-resize-dialog p {
+  color: var(--dc-muted);
+}
+html[data-dc-theme="light"] .storage-workspace {
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"]
+  .storage-workspace
+  :is(
+    button,
+    a,
+    input,
+    select,
+    article,
+    .storage-library,
+    .storage-capacity,
+    .storage-protection,
+    .storage-local
+  ) {
+  background-color: #e0e7d8;
+  color: var(--dc-ink);
+  border-color: var(--dc-line);
+}
+html[data-dc-theme="light"] .storage-workspace :is(h1, h2, h3, strong) {
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"]
+  .storage-workspace
+  :is(
+    p,
+    small,
+    time,
+    .storage-eyebrow,
+    .storage-project-info,
+    .storage-overview span
+  ) {
+  color: var(--dc-muted);
+}
+html[data-dc-theme="light"] .packaging-studio .packaging-hero {
+  background: linear-gradient(115deg, #d5e2d2b8, #d4ded0ad 65%, #e1d9cbbd);
+}
+html[data-dc-theme="light"]
+  .packaging-studio
+  :is(.packaging-projects, .packaging-template) {
+  background-color: #e1e6d8c9;
+}
+.dc-theme-caption {
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .dc-theme-caption {
+    display: none;
+  }
+  .ut-site-nav [data-testid="designer-theme-toggle"] {
+    padding: 7px 9px;
+  }
+}
+html[data-dc-theme="light"] {
+  --dc-toolbar: #c9d6c4;
+  --dc-toolbar-item: #e1e7d7;
+  --dc-toolbar-muted: #4b6253;
+  --dc-toolbar-ink: #273e30;
+}
+html[data-dc-theme="light"] button[class*="bg-gradient-to-r"] {
+  background-image: linear-gradient(110deg, #b2cdb8, #d6d3bc);
+  color: var(--dc-ink);
+}
+html[data-dc-theme="light"] :is([class*="text-red-4"], [class*="text-rose-4"]) {
+  color: #a82f40;
+}
+html[data-dc-theme="light"]
+  :is([class*="text-amber-"], [class*="text-orange-"]) {
+  color: #855220;
+}
+html[data-dc-theme="light"] button:hover {
+  color: var(--dc-ink);
+}
+/* The dashboard hero/custom-size preview use gradient utilities, not panel fills. */
+html[data-dc-theme='light'] :is([class*='from-[#16223F]'],[class*='from-[#101A33]']) {
+  background-image: linear-gradient(120deg,#b7cdbb,#d2d1bc);
+}
+html[data-dc-theme='light'] .storage-workspace :is(.storage-capacity,.storage-protection,.storage-cleanup,.storage-project-card,.storage-library-tools label,.storage-project-details > span) {
+  background: #dce4d3;
+  color: var(--dc-ink);
+  border-color: var(--dc-line);
+}
+html[data-dc-theme='light'] .storage-workspace :is(.storage-project-title,.storage-cleanup h2,.storage-project-details,.storage-project-details > span) { color: var(--dc-ink); }
+html[data-dc-theme='light'] .carton-3d-dialog :is(header,.carton-3d-controls,button,select) {
+  background: #d7e2ce;
+  color: var(--dc-ink);
+  border-color: var(--dc-line);
+}
+html[data-dc-theme='light'] .carton-3d-dialog :is(label,header p) { color: var(--dc-muted); }
+/* All component styles consume these UI tokens, including responsive docks,
+   portal menus and dialogs. Dark mode retains each declaration's original fallback. */
+html[data-dc-theme='light'] {
+  --studio-ui-surface: #dce3d4;
+  --studio-ui-glass: #dce3d4ed;
+  --studio-ui-ink: #263e36;
+  --studio-ui-muted: #4b6358;
+  --studio-ui-line: #9bac98;
+}
+html[data-dc-theme='light'] { --dc-loading-background: #bdcbbd; --dc-loading-foreground: #263e36; }
+html[data-dc-theme='light'] input[type='range']::-webkit-slider-runnable-track { background: #91a88f; border-radius: 999px; }
+html[data-dc-theme='light'] input[type='range']::-moz-range-track { background: #91a88f; border-radius: 999px; }

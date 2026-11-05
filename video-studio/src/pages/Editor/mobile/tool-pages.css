@@ -23,8 +23,8 @@
     min-height: 0;
     gap: 5px;
     padding: 0 6px env(safe-area-inset-bottom);
-    background: #1b1b1b;
-    border-top: 1px solid #303030;
+    background: var(--studio-ui-surface, #1b1b1b);
+    border-top: 1px solid var(--studio-ui-line, #303030);
     z-index: 12;
   }
   .editor-shell .mobile-tool-page-footer > button:not(.studio-select) {
@@ -35,12 +35,12 @@
     height: 42px;
     min-height: 42px;
     padding: 0;
-    color: #ddd;
+    color: var(--studio-ui-ink, #ddd);
     border-radius: 4px;
   }
   .editor-shell .mobile-tool-page-footer > button:first-child {
-    border-inline-end: 1px solid #373737;
-    background: #242424;
+    border-inline-end: 1px solid var(--studio-ui-line, #373737);
+    background: var(--studio-ui-surface, #242424);
   }
   .editor-shell .mobile-tool-page-footer > .studio-select {
     flex: 1;

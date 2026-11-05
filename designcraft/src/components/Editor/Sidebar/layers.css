@@ -24,7 +24,7 @@
   touch-action: pan-y;
 }
 .dc-layer-card [aria-pressed='true'] {
-  color: #7dd3fc;
+  color: var(--studio-night-accent-ink, #7dd3fc);
 }
 @media (pointer: coarse) {
   .dc-layer-card > div:first-child,

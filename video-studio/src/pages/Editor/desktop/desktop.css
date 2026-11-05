@@ -11,7 +11,7 @@
     --panel: #202020;
     --line: #ffffff12;
     min-height: 0;
-    background: #101010;
+    background: var(--studio-ui-surface, #101010);
     padding: 0 6px 6px;
     gap: 6px;
     overflow: hidden;
@@ -21,7 +21,7 @@
     height: 46px;
     min-height: 46px;
     padding: 0 10px;
-    background: #101010;
+    background: var(--studio-ui-surface, #101010);
     border: 0;
     gap: 12px;
   }
@@ -43,8 +43,8 @@
   .editor-brand .brand-icon {
     width: 26px;
     height: 26px;
-    background: #242424;
-    color: #eee;
+    background: var(--studio-ui-surface, #242424);
+    color: var(--studio-ui-ink, #eee);
   }
   .editor-actions {
     direction: rtl;
@@ -88,7 +88,7 @@
     align-items: stretch;
     gap: 1px;
     padding: 3px 6px 0;
-    background: #242424;
+    background: var(--studio-ui-surface, #242424);
     border: 0;
     border-bottom: 1px solid var(--line);
     border-radius: 7px 7px 0 0;
@@ -101,7 +101,7 @@
     height: 53px;
     gap: 5px;
     border-radius: 4px;
-    color: #b5b5b5;
+    color: var(--studio-ui-muted, #b5b5b5);
     font-size: 9px;
     position: relative;
   }
@@ -111,7 +111,7 @@
   }
   .tool-rail > button.active {
     color: var(--mint);
-    background: #22c5ce0a;
+    background: var(--studio-night-accent-wash, #22c5ce0a);
   }
   .tool-rail > button.active::after {
     content: "";
@@ -135,7 +135,7 @@
     min-height: 0;
     padding: 14px;
     border: 0;
-    background: #202020;
+    background: var(--studio-ui-surface, #202020);
     border-radius: 0 0 7px 7px;
     overflow: auto;
   }
@@ -148,14 +148,14 @@
     direction: rtl;
     min-width: 0;
     min-height: 0;
-    background: #181818;
+    background: var(--studio-ui-surface, #181818);
     border-radius: 7px;
     overflow: hidden;
   }
   .workspace-tools {
     padding: 5px 10px;
     min-height: 42px;
-    background: #242424;
+    background: var(--studio-ui-surface, #242424);
   }
   .workspace-tools .text-button {
     font-size: 10px;
@@ -166,7 +166,7 @@
   }
   .preview-title {
     margin-bottom: 8px;
-    color: #b6b6b6;
+    color: var(--studio-ui-muted, #b6b6b6);
   }
   .canvas-stage {
     background: #141414;
@@ -178,13 +178,13 @@
     padding: 5px 8px;
     font-size: 10px;
     border-radius: 5px;
-    background: #242424;
-    border-color: #ffffff18;
+    background: var(--studio-ui-surface, #242424);
+    border-color: var(--studio-ui-line, #ffffff18);
   }
   .preview-edit-toolbar > button[aria-pressed="true"] {
-    background: #22c5ce16;
-    color: #5bdae1;
-    border-color: #22c5ce77;
+    background: var(--studio-night-accent-wash, #22c5ce16);
+    color: var(--studio-night-accent-ink, #5bdae1);
+    border-color: var(--studio-night-accent-line, #22c5ce77);
   }
   .preview-edit-hint {
     font-size: 9px;
@@ -203,7 +203,7 @@
     min-width: 0;
     min-height: 0;
     padding: 16px;
-    background: #242424;
+    background: var(--studio-ui-surface, #242424);
     border: 0;
     border-radius: 7px;
     overflow: auto;
@@ -244,36 +244,36 @@
     direction: rtl;
     border: 0;
     border-radius: 7px;
-    background: #202020;
+    background: var(--studio-ui-surface, #202020);
     flex-shrink: 0;
     max-height: 48dvh;
     min-height: 190px;
     overflow: hidden;
   }
   .timeline .timeline-toolbar {
-    background: #242424;
+    background: var(--studio-ui-surface, #242424);
     border-color: var(--line);
   }
   .timeline .timeline-resize {
     height: 7px;
-    background: #151515;
+    background: var(--studio-ui-surface, #151515);
   }
   .timeline .timeline-resize i {
-    background: #555;
+    background: var(--studio-ui-surface, #555);
   }
   .timeline .timeline-meta {
-    background: #202020;
+    background: var(--studio-ui-surface, #202020);
   }
   .timeline .timeline-scroll,
   .timeline .track-labels {
-    background-color: #202020;
+    background-color: var(--studio-ui-surface, #202020);
   }
   .editor-shell :is(.library-panel, .inspector, .timeline-scroll) {
     scrollbar-width: thin;
     scrollbar-color: #555 transparent;
   }
   .editor-shell .primary:hover {
-    background: #51d6dd;
+    background: var(--studio-night-accent-fill, #51d6dd);
   }
 }
 @media (min-width: 651px) and (max-width: 1100px) and (pointer: fine),

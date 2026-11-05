@@ -56,7 +56,7 @@ onBeforeUnmount(() => window.removeEventListener('pointerdown', onOutside))
 <template>
   <div ref="root" class="relative" @keydown.esc="open = false">
     <div
-      class="flex overflow-hidden rounded-xl bg-[var(--ink)] text-[var(--paper)] shadow-sm transition"
+      class="unitool-svg-primary flex overflow-hidden rounded-xl bg-[var(--ink)] text-[var(--paper)] shadow-sm transition"
       :class="occupe && 'opacity-60'"
     >
       <button

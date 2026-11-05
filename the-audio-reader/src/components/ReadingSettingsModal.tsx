@@ -58,7 +58,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
     {
       id: "dark",
       label: t.themeDark,
-      bg: "bg-slate-950",
+      bg: "bg-[#171717]",
       text: "text-slate-100",
       border: "border-slate-800",
     },
@@ -72,15 +72,15 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
     {
       id: "sepia",
       label: t.themeSepia,
-      bg: "bg-[#141210]",
-      text: "text-[#f0e6d2]",
+      bg: "bg-[#fbf4e6]",
+      text: "text-[#4a3c2b]",
       border: "border-[#362e28]",
     },
     {
       id: "light",
       label: t.themeLight,
-      bg: "bg-[#031e17]",
-      text: "text-[#e6f4f1]",
+      bg: "bg-white",
+      text: "text-[#243d31]",
       border: "border-[#0f4d3d]",
     },
   ];
@@ -140,6 +140,8 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               {themeOptions.map((th) => (
                 <button
                   key={th.id}
+                  aria-label={th.label}
+                  aria-pressed={settings.theme === th.id}
                   onClick={() => onUpdateSettings({ theme: th.id })}
                   className={`flex flex-col items-center justify-between rounded-2xl border p-3 text-center transition ${
                     settings.theme === th.id

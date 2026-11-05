@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useToolsAppearance } from './hooks/useToolsAppearance';
 import { useEffect, useRef, useState } from 'react';
 
 import type { FileHandoff, FileHandoffTarget, PageId } from './types/app';
@@ -27,6 +28,7 @@ const knownPageIds = new Set([
 ]);
 
 export default function App() {
+  const { theme, toggleTheme } = useToolsAppearance();
   // Deep-link support: /app.html#<toolId> opens that tool directly
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     const hashId = window.location.hash.replace('#', '').trim();
@@ -35,9 +37,9 @@ export default function App() {
   const [fileHandoff, setFileHandoff] = useState<FileHandoff | null>(null);
   const fileHandoffId = useRef(0);
   const [lang, setLang] = useState<'ar' | 'en'>(() => {
-    const shared = localStorage.getItem('unitool-lang');
-    if (shared === 'ar' || shared === 'en') return shared;
-    return 'ar';
+    try {
+      return localStorage.getItem('unitool-lang') === 'en' ? 'en' : 'ar';
+    } catch { return 'ar'; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [minDelayDone, setMinDelayDone] = useState(false);
@@ -68,7 +70,7 @@ export default function App() {
   const toggleLang = () => {
     setLang(prev => {
       const next = prev === 'ar' ? 'en' : 'ar';
-      localStorage.setItem('unitool-lang', next);
+      try { localStorage.setItem('unitool-lang', next); } catch { /* Keep the in-memory choice. */ }
       return next;
     });
   };
@@ -109,8 +111,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="tools-app-shell flex flex-col h-screen bg-[#0F1115] text-[#D1D5DB] font-sans selection:bg-blue-500/30 overflow-hidden pt-14" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <Header
+        theme={theme}
+        onToggleTheme={toggleTheme}
         lang={lang}
         onToggleLang={toggleLang}
         onOpenMobileMenu={() => setMobileMenuOpen(true)}

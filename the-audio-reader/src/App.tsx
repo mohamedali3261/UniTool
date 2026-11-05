@@ -1,3 +1,4 @@
+import { useDocumentAppearance } from '../../src/hooks/useSiteAppearance';
 import React, {
   useState,
   useEffect,
@@ -52,9 +53,12 @@ export default function App() {
   const [settings, setSettings] = useState<ReaderSettings>(() =>
     loadSettings(),
   );
+  useDocumentAppearance(settings.theme === 'light' ? 'light' : 'dark', 'reader');
   const [uiLang, setUiLang] = useState<UILanguage>(() => {
-    const shared = localStorage.getItem("unitool-lang");
-    if (shared === "ar" || shared === "en") return shared;
+    try {
+      const shared = localStorage.getItem("unitool-lang");
+      if (shared === "ar" || shared === "en") return shared;
+    } catch { /* In-memory fallback. */ }
     return settings.uiLanguage || "ar";
   });
   const t = getTranslation(uiLang);
@@ -229,7 +233,7 @@ export default function App() {
   const handleToggleLang = useCallback(() => {
     const nextLang: UILanguage = uiLang === "ar" ? "en" : "ar";
     setUiLang(nextLang);
-    localStorage.setItem("unitool-lang", nextLang);
+    try { localStorage.setItem("unitool-lang", nextLang); } catch { /* In-memory fallback. */ }
     handleUpdateSettings({ uiLanguage: nextLang });
   }, [uiLang, handleUpdateSettings]);
 
@@ -1098,6 +1102,7 @@ export default function App() {
         onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
         onOpenVoiceSelector={() => setIsVoiceModalOpen(true)}
         onResetBook={handleResetBook}
+        onToggleAppearance={() => handleUpdateSettings({theme: settings.theme === "light" ? "dark" : "light"})}
         currentTheme={settings.theme}
         onToggleTheme={handleToggleTheme}
         onToggleMobileDrawer={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}

@@ -1,3 +1,4 @@
+import {useDesignerTheme} from './hooks/useDesignerTheme';
 import { enqueueToast } from './utils/toastQueue';
 import {ProjectImport} from './components/Common/ProjectImport';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -12,6 +13,7 @@ import { STORAGE_CHANGED_EVENT, type StorageChange } from './utils/projectStorag
 const OPEN_TABS_KEY = 'designcraft_open_tabs_v1';
 
 export default function App() {
+  const {theme}=useDesignerTheme();
   const [currentView, setCurrentView] = useState<'dashboard' | 'editor'>('dashboard');
   const [openTabs, setOpenTabs] = useState<ProjectItem[]>(() => {
     try {
@@ -210,7 +212,7 @@ export default function App() {
   };
 
   return (
-    <main dir={dir} className="min-h-screen bg-[#070D1E] text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <main dir={dir} className={`dc-studio-root min-h-screen bg-[#070D1E] text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white ${theme==='light'?'packaging-daylight':''}`} >
       {currentView === 'dashboard' && (
         <NewDesignScreen
           onSelectPreset={handleSelectPreset}

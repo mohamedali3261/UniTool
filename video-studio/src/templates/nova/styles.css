@@ -38,7 +38,7 @@
   z-index: 1;
 }
 .nova-features {
-  color: #6ee7f9;
+  color: var(--studio-night-accent-ink, #6ee7f9);
   font-size: 10px;
   padding: 12px 14px 0;
   line-height: 1.8;
@@ -50,13 +50,13 @@
   align-items: center;
   padding: 32px;
   margin: 24px 0;
-  border: 1px solid #6ee7f92b;
+  border: 1px solid var(--studio-night-accent-line, #6ee7f92b);
   border-radius: 18px;
   background:
-    radial-gradient(ellipse at 90% 0, #30234d66, transparent 55%), #0c111c;
+    radial-gradient(ellipse at 90% 0, #30234d66, transparent 55%), var(--studio-ui-surface, #0c111c);
 }
 .nova-eyebrow {
-  color: #6ee7f9;
+  color: var(--studio-night-accent-ink, #6ee7f9);
   font:
     10px Arial,
     sans-serif;
@@ -69,11 +69,11 @@
   font-weight: 700;
 }
 .nova-showcase h3 em {
-  color: #6ee7f9;
+  color: var(--studio-night-accent-ink, #6ee7f9);
   font-style: normal;
 }
 .nova-showcase p {
-  color: #a9b6cb;
+  color: var(--studio-ui-ink, #a9b6cb);
   font-size: 12px;
   line-height: 2;
 }
@@ -85,28 +85,28 @@
 }
 .nova-specs span {
   padding: 6px 9px;
-  border: 1px solid #ffffff14;
+  border: 1px solid var(--studio-ui-line, #ffffff14);
   border-radius: 5px;
   font-size: 10px;
-  color: #cad5e6;
+  color: var(--studio-ui-ink, #cad5e6);
 }
 .nova-showcase .primary {
-  background: #6ee7f9;
+  background: var(--studio-night-accent-fill, #6ee7f9);
   color: #0b1725;
 }
 .nova-showcase small {
   display: block;
-  color: #7f90aa;
+  color: var(--studio-ui-muted, #7f90aa);
   line-height: 1.9;
   font-size: 10px;
   margin-top: 12px;
 }
 .nova-demo {
   min-width: 0;
-  border: 1px solid #ffffff12;
+  border: 1px solid var(--studio-ui-line, #ffffff12);
   border-radius: 10px;
   overflow: hidden;
-  background: #080d17;
+  background: var(--studio-ui-surface, #080d17);
 }
 .nova-demo-frame {
   position: relative;
@@ -136,7 +136,7 @@
   text-shadow: 0 3px 18px #000;
 }
 .nova-demo-title span {
-  color: #6ee7f9;
+  color: var(--studio-night-accent-ink, #6ee7f9);
   font-size: clamp(11px, 1vw, 15px);
 }
 .nova-demo-controls {
@@ -148,18 +148,18 @@
   font-size: 10px;
 }
 .nova-demo-controls button {
-  color: #6ee7f9;
-  border: 1px solid #6ee7f940;
+  color: var(--studio-night-accent-ink, #6ee7f9);
+  border: 1px solid var(--studio-night-accent-line, #6ee7f940);
   padding: 9px;
   border-radius: 6px;
   white-space: nowrap;
 }
 .nova-demo-controls > span {
-  color: #73859d;
+  color: var(--studio-ui-muted, #73859d);
   font-size: 9px;
 }
 .nova-demo-controls time {
-  color: #a6b4c9;
+  color: var(--studio-ui-ink, #a6b4c9);
   font: 9px monospace;
   white-space: nowrap;
 }
@@ -172,10 +172,10 @@
   accent-color: #6ee7f9;
 }
 .nova-demo progress::-webkit-progress-bar {
-  background: #202d3d;
+  background: var(--studio-ui-surface, #202d3d);
 }
 .nova-demo progress::-webkit-progress-value {
-  background: #6ee7f9;
+  background: var(--studio-night-accent-fill, #6ee7f9);
 }
 .nova-demo > p {
   padding: 8px 12px;

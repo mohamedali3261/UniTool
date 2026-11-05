@@ -1,3 +1,4 @@
+import { useDocumentAppearance, SiteAppearanceToggle } from '../src/hooks/useSiteAppearance';
 import { SiteNavbar } from "../src/components/SiteNavbar";
 /** أوامر المشروع العامة، من غير نسخة منفصلة لحالة التصميم. */
 import {
@@ -5,18 +6,18 @@ import {
   Redo2,
   Save,
   Download,
-  Sun,
-  Moon,
   PanelLeftClose,
   PanelRightClose,
 } from "lucide-react";
 import { useDesigner } from "./state";
 export default function TopBar() {
   const s = useDesigner();
+  useDocumentAppearance(s.theme === "dark" ? "dark" : "light", "logo");
   return (
     <>
       <SiteNavbar
         lang={s.lang}
+        actions={<SiteAppearanceToggle theme={s.theme === "dark" ? "dark" : "light"} onToggle={() => s.setTheme(s.theme === "dark" ? "light" : "dark")} lang={s.lang}/>}
         onToggleLang={() => s.setLang(s.lang === "ar" ? "en" : "ar")}
       />
       <header className="ld-topbar">
@@ -60,12 +61,7 @@ export default function TopBar() {
           >
             <Save size={18} />
           </button>
-          <button
-            aria-label={s.t("تبديل المظهر", "Toggle theme")}
-            onClick={() => s.setTheme(s.theme === "dark" ? "light" : "dark")}
-          >
-            {s.theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+
           <button
             aria-label={s.t("طي مكتبة الأدوات", "Toggle library")}
             onClick={() => {

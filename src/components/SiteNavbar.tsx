@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Menu, X, Globe, ArrowUpLeft, ChevronDown } from "lucide-react";
-import { sitePages } from "../config/sitePages";
+import { navbarSections, isCurrentSitePage } from "./navbarSections";
 import "./site-navbar.css";
 export function SiteNavbar({
   lang: controlled,
@@ -27,6 +27,7 @@ export function SiteNavbar({
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLElement>(null),
     trigger = useRef<HTMLButtonElement>(null);
+  const groupId = useId();
   const id = home ? "home-mobile-nav" : "site-mobile-nav";
   useEffect(() => {
     const escape = (e: KeyboardEvent) => {
@@ -35,8 +36,10 @@ export function SiteNavbar({
         root.current
           ?.querySelectorAll("details[open]")
           .forEach((d) => d.removeAttribute("open"));
-        if (root.current?.contains(document.activeElement))
-          trigger.current?.focus();
+        if (root.current?.contains(document.activeElement)) {
+          if (window.innerWidth < 960) trigger.current?.focus();
+          else root.current?.querySelector<HTMLElement>('summary')?.focus();
+        }
       }
     };
     const outside = (e: PointerEvent) => {
@@ -47,18 +50,51 @@ export function SiteNavbar({
           .forEach((d) => d.removeAttribute("open"));
       }
     };
+    const focusOutside = (e: FocusEvent) => {
+      if (!root.current?.contains(e.target as Node)) {
+        setOpen(false);
+        root.current?.querySelectorAll('details[open]').forEach(detail => detail.removeAttribute('open'));
+      }
+    };
     const resize = () => {
       if (window.innerWidth >= 960) setOpen(false);
     };
     document.addEventListener("keydown", escape);
     document.addEventListener("pointerdown", outside);
+    document.addEventListener("focusin", focusOutside);
     window.addEventListener("resize", resize);
     return () => {
       document.removeEventListener("keydown", escape);
       document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("focusin", focusOutside);
       window.removeEventListener("resize", resize);
     };
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [open]);
+  const closeMenus = () => {
+    setOpen(false);
+    root.current?.querySelectorAll('details[open]').forEach(detail => detail.removeAttribute('open'));
+  };
+  const sections = (mobile: boolean) => navbarSections.map(group => (
+    <section className="ut-nav-group" key={group.id} aria-labelledby={`${groupId}-${mobile ? 'mobile' : 'desktop'}-${group.id}`}>
+      <h2 id={`${groupId}-${mobile ? 'mobile' : 'desktop'}-${group.id}`}>{group[lang]}</h2>
+      <div className="ut-nav-group-links">
+        {group.pages.map(page => (
+          <a key={page.href} href={page.href}
+            aria-current={isCurrentSitePage(page.href, location.pathname) ? 'page' : undefined}
+            onClick={closeMenus}>
+            <span className="ut-nav-link-icon"><page.icon size={16} aria-hidden="true" /></span>
+            <span>{page[lang]}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  ));
   const section = (hash: string) => (home ? hash : "/index.html" + hash);
   return (
     <header
@@ -79,31 +115,13 @@ export function SiteNavbar({
           className="ut-nav-desktop desktop-home-nav"
           aria-label={ar ? "التنقل الرئيسي" : "Main navigation"}
         >
-          <a href={section("#tools")}>{ar ? "الأدوات" : "Tools"}</a>
-          <a href={section("#studios")}>{ar ? "الاستوديوهات" : "Studios"}</a>
-          <a href="/video-studio.html#elements">
-            {ar ? "العناصر" : "Elements"}
-          </a>
-          <a href={section("#how")}>{ar ? "كيف يعمل" : "How it works"}</a>
+          <a href="/index.html" aria-current={isCurrentSitePage('/index.html', location.pathname) ? 'page' : undefined}>{ar ? 'الرئيسية' : 'Home'}</a>
+          <a href="/app.html" aria-current={isCurrentSitePage('/app.html', location.pathname) ? 'page' : undefined}>{ar ? 'الأدوات' : 'Tools'}</a>
           <details className="ut-nav-sections">
-            <summary>
-              {ar ? "كل الأقسام" : "All sections"}
-              <ChevronDown size={13} />
-            </summary>
-            <div>
-              {sitePages.map((p) => (
-                <a
-                  key={p.href}
-                  href={p.href}
-                  aria-current={
-                    location.pathname === p.href ? "page" : undefined
-                  }
-                >
-                  {p[lang]}
-                </a>
-              ))}
-            </div>
+            <summary>{ar ? 'كل الأقسام' : 'Workspaces'}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <div className="ut-nav-mega">{sections(false)}</div>
           </details>
+          <a className="ut-nav-help" href={section("#how")}>{ar ? 'كيف يعمل' : 'How it works'}</a>
         </nav>
         <div className="ut-nav-actions">
           {actions}
@@ -124,8 +142,8 @@ export function SiteNavbar({
             <Globe size={14} />
             {ar ? "EN" : "عربي"}
           </button>
-          <a className="ut-nav-start header-start" href={section("#studios")}>
-            {ar ? "ابدأ الآن" : "Get started"}
+          <a className="ut-nav-start header-start" href="/app.html">
+            {ar ? "ابدأ العمل" : "Get started"}
             <ArrowUpLeft size={15} />
           </a>
           <button
@@ -140,22 +158,19 @@ export function SiteNavbar({
           </button>
         </div>
       </div>
+      {open && <button type="button" className="ut-nav-backdrop" tabIndex={-1}
+        aria-label={ar ? 'إغلاق القائمة' : 'Close menu'} onClick={() => { closeMenus(); trigger.current?.focus(); }} />}
       {open && (
         <nav
           id={id}
           className="ut-nav-mobile home-mobile-nav"
           aria-label={ar ? "القائمة الرئيسية" : "Main menu"}
         >
-          {sitePages.map((p) => (
-            <a
-              key={p.href}
-              href={p.href}
-              aria-current={location.pathname === p.href ? "page" : undefined}
-              onClick={() => setOpen(false)}
-            >
-              {p[lang]}
-            </a>
-          ))}
+          <div className="ut-nav-mobile-heading">
+            <span>{ar ? 'مساحاتك في UniTool' : 'Your UniTool workspace'}</span>
+            <small>{ar ? 'اختار القسم وكمّل شغلك' : 'Pick a space. Keep creating.'}</small>
+          </div>
+          {sections(true)}
         </nav>
       )}
     </header>

@@ -13,9 +13,9 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 110;
-  background: #301e24;
+  background: var(--studio-ui-surface, #301e24);
   border: 1px solid #bf7676;
-  color: #ffded8;
+  color: var(--studio-ui-ink, #ffded8);
   padding: 12px;
   border-radius: 8px;
   width: min(540px, calc(100vw - 24px));

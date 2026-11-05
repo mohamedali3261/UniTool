@@ -54,7 +54,7 @@ export function ImageTools({ t, lang, onNavigate }: Props) {
   const featured = tools[0];
   const rest = tools.slice(1);
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div data-tools-catalog className="flex flex-col flex-1 overflow-hidden">
       <style>{`
         .img-tools-scroll {
           direction: ltr;

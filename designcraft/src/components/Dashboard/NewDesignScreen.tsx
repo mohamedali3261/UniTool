@@ -1,3 +1,4 @@
+import {DesignerThemeToggle} from '../Common/DesignerThemeToggle';
 import {isPackagingProject} from '../../packaging/projectScope';
 import { SiteNavbar } from '../../../../src/components/SiteNavbar';
 import {PackagingPage} from '../../packaging/PackagingPage';
@@ -234,8 +235,8 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   };
 
   return (
-    <div dir={dir} className={`min-h-screen bg-[#070D1E] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white antialiased ${activeTab === 'packaging' ? 'packaging-daylight' : ''}`} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
-      <SiteNavbar fixed lang={lang} onToggleLang={toggleLang}/>
+    <div dir={dir} className={`min-h-screen bg-[#070D1E] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white antialiased dc-dashboard`} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+      <SiteNavbar fixed lang={lang} onToggleLang={toggleLang} actions={<DesignerThemeToggle/>}/>
 
 
       {/* Body */}
