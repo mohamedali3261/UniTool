@@ -1,7 +1,12 @@
 import type { scrollChapters } from "./chapters";
 type Kind = (typeof scrollChapters)[number]["id"];
-/** Lightweight vector motion compositions. No image/video downloads or WebGL contexts. */
+
+/** Lightweight vector motion compositions. Surfaces follow day/night CSS tokens. */
 export function ChapterArt({ kind }: { kind: Kind }) {
+  const card = "var(--chapter-card, #eef4ee)",
+    alt = "var(--chapter-card-alt, #e2ece1)",
+    onFill = "var(--chapter-on-fill, #ffffff)",
+    contrast = "var(--chapter-contrast, #24795e)";
   return (
     <svg
       className={`journey-art art-${kind}`}
@@ -17,7 +22,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
           height="40"
           patternUnits="userSpaceOnUse"
         >
-          <path d="M40 0H0V40" stroke="currentColor" strokeOpacity=".08" />
+          <path d="M40 0H0V40" stroke="currentColor" strokeOpacity=".1" />
         </pattern>
       </defs>
       <rect width="800" height="580" fill={`url(#journey-grid-${kind})`} />
@@ -27,7 +32,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
         cy="290"
         r="225"
         stroke="currentColor"
-        strokeOpacity=".2"
+        strokeOpacity=".25"
         strokeDasharray="3 12"
       />
       {kind === "tools" && (
@@ -44,7 +49,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               <path
                 d={`M${x} ${y}L400 290`}
                 stroke="currentColor"
-                strokeOpacity=".25"
+                strokeOpacity=".3"
                 strokeDasharray="5 8"
               />
               <rect
@@ -53,8 +58,9 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 width="96"
                 height="68"
                 rx="18"
-                fill="#192620"
+                fill={card}
                 stroke="currentColor"
+                strokeWidth="1.8"
               />
               <text
                 x={x}
@@ -78,7 +84,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             />
             <path
               d="M360 255V305Q400 350 440 305V255"
-              stroke="#142019"
+              stroke={onFill}
               strokeWidth="22"
               strokeLinecap="round"
             />
@@ -99,7 +105,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 width="260"
                 height="350"
                 rx="15"
-                fill={i === 2 ? "#f3e7d6" : "#322b27"}
+                fill={i === 2 ? "#f9f1e4" : i === 1 ? alt : card}
                 stroke="currentColor"
                 strokeWidth="2"
               />
@@ -130,7 +136,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                     width="165"
                     height="24"
                     fill="currentColor"
-                    fillOpacity=".45"
+                    fillOpacity=".32"
                   />
                 </>
               )}
@@ -148,11 +154,11 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             <text
               x="605"
               y="393"
-              fill="#30251e"
+              fill={onFill}
               textAnchor="middle"
               fontSize="28"
             >
-              PDF
+              ZIP
             </text>
           </g>
         </>
@@ -166,16 +172,16 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="560"
               height="340"
               rx="20"
-              fill="#172b23"
+              fill={card}
               stroke="currentColor"
-              strokeOpacity=".4"
+              strokeOpacity=".45"
             />
             {Array.from({ length: 7 }, (_, i) => (
               <path
                 key={i}
                 d={`M140 ${180 + i * 42}H660`}
                 stroke="currentColor"
-                strokeOpacity=".17"
+                strokeOpacity=".2"
               />
             ))}
             {Array.from({ length: 9 }, (_, i) => (
@@ -183,7 +189,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 key={i}
                 d={`M${150 + i * 60} 155V450`}
                 stroke="currentColor"
-                strokeOpacity=".17"
+                strokeOpacity=".2"
               />
             ))}
             {[80, 135, 180, 245, 210].map((h, i) => (
@@ -196,7 +202,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 height={h}
                 rx="7"
                 fill="currentColor"
-                opacity={0.45 + i * 0.12}
+                opacity={0.48 + i * 0.12}
                 style={{ transformOrigin: `${227 + i * 78}px 440px` }}
               />
             ))}
@@ -213,7 +219,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             <text
               x="315"
               y="117"
-              fill="#142c20"
+              fill={onFill}
               textAnchor="middle"
               fontSize="26"
             >
@@ -231,7 +237,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="450"
               height="420"
               rx="22"
-              fill="#272238"
+              fill={card}
               stroke="currentColor"
               strokeOpacity=".5"
             />
@@ -240,14 +246,14 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               y="115"
               width="390"
               height="360"
-              rx="5"
-              fill="#d6cced"
+              rx="8"
+              fill="#eae3f8"
             />
-            <circle cx="470" cy="240" r="100" fill="#9580cd" />
+            <circle cx="470" cy="240" r="100" fill="#a894dc" />
             <path
               className="design-petal"
               d="M300 170Q440 290 300 420Q160 290 300 170Z"
-              fill="#4e367c"
+              fill="#5d4294"
             />
             <text
               x="395"
@@ -255,7 +261,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               textAnchor="middle"
               fontSize="70"
               fontWeight="800"
-              fill="#1e1733"
+              fill="#23193b"
             >
               CREATE
             </text>
@@ -280,7 +286,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             y="235"
             width="315"
             height="120"
-            stroke="#fff"
+            stroke="#5d4294"
             strokeWidth="2"
             strokeDasharray="1"
           />
@@ -295,15 +301,16 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="310"
               height="200"
               rx="18"
-              fill="#204844"
+              fill={alt}
               stroke="currentColor"
+              strokeWidth="1.8"
             />
             <circle
               cx="255"
               cy="210"
               r="50"
               fill="currentColor"
-              fillOpacity=".3"
+              fillOpacity=".26"
             />
           </g>
           <g className="video-frame fly-piece piece-1">
@@ -313,8 +320,9 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="320"
               height="210"
               rx="18"
-              fill="#122d2c"
+              fill={card}
               stroke="currentColor"
+              strokeWidth="1.8"
             />
             <path d="M495 230L555 270L495 310Z" fill="currentColor" />
           </g>
@@ -325,7 +333,9 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="560"
               height="90"
               rx="15"
-              fill="#1c3030"
+              fill={alt}
+              stroke="currentColor"
+              strokeOpacity=".35"
             />
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <rect
@@ -336,7 +346,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 height="23"
                 rx="5"
                 fill="currentColor"
-                fillOpacity={i % 2 ? 0.75 : 0.35}
+                fillOpacity={i % 2 ? 0.78 : 0.4}
               />
             ))}
             <path
@@ -348,7 +358,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             <path
               className="scene-playhead"
               d="M200 390V500"
-              stroke="#fff"
+              stroke={contrast}
               strokeWidth="3"
             />
           </g>
@@ -360,7 +370,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
             d="M155 400C175 30 650 550 640 150"
             stroke="currentColor"
             strokeWidth="75"
-            strokeOpacity=".08"
+            strokeOpacity=".1"
           />
           <path
             className="draw-path"
@@ -374,7 +384,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
           <path
             d="M155 400L175 100M640 150L650 460"
             stroke="currentColor"
-            strokeOpacity=".4"
+            strokeOpacity=".45"
           />
           {[
             [155, 400],
@@ -388,7 +398,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
                 y={y - 12}
                 width="24"
                 height="24"
-                fill={i % 2 ? "#233027" : "currentColor"}
+                fill={i % 2 ? card : "currentColor"}
                 stroke="currentColor"
                 strokeWidth="3"
               />
@@ -401,8 +411,9 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="210"
               height="80"
               rx="18"
-              fill="#2f2b1e"
+              fill={card}
               stroke="currentColor"
+              strokeWidth="2"
             />
             <text
               x="400"
@@ -430,14 +441,14 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               fill="currentColor"
               fillOpacity=".5"
             />
-            <circle cx="405" cy="265" r="58" fill="#201b24" />
+            <circle cx="405" cy="265" r="58" fill={card} />
           </g>
           <path
             className="draw-path"
             pathLength="1"
             d="M220 100H590V440H220Z"
             stroke="currentColor"
-            strokeOpacity=".3"
+            strokeOpacity=".35"
             strokeDasharray="1"
           />
           <text
@@ -461,16 +472,16 @@ export function ChapterArt({ kind }: { kind: Kind }) {
               width="300"
               height="365"
               rx="20"
-              fill="#202b40"
+              fill={card}
               stroke="currentColor"
-              strokeOpacity=".4"
+              strokeOpacity=".45"
             />
             {[0, 1, 2, 3, 4, 5, 6].map((i) => (
               <path
                 key={i}
                 d={`M175 ${165 + i * 38}H${i % 3 === 0 ? 340 : 390}`}
                 stroke="currentColor"
-                strokeOpacity={0.2 + i * 0.08}
+                strokeOpacity={0.28 + i * 0.08}
                 strokeWidth="8"
                 strokeLinecap="round"
               />
@@ -496,7 +507,7 @@ export function ChapterArt({ kind }: { kind: Kind }) {
           </g>
           <g className="scene-badge">
             <circle cx="600" cy="440" r="40" fill="currentColor" />
-            <path d="M590 420L620 440L590 460Z" fill="#1d2941" />
+            <path d="M590 420L620 440L590 460Z" fill={onFill} />
           </g>
         </>
       )}

@@ -1,3 +1,5 @@
+import { syncMotionVersions } from "./motion-versions";
+import { MotionTemplates } from "./Motion";
 import { latestLayouts } from "./collection-2026";
 /** كل معاينة مبنية بنفس مرسم اللوحة، وكل قالب يظل قابلًا للتعديل. */
 import { useMemo, useState } from "react";
@@ -54,6 +56,7 @@ export default function Templates() {
           placeholder={s.t("اسم علامتك…", "Your brand…")}
         />
       </label>
+      <MotionTemplates brand={brand} />
       <label className="ld-search">
         <Search size={17} />
         <input
@@ -121,7 +124,16 @@ export default function Templates() {
               )
                 return;
               const p = templateProject(t, s.lang, brand.trim() || undefined);
-              s.commit((old) => ({ ...p, id: old.id }));
+              s.commit((old) => ({
+                ...p,
+                id: old.id,
+                ...(old.motionVersions
+                  ? {
+                      motionVersions: syncMotionVersions(old),
+                      activeMotionVersion: old.activeMotionVersion,
+                    }
+                  : {}),
+              }));
               s.setSelected([]);
             }}
           >

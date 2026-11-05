@@ -1,3 +1,4 @@
+import type { FrameElement } from "./motion-tracks";
 import { renderToStaticMarkup } from "react-dom/server";
 import { symbolMap } from "./catalog";
 import type { Element, Project } from "./types";
@@ -7,7 +8,7 @@ export function ElementGraphic({
   prefix = "canvas",
   mono = false,
 }: {
-  n: Element;
+  n: FrameElement;
   prefix?: string;
   mono?: boolean;
 }) {
@@ -182,6 +183,40 @@ export function ElementGraphic({
       }
     }
   }
+  // Normalize every generated geometry to pathLength=1, including nested Lucide
+  // SVGs. Markup comes ONLY from our escaped React renderer, never user SVG input.
+  if (n.motionVisual?.draw !== undefined) {
+    const progress = n.motionVisual.draw;
+    const outline =
+      n.kind === "icon"
+        ? n.strokeWidth || 1.8
+        : n.kind === "vector"
+          ? n.strokeWidth || 2
+          : n.strokeWidth || Math.max(1, n.w * 0.012);
+    const escapeAttribute = (v: string) =>
+      v
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    const markup = renderToStaticMarkup(<>{shape}</>).replace(
+      /<(path|rect|ellipse|circle|polygon|polyline|line)\b([^>]*?)(\/?)>/g,
+      (_all, tag, attributes, closing) => {
+        const clean = attributes.replace(
+          /\s(?:pathLength|stroke|stroke-width|stroke-dasharray|stroke-dashoffset|fill-opacity)="[^"]*"/g,
+          "",
+        );
+        // Colors originate from validated six-digit colors or our generated gradient URL.
+        return `<${tag}${clean} pathLength="1" stroke="${escapeAttribute(mono ? "#111111" : fill)}" stroke-width="${outline}" stroke-dasharray="1" stroke-dashoffset="${1 - progress}" fill-opacity="${Math.max(0, (progress - 0.65) / 0.35)}" ${closing}>`;
+      },
+    );
+    shape = (
+      <g
+        data-motion-draw={progress}
+        dangerouslySetInnerHTML={{ __html: markup }}
+      />
+    );
+  }
   return (
     <g
       transform={`translate(${n.x} ${n.y}) rotate(${n.rotation}) scale(${n.flipX ? -1 : 1} ${n.flipY ? -1 : 1})`}
@@ -229,6 +264,39 @@ export function ElementGraphic({
         </filter>
       </defs>
       {shape}
+      {n.motionVisual?.shine !== undefined && (
+        <>
+          <defs>
+            <mask
+              id={`${id}-shine-mask`}
+              style={{ maskType: "alpha" }}
+              x={-n.w}
+              y={-n.h}
+              width={n.w * 2}
+              height={n.h * 2}
+              maskUnits="userSpaceOnUse"
+            >
+              {shape}
+            </mask>
+            <linearGradient id={`${id}-shine-gradient`}>
+              <stop stopColor="white" stopOpacity="0" />
+              <stop offset=".5" stopColor="white" stopOpacity=".8" />
+              <stop offset="1" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <g mask={`url(#${id}-shine-mask)`}>
+            <rect
+              data-motion-shine={n.motionVisual.shine}
+              x={-n.w * 0.2}
+              y={-n.h}
+              width={n.w * 0.4}
+              height={n.h * 2}
+              fill={`url(#${id}-shine-gradient)`}
+              transform={`translate(${(n.motionVisual.shine * 3 - 1.5) * n.w} 0) skewX(-18)`}
+            />
+          </g>
+        </>
+      )}
       {n.reflection && (
         <g mask={`url(#${id}-mask)`}>
           <g transform={`translate(0 ${n.h + 8}) scale(1 -1)`}>{shape}</g>

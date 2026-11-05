@@ -23,6 +23,7 @@ import { totalToolCount } from "../ToolsHome/data";
 import { copy, studios, type Language } from "./data";
 import {
   DesignArt,
+  SheetsArt,
   VideoArt,
   SvgArt,
   ReaderArt,
@@ -294,7 +295,11 @@ export default function HomePage() {
                   role="img"
                   aria-label={`${t.illustration}: ${s.name[lang]}`}
                 >
-                  {s.id === "storage" ? (<StorageArt lang={lang}/>) : s.id === "design" ? (
+                  {s.id === "storage" ? (
+                    <StorageArt lang={lang} />
+                  ) : s.id === "sheets" ? (
+                    <SheetsArt lang={lang} />
+                  ) : s.id === "design" ? (
                     <DesignArt lang={lang} />
                   ) : s.id === "video" ? (
                     <VideoArt />
