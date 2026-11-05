@@ -147,7 +147,7 @@ test("resize same editable artwork, undo/redo nominal geometry, preview, physica
   expect(svg).toContain(`height="${g.height}mm"`);
   await page.keyboard.press("Escape");
   await page.reload();
-  await page.getByRole("button", { name: /مشاريعي/ }).click();
+  await page.getByRole("button", { name: "تصميم العلب",exact:true }).click();
   await page.getByRole("heading", { name: "Resize QA", exact: true }).click();
   await expect(page.locator(".carton-editor-bar")).toContainText(
     "155 × 105 × 45 mm",

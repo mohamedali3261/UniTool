@@ -152,7 +152,7 @@ test("actual sheet artwork maps to all six faces, without horizontal mirroring",
     db.close();
   }, fixture);
   await page.reload();
-  await page.getByRole("button", { name: /مشاريعي/ }).click();
+  await page.getByRole("button", { name: "تصميم العلب",exact:true }).click();
   await page.getByRole("heading", { name: "3D QA", exact: true }).click();
   await preview(page);
   async function pixels(name: string) {

@@ -1,3 +1,4 @@
+import { hingedPieces } from "../hinged";
 import { cartonGeometry, type CartonSize } from "../geometry";
 export type Point2 = [number, number];
 export type CartonPiece = {
@@ -9,9 +10,14 @@ export type CartonPiece = {
   angle: number;
   polygon: Point2[];
   paperOrigin: Point2;
+  inset?: [number, number, number];
 };
 /** All coordinates are nominal millimetres. Paper Y runs down; model Y runs up. */
 export function cartonAssembly(size: CartonSize): CartonPiece[] {
+  if (size.construction === "hinged-lid") {
+    cartonGeometry(size);
+    return hingedPieces(size);
+  }
   const g = cartonGeometry(size),
     { width: w, height: h, depth: d, glue: gl, tuck: t } = size;
   const [f, r, b, l] = g.panels,
@@ -195,6 +201,12 @@ export function piecePose(
   const stage = foldStage(piece.role, Math.max(0, Math.min(1, progress))),
     position = [...piece.hinge] as [number, number, number];
   // Closure layers are displaced inward, never outside the nominal six exterior faces.
+  if (piece.inset) {
+    piece.inset.forEach(
+      (offset, i) => (position[i] += offset * thickness * stage),
+    );
+    return { position, rotation: piece.angle * stage };
+  }
   if (piece.role === "glue") position[0] += thickness * 1.2 * stage;
   if (piece.role === "dust")
     position[1] += (piece.angle < 0 ? -1 : 1) * thickness * 1.2 * stage;

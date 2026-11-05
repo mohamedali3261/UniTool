@@ -60,7 +60,7 @@ test("native carton metadata survives reopening the designer", async ({
   expect(saved.canvasData.objects).toHaveLength(13);
   expect(saved.packaging.size.width).toBe(80);
   await page.reload();
-  await page.getByRole("button", { name: /مشاريعي/ }).click();
+  await page.getByRole("button", { name: "تصميم العلب",exact:true }).click();
   await page
     .getByRole("heading", { name: "علبة تجريبية", exact: true })
     .click();
@@ -195,7 +195,7 @@ test("print downloads preserve full artwork, silhouette, DPI and actual physical
   // Native project fixture: a full-sheet background, deliberately extending beyond every cut edge.
   await setStoredBackground(page, "Print QA", "#ef2345");
   await page.reload();
-  await page.getByRole("button", { name: /مشاريعي/ }).click();
+  await page.getByRole("button", { name: "تصميم العلب",exact:true }).click();
   await page.getByRole("heading", { name: "Print QA", exact: true }).click();
   await expect(page.locator("#editor-layout")).toBeVisible();
   await page

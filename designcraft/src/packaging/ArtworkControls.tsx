@@ -36,6 +36,7 @@ export function ArtworkControls({
               onChange({
                 ...value,
                 style: key as keyof typeof ART_STYLES,
+                stock: undefined,
                 accent: t.accent,
                 product:
                   value.descriptor === undefined ? t.product : value.product,

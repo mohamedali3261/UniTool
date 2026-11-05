@@ -54,7 +54,11 @@ export function createCartonProject(
     height: g.height * s,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    packaging: { kind: "reverse-tuck", size: { ...size }, version: 1 },
+    packaging: {
+      kind: size.construction === "hinged-lid" ? "hinged-lid" : "reverse-tuck",
+      size: { ...size },
+      version: 1,
+    },
     canvasData: {
       version: fabric.version,
       background: "#FFFFFF",

@@ -28,7 +28,10 @@ export function CartonResizeDialog({
   const adjusted = {
       ...value,
       glue: Math.min(size.glue, 30, value.width * 0.4),
-      tuck: Math.min(size.tuck, 30, value.depth * 0.6, value.width * 0.25),
+      tuck:
+        size.construction === "hinged-lid"
+          ? Math.min(size.tuck, 30, value.height * 0.7)
+          : Math.min(size.tuck, 30, value.depth * 0.6, value.width * 0.25),
     },
     invalid = cartonError(adjusted);
   return (
@@ -68,9 +71,27 @@ export function CartonResizeDialog({
         <div className="carton-resize-fields">
           {(
             [
-              ["height", "طول العلبة", "Carton length", 30, 500],
-              ["width", "عرض العلبة", "Carton width", 20, 300],
-              ["depth", "عمق العلبة", "Carton depth", 10, 150],
+              [
+                "height",
+                size.construction ? "ارتفاع العلبة" : "طول العلبة",
+                size.construction ? "Carton height" : "Carton length",
+                size.construction ? 20 : 30,
+                size.construction ? 150 : 500,
+              ],
+              [
+                "width",
+                "عرض العلبة",
+                "Carton width",
+                size.construction ? 100 : 20,
+                size.construction ? 650 : 300,
+              ],
+              [
+                "depth",
+                size.construction ? "طول القاعدة" : "عمق العلبة",
+                size.construction ? "Base length" : "Carton depth",
+                size.construction ? 100 : 10,
+                size.construction ? 650 : 150,
+              ],
             ] as const
           ).map(([key, arabic, english, min, max]) => (
             <label key={key}>

@@ -198,3 +198,112 @@ export const CARTON_PRESETS: CartonPreset[] = [
     "MADE FOR YOU",
   ),
 ];
+
+export type PackagingFamily = "all" | "carton" | "pizza" | "bakery" | "mailer";
+export const BOX_FAMILIES = [
+  ["all", "كل العلب", "All boxes"],
+  ["carton", "علب المنتجات", "Product cartons"],
+  ["pizza", "علب البيتزا", "Pizza boxes"],
+  ["bakery", "علب المخبوزات", "Bakery boxes"],
+  ["mailer", "غطاء متصل", "Hinged mailers"],
+] as const;
+const hingedPreset = (
+  family: "pizza" | "bakery" | "mailer",
+  id: string,
+  ar: string,
+  en: string,
+  width: number,
+  depth: number,
+  height: number,
+): CartonPreset => ({
+  id,
+  ar,
+  en,
+  category: "wide",
+  size: {
+    construction: "hinged-lid",
+    family,
+    width,
+    depth,
+    height,
+    glue: 12,
+    tuck: Math.min(20, height * 0.5),
+  },
+  artwork: {
+    style: "noir",
+    stock: "kraft",
+    brand:
+      family === "pizza" ? "FORNO" : family === "bakery" ? "BAKED" : "PARCEL",
+    product:
+      family === "pizza"
+        ? "WOOD FIRED PIZZA"
+        : family === "bakery"
+          ? "FRESHLY BAKED"
+          : "PACKED WITH CARE",
+    descriptor: "YOUR BRAND · YOUR DESIGN",
+    quantity: "MADE WITH CARE",
+    accent:
+      family === "pizza"
+        ? "#913627"
+        : family === "bakery"
+          ? "#503528"
+          : "#293f35",
+    ml: 50,
+  },
+});
+export const HINGED_PRESETS: CartonPreset[] = [
+  ...[6, 8, 10, 12, 14, 16, 18, 20, 24].map((inches) =>
+    hingedPreset(
+      "pizza",
+      "pizza-" + inches,
+      `بيتزا ${inches} بوصة`,
+      `Pizza ${inches} inch`,
+      Number((inches * 25.4).toFixed(2)),
+      Number((inches * 25.4).toFixed(2)),
+      inches <= 8 ? 35 : inches <= 14 ? 40 : 50,
+    ),
+  ),
+  ...[150, 200, 250, 300].map((mm, i) =>
+    hingedPreset(
+      "bakery",
+      "bakery-" + mm,
+      `مخبوزات ${mm} مم`,
+      `Bakery ${mm} mm`,
+      mm,
+      mm,
+      [60, 80, 100, 100][i],
+    ),
+  ),
+  hingedPreset(
+    "mailer",
+    "mailer-small",
+    "غطاء متصل صغير",
+    "Small hinged mailer",
+    180,
+    120,
+    40,
+  ),
+  hingedPreset(
+    "mailer",
+    "mailer-medium",
+    "غطاء متصل متوسط",
+    "Medium hinged mailer",
+    250,
+    180,
+    60,
+  ),
+  hingedPreset(
+    "mailer",
+    "mailer-large",
+    "غطاء متصل كبير",
+    "Large hinged mailer",
+    350,
+    250,
+    80,
+  ),
+];
+export const ALL_BOX_PRESETS = [...CARTON_PRESETS, ...HINGED_PRESETS];
+export const boxFamily = (
+  size?: CartonSize,
+): Exclude<PackagingFamily, "all"> =>
+  size?.construction === "hinged-lid" ? size.family || "mailer" : "carton";

@@ -11,6 +11,8 @@ test("dedicated studio supports direct URL, real preset filters, navigation hist
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await studio(page);
+  await expect(page.locator("[data-carton-preset]")).toHaveCount(28);
+  await page.getByRole("button",{name:"علب المنتجات",exact:true}).click();
   await expect(page.locator("[data-carton-preset]")).toHaveCount(12);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.getByRole("button", { name: "عريض ومسطح", exact: true }).click();

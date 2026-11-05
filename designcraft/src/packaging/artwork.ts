@@ -1,3 +1,4 @@
+import { hingedArtwork } from "./hingedArtwork";
 import {
   cartonGeometry,
   cartonSvg,
@@ -39,6 +40,7 @@ export type ArtworkOptions = {
   descriptor?: string;
   quantity?: string;
   sideLabel?: string;
+  stock?: "kraft";
 };
 export const DEFAULT_ARTWORK: ArtworkOptions = {
   style: "blank",
@@ -52,6 +54,8 @@ export function cartonArtwork(
   options: ArtworkOptions,
 ): Record<string, any>[] {
   if (options.style === "blank") return [];
+  if (size.construction === "hinged-lid")
+    return hingedArtwork(size, options, ART_STYLES[options.style]);
   const theme = ART_STYLES[options.style],
     g = cartonGeometry(size),
     s = MM_TO_PX;

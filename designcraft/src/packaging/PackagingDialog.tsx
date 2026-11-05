@@ -24,7 +24,7 @@ import {
 } from "./artwork";
 import { BoxPreview } from "./BoxPreview";
 import "./packaging.css";
-const fields = [
+const standardFields = [
   ["height", "طول العلبة", "Box length", 30, 500],
   ["width", "عرض العلبة", "Box width", 20, 300],
   ["depth", "عمق العلبة", "Box depth", 10, 150],
@@ -44,6 +44,24 @@ export function PackagingDialog({
   initialArtwork?: ArtworkOptions;
   initialTitle?: string;
 }) {
+  const hinged = initial.construction === "hinged-lid";
+  const fields: ReadonlyArray<
+    readonly [
+      "height" | "width" | "depth" | "glue" | "tuck",
+      string,
+      string,
+      number,
+      number,
+    ]
+  > = hinged
+    ? ([
+        ["height", "ارتفاع العلبة", "Box height", 20, 150],
+        ["width", "عرض العلبة", "Box width", 100, 650],
+        ["depth", "طول القاعدة", "Base length", 100, 650],
+        ["glue", "احتياطي الوصلة", "Allowance", 5, 30],
+        ["tuck", "لسان الغطاء", "Lid flap", 5, 30],
+      ] as const)
+    : standardFields;
   const { lang } = useDcLang(),
     ar = lang === "ar",
     ref = useRef<HTMLDialogElement>(null),
@@ -57,7 +75,20 @@ export function PackagingDialog({
         ) as Record<keyof CartonSize, string>,
     ),
     [artwork, setArtwork] = useState<ArtworkOptions>({
-      ...(initialArtwork || DEFAULT_ARTWORK),
+      ...(initialArtwork ||
+        (hinged
+          ? {
+              ...DEFAULT_ARTWORK,
+              descriptor: "YOUR DESIGN",
+              quantity: "MADE WITH CARE",
+              brand: "YOUR BRAND",
+              product:
+                initial.family === "pizza"
+                  ? "WOOD FIRED PIZZA"
+                  : "YOUR PRODUCT",
+              stock: "kraft" as const,
+            }
+          : DEFAULT_ARTWORK)),
     }),
     [resetKey, setResetKey] = useState(0),
     [safeArea, setSafeArea] = useState(false),
@@ -66,9 +97,12 @@ export function PackagingDialog({
     [exportDimensions, setExportDimensions] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const size = Object.fromEntries(
-      fields.map(([k]) => [k, Number(draft[k])]),
-    ) as unknown as CartonSize,
+  const size = {
+      ...Object.fromEntries(fields.map(([k]) => [k, Number(draft[k])])),
+      ...(hinged
+        ? { construction: initial.construction, family: initial.family }
+        : {}),
+    } as unknown as CartonSize,
     issue = cartonError(size),
     g = issue ? null : cartonGeometry(size);
   useEffect(() => {
@@ -84,15 +118,23 @@ export function PackagingDialog({
     finite: ar
       ? "أدخل أرقامًا صالحة في كل المقاسات."
       : "Enter finite numbers in every field.",
-    dimensions: ar
-      ? "الطول 30–500، العرض 20–300، والعمق 10–150 مم."
-      : "Length 30–500, width 20–300, depth 10–150 mm.",
+    dimensions: hinged
+      ? ar
+        ? "ارتفاع الجدار 20–150 مم، والعرض وطول القاعدة 100–650 مم."
+        : "Wall height 20–150 mm; base width and length 100–650 mm."
+      : ar
+        ? "الطول 30–500، العرض 20–300، والعمق 10–150 مم."
+        : "Length 30–500, width 20–300, depth 10–150 mm.",
     glue: ar
       ? "لسان اللصق: 5–30 مم، بحد أقصى 40% من العرض."
       : "Glue: 5–30 mm; at most 40% of width.",
-    tuck: ar
-      ? "لسان القفل: 5–30 مم، بحد أقصى 60% من العمق و25% من العرض."
-      : "Tuck: 5–30 mm; at most 60% of depth and 25% of width.",
+    tuck: hinged
+      ? ar
+        ? "لسان الغطاء: 5–30 مم، وبحد أقصى 70% من ارتفاع الجدار."
+        : "Lid flap: 5–30 mm and at most 70% of wall height."
+      : ar
+        ? "لسان القفل: 5–30 مم، بحد أقصى 60% من العمق و25% من العرض."
+        : "Tuck: 5–30 mm; at most 60% of depth and 25% of width.",
   };
   const create = async () => {
     if (issue || busy) return;
@@ -193,8 +235,8 @@ export function PackagingDialog({
           </div>
           <p>
             {ar
-              ? "قفل متعاكس · أبعاد فعلية بالملليمتر."
-              : "Reverse-tuck construction · physical dimensions in millimetres."}
+              ? "مقاسات فعلية بالملليمتر · القالب مطابق لنوع العلبة."
+              : "Physical dimensions in millimetres · construction matches the box family."}
           </p>
           <label>
             {ar ? "اسم التصميم" : "Design name"}
@@ -210,7 +252,7 @@ export function PackagingDialog({
               ? "طول × عرض × عمق — مقاسات العلبة بعد التجميع بالملليمتر، وليست مقاسات الورقة المفرودة."
               : "Length × width × depth — assembled box dimensions in millimetres, not the unfolded sheet size."}
           </p>
-          {artwork.descriptor === undefined && (
+          {!hinged && artwork.descriptor === undefined && (
             <PerfumeTemplates
               key={resetKey}
               ar={ar}
@@ -263,7 +305,7 @@ export function PackagingDialog({
               {ar ? "إعدادات الألسنة المتقدمة" : "Advanced tab settings"}
             </summary>
             <div className="carton-fields">
-              {fields.slice(3).map(([k, arabic, en, min, max]) => (
+              {fields.slice(hinged ? 4 : 3).map(([k, arabic, en, min, max]) => (
                 <label key={k}>
                   {ar ? arabic : en} · mm
                   <input
@@ -291,7 +333,8 @@ export function PackagingDialog({
             </summary>
             {!issue && (
               <p dir="ltr">
-                L {size.height} mm · W {size.width} mm · D {size.depth} mm
+                {hinged ? "H" : "L"} {size.height} mm · W {size.width} mm ·{" "}
+                {hinged ? "L" : "D"} {size.depth} mm
                 <br />
                 {ar ? "وجهان / Faces" : "Faces"}: 2 × ({size.width} ×{" "}
                 {size.height}) mm
@@ -312,14 +355,22 @@ export function PackagingDialog({
                   : "Cut only solid lines; score dashed fold lines without cutting through."}
               </li>
               <li>
-                {ar
-                  ? "اطوِ الأوجه الأربعة وألصق لسان اللصق داخل الحافة المقابلة. لا تلصق ألسنة القفل."
-                  : "Fold the four panels; glue the seam tab inside the opposite edge. Do not glue tuck tabs."}
+                {hinged
+                  ? ar
+                    ? "ارفع الجدران الأربعة واطوِ أجنحة الزوايا للداخل؛ ثبّتها حسب الورق المستخدم."
+                    : "Raise the four walls; fold corner wings inward and secure them to suit your board."
+                  : ar
+                    ? "اطوِ الأوجه الأربعة وألصق لسان اللصق داخل الحافة المقابلة. لا تلصق ألسنة القفل."
+                    : "Fold the four panels; glue the seam tab inside the opposite edge. Do not glue tuck tabs."}
               </li>
               <li>
-                {ar
-                  ? "اطوِ الألسنة الجانبية الصغيرة أولًا، ثم الغطاء الكبير وأدخل لسان القفل. جرّب الإغلاق دون إجبار."
-                  : "Fold small dust flaps first, then the main cover and insert its tuck tab. Test closure without force."}
+                {hinged
+                  ? ar
+                    ? "اطوِ الغطاء فوق القاعدة وأدخل ألسنته للداخل برفق. هذا نموذج غطاء متصل، وليس قفل شحن معتمدًا."
+                    : "Close the hinged lid and gently tuck its flaps inside. This is not a certified locking shipping construction."
+                  : ar
+                    ? "اطوِ الألسنة الجانبية الصغيرة أولًا، ثم الغطاء الكبير وأدخل لسان القفل. جرّب الإغلاق دون إجبار."
+                    : "Fold small dust flaps first, then the main cover and insert its tuck tab. Test closure without force."}
               </li>
               <li>
                 {ar

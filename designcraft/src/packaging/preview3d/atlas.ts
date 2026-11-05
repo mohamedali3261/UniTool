@@ -6,7 +6,7 @@ import { cartonGeometry, MM_TO_PX, type CartonSize } from "../geometry";
 import { assertPhysicalCanvas } from "../printMath";
 /** Isolated, bounded artwork snapshot: no editor viewport, guide strokes, or saved raster copy. */
 export async function cartonAtlas(
-  canvas: fabric.Canvas,
+  canvas: fabric.StaticCanvas,
   size: CartonSize,
   width: number,
   height: number,

@@ -1,4 +1,4 @@
-import {validatePrint} from '../advanced/core/faces';
+import { validatePrint } from "../advanced/core/faces";
 import type { fabric } from "fabric";
 import type { ProjectItem } from "../types";
 import { cartonError } from "../packaging/geometry";
@@ -104,12 +104,14 @@ export function parseProjectFile(raw: unknown): ProjectItem {
   let packaging: ProjectItem["packaging"];
   if (p.packaging) {
     if (
-      p.packaging.kind !== "reverse-tuck" ||
+      !["reverse-tuck", "hinged-lid"].includes(p.packaging.kind) ||
+      (p.packaging.kind === "hinged-lid") !==
+        (p.packaging.size?.construction === "hinged-lid") ||
       p.packaging.version !== 1 ||
       cartonError(p.packaging.size)
     )
       throw Error("CARTON");
-    packaging = { kind: "reverse-tuck", version: 1, size: p.packaging.size };
+    packaging = { kind: p.packaging.kind, version: 1, size: p.packaging.size };
   }
   const now = Date.now();
   return {
@@ -121,7 +123,7 @@ export function parseProjectFile(raw: unknown): ProjectItem {
     category:
       typeof p.category === "string" ? p.category.slice(0, 80) : "custom",
     packaging,
-    studio:p.studio?validatePrint(p.studio):undefined,
+    studio: p.studio ? validatePrint(p.studio) : undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -142,18 +144,25 @@ export async function portableProject(
         const w = image.naturalWidth || image.width,
           h = image.naturalHeight || image.height;
         if (!w || !h || w * h > 16_000_000) throw Error("IMAGE_SIZE");
-        const embedded = image.src || '';
-        if (/^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(embedded)) {
+        const embedded = image.src || "";
+        if (
+          /^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(
+            embedded,
+          )
+        ) {
           o.src = embedded; // Preserve compressed originals instead of re-encoding every recovery point as PNG.
         } else {
           const temp = document.createElement("canvas");
-          temp.width = w; temp.height = h;
+          temp.width = w;
+          temp.height = h;
           try {
             const ctx = temp.getContext("2d");
             if (!ctx) throw Error("CANVAS");
             ctx.drawImage(image, 0, 0);
             o.src = temp.toDataURL("image/png");
-          } finally { temp.width = temp.height = 1; }
+          } finally {
+            temp.width = temp.height = 1;
+          }
         }
         if ("_originalSrc" in o) o._originalSrc = o.src;
       }
@@ -170,7 +179,7 @@ export async function portableProject(
       height: project.height,
       category: project.category,
       packaging: project.packaging,
-      studio:project.studio,
+      studio: project.studio,
       canvasData: data,
     },
   };
