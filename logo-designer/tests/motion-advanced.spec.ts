@@ -261,6 +261,14 @@ for (const [width, lang] of [
   }, info) => {
     await page.setViewportSize({ width, height: 950 });
     await start(page, lang);
+    if (width <= 850) {
+      await page
+        .getByRole("button", {
+          name: lang === "ar" ? "قائمة الأدوات" : "Tools menu",
+          exact: true,
+        })
+        .click();
+    }
     await page
       .getByRole("button", {
         name: lang === "ar" ? "حركة" : "Motion",

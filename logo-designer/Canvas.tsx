@@ -79,8 +79,8 @@ export default function Canvas() {
   }, []);
   const compact = size.w < 600 || size.h < 300;
   const fit = Math.min(
-      (size.w - (compact ? 24 : 70)) / s.doc.width,
-      (size.h - (compact ? 24 : 100)) / s.doc.height,
+      (size.w - (compact ? 12 : 70)) / s.doc.width,
+      (size.h - (compact ? 12 : 100)) / s.doc.height,
     ),
     scale = Math.max(0.03, fit) * s.zoom;
   const point = (x: number, y: number) => {

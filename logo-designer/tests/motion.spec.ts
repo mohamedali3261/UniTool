@@ -172,6 +172,14 @@ for (const [width, lang] of [
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await start(page, lang);
+    if (width <= 850) {
+      await page
+        .getByRole("button", {
+          name: lang === "ar" ? "قائمة الأدوات" : "Tools menu",
+          exact: true,
+        })
+        .click();
+    }
     await page
       .getByRole("button", {
         name: lang === "ar" ? "حركة" : "Motion",
@@ -270,6 +278,9 @@ test("320px Arabic dark: animated template opens full preview and standard expor
     localStorage.setItem("logo-designer-theme", "dark"),
   );
   await start(page, "ar");
+  await page
+    .getByRole("button", { name: "قائمة الأدوات", exact: true })
+    .click();
   await page.getByRole("button", { name: "قوالب", exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page

@@ -1,5 +1,6 @@
 import MotionPanel, { MotionStage } from "./Motion";
 import MotionExport from "./MotionExport";
+import MobileToolsBar from "./MobileToolsBar";
 import { Modal } from "./ui";
 import QuickEdit from "./QuickEdit";
 /** مجمّع الأقسام والاختصارات؛ المشروع نفسه يأتي من الحالة المشتركة. */
@@ -82,6 +83,9 @@ function Workspace() {
     if (window.innerWidth <= 850 && s.leftOpen && s.rightOpen)
       s.setRightOpen(false);
   }, [s.leftOpen, s.rightOpen]);
+  useEffect(() => {
+    if (!s.leftOpen && !s.rightOpen && panelExpanded) setPanelExpanded(false);
+  }, [s.leftOpen, s.rightOpen, panelExpanded]);
   useEffect(() => {
     const media = window.matchMedia("(max-width: 850px)");
     const narrow = () => {
@@ -270,6 +274,11 @@ function Workspace() {
             </button>
           </div>
         </main>
+        <MobileToolsBar
+          tabs={tabs}
+          panelExpanded={panelExpanded}
+          setPanelExpanded={setPanelExpanded}
+        />
         {s.rightOpen && (
           <aside
             className="ld-inspector"

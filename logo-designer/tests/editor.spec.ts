@@ -203,6 +203,7 @@ test("mobile fits viewport and tools collapse for touch canvas", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390,
   );
+  await page.getByRole("button", { name: "Tools menu", exact: true }).click();
   await page.getByRole("button", { name: "Text", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Type with character." }),
@@ -696,20 +697,37 @@ test("new template edition has distinct editable layouts and new symbols are sea
   await expect(page.locator(".ld-artboard rect[role=button]")).toHaveCount(6);
 });
 for (const width of [320, 390, 600])
-  test(`mobile dock at ${width}px keeps canvas visible and all tools accessible`, async ({
+  test(`mobile tools dropdown at ${width}px keeps preview and tools spacious and accessible`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
     await start(page);
-    const canvas = await page.locator(".ld-center").boundingBox(),
-      panel = await page.locator(".ld-library").boundingBox();
-    expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(panel!.y + 1);
+    await expect(page.locator(".ld-rail")).toBeHidden();
+    const canvas = (await page.locator(".ld-center").boundingBox())!,
+      bar = (await page.locator(".ld-mobile-tools-bar").boundingBox())!,
+      panel = (await page.locator(".ld-library").boundingBox())!;
+    expect(canvas.y + canvas.height).toBeLessThanOrEqual(bar.y + 1);
+    expect(bar.y + bar.height).toBeLessThanOrEqual(panel.y + 1);
+    expect(canvas.height).toBeGreaterThanOrEqual(320);
+    expect(panel.height).toBeGreaterThanOrEqual(260);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBe(width);
+
+    await page
+      .getByRole("button", { name: "Tools menu", exact: true })
+      .click();
+    const menu = page.locator(".ld-tools-dropdown-menu");
+    await expect(menu).toBeVisible();
+    const menuBox = (await menu.boundingBox())!;
+    expect(menuBox.x).toBeGreaterThanOrEqual(0);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(width);
+    expect(menuBox.y).toBeGreaterThanOrEqual(0);
+    expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(844);
     for (const name of [
       "Elements",
       "Templates",
+      "Motion",
       "Text",
       "Colors",
       "Layers",
@@ -717,16 +735,20 @@ for (const width of [320, 390, 600])
       "Assistant",
       "Mockups",
       "Projects",
+      "Brand lab",
+      "Design properties",
       "Help",
     ]) {
-      const tool = page.getByRole("button", { name, exact: true });
+      const tool = menu.getByRole("button", { name, exact: true });
       await tool.scrollIntoViewIfNeeded();
-      await expect(tool).toBeInViewport();
+      await expect(tool).toBeVisible();
     }
-    const rail = (await page.locator(".ld-rail").boundingBox())!;
-    expect(rail.height).toBeLessThanOrEqual(56);
-    expect(panel!.height).toBeLessThanOrEqual(211);
-    expect(canvas!.height).toBeGreaterThan(panel!.height * 1.8);
+    await menu.getByRole("button", { name: "Colors", exact: true }).click();
+    await expect(menu).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Find your color." }),
+    ).toBeVisible();
+
     await page
       .getByRole("button", { name: "Expand tool panel", exact: true })
       .click();
@@ -977,6 +999,7 @@ test("mobile direct editing and preview mode work without losing the compact lay
     localStorage.setItem("logo-designer-lang", "en");
   });
   await page.goto("/logo-designer/");
+  await page.getByRole("button", { name: "Tools menu", exact: true }).tap();
   await page.getByRole("button", { name: "Text", exact: true }).tap();
   await page.getByRole("button", { name: "Add brand name", exact: true }).tap();
   await page.getByRole("button", { name: "Close library", exact: true }).tap();
@@ -1001,9 +1024,9 @@ test("mobile direct editing and preview mode work without losing the compact lay
   await page
     .getByRole("button", { name: "Full screen preview", exact: true })
     .tap();
-  await expect(page.locator(".ld-rail")).toBeHidden();
+  await expect(page.locator(".ld-mobile-tools-bar")).toBeHidden();
   await page.getByRole("button", { name: "Show tools", exact: true }).tap();
-  await expect(page.locator(".ld-rail")).toBeVisible();
+  await expect(page.locator(".ld-mobile-tools-bar")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390,
   );
