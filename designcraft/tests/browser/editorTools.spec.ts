@@ -341,3 +341,68 @@ await page
     page.getByRole("button", { name: "تصدير للطباعة", exact: true }),
   ).toBeVisible();
 });
+
+test("shapes section offers 60+ patterned backgrounds, compact desktop modal, and portable pattern save", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await load(page, []);
+  await page
+    .getByRole("button", { name: "الأشكال", exact: true })
+    .filter({ visible: true })
+    .first()
+    .click();
+
+  const patternsSection = page
+    .locator('[data-testid="shapes-patterns-section"]')
+    .filter({ visible: true })
+    .first();
+  await expect(patternsSection).toBeVisible();
+  const sidebarPatterns = patternsSection.locator("button[data-theme-art]");
+  await expect(sidebarPatterns).toHaveCount(60);
+
+  // Verify Fabric upper-canvas uses the unified green SVG arrow cursor too
+  const canvasCursor = await page.evaluate(
+    () => getComputedStyle(document.querySelector(".upper-canvas")!).cursor,
+  );
+  expect(canvasCursor).toContain("data:image/svg+xml");
+
+  // Apply a patterned background directly from the Shapes sidebar
+  await sidebarPatterns.nth(1).click();
+
+  // Open the Shapes popup modal and verify compact desktop bounds cleanly below navbar
+  await page
+    .getByRole("button", { name: "فتح مكتبة الأشكال المتقدمة" })
+    .filter({ visible: true })
+    .first()
+    .click();
+  const dialog = page.getByTestId("shapes-modal-dialog");
+  await expect(dialog).toBeVisible();
+  const box = (await dialog.boundingBox())!;
+  expect(box.y).toBeGreaterThan(70);
+  expect(box.width).toBeLessThanOrEqual(580);
+  expect(box.height).toBeLessThanOrEqual(490);
+
+  // Switch to Patterned Backgrounds inside the modal and verify 60 items + apply
+  await dialog.getByRole("button", { name: /خلفيات منقوشات/ }).click();
+  const modalPatterns = dialog.locator("button[data-theme-art]");
+  await expect(modalPatterns).toHaveCount(60);
+  await modalPatterns.nth(4).click();
+  await expect(dialog).toBeHidden();
+
+  // Export editable JSON project and verify pattern background survives portableProject + parseProjectFile round-trip
+  const exported = JSON.parse(
+    (await exportFile(page, /^مشروع قابل للتعديل/)).toString(),
+  );
+  expect(exported.project.canvasData.background?.type).toBe("pattern");
+  expect(exported.project.canvasData.background?.source).toMatch(
+    /^data:image\/png;base64,/,
+  );
+  await page.locator('input[aria-label="ملف مشروع المصمم"]').setInputFiles({
+    name: "patterned.unitool.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(exported)),
+  });
+  await expect(page.locator("#editor-layout")).toBeVisible();
+});
+

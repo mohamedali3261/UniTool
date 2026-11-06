@@ -269,6 +269,10 @@ export const dcTranslations = {
     elemPlus200: '+200 شكل',
     elemOpenShapes: 'فتح مكتبة الأشكال المتقدمة',
     elemFillColor: 'لون التعبئة',
+    elemPatternsTitle: 'خلفيات منقوشات',
+    elemPatternsSearch: 'ابحث في المنقوشات (إسلامي، رخام، هندسي، زهور)...',
+    elemPatternsOpenWindow: 'عرض بنافذة',
+    elemPatternsEmpty: 'لا توجد منقوشات مطابقة للبحث',
 
     // IconsTab
     iconsLibrary: 'مكتبة الأيقونات',
@@ -548,7 +552,10 @@ export const dcTranslations = {
 
     // ShapesModal
     shTitle: 'مكتبة الأشكال والرموز',
-    shSearchPlaceholder: 'ابحث في أكثر من 200 شكل (مثل: نجوم، درع، ختم، سهم، فقاعة)...',
+    shTabShapes: 'الأشكال والرموز',
+    shTabPatterns: 'خلفيات منقوشات',
+    shSearchPlaceholder: 'ابحث في الأشكال والرموز...',
+    shPatternsSearchPlaceholder: 'ابحث في المنقوشات (زخارف، رخام، هندسي، زهور)...',
     shNoResults: 'لا توجد أشكال مطابقة للبحث',
 
     // IconsModal
@@ -918,6 +925,10 @@ export const dcTranslations = {
     elemPlus200: '+200 Shapes',
     elemOpenShapes: 'Open Advanced Shapes Library',
     elemFillColor: 'Fill Color',
+    elemPatternsTitle: 'Patterned Backgrounds',
+    elemPatternsSearch: 'Search patterns (Islamic, marble, geometric, floral)...',
+    elemPatternsOpenWindow: 'Open popup',
+    elemPatternsEmpty: 'No patterns match your search',
 
     // IconsTab
     iconsLibrary: 'Icons Library',
@@ -1197,7 +1208,10 @@ export const dcTranslations = {
 
     // ShapesModal
     shTitle: 'Shapes & Symbols Library',
-    shSearchPlaceholder: 'Search 200+ shapes (e.g. stars, shield, seal, arrow, bubble)...',
+    shTabShapes: 'Shapes & Symbols',
+    shTabPatterns: 'Patterned Backgrounds',
+    shSearchPlaceholder: 'Search shapes (stars, shield, arrow)...',
+    shPatternsSearchPlaceholder: 'Search patterned backgrounds (arabesque, marble, floral)...',
     shNoResults: 'No shapes match your search',
 
     // IconsModal

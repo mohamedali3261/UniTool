@@ -67,6 +67,21 @@ for (const mobile of [false, true])
         .first()
         .click();
       await audit(tab);
+      if (tab === "الأشكال") {
+        await page
+          .getByRole("button", { name: "فتح مكتبة الأشكال المتقدمة" })
+          .filter({ visible: true })
+          .first()
+          .click();
+        await expect(page.getByTestId("shapes-modal-dialog")).toBeVisible();
+        await audit("shapes modal - shapes tab");
+        await page
+          .getByTestId("shapes-modal-dialog")
+          .getByRole("button", { name: /خلفيات منقوشات/ })
+          .click();
+        await audit("shapes modal - patterns tab");
+        await page.keyboard.press("Escape");
+      }
     }
     for (const tab of ["أيقونات", "زخارف", "صور"]) {
       await page

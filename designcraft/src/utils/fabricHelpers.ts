@@ -1251,7 +1251,8 @@ export const addSvgShapeToCanvas = (
   }
 };
 
-// Set SVG seamless repeating pattern as canvas background
+// Set SVG seamless repeating pattern as canvas background (rasterized to 2x PNG
+// so Fabric JSON, IndexedDB recovery, and portableProject export validate cleanly)
 export const setCanvasPatternBackground = (
   canvas: fabric.Canvas,
   patternSourceUrl: string,
@@ -1264,14 +1265,42 @@ export const setCanvasPatternBackground = (
   img.onload = () => {
     if (!canvas.contextContainer) return;
     try {
-      const pattern = new fabric.Pattern({
-        source: img,
-        repeat: 'repeat'
-      });
-      canvas.setBackgroundColor(pattern as any, () => {
-        canvas.renderAll();
-        if (onComplete) onComplete();
-      });
+      const baseW = Math.max(16, Math.min(256, img.naturalWidth || img.width || 64));
+      const baseH = Math.max(16, Math.min(256, img.naturalHeight || img.height || 64));
+      const tile = document.createElement('canvas');
+      tile.width = baseW * 2;
+      tile.height = baseH * 2;
+      const ctx = tile.getContext('2d');
+      let pngDataUrl = '';
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, tile.width, tile.height);
+        pngDataUrl = tile.toDataURL('image/png');
+      }
+      tile.width = tile.height = 1;
+
+      const applySource = (sourceEl: HTMLImageElement, scale: number) => {
+        if (!canvas.contextContainer) return;
+        const pattern = new fabric.Pattern({
+          source: sourceEl,
+          repeat: 'repeat',
+          patternTransform: scale !== 1 ? [scale, 0, 0, scale, 0, 0] : undefined,
+        } as any);
+        canvas.backgroundImage = undefined;
+        canvas.setBackgroundColor(pattern as any, () => {
+          canvas.renderAll();
+          canvas.requestRenderAll();
+          if (onComplete) onComplete();
+        });
+      };
+
+      if (pngDataUrl) {
+        const pngImg = new Image();
+        pngImg.onload = () => applySource(pngImg, 0.5);
+        pngImg.onerror = () => applySource(img, 1);
+        pngImg.src = pngDataUrl;
+      } else {
+        applySource(img, 1);
+      }
     } catch (err) {
       console.error('Failed to set canvas pattern background:', err);
     }

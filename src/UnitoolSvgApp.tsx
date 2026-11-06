@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Footer } from './components/Footer';
 import { Header, sitePages } from './components/Header';
 import { UniToolSvg } from './pages/UniToolSvg';
+import siteCursorsCss from './styles/site-cursors.css?inline';
 
 export default function UnitoolSvgApp() {
   const { theme, setTheme, toggleTheme } = useSiteAppearance('svg');
@@ -13,6 +14,18 @@ export default function UnitoolSvgApp() {
   const svgFrame = useRef<HTMLIFrameElement>(null);
 
   const syncSvgLanguage = () => {
+    try {
+      const doc = svgFrame.current?.contentDocument;
+      if (doc?.head) {
+        doc.documentElement.dataset.siteTheme = theme;
+        if (!doc.head.querySelector('style[data-unitool-cursors]')) {
+          const styleEl = doc.createElement('style');
+          styleEl.dataset.unitoolCursors = 'true';
+          styleEl.textContent = siteCursorsCss;
+          doc.head.appendChild(styleEl);
+        }
+      }
+    } catch { /* Cross-origin fallback */ }
     svgFrame.current?.contentWindow?.postMessage({ type: 'unitool-appearance-change', theme }, window.location.origin);
     svgFrame.current?.contentWindow?.postMessage(
       { type: 'unitool-language-change', lang },

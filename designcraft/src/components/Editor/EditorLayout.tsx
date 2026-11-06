@@ -160,6 +160,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isPexelsModalOpen, setIsPexelsModalOpen] = useState(false);
   const [isShapesModalOpen, setIsShapesModalOpen] = useState(false);
+  const [shapesModalTab, setShapesModalTab] = useState<'shapes' | 'patterns'>('shapes');
   const [isIconsModalOpen, setIsIconsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -1225,7 +1226,18 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
                 if (window.innerWidth < 1100) setIsSidebarOpen(false);
               }
             }}
-            onOpenShapesModal={() => setIsShapesModalOpen(true)}
+            onOpenShapesModal={() => {
+              setShapesModalTab('shapes');
+              setIsShapesModalOpen(true);
+            }}
+            onOpenPatternsModal={() => {
+              setShapesModalTab('patterns');
+              setIsShapesModalOpen(true);
+            }}
+            onSelectPattern={(patternItem) => {
+              handleSetBackgroundPattern(patternItem);
+              if (window.innerWidth < 1100) setIsSidebarOpen(false);
+            }}
           />
         );
       case 'templates':
@@ -1841,7 +1853,12 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
       <ShapesModal
         isOpen={isShapesModalOpen}
+        initialTab={shapesModalTab}
         onClose={() => setIsShapesModalOpen(false)}
+        onSelectPattern={(patternItem) => {
+          handleSetBackgroundPattern(patternItem);
+          if (window.innerWidth < 1100) setIsSidebarOpen(false);
+        }}
         onSelectShape={(shape, fill) => {
           if (fabricCanvasRef.current) {
             if (shape.type === 'rect') addRectangleToCanvas(fabricCanvasRef.current, { fill, rx: 0 });
