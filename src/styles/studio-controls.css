@@ -1,3 +1,5 @@
+@import "./site-cursors.css";
+
 /* Shared graphic/video interface palette, matched to Excel Studio's
    --xs-accent, --xs-ink and .xs-button. Never applied to rendered artwork. */
 html:is([data-dc-theme], [data-video-theme], [data-tools-theme], [data-site-theme]) {

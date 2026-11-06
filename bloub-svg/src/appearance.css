@@ -1,3 +1,5 @@
+@import "../../src/styles/site-cursors.css";
+
 /* UI variables only. SVG artwork, user palette, capture/export colors and
    timeline thumbnails keep their native rendering inputs. */
 :root {

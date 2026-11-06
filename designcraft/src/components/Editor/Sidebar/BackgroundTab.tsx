@@ -104,6 +104,7 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                   <button
                     key={item.id}
                     type="button"
+                    data-theme-art
                     title={isAr ? item.nameAr : item.name}
                     aria-label={isAr ? item.nameAr : item.name}
                     onClick={() => {
@@ -118,21 +119,16 @@ export const BackgroundTab: React.FC<BackgroundTabProps> = ({
                         : 'border-slate-800 hover:border-sky-400/80 hover:scale-[1.03]'
                     }`}
                   >
-                    {/* Fallback stays behind the image so a broken URL never leaves an empty card */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center text-slate-600">
-                      <ImageIcon className="w-5 h-5" />
-                    </div>
-
-                    {/* Live Pattern Full Bleed Preview Image */}
-                    <img
-                      src={item.thumbnail}
-                      alt={isAr ? item.nameAr : item.name}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                    <span
+                      data-theme-art
+                      aria-hidden="true"
+                      className="block w-full h-full transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundImage: `url("${item.thumbnail}")`,
+                        backgroundRepeat: item.type === 'svg-pattern' ? 'repeat' : 'no-repeat',
+                        backgroundSize: item.type === 'svg-pattern' ? '42px 42px' : 'cover',
+                        backgroundPosition: 'center',
                       }}
-                      className="relative w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
 
                     {/* Subtle Overlay Badge on Hover */}

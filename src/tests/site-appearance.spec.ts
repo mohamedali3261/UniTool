@@ -115,3 +115,41 @@ test('reader day/night and warm paper preserve Arabic text and settings', async 
   await expect(canvas).toHaveCSS('background-color','rgb(251, 244, 230)');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('sawti_reader_settings_v1')!).theme)).toBe('sepia');
 });
+
+test('unified green arrow cursor and all companion cursor icons apply across site pages and themes', async ({ page }) => {
+  for (const url of ['/index.html', '/app.html', '/designcraft.html', '/excel-studio/', '/logo-designer/', '/video-studio.html', '/storage.html', '/the-audio-reader.html', '/unitool-svg.html']) {
+    await page.goto(url);
+    await expect(page.locator('button:not(:disabled), a[href]').first()).toBeVisible();
+    const cursors = await page.evaluate(() => {
+      const body = getComputedStyle(document.body).cursor;
+      const interactive = getComputedStyle(document.querySelector('button:not(:disabled), a[href]')!).cursor;
+      return { body, interactive };
+    });
+    expect(cursors.body, `${url} default arrow`).toContain('data:image/svg+xml');
+    expect(cursors.body, `${url} arrow hotspot`).toContain('4 4');
+    expect(cursors.interactive, `${url} pointer companion`).toContain('data:image/svg+xml');
+    expect(cursors.interactive, `${url} pointer hotspot`).toContain('8 2');
+  }
+
+  // Verify light (#24795e) vs dark (#85ccac) adaptation and all companion cursor tokens
+  await page.goto('/index.html');
+  const lightVar = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ut-cursor-default'));
+  expect(lightVar.toLowerCase()).toContain('%2324795e');
+  const companionStates = [
+    'pointer', 'text', 'vertical-text', 'grab', 'grabbing', 'move', 'crosshair',
+    'cell', 'ew-resize', 'ns-resize', 'nwse-resize', 'nesw-resize', 'col-resize',
+    'row-resize', 'not-allowed', 'zoom-in', 'zoom-out', 'help', 'wait', 'progress', 'copy',
+  ];
+  const probeResults = await page.evaluate((states) => {
+    return states.every((state) => {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(`--ut-cursor-${state}`);
+      return val.includes('data:image/svg+xml');
+    });
+  }, companionStates);
+  expect(probeResults).toBe(true);
+
+  await page.getByTestId('site-theme-toggle').click();
+  const darkVar = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ut-cursor-default'));
+  expect(darkVar.toLowerCase()).toContain('%2385ccac');
+});
+
