@@ -1,4 +1,5 @@
-#mobile-properties-dock {
+#mobile-properties-dock,
+#mobile-sidebar-dock {
   height: 38dvh;
   max-height: 360px;
   margin-bottom: 56px;
@@ -12,7 +13,8 @@
   min-height: 0;
   border-color: var(--studio-ui-line, #31435c);
 }
-.dc-properties .properties-scroll {
+.dc-properties .properties-scroll,
+.dc-sidebar-dock .properties-scroll {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scroll-behavior: smooth;
@@ -52,8 +54,11 @@
 }
 
 @media (max-width: 767px) {
-  #editor-layout:has(#mobile-properties-dock) #canvas-workspace {
+  #editor-layout:has(#mobile-properties-dock, #mobile-sidebar-dock) #canvas-workspace {
     --canvas-controls-bottom: 8px;
+  }
+  #editor-layout:has(#mobile-properties-dock, #mobile-sidebar-dock) #canvas-area-container {
+    padding-bottom: 44px;
   }
 }
 .dc-element-extras {

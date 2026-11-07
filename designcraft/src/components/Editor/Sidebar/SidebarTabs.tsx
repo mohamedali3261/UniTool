@@ -78,11 +78,13 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
           );
         })}
 
-        {/* Quick Properties Button on Mobile when element is selected */}
+        {/* Quick Properties Button on Mobile */}
         {onToggleProperties && (
           <button
             type="button"
             onClick={onToggleProperties}
+            title={isPropertiesOpen ? t.hideProps : t.showProps}
+            aria-pressed={!!isPropertiesOpen}
             className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition min-h-[44px] ${
               isPropertiesOpen
                 ? 'text-amber-400 font-bold'
@@ -128,6 +130,29 @@ export const SidebarTabs: React.FC<SidebarTabsProps> = ({
           </React.Fragment>
         );
       })}
+
+      {onToggleProperties && (
+        <>
+          <div className="w-8 h-px bg-slate-700/70 my-1" />
+          <button
+            type="button"
+            onClick={onToggleProperties}
+            title={`${t.tabProperties} (${isPropertiesOpen ? t.hideProps : t.showProps})`}
+            aria-label={isPropertiesOpen ? t.hideProps : t.showProps}
+            aria-pressed={!!isPropertiesOpen}
+            className={`w-11 py-2 rounded-xl flex flex-col items-center justify-center gap-1 transition ${
+              isPropertiesOpen
+                ? 'bg-[#1C2541] text-sky-400 font-bold shadow-sm border border-sky-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-[#1C2541]/40'
+            }`}
+          >
+            <div className={isPropertiesOpen ? 'text-sky-400 scale-105 transition' : ''}>
+              <Sliders className="w-4 h-4" />
+            </div>
+            <span className="text-[9px] tracking-tight truncate max-w-[40px]">{t.tabProperties}</span>
+          </button>
+        </>
+      )}
     </aside>
   );
 };

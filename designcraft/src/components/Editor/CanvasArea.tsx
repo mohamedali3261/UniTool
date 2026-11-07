@@ -513,6 +513,17 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     return () => container.removeEventListener('wheel', handleWheel);
   }, [scheduleInteractiveZoom, zoom]);
 
+  // Keep Fabric pointer offsets synced whenever mobile docks or sidebars resize the canvas viewport
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      fabricCanvasRef.current?.calcOffset();
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [fabricCanvasRef]);
+
   // 6. Keyboard Shortcuts
   // Undo/redo/duplicate/delete live in EditorLayout's global handler — handling
   // them here as well made every Ctrl+Z undo two steps and Ctrl+D duplicate twice.
