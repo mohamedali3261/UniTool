@@ -46,6 +46,9 @@ async function renderSheetElementToCanvas(sheet: HTMLElement, paperSize: PaperSi
   ].join(';');
 
   const clone = sheet.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll('[data-canvas-ui-chrome]').forEach((el) => el.remove());
+  clone.querySelectorAll('.is-canvas-selected').forEach((el) => el.classList.remove('is-canvas-selected'));
+  clone.querySelectorAll('[contenteditable]').forEach((el) => el.removeAttribute('contenteditable'));
   clone.style.transform = 'none';
   clone.style.width = `${dims.widthPx}px`;
   clone.style.minHeight = `${dims.heightPx}px`;

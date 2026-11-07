@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { IDBFactory } from 'fake-indexeddb';
 import { resolvePhysicalKey } from '../src/app/useShortcuts';
 import { applyInstantAtsFix, evaluateAts, extractJobKeywords } from '../src/core/atsEngine';
@@ -18,7 +21,22 @@ import {
   createDefaultStarterResume,
   createResumeFromTemplate,
   CV_TEMPLATES,
+  CV_TEMPLATE_MODULES,
+  resolveTemplateModuleForDoc,
 } from '../src/data/templates';
+import {
+  buildImageFilterCss,
+  buildImageTransformCss,
+  createCanvasBadgeElement,
+  createCanvasDividerElement,
+  createCanvasIconElement,
+  createCanvasImageElement,
+  createCanvasRatingElement,
+  createCanvasShapeElement,
+  createCanvasTextElement,
+  DEFAULT_IMAGE_FILTERS,
+  getImageShapeFrameStyle,
+} from '../src/pages/editor/canvas/canvasDefaults';
 
 test('physical keyboard resolver supports both Arabic and English keyboard layouts', () => {
   assert.equal(resolvePhysicalKey({ code: 'KeyZ', key: 'ئ' }), 'z');
@@ -139,4 +157,100 @@ test('UTCV project export/import and IndexedDB CRUD round-trip safely', async ()
   await deleteResumeRecord(blank.id);
   const afterDelete = await loadSavedResumes();
   assert.equal(afterDelete.length, 0);
+});
+
+test('every built-in CV template lives in its own separate file and has a unique visual architecture', () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const templatesDir = path.resolve(__dirname, '../src/templates');
+
+  const standaloneTemplateFiles = [
+    'atsStandard.tsx',
+    'modernEmeraldExec.tsx',
+    'techOnePage.tsx',
+    'financeCorporate.tsx',
+    'modernBannerCreative.tsx',
+    'academicMultipage.tsx',
+    'freshGradStarter.tsx',
+    'minimalistNordic.tsx',
+  ];
+
+  for (const filename of standaloneTemplateFiles) {
+    const fullPath = path.join(templatesDir, filename);
+    assert.ok(fs.existsSync(fullPath), `Expected standalone template file ${filename} to exist`);
+  }
+
+  assert.equal(CV_TEMPLATES.length, 8);
+  assert.equal(CV_TEMPLATE_MODULES.length, 8);
+
+  const uniqueVisualStyles = new Set(CV_TEMPLATES.map((t) => t.design.visualStyle));
+  assert.equal(uniqueVisualStyles.size, 8, 'Every built-in template must have a distinct visualStyle');
+
+  const uniqueTagsEn = new Set(CV_TEMPLATES.map((t) => t.structureTagEn));
+  assert.equal(uniqueTagsEn.size, 8, 'Every built-in template must have a distinct structural tag');
+
+  for (const tpl of CV_TEMPLATES) {
+    const doc = createResumeFromTemplate(tpl, 'ar');
+    const resolvedMod = resolveTemplateModuleForDoc(doc);
+    assert.equal(resolvedMod.preset.id, tpl.id);
+  }
+});
+
+test('interactive canvas elements, image filters, shapes, and block overrides serialize cleanly', () => {
+  const doc = createDefaultStarterResume('ar');
+  const txtEl = createCanvasTextElement('heading', {
+    paperLang: 'ar',
+    paperDir: 'rtl',
+    fontFamily: 'Cairo, sans-serif',
+    accentColor: '#24795e',
+    pageIndex: 0,
+  });
+  const imgEl = createCanvasImageElement(
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    { name: 'صورة توقيع', shape: 'hexagon', accentColor: '#24795e', pageIndex: 0 },
+  );
+  const shapeEl = createCanvasShapeElement('hexagon', { accentColor: '#24795e', pageIndex: 0 });
+  const divEl = createCanvasDividerElement('double', { accentColor: '#24795e', pageIndex: 0 });
+  const badgeEl = createCanvasBadgeElement({
+    paperLang: 'ar',
+    paperDir: 'rtl',
+    fontFamily: 'Cairo, sans-serif',
+    accentColor: '#24795e',
+    pageIndex: 0,
+  });
+  const ratingEl = createCanvasRatingElement({ accentColor: '#24795e', pageIndex: 0 });
+  const iconEl = createCanvasIconElement('award', { accentColor: '#24795e', pageIndex: 0 });
+
+  imgEl.imageFilters = {
+    ...DEFAULT_IMAGE_FILTERS,
+    brightness: 112,
+    contrast: 108,
+    grayscale: 25,
+    zoom: 1.35,
+    flipX: true,
+  };
+
+  doc.canvasElements = [txtEl, imgEl, shapeEl, divEl, badgeEl, ratingEl, iconEl];
+  doc.blockStyles = {
+    header: { dx: 14, dy: -6, bgColor: '#f0fdf4', borderRadius: 8 },
+    'section:experience': { dx: 0, dy: 12, padding: 10 },
+  };
+  doc.personal.photoShape = 'diamond';
+
+  const filterCss = buildImageFilterCss(imgEl.imageFilters);
+  assert.ok(filterCss.includes('brightness(112%)'));
+  assert.ok(filterCss.includes('grayscale(25%)'));
+
+  const transformCss = buildImageTransformCss(imgEl.imageFilters);
+  assert.ok(transformCss.includes('scale(-1.35, 1.35)'));
+
+  const hexFrame = getImageShapeFrameStyle('hexagon');
+  assert.ok(String(hexFrame.clipPath || '').includes('polygon'));
+
+  const json = serializeUtcvProject(doc);
+  const roundTripped = parseUtcvProject(json);
+  assert.equal(roundTripped.canvasElements?.length, 7);
+  assert.equal(roundTripped.canvasElements?.[1].imageShape, 'hexagon');
+  assert.equal(roundTripped.canvasElements?.[1].imageFilters?.zoom, 1.35);
+  assert.equal(roundTripped.blockStyles?.header?.dx, 14);
+  assert.equal(roundTripped.personal.photoShape, 'diamond');
 });

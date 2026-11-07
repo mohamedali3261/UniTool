@@ -143,5 +143,7 @@ export function parseUtcvProject(raw: string): ResumeDocument {
     projects: Array.isArray(r.projects) ? r.projects : [],
     customSections: Array.isArray(r.customSections) ? r.customSections : [],
     jobDescription: typeof r.jobDescription === 'string' ? r.jobDescription : '',
+    canvasElements: Array.isArray(r.canvasElements) ? r.canvasElements : [],
+    blockStyles: r.blockStyles && typeof r.blockStyles === 'object' ? r.blockStyles : {},
   };
 }

@@ -2,7 +2,12 @@ import { Check } from 'lucide-react';
 import { useCvStudio } from '../../app/context';
 import { Modal } from '../../components/Modal';
 import { LAYOUT_MODE_LABELS, SKILL_DISPLAY_LABELS } from '../../core/i18n';
-import type { DesignSettings, LayoutMode, SkillDisplayMode } from '../../core/types';
+import type {
+  DesignSettings,
+  LayoutMode,
+  SkillDisplayMode,
+  TemplateVisualStyle,
+} from '../../core/types';
 import { CV_COLOR_SWATCHES, CV_FONTS } from '../../data/themes';
 
 export function DesignCustomizerPanel() {
@@ -34,7 +39,24 @@ export function DesignCustomizerPanel() {
   };
 
   const layoutModes: LayoutMode[] = ['ats', 'modern', 'one-page', 'detailed'];
-  const skillModes: SkillDisplayMode[] = ['badges', 'bars', 'bullets', 'comma'];
+  const skillModes: SkillDisplayMode[] = ['badges', 'bars', 'dots', 'bullets', 'comma'];
+
+  const setLayoutModeAndStyle = (mode: LayoutMode) => {
+    const defaultStyle: Record<LayoutMode, TemplateVisualStyle> = {
+      ats: 'ats-classic',
+      modern: design.modernVariant === 'sidebar' ? 'modern-sidebar' : 'creative-banner-timeline',
+      'one-page': 'tech-split-grid',
+      detailed: 'academic-hanging',
+    };
+    updateResume((prev) => ({
+      ...prev,
+      design: {
+        ...prev.design,
+        layoutMode: mode,
+        visualStyle: defaultStyle[mode],
+      },
+    }));
+  };
 
   return (
     <div className="cv-design-panel">
@@ -51,7 +73,7 @@ export function DesignCustomizerPanel() {
                 type="button"
                 data-testid={`layout-mode-${mode}`}
                 className={`cv-layout-card ${active ? 'active' : ''}`}
-                onClick={() => setDesign('layoutMode', mode)}
+                onClick={() => setLayoutModeAndStyle(mode)}
               >
                 <div className="cv-layout-card-top">
                   <strong>{t(info.ar, info.en)}</strong>
@@ -69,14 +91,32 @@ export function DesignCustomizerPanel() {
             <button
               type="button"
               className={`cv-chip ${design.modernVariant === 'sidebar' ? 'active' : ''}`}
-              onClick={() => setDesign('modernVariant', 'sidebar')}
+              onClick={() =>
+                updateResume((prev) => ({
+                  ...prev,
+                  design: {
+                    ...prev.design,
+                    modernVariant: 'sidebar',
+                    visualStyle: 'modern-sidebar',
+                  },
+                }))
+              }
             >
               {t('عمودان جانبيان', 'Two-Column Sidebar')}
             </button>
             <button
               type="button"
               className={`cv-chip ${design.modernVariant === 'banner' ? 'active' : ''}`}
-              onClick={() => setDesign('modernVariant', 'banner')}
+              onClick={() =>
+                updateResume((prev) => ({
+                  ...prev,
+                  design: {
+                    ...prev.design,
+                    modernVariant: 'banner',
+                    visualStyle: 'creative-banner-timeline',
+                  },
+                }))
+              }
             >
               {t('ترويسة عريضة مميزة', 'Executive Banner')}
             </button>

@@ -5,7 +5,7 @@ import { evaluateAts } from '../core/atsEngine';
 import { exportProjectUtcv, exportSheetsToPdf, exportSheetsToPng } from '../core/exportEngine';
 import { tr } from '../core/i18n';
 import { parseUtcvProject, readSafeLocal, UI_LANG_KEY, writeSafeLocal } from '../core/storage';
-import type { StudioPageId, TemplatePreset, UiLang } from '../core/types';
+import type { CanvasSelection, StudioPageId, TemplatePreset, UiLang } from '../core/types';
 import { applyTemplatePreservingData, createResumeFromTemplate } from '../data/templates';
 import { AtsCheckerPage } from '../pages/ats-checker/AtsCheckerPage';
 import { CoverLetterPage } from '../pages/cover-letter/CoverLetterPage';
@@ -37,6 +37,7 @@ export default function App() {
     return saved === 'en' ? 'en' : 'ar';
   });
   const [page, setPage] = useState<StudioPageId>(readInitialPage);
+  const [canvasSelection, setCanvasSelection] = useState<CanvasSelection>(null);
   const [toast, setToast] = useState('');
   const [busyLabel, setBusyLabel] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,6 +58,11 @@ export default function App() {
       /* ignore */
     }
     setPage(next);
+    try {
+      window.scrollTo(0, 0);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -196,6 +202,10 @@ export default function App() {
     resume: store.activeResume,
     resumes: store.resumes,
     updateResume: store.updateResume,
+    updateResumeTransient: store.updateResumeTransient,
+    commitHistorySnapshot: store.commitHistorySnapshot,
+    canvasSelection,
+    setCanvasSelection,
     selectResume: store.selectResume,
     addResume: store.addResume,
     duplicateResume: store.duplicateResume,

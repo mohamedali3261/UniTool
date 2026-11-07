@@ -1,5 +1,12 @@
 import { createContext, useContext } from 'react';
-import type { AtsReport, ResumeDocument, StudioPageId, TemplatePreset, UiLang } from '../core/types';
+import type {
+  AtsReport,
+  CanvasSelection,
+  ResumeDocument,
+  StudioPageId,
+  TemplatePreset,
+  UiLang,
+} from '../core/types';
 import type { SaveIndicator } from './useResumeStore';
 
 export interface CvStudioContextValue {
@@ -11,6 +18,10 @@ export interface CvStudioContextValue {
   resume: ResumeDocument;
   resumes: ResumeDocument[];
   updateResume: (updater: ResumeDocument | ((prev: ResumeDocument) => ResumeDocument)) => void;
+  updateResumeTransient: (updater: ResumeDocument | ((prev: ResumeDocument) => ResumeDocument)) => void;
+  commitHistorySnapshot: () => void;
+  canvasSelection: CanvasSelection;
+  setCanvasSelection: (sel: CanvasSelection) => void;
   selectResume: (id: string) => void;
   addResume: (doc: ResumeDocument) => Promise<ResumeDocument>;
   duplicateResume: (sourceId: string, customTitle?: string, customCompany?: string) => Promise<ResumeDocument | null>;

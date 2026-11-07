@@ -64,6 +64,7 @@ export const LAYOUT_MODE_LABELS: Record<LayoutMode, { ar: string; en: string; de
 export const SKILL_DISPLAY_LABELS: Record<SkillDisplayMode, { ar: string; en: string }> = {
   badges: { ar: 'شارات منظمة', en: 'Clean Badges' },
   bars: { ar: 'أشرطة مستوى', en: 'Level Bars' },
+  dots: { ar: 'مؤشر نقطي (●●●○○)', en: 'Dot Matrix' },
   bullets: { ar: 'نقاط مختصرة', en: 'Bullet Points' },
   comma: { ar: 'نص مفصول بفواصل (ATS)', en: 'Comma-Separated (ATS)' },
 };

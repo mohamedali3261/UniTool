@@ -26,6 +26,8 @@ interface StoreState {
 type StoreAction =
   | { type: 'HYDRATE'; stored: ResumeDocument[]; savedActiveId: string | null }
   | { type: 'UPDATE'; updater: ResumeDocument | ((prev: ResumeDocument) => ResumeDocument) }
+  | { type: 'UPDATE_TRANSIENT'; updater: ResumeDocument | ((prev: ResumeDocument) => ResumeDocument) }
+  | { type: 'PUSH_HISTORY' }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'SELECT'; id: string }
@@ -81,6 +83,33 @@ function storeReducer(state: StoreState, action: StoreAction): StoreState {
         resumes: state.resumes.map((item) => (item.id === current.id ? next : item)),
         past: [...state.past.slice(-(MAX_HISTORY - 1)), current],
         future: [],
+        dirtyBeforeHydrate: true,
+      };
+    }
+
+    case 'PUSH_HISTORY': {
+      const current = state.resumes.find((r) => r.id === state.activeId) || state.resumes[0];
+      if (!current) return state;
+      return {
+        ...state,
+        past: [...state.past.slice(-(MAX_HISTORY - 1)), current],
+        future: [],
+      };
+    }
+
+    case 'UPDATE_TRANSIENT': {
+      const current = state.resumes.find((r) => r.id === state.activeId) || state.resumes[0];
+      if (!current) return state;
+      const nextRaw =
+        typeof action.updater === 'function' ? action.updater(current) : action.updater;
+      const next: ResumeDocument = {
+        ...nextRaw,
+        id: current.id,
+        updatedAt: new Date().toISOString(),
+      };
+      return {
+        ...state,
+        resumes: state.resumes.map((item) => (item.id === current.id ? next : item)),
         dirtyBeforeHydrate: true,
       };
     }
@@ -211,6 +240,17 @@ export function useResumeStore() {
     [],
   );
 
+  const updateResumeTransient = useCallback(
+    (updater: ResumeDocument | ((prev: ResumeDocument) => ResumeDocument)) => {
+      dispatch({ type: 'UPDATE_TRANSIENT', updater });
+    },
+    [],
+  );
+
+  const commitHistorySnapshot = useCallback(() => {
+    dispatch({ type: 'PUSH_HISTORY' });
+  }, []);
+
   const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
 
@@ -266,6 +306,8 @@ export function useResumeStore() {
     resumes: state.resumes,
     activeResume,
     updateResume,
+    updateResumeTransient,
+    commitHistorySnapshot,
     selectResume,
     addResume,
     duplicateResume,

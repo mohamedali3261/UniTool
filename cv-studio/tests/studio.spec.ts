@@ -232,3 +232,117 @@ test('Homepage animated CvStudioArt, Tools catalog animated preview, and /storag
   await ctxA.close();
   await ctxB.close();
 });
+
+test('All 8 templates render genuinely distinct mini-previews in Gallery and distinct visual architectures on [data-cv-sheet]', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.goto('/cv-studio/');
+  await page.locator('#cv-fullname').fill('م. طارق المنصور');
+
+  // Open Templates gallery and verify all 8 distinct miniature layouts are visible
+  await page.getByRole('button', { name: /القوالب|Templates/ }).click();
+  await expect(page.getByTestId('cv-templates-page')).toBeVisible();
+
+  const distinctMiniStyles = [
+    'ats-classic',
+    'modern-sidebar',
+    'tech-split-grid',
+    'corporate-ledger',
+    'creative-banner-timeline',
+    'academic-hanging',
+    'fresh-grad-cards',
+    'nordic-minimal',
+  ];
+
+  for (const miniStyle of distinctMiniStyles) {
+    await expect(page.locator(`[data-visual-style="${miniStyle}"] .cvt-mini-paper`).first()).toBeVisible();
+  }
+  await page.screenshot({ path: '.cache/cv-qa-distinct-templates-gallery.png', fullPage: true });
+
+  // Switch across markedly different template architectures and assert structural DOM differences + preserved user name
+  const templateChecks = [
+    { id: 'tech-one-page', style: 'tech-split-grid', selector: '.cvp-tech-masthead' },
+    { id: 'finance-corporate', style: 'corporate-ledger', selector: '.cvp-corp-double-bar' },
+    { id: 'minimalist-nordic', style: 'nordic-minimal', selector: '.cvp-nordic-monogram' },
+    { id: 'fresh-grad-starter', style: 'fresh-grad-cards', selector: '.cvp-fresh-hero-card' },
+  ];
+
+  for (const check of templateChecks) {
+    await page.getByRole('button', { name: /القوالب|Templates/ }).click();
+    await page.getByTestId(`apply-template-keep-${check.id}`).click();
+    const sheet = page.locator('[data-cv-sheet]').first();
+    await expect(sheet).toHaveAttribute('data-template-style', check.style);
+    await expect(sheet.locator(check.selector).first()).toBeVisible();
+    await expect(sheet).toContainText('م. طارق المنصور');
+    await page.screenshot({ path: `.cache/cv-qa-tpl-${check.id}.png` });
+  }
+});
+
+test('Direct interactive text editing & dragging, custom images with shape/filter studio, Shapes library, and Layers panel', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/cv-studio/');
+
+  const sheet = page.locator('[data-cv-sheet]').first();
+  await expect(sheet).toBeVisible();
+
+  // 1. Direct inline text editing right on the CV sheet (double-click h1)
+  const headingOnSheet = sheet.locator('h1.cvp-inline-editable').first();
+  await headingOnSheet.dblclick();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('د. كريم الشافعي');
+  await headingOnSheet.blur();
+  await expect(sheet).toContainText('د. كريم الشافعي');
+  await expect(page.locator('#cv-fullname')).toHaveValue('د. كريم الشافعي');
+
+  // 2. Quick-add a movable freeform text onto [data-cv-sheet] and drag it to new coordinates
+  await page.getByTestId('quick-add-text-btn').click();
+  const canvasEl = sheet.locator('.cv-canvas-el').first();
+  await expect(canvasEl).toBeVisible();
+
+  const beforeLeft = await canvasEl.evaluate((el) => parseFloat((el as HTMLElement).style.left));
+  const box = await canvasEl.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 75, box!.y + box!.height / 2 + 45, { steps: 6 });
+  await page.mouse.up();
+
+  const afterLeft = await canvasEl.evaluate((el) => parseFloat((el as HTMLElement).style.left));
+  expect(afterLeft).toBeGreaterThan(beforeLeft + 25);
+
+  // 3. Elements, Shapes, Dividers, Icons & Custom Image Upload
+  await page.getByTestId('editor-tab-elements-shapes').click();
+  await expect(page.getByTestId('cv-elements-shapes-panel')).toBeVisible();
+
+  await page.getByTestId('add-shape-hexagon').click();
+  await page.getByTestId('editor-tab-elements-shapes').click();
+  await page.getByTestId('add-divider-double').click();
+  await page.getByTestId('editor-tab-elements-shapes').click();
+  await page.getByTestId('add-icon-Award').click();
+  await page.getByTestId('editor-tab-elements-shapes').click();
+  await page.getByTestId('add-sample-canvas-image').click();
+  await page.screenshot({ path: '.cache/cv-qa-layers-inspector.png' });
+
+  // Verify all 5 freeform elements are mounted on [data-cv-sheet] and listed alongside template blocks in Layers & Inspector
+  await expect(sheet.locator('.cv-canvas-el')).toHaveCount(5);
+  await page.getByTestId('editor-tab-layers').click();
+  await expect(page.locator('[data-testid^="layer-row-"]')).toHaveCount(5);
+  await expect(page.locator('.cv-layer-row')).toHaveCount(14);
+
+  await page.getByTestId('editor-tab-elements-shapes').click();
+  await page.screenshot({ path: '.cache/cv-qa-elements-shapes-panel.png' });
+
+  // 4. Drag built-in template summary block on the CV sheet and verify block override transform
+  const summaryBlock = sheet.locator('[data-cv-block="summary"]').first();
+  const sBox = await summaryBlock.boundingBox();
+  expect(sBox).not.toBeNull();
+  await page.mouse.move(sBox!.x + 40, sBox!.y + 18);
+  await page.mouse.down();
+  await page.mouse.move(sBox!.x + 85, sBox!.y + 42, { steps: 6 });
+  await page.mouse.up();
+  const blockTransform = await summaryBlock.evaluate((el) => (el as HTMLElement).style.transform);
+  expect(blockTransform).toContain('translate(');
+});

@@ -3,6 +3,8 @@ import { Eye, PenLine, SlidersHorizontal } from 'lucide-react';
 import { useCvStudio } from '../../app/context';
 import type { EditorSectionKey, MobileEditorTab, WorkspaceViewMode } from '../../core/types';
 import { A4Preview } from './A4Preview';
+import { ElementsShapesPanel } from './canvas/ElementsShapesPanel';
+import { LayersAndInspectorPanel } from './canvas/LayersAndInspectorPanel';
 import { DesignCustomizerModal, DesignCustomizerPanel } from './DesignCustomizerModal';
 import { EducationCertsSection } from './EducationCertsSection';
 import './editor.css';
@@ -25,7 +27,7 @@ export function EditorPage() {
       data-mobile-tab={mobileTab}
       data-testid="cv-editor-workspace"
     >
-      {/* Editor Form Pane */}
+      {/* Editor Form & Canvas Inspector Pane */}
       {viewMode === 'split' && (
         <div className="cv-editor-pane no-print">
           <SectionNavigator
@@ -35,11 +37,17 @@ export function EditorPage() {
           />
 
           <div className="cv-editor-scroll">
-            {activeSection === 'personal' && <PersonalInfoSection />}
+            {activeSection === 'personal' && (
+              <PersonalInfoSection onEditPhotoInspector={() => setActiveSection('layers')} />
+            )}
             {activeSection === 'summary-experience' && <SummaryExperienceSection />}
             {activeSection === 'education-certs' && <EducationCertsSection />}
             {activeSection === 'skills-languages' && <SkillsLanguagesSection />}
             {activeSection === 'projects-custom' && <ProjectsCustomSection />}
+            {activeSection === 'elements-shapes' && (
+              <ElementsShapesPanel onOpenInspector={() => setActiveSection('layers')} />
+            )}
+            {activeSection === 'layers' && <LayersAndInspectorPanel />}
           </div>
         </div>
       )}
@@ -51,7 +59,12 @@ export function EditorPage() {
             <div className="cv-section-head">
               <div>
                 <h3>{t('التصميم والأوضاع', 'Design & Modes')}</h3>
-                <p>{t('الأوضاع الأربعة، لغة الورقة، الخطوط، والهوامش.', 'Layout modes, paper language, fonts, and spacing.')}</p>
+                <p>
+                  {t(
+                    'الأوضاع الأربعة، لغة الورقة، الخطوط، والهوامش.',
+                    'Layout modes, paper language, fonts, and spacing.',
+                  )}
+                </p>
               </div>
             </div>
             <DesignCustomizerPanel />
@@ -59,10 +72,14 @@ export function EditorPage() {
         </div>
       )}
 
-      {/* Live A4 / Letter Preview Pane */}
+      {/* Live Interactive A4 / Letter Canvas Preview Pane */}
       <A4Preview
         viewMode={viewMode}
         onToggleViewMode={() => setViewMode((m) => (m === 'split' ? 'focus' : 'split'))}
+        onOpenTab={(tab) => {
+          setActiveSection(tab);
+          if (mobileTab === 'preview') setMobileTab('sections');
+        }}
       />
 
       {/* Desktop Design Customizer Modal */}

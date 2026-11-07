@@ -248,3 +248,398 @@
   border-radius: 14px;
   color: var(--cv-muted);
 }
+
+/* ============================================================
+   8 Distinct Per-Template Miniature Preview Cards
+   ============================================================ */
+.mini-ats-head {
+  text-align: center;
+  padding: 11px 10px 7px;
+  border-bottom: 2px solid #111827;
+}
+.mini-ats-head strong {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.mini-ats-head span {
+  display: block;
+  font-size: 7.5px;
+  color: #4b5563 !important;
+}
+.mini-ats-head small {
+  display: block;
+  font-size: 6.8px;
+  color: #6b7280 !important;
+  margin-top: 2px;
+}
+.mini-rule-title {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 2px;
+}
+.mini-comma-skills {
+  font-size: 7px !important;
+  color: #475569 !important;
+}
+
+.mini-pill-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.mini-pill-wrap b {
+  font-size: 6.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+.mini-bar-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+}
+.mini-bar-heading em {
+  width: 3px;
+  height: 9px;
+  border-radius: 2px;
+  display: block;
+}
+.mini-bar-heading small {
+  font-size: 7px;
+  letter-spacing: 0.04em;
+}
+
+/* 3. Tech Dark Strip + 2-Col Grid */
+.mini-tech-top {
+  padding: 10px 11px 8px;
+  color: #ffffff !important;
+}
+.mini-tech-top strong {
+  display: block;
+  font-size: 10px;
+  color: #ffffff !important;
+}
+.mini-tech-top span {
+  display: block;
+  font-size: 7.3px;
+  color: #93c5fd !important;
+}
+.mini-tech-pills {
+  margin-top: 4px;
+  display: flex;
+  gap: 4px;
+}
+.mini-tech-pills i {
+  font-style: normal;
+  font-size: 6px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0 !important;
+}
+.mini-tech-cols {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 8px;
+  padding: 9px 10px;
+}
+.mini-tech-left,
+.mini-tech-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-tech-right {
+  padding-inline-start: 6px;
+  border-inline-start: 1px dashed #cbd5e1;
+}
+.mini-tech-cols small {
+  font-family: ui-monospace, monospace;
+  font-size: 6.6px;
+  font-weight: 800;
+}
+
+/* 4. Corporate Double-Rule Frame */
+.mini-corporate-ledger {
+  padding: 8px;
+}
+.mini-corp-frame {
+  height: 100%;
+  border-top: 3px double #1b4332;
+  border-bottom: 3px double #1b4332;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-corp-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #cbd5e1;
+}
+.mini-corp-top strong {
+  display: block;
+  font-size: 9.5px;
+}
+.mini-corp-top span {
+  display: block;
+  font-size: 7px;
+  color: #6b7280 !important;
+}
+.mini-corp-meta {
+  padding-inline-start: 6px;
+  border-inline-start: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 6.2px;
+  color: #475569 !important;
+}
+.mini-corp-flanked {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 6.6px;
+}
+.mini-corp-flanked u {
+  flex: 1;
+  height: 1px;
+  background: #cbd5e1;
+}
+.mini-hanging-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.mini-hanging-row small {
+  font-size: 6px;
+  color: #64748b !important;
+  direction: ltr;
+}
+
+/* 5. Solid Banner + Timeline */
+.mini-solid-banner {
+  padding: 11px 12px;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mini-solid-banner strong {
+  display: block;
+  font-size: 10px;
+  color: #ffffff !important;
+}
+.mini-solid-banner span {
+  display: block;
+  font-size: 7.2px;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+.mini-banner-ring {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+}
+.mini-soft-band {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 6.8px;
+  font-weight: 800;
+}
+.mini-timeline-list {
+  padding-inline-start: 8px;
+  border-inline-start: 2px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.mini-tl-item {
+  position: relative;
+  display: flex;
+}
+.mini-tl-item u {
+  position: absolute;
+  top: 1px;
+  inset-inline-start: -11.5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.mini-bars-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+.mini-bars-preview > div {
+  height: 4px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+.mini-bars-preview > div > span {
+  display: block;
+  height: 100%;
+}
+
+/* 6. Academic Hanging + Publications */
+.mini-acad-head {
+  margin: 10px 12px 0;
+  padding: 6px 0;
+  border-top: 2.5px solid #6b2737;
+  border-bottom: 1px solid #cbd5e1;
+}
+.mini-acad-head em {
+  display: block;
+  font-style: normal;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.mini-acad-head strong {
+  display: block;
+  font-size: 10px;
+}
+.mini-acad-head span {
+  display: block;
+  font-size: 7.2px;
+  color: #6b7280 !important;
+}
+.mini-pub-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 6.8px;
+}
+.mini-pub-row i {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+}
+.mini-acad-foot {
+  margin-top: auto;
+  padding-top: 4px;
+  border-top: 1px solid #f1f5f9;
+  text-align: end;
+  font-size: 6.2px;
+  color: #94a3b8 !important;
+}
+
+/* 7. Fresh-Grad Hero Box + 2-Col Cards */
+.mini-fresh-hero {
+  margin: 9px 10px 2px;
+  padding: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-fresh-hero strong {
+  font-size: 9.8px;
+}
+.mini-fresh-hero span {
+  font-size: 7px;
+  color: #64748b !important;
+}
+.mini-fresh-summary-box {
+  margin-top: 3px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-fresh-summary-box i,
+.mini-card-box i {
+  display: block;
+  height: 3.5px;
+  border-radius: 2px;
+  background: #e2e8f0;
+}
+.mini-cards-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.mini-card-box {
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-card-box b {
+  font-size: 6.8px;
+}
+
+/* 8. Swiss / Nordic Monogram & Dot Matrix */
+.mini-nordic-head {
+  padding: 11px 12px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mini-monogram-box {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1.8px solid #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.mini-nordic-head strong {
+  display: block;
+  font-size: 9.8px;
+}
+.mini-nordic-head span {
+  display: block;
+  font-size: 7.2px;
+}
+.mini-nordic-gridbar {
+  margin: 0 12px;
+  padding: 3px 0;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 6.2px;
+  color: #64748b !important;
+}
+.mini-nordic-sec {
+  font-size: 6.8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.mini-dot-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-dot-matrix > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 6.8px;
+}
+
