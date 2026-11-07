@@ -230,5 +230,5 @@ test("every hero motion tool renders a unique non-empty visual and light mode ha
       seenSvgs.set(html, id);
     }
   }
-  expect(seenSvgs.size).toBe(39);
+  expect(seenSvgs.size).toBe(41);
 });

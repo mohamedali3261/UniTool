@@ -13,7 +13,20 @@ export type LayoutMode = 'ats' | 'modern' | 'one-page' | 'detailed';
 
 export type ModernHeaderVariant = 'sidebar' | 'banner';
 
-export type SkillDisplayMode = 'badges' | 'bars' | 'bullets' | 'comma';
+/**
+ * Distinct per-template visual architecture so every template renders with its own unmistakable structure.
+ */
+export type TemplateVisualStyle =
+  | 'ats-classic'
+  | 'modern-sidebar'
+  | 'tech-split-grid'
+  | 'corporate-ledger'
+  | 'creative-banner-timeline'
+  | 'academic-hanging'
+  | 'fresh-grad-cards'
+  | 'nordic-minimal';
+
+export type SkillDisplayMode = 'badges' | 'bars' | 'bullets' | 'comma' | 'dots';
 
 export type CoreSectionId =
   | 'summary'
@@ -30,7 +43,9 @@ export type EditorSectionKey =
   | 'summary-experience'
   | 'education-certs'
   | 'skills-languages'
-  | 'projects-custom';
+  | 'projects-custom'
+  | 'elements-shapes'
+  | 'layers';
 
 export type StudioPageId =
   | 'editor'
@@ -41,6 +56,122 @@ export type StudioPageId =
 
 export type WorkspaceViewMode = 'split' | 'focus';
 export type MobileEditorTab = 'sections' | 'preview' | 'design';
+
+export type ImageFrameShape = 'circle' | 'rounded' | 'square' | 'hexagon' | 'arch' | 'diamond';
+
+export interface ImageFilterSettings {
+  brightness: number; // 50..150 (default 100)
+  contrast: number; // 50..150 (default 100)
+  saturate: number; // 0..200 (default 100)
+  grayscale: number; // 0..100 (default 0)
+  sepia: number; // 0..100 (default 0)
+  blur: number; // 0..10 (default 0)
+  zoom: number; // 1..3 (default 1)
+  panX: number; // -100..100 (default 0)
+  panY: number; // -100..100 (default 0)
+  flipX: boolean;
+  flipY: boolean;
+  objectFit: 'cover' | 'contain';
+}
+
+export type CanvasElementType =
+  | 'text'
+  | 'badge'
+  | 'image'
+  | 'shape'
+  | 'divider'
+  | 'icon'
+  | 'rating'
+  | 'qr';
+
+export type CanvasShapeKind =
+  | 'rect'
+  | 'rounded'
+  | 'pill'
+  | 'circle'
+  | 'ring'
+  | 'triangle'
+  | 'diamond'
+  | 'hexagon'
+  | 'star'
+  | 'banner';
+
+export type CanvasDividerKind = 'solid' | 'dashed' | 'dotted' | 'double' | 'arrow';
+
+export interface CanvasElement {
+  id: string;
+  type: CanvasElementType;
+  name: string;
+  pageIndex: number; // 0-based page index
+  layerPlane: 'underlay' | 'overlay';
+  zIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+  // Text & Badge styling
+  text?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: number;
+  fontStyle?: 'normal' | 'italic';
+  textDecoration?: 'none' | 'underline';
+  textAlign?: 'start' | 'center' | 'end' | 'left' | 'right';
+  textDir?: 'rtl' | 'ltr';
+  lineHeight?: number;
+  letterSpacing?: number;
+  textColor?: string;
+  // Shape, Box & Divider styling
+  shapeKind?: CanvasShapeKind;
+  dividerStyle?: CanvasDividerKind;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+  borderRadius?: number;
+  padding?: number;
+  shadow?: boolean;
+  // Image & QR properties
+  src?: string;
+  qrText?: string;
+  imageShape?: ImageFrameShape;
+  imageFilters?: ImageFilterSettings;
+  // Icon & Rating properties
+  iconName?: string;
+  ratingValue?: number;
+  ratingMax?: number;
+}
+
+/**
+ * Per-block position & style overrides for built-in template blocks ('header', 'photo', 'summary', 'experience', etc.)
+ * so users can drag, move, restyle, lock, or reset any part of the template directly on the CV page!
+ */
+export interface BlockOverrideStyle {
+  dx?: number;
+  dy?: number;
+  widthDelta?: number;
+  fontSizeScale?: number; // 0.75 .. 1.6
+  fontFamily?: string;
+  headingColor?: string;
+  textColor?: string;
+  bgColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  padding?: number;
+  textAlign?: 'start' | 'center' | 'end';
+  opacity?: number;
+  locked?: boolean;
+  hidden?: boolean;
+}
+
+export type CanvasSelection =
+  | { kind: 'element'; id: string }
+  | { kind: 'block'; blockKey: string }
+  | null;
 
 export interface PersonalInfo {
   fullName: string;
@@ -53,7 +184,12 @@ export interface PersonalInfo {
   github: string;
   photoDataUrl: string;
   showPhoto: boolean;
-  photoShape: 'circle' | 'rounded';
+  photoShape: ImageFrameShape;
+  photoSizePx?: number;
+  photoBorderWidth?: number;
+  photoBorderColor?: string;
+  photoShadow?: boolean;
+  photoFilters?: ImageFilterSettings;
 }
 
 export interface ExperienceItem {
@@ -133,6 +269,7 @@ export interface SectionMeta {
 
 export interface DesignSettings {
   templateId: string;
+  visualStyle?: TemplateVisualStyle;
   layoutMode: LayoutMode;
   modernVariant: ModernHeaderVariant;
   sectionDivider: 'line' | 'soft-bg' | 'accent-bar';
@@ -182,6 +319,8 @@ export interface ResumeDocument {
   design: DesignSettings;
   coverLetter: CoverLetterData;
   jobDescription: string;
+  canvasElements?: CanvasElement[];
+  blockStyles?: Record<string, BlockOverrideStyle>;
 }
 
 export interface UtcvProjectFile {
@@ -203,6 +342,7 @@ export type TemplateCategory =
 
 export interface TemplatePreset {
   id: string;
+  visualStyle: TemplateVisualStyle;
   category: Exclude<TemplateCategory, 'all'>;
   nameAr: string;
   nameEn: string;
@@ -210,6 +350,8 @@ export interface TemplatePreset {
   descEn: string;
   badgeAr: string;
   badgeEn: string;
+  structureTagAr: string;
+  structureTagEn: string;
   design: DesignSettings;
   sampleAr: Omit<ResumeDocument, 'id' | 'createdAt' | 'updatedAt' | 'design'>;
   sampleEn: Omit<ResumeDocument, 'id' | 'createdAt' | 'updatedAt' | 'design'>;
@@ -248,9 +390,10 @@ export interface AtsSubScore {
 export interface AtsReport {
   totalScore: number; // 0..100
   grade: 'excellent' | 'good' | 'fair' | 'needs-work';
+  hasJobDescription: boolean;
   subScores: AtsSubScore[];
   checks: AtsCheckItem[];
   matchedKeywords: string[];
   missingKeywords: string[];
-  hasJobDescription: boolean;
+  jdMatchPercent?: number | null;
 }

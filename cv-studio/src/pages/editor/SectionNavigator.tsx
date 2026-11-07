@@ -8,7 +8,9 @@ import {
   EyeOff,
   FolderKanban,
   GraduationCap,
+  Layers,
   ListOrdered,
+  Shapes,
   SlidersHorizontal,
   Sparkles,
   UserRound,
@@ -29,13 +31,22 @@ export function SectionNavigator({
 }) {
   const { resume, updateResume, t } = useCvStudio();
   const [orderOpen, setOrderOpen] = useState(false);
+  const layersCount = (resume.canvasElements || []).length;
 
-  const tabs: { key: EditorSectionKey; ar: string; en: string; icon: typeof UserRound }[] = [
+  const tabs: {
+    key: EditorSectionKey;
+    ar: string;
+    en: string;
+    icon: typeof UserRound;
+    badge?: number;
+  }[] = [
     { key: 'personal', ar: 'البيانات والصورة', en: 'Personal & Photo', icon: UserRound },
     { key: 'summary-experience', ar: 'الملخص والخبرات', en: 'Summary & Work', icon: BriefcaseBusiness },
     { key: 'education-certs', ar: 'التعليم والشهادات', en: 'Education & Certs', icon: GraduationCap },
     { key: 'skills-languages', ar: 'المهارات واللغات', en: 'Skills & Languages', icon: Sparkles },
     { key: 'projects-custom', ar: 'المشاريع وأقسام حرة', en: 'Projects & Custom', icon: FolderKanban },
+    { key: 'elements-shapes', ar: 'عناصر وأشكال وصور', en: 'Elements & Shapes', icon: Shapes },
+    { key: 'layers', ar: 'الطبقات والخصائص', en: 'Layers & Inspector', icon: Layers, badge: layersCount },
   ];
 
   const moveSection = (index: number, delta: -1 | 1) => {
@@ -67,12 +78,14 @@ export function SectionNavigator({
                 key={tab.key}
                 type="button"
                 role="tab"
+                data-testid={`editor-tab-${tab.key}`}
                 aria-selected={active}
                 className={`cv-sec-pill ${active ? 'active' : ''}`}
                 onClick={() => onSelectSection(tab.key)}
               >
                 <tab.icon size={15} aria-hidden="true" />
                 <span>{t(tab.ar, tab.en)}</span>
+                {tab.badge ? <b className="cv-pill-count">{tab.badge}</b> : null}
               </button>
             );
           })}

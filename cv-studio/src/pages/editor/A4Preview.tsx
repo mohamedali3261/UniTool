@@ -1,345 +1,40 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Printer, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
-import { useCvStudio } from '../../app/context';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  formatPageNumber,
-  formatPaperPresent,
-  getPaperSectionTitle,
-  LAYOUT_MODE_LABELS,
-  PROFICIENCY_LABELS,
-} from '../../core/i18n';
-import { computeOnePageAdjustments, getPaperDimensions, paginateResume, type PaginatedBlock } from '../../core/pagination';
-import type { CoreSectionId, ResumeDocument, SkillDisplayMode, WorkspaceViewMode } from '../../core/types';
+  ImagePlus,
+  Layers,
+  Maximize2,
+  Minimize2,
+  MousePointerClick,
+  Printer,
+  RotateCcw,
+  Shapes,
+  Type,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
+import { useCvStudio } from '../../app/context';
+import { LAYOUT_MODE_LABELS } from '../../core/i18n';
+import { computeOnePageAdjustments, getPaperDimensions, paginateResume } from '../../core/pagination';
+import type { EditorSectionKey, ResumeDocument, WorkspaceViewMode } from '../../core/types';
+import { resolveTemplateModuleForDoc } from '../../data/templates';
 import { resolveFontFamily } from '../../data/themes';
+import type { SheetInteractiveCallbacks } from '../../templates/TemplateBlockHelpers';
+import {
+  createCanvasImageElement,
+  createCanvasShapeElement,
+  createCanvasTextElement,
+} from './canvas/canvasDefaults';
+import { CanvasOverlayLayer } from './canvas/CanvasOverlayLayer';
 
-function renderSkillsContent(doc: ResumeDocument, mode: SkillDisplayMode, accent: string) {
-  if (!doc.skills.length) return null;
-  if (mode === 'comma') {
-    return (
-      <p className="cvp-skills-comma">
-        {doc.skills.map((s) => s.name).join(doc.design.paperLang === 'ar' ? ' ، ' : ' • ')}
-      </p>
-    );
-  }
-  if (mode === 'bullets') {
-    return (
-      <ul className="cvp-skills-bullets">
-        {doc.skills.map((s) => (
-          <li key={s.id}>{s.name}</li>
-        ))}
-      </ul>
-    );
-  }
-  if (mode === 'bars') {
-    return (
-      <div className="cvp-skills-bars">
-        {doc.skills.map((s) => (
-          <div key={s.id} className="cvp-skill-bar-row">
-            <div className="cvp-skill-bar-top">
-              <span>{s.name}</span>
-              <small>{Math.round((s.level / 5) * 100)}%</small>
-            </div>
-            <div className="cvp-skill-bar-track">
-              <div
-                className="cvp-skill-bar-fill"
-                style={{ width: `${(s.level / 5) * 100}%`, backgroundColor: accent }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div className="cvp-skills-badges">
-      {doc.skills.map((s) => (
-        <span key={s.id} className="cvp-skill-badge" style={{ borderColor: `${accent}44` }}>
-          {s.name}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function SheetSectionHeading({
-  title,
-  continued,
-  paperLang,
-  divider,
-  accent,
-  isAts,
-}: {
-  title: string;
-  continued?: boolean;
-  paperLang: 'ar' | 'en';
-  divider: ResumeDocument['design']['sectionDivider'];
-  accent: string;
-  isAts: boolean;
-}) {
-  const suffix = continued ? (paperLang === 'ar' ? ' (تابع)' : ' (Cont.)') : '';
-  if (isAts || divider === 'line') {
-    return (
-      <h2 className="cvp-sec-heading cvp-sec-line" style={{ color: accent, borderBottomColor: `${accent}40` }}>
-        {title}
-        {suffix}
-      </h2>
-    );
-  }
-  if (divider === 'soft-bg') {
-    return (
-      <h2
-        className="cvp-sec-heading cvp-sec-soft"
-        style={{ color: accent, backgroundColor: `${accent}12` }}
-      >
-        {title}
-        {suffix}
-      </h2>
-    );
-  }
-  return (
-    <h2 className="cvp-sec-heading cvp-sec-bar" style={{ color: accent }}>
-      <i style={{ backgroundColor: accent }} aria-hidden="true" />
-      <span>
-        {title}
-        {suffix}
-      </span>
-    </h2>
-  );
-}
-
-function RenderSectionBlock({
+export function ResumeSheetCanvas({
   doc,
-  block,
-  accent,
-  isAts,
+  canvas,
+  onFocusInspector,
 }: {
   doc: ResumeDocument;
-  block: PaginatedBlock;
-  accent: string;
-  isAts: boolean;
+  canvas?: SheetInteractiveCallbacks;
+  onFocusInspector?: () => void;
 }) {
-  const pLang = doc.design.paperLang;
-  const meta = doc.sections.find((s) => s.id === block.kind);
-  const title = getPaperSectionTitle(block.kind, pLang, meta?.customTitleAr, meta?.customTitleEn);
-  const divider = doc.design.sectionDivider;
-
-  if (block.kind === 'summary') {
-    if (!doc.summary.trim()) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading title={title} paperLang={pLang} divider={divider} accent={accent} isAts={isAts} />
-        <p className="cvp-summary-text">{doc.summary}</p>
-      </section>
-    );
-  }
-
-  if (block.kind === 'experience') {
-    const items = block.itemIds
-      ? doc.experience.filter((e) => block.itemIds!.includes(e.id))
-      : doc.experience;
-    if (!items.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading
-          title={title}
-          continued={block.continued}
-          paperLang={pLang}
-          divider={divider}
-          accent={accent}
-          isAts={isAts}
-        />
-        <div className="cvp-entries">
-          {items.map((exp) => (
-            <div key={exp.id} className="cvp-entry">
-              <div className="cvp-entry-head">
-                <div>
-                  <strong className="cvp-entry-role">{exp.role}</strong>
-                  <div className="cvp-entry-sub">
-                    <span style={{ color: accent }}>{exp.company}</span>
-                    {exp.location ? <span> • {exp.location}</span> : null}
-                  </div>
-                </div>
-                <span className="cvp-entry-date">
-                  {exp.startDate}
-                  {(exp.current || exp.endDate) && ' – '}
-                  {exp.current ? formatPaperPresent(pLang) : exp.endDate}
-                </span>
-              </div>
-              {exp.highlights.filter(Boolean).length > 0 && (
-                <ul className="cvp-bullets">
-                  {exp.highlights.filter(Boolean).map((h, idx) => (
-                    <li key={idx}>{h}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.kind === 'education') {
-    if (!doc.education.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading title={title} paperLang={pLang} divider={divider} accent={accent} isAts={isAts} />
-        <div className="cvp-entries">
-          {doc.education.map((edu) => (
-            <div key={edu.id} className="cvp-entry">
-              <div className="cvp-entry-head">
-                <div>
-                  <strong className="cvp-entry-role">{edu.degree}</strong>
-                  <div className="cvp-entry-sub">
-                    <span style={{ color: accent }}>{edu.school}</span>
-                    {edu.location ? <span> • {edu.location}</span> : null}
-                  </div>
-                </div>
-                <span className="cvp-entry-date">
-                  {edu.startDate}
-                  {edu.endDate ? ` – ${edu.endDate}` : ''}
-                </span>
-              </div>
-              {edu.grade && <p className="cvp-entry-note">{edu.grade}</p>}
-              {edu.notes && <p className="cvp-entry-note">{edu.notes}</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.kind === 'certifications') {
-    if (!doc.certifications.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading title={title} paperLang={pLang} divider={divider} accent={accent} isAts={isAts} />
-        <div className="cvp-cert-list">
-          {doc.certifications.map((cert) => (
-            <div key={cert.id} className="cvp-cert-row">
-              <div>
-                <strong>{cert.name}</strong>
-                {cert.issuer && <span> — {cert.issuer}</span>}
-                {cert.credentialId && <small> ({cert.credentialId})</small>}
-              </div>
-              {cert.date && <span className="cvp-entry-date">{cert.date}</span>}
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.kind === 'skills') {
-    if (!doc.skills.length) return null;
-    const effectiveMode: SkillDisplayMode = isAts && doc.design.skillDisplay === 'bars' ? 'comma' : doc.design.skillDisplay;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading title={title} paperLang={pLang} divider={divider} accent={accent} isAts={isAts} />
-        {renderSkillsContent(doc, effectiveMode, accent)}
-      </section>
-    );
-  }
-
-  if (block.kind === 'languages') {
-    if (!doc.languages.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading title={title} paperLang={pLang} divider={divider} accent={accent} isAts={isAts} />
-        <div className="cvp-lang-grid">
-          {doc.languages.map((l) => (
-            <div key={l.id} className="cvp-lang-item">
-              <strong>{l.name}</strong>
-              <span>{PROFICIENCY_LABELS[l.proficiency][pLang]}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.kind === 'projects') {
-    const items = block.itemIds ? doc.projects.filter((p) => block.itemIds!.includes(p.id)) : doc.projects;
-    if (!items.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading
-          title={title}
-          continued={block.continued}
-          paperLang={pLang}
-          divider={divider}
-          accent={accent}
-          isAts={isAts}
-        />
-        <div className="cvp-entries">
-          {items.map((proj) => (
-            <div key={proj.id} className="cvp-entry">
-              <div className="cvp-entry-head">
-                <div>
-                  <strong className="cvp-entry-role">{proj.name}</strong>
-                  {(proj.role || proj.link) && (
-                    <div className="cvp-entry-sub">
-                      {proj.role && <span style={{ color: accent }}>{proj.role}</span>}
-                      {proj.role && proj.link && <span> • </span>}
-                      {proj.link && <span dir="ltr">{proj.link}</span>}
-                    </div>
-                  )}
-                </div>
-                {proj.date && <span className="cvp-entry-date">{proj.date}</span>}
-              </div>
-              {proj.summary && <p className="cvp-entry-note">{proj.summary}</p>}
-              {proj.highlights.filter(Boolean).length > 0 && (
-                <ul className="cvp-bullets">
-                  {proj.highlights.filter(Boolean).map((h, idx) => (
-                    <li key={idx}>{h}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.kind === 'custom' && block.customGroupId) {
-    const group = doc.customSections.find((g) => g.id === block.customGroupId);
-    if (!group || !group.visible || !group.items.length) return null;
-    return (
-      <section className="cvp-section">
-        <SheetSectionHeading
-          title={group.title}
-          paperLang={pLang}
-          divider={divider}
-          accent={accent}
-          isAts={isAts}
-        />
-        <div className="cvp-entries">
-          {group.items.map((item) => (
-            <div key={item.id} className="cvp-entry">
-              <div className="cvp-entry-head">
-                <div>
-                  <strong className="cvp-entry-role">{item.heading}</strong>
-                  {item.subheading && (
-                    <div className="cvp-entry-sub">
-                      <span style={{ color: accent }}>{item.subheading}</span>
-                    </div>
-                  )}
-                </div>
-                {item.date && <span className="cvp-entry-date">{item.date}</span>}
-              </div>
-              {item.description && <p className="cvp-entry-note">{item.description}</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  return null;
-}
-
-export function ResumeSheetCanvas({ doc }: { doc: ResumeDocument }) {
   const dims = getPaperDimensions(doc.design.paperSize);
   const pages = useMemo(() => paginateResume(doc), [doc]);
   const onePageFit = useMemo(
@@ -347,9 +42,8 @@ export function ResumeSheetCanvas({ doc }: { doc: ResumeDocument }) {
     [doc],
   );
 
+  const tplModule = useMemo(() => resolveTemplateModuleForDoc(doc), [doc]);
   const isAts = doc.design.layoutMode === 'ats';
-  const isSidebarModern = doc.design.layoutMode === 'modern' && doc.design.modernVariant === 'sidebar';
-  const isBannerModern = doc.design.layoutMode === 'modern' && doc.design.modernVariant === 'banner';
 
   const effectiveMargin = onePageFit ? onePageFit.effectiveMarginMm : doc.design.marginMm;
   const effectiveScale = onePageFit ? onePageFit.effectiveFontScale : doc.design.fontScale;
@@ -358,22 +52,11 @@ export function ResumeSheetCanvas({ doc }: { doc: ResumeDocument }) {
   const accent = isAts ? doc.design.accentColor || '#111827' : doc.design.accentColor || '#24795e';
   const fontCss = resolveFontFamily(doc.design.fontFamily);
 
-  const contacts = [
-    doc.personal.email,
-    doc.personal.phone,
-    doc.personal.location,
-    doc.personal.linkedin,
-    doc.personal.website,
-    doc.personal.github,
-  ].filter((v) => v && v.trim());
-
-  const showPhoto = Boolean(doc.personal.showPhoto && doc.personal.photoDataUrl && !isAts);
-  const sidebarKinds: CoreSectionId[] = ['skills', 'languages', 'certifications'];
-
   return (
     <div className="cvp-pages-stack">
-      {pages.map((pg) => {
+      {pages.map((pg, idx) => {
         const sheetStyle: React.CSSProperties = {
+          position: 'relative',
           width: `${dims.widthPx}px`,
           minHeight: `${dims.heightPx}px`,
           maxHeight: doc.design.layoutMode === 'one-page' ? `${dims.heightPx}px` : undefined,
@@ -385,139 +68,33 @@ export function ResumeSheetCanvas({ doc }: { doc: ResumeDocument }) {
           ['--cvp-accent' as any]: accent,
         };
 
-        if (isSidebarModern) {
-          const sidebarBlocks = pg.blocks.filter((b) => sidebarKinds.includes(b.kind));
-          const mainBlocks = pg.blocks.filter((b) => !sidebarKinds.includes(b.kind));
-          return (
-            <article
-              key={pg.pageNumber}
-              data-cv-sheet
-              dir={doc.design.paperDir}
-              lang={doc.design.paperLang}
-              className="cv-paper-sheet cvp-mode-sidebar"
-              style={sheetStyle}
-            >
-              <aside className="cvp-sidebar-col" style={{ backgroundColor: `${accent}0d`, borderColor: `${accent}24` }}>
-                {showPhoto && (
-                  <div className={`cvp-photo-frame ${doc.personal.photoShape}`}>
-                    <img src={doc.personal.photoDataUrl} alt={doc.personal.fullName} />
-                  </div>
-                )}
-                <div className="cvp-sidebar-identity">
-                  <h1 style={{ color: accent }}>{doc.personal.fullName}</h1>
-                  {doc.personal.jobTitle && <p className="cvp-job-title">{doc.personal.jobTitle}</p>}
-                </div>
-                {contacts.length > 0 && (
-                  <div className="cvp-sidebar-contacts">
-                    {contacts.map((c, i) => (
-                      <span key={i} dir={c.includes('@') || c.includes('+') || c.includes('.') ? 'ltr' : undefined}>
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="cvp-col-sections">
-                  {sidebarBlocks.map((b, idx) => (
-                    <RenderSectionBlock key={`${b.kind}-${idx}`} doc={doc} block={b} accent={accent} isAts={false} />
-                  ))}
-                </div>
-              </aside>
-
-              <div className="cvp-main-col" style={{ padding: `${effectiveMargin}mm` }}>
-                <div className="cvp-col-sections">
-                  {mainBlocks.map((b, idx) => (
-                    <RenderSectionBlock
-                      key={`${b.kind}-${b.customGroupId || idx}`}
-                      doc={doc}
-                      block={b}
-                      accent={accent}
-                      isAts={false}
-                    />
-                  ))}
-                </div>
-              </div>
-            </article>
-          );
-        }
-
-        return (
-          <article
-            key={pg.pageNumber}
-            data-cv-sheet
-            dir={doc.design.paperDir}
-            lang={doc.design.paperLang}
-            className={`cv-paper-sheet cvp-mode-${doc.design.layoutMode}`}
-            style={{
-              ...sheetStyle,
-              padding: isBannerModern ? `0 0 ${effectiveMargin}mm 0` : `${effectiveMargin}mm`,
-            }}
-          >
-            {pg.includeHeader ? (
-              <header
-                className={`cvp-top-header ${isBannerModern ? 'cvp-banner-header' : ''} ${isAts ? 'cvp-ats-header' : ''}`}
-                style={
-                  isBannerModern
-                    ? {
-                        backgroundColor: `${accent}10`,
-                        borderTop: `5px solid ${accent}`,
-                        padding: `${effectiveMargin}mm ${effectiveMargin}mm 14px`,
-                        marginBottom: '14px',
-                      }
-                    : { borderBottomColor: `${accent}33` }
-                }
-              >
-                <div className="cvp-header-row">
-                  <div className="cvp-header-copy">
-                    <h1 style={{ color: isAts ? '#111827' : accent }}>{doc.personal.fullName}</h1>
-                    {doc.personal.jobTitle && <p className="cvp-job-title">{doc.personal.jobTitle}</p>}
-                    {contacts.length > 0 && (
-                      <div className="cvp-inline-contacts">
-                        {contacts.map((c, i) => (
-                          <span key={i}>
-                            {i > 0 && <em aria-hidden="true"> • </em>}
-                            <bdi>{c}</bdi>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {showPhoto && (
-                    <div className={`cvp-photo-frame ${doc.personal.photoShape}`}>
-                      <img src={doc.personal.photoDataUrl} alt={doc.personal.fullName} />
-                    </div>
-                  )}
-                </div>
-              </header>
-            ) : (
-              <header className="cvp-continuation-bar" style={{ borderBottomColor: `${accent}26` }}>
-                <span>{doc.personal.fullName}</span>
-                <span>{formatPageNumber(pg.pageNumber, pages.length, doc.design.paperLang)}</span>
-              </header>
-            )}
-
-            <div
-              className="cvp-body-flow"
-              style={isBannerModern ? { paddingInline: `${effectiveMargin}mm` } : undefined}
-            >
-              {pg.blocks.map((b, idx) => (
-                <RenderSectionBlock
-                  key={`${b.kind}-${b.customGroupId || idx}`}
-                  doc={doc}
-                  block={b}
-                  accent={accent}
-                  isAts={isAts}
-                />
-              ))}
-            </div>
-
-            {(pages.length > 1 || doc.design.layoutMode === 'detailed') && (
-              <footer className="cvp-sheet-footer">
-                <span>{doc.personal.fullName}</span>
-                <span>{formatPageNumber(pg.pageNumber, pages.length, doc.design.paperLang)}</span>
-              </footer>
-            )}
-          </article>
-        );
+        return tplModule.renderPage({
+          doc,
+          page: pg,
+          totalPages: pages.length,
+          sheetStyle,
+          effectiveMarginMm: effectiveMargin,
+          accent,
+          canvas,
+          renderCanvasUnderlay: () => (
+            <CanvasOverlayLayer
+              doc={doc}
+              pageIndex={idx}
+              plane="underlay"
+              canvas={canvas}
+              onFocusInspector={onFocusInspector}
+            />
+          ),
+          renderCanvasOverlay: () => (
+            <CanvasOverlayLayer
+              doc={doc}
+              pageIndex={idx}
+              plane="overlay"
+              canvas={canvas}
+              onFocusInspector={onFocusInspector}
+            />
+          ),
+        });
       })}
     </div>
   );
@@ -526,14 +103,28 @@ export function ResumeSheetCanvas({ doc }: { doc: ResumeDocument }) {
 export function A4Preview({
   viewMode,
   onToggleViewMode,
+  onOpenTab,
 }: {
   viewMode: WorkspaceViewMode;
   onToggleViewMode: () => void;
+  onOpenTab?: (tab: EditorSectionKey) => void;
 }) {
-  const { resume, t } = useCvStudio();
+  const {
+    resume,
+    updateResume,
+    updateResumeTransient,
+    commitHistorySnapshot,
+    canvasSelection,
+    setCanvasSelection,
+    notify,
+    t,
+  } = useCvStudio();
+
   const stageRef = useRef<HTMLDivElement>(null);
+  const quickImgRef = useRef<HTMLInputElement>(null);
   const [zoomMode, setZoomMode] = useState<'fit' | number>('fit');
   const [fitZoom, setFitZoom] = useState(0.76);
+  const [interactive, setInteractive] = useState(true);
 
   const dims = getPaperDimensions(resume.design.paperSize);
 
@@ -555,6 +146,128 @@ export function A4Preview({
   const scale = zoomMode === 'fit' ? fitZoom : zoomMode;
   const pagesCount = useMemo(() => paginateResume(resume).length, [resume]);
   const modeLabel = LAYOUT_MODE_LABELS[resume.design.layoutMode];
+  const layersCount = (resume.canvasElements || []).length;
+
+  // Keyboard nudge & delete for selected canvas element or template block
+  useEffect(() => {
+    if (!interactive || !canvasSelection) return;
+    const onKey = (e: KeyboardEvent) => {
+      const active = document.activeElement as HTMLElement | null;
+      if (
+        active &&
+        (active.tagName === 'INPUT' ||
+          active.tagName === 'TEXTAREA' ||
+          active.tagName === 'SELECT' ||
+          active.isContentEditable)
+      ) {
+        return;
+      }
+
+      const step = e.shiftKey ? 10 : 2;
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+
+        if (canvasSelection.kind === 'element') {
+          updateResume((prev) => ({
+            ...prev,
+            canvasElements: (prev.canvasElements || []).map((item) =>
+              item.id === canvasSelection.id && !item.locked
+                ? { ...item, x: item.x + dx, y: item.y + dy }
+                : item,
+            ),
+          }));
+        } else if (canvasSelection.kind === 'block') {
+          const bk = canvasSelection.blockKey;
+          updateResume((prev) => {
+            const cur = prev.blockStyles?.[bk];
+            if (cur?.locked) return prev;
+            return {
+              ...prev,
+              blockStyles: {
+                ...(prev.blockStyles || {}),
+                [bk]: {
+                  ...(cur || {}),
+                  dx: (cur?.dx || 0) + dx,
+                  dy: (cur?.dy || 0) + dy,
+                },
+              },
+            };
+          });
+        }
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && canvasSelection.kind === 'element') {
+        const target = (resume.canvasElements || []).find((x) => x.id === canvasSelection.id);
+        if (target && !target.locked) {
+          e.preventDefault();
+          updateResume((prev) => ({
+            ...prev,
+            canvasElements: (prev.canvasElements || []).filter((x) => x.id !== canvasSelection.id),
+          }));
+          setCanvasSelection(null);
+        }
+      } else if (e.key === 'Escape') {
+        setCanvasSelection(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [interactive, canvasSelection, resume.canvasElements, updateResume, setCanvasSelection]);
+
+  const canvasCallbacks: SheetInteractiveCallbacks = useMemo(
+    () => ({
+      interactive,
+      zoomScale: scale,
+      selection: canvasSelection,
+      onSelect: (sel) => {
+        setCanvasSelection(sel);
+      },
+      onUpdateDoc: updateResume,
+      onUpdateDocTransient: updateResumeTransient,
+      onCommitHistory: commitHistorySnapshot,
+    }),
+    [
+      interactive,
+      scale,
+      canvasSelection,
+      setCanvasSelection,
+      updateResume,
+      updateResumeTransient,
+      commitHistorySnapshot,
+    ],
+  );
+
+  const quickAddText = () => {
+    const el = createCanvasTextElement('heading', {
+      paperLang: resume.design.paperLang,
+      paperDir: resume.design.paperDir,
+      fontFamily: resume.design.fontFamily,
+      accentColor: resume.design.accentColor || '#24795e',
+      existing: resume.canvasElements,
+    });
+    updateResume((prev) => ({
+      ...prev,
+      canvasElements: [...(prev.canvasElements || []), el],
+    }));
+    setCanvasSelection({ kind: 'element', id: el.id });
+    onOpenTab?.('layers');
+    notify(t('تمت إضافة نص حر — اسحبه أو انقر مرتين لتعديله', 'Added movable text'));
+  };
+
+  const quickAddShape = () => {
+    const el = createCanvasShapeElement('rounded', {
+      accentColor: resume.design.accentColor || '#24795e',
+      existing: resume.canvasElements,
+      labelAr: 'بطاقة هندسية',
+    });
+    updateResume((prev) => ({
+      ...prev,
+      canvasElements: [...(prev.canvasElements || []), el],
+    }));
+    setCanvasSelection({ kind: 'element', id: el.id });
+    onOpenTab?.('layers');
+    notify(t('تمت إضافة شكل هندسي — خصّص لونه وحجمه وطبقاته', 'Added geometric shape'));
+  };
 
   return (
     <section className="cv-preview-pane" aria-label={t('المعاينة الحية للورقة', 'Live sheet preview')}>
@@ -569,12 +282,111 @@ export function A4Preview({
           </span>
         </div>
 
+        {/* Quick Direct Canvas Tools */}
+        <div className="cv-canvas-stage-tools" data-testid="canvas-quick-toolbar">
+          <button
+            type="button"
+            className={`cv-stage-tool-btn ${interactive ? 'is-on' : ''}`}
+            data-testid="toggle-interactive-canvas"
+            onClick={() => {
+              setInteractive((v) => !v);
+              if (interactive) setCanvasSelection(null);
+            }}
+            title={t(
+              'تفعيل/إيقاف التحريك والتعديل المباشر على الورقة',
+              'Toggle direct dragging & inline text editing on sheet',
+            )}
+          >
+            <MousePointerClick size={14} />
+            <span>{t('تحرير وتحريك مباشر', 'Direct Edit')}</span>
+          </button>
+
+          <button
+            type="button"
+            className="cv-stage-tool-btn"
+            data-testid="quick-add-text-btn"
+            onClick={quickAddText}
+          >
+            <Type size={14} />
+            <span>{t('+ نص', '+ Text')}</span>
+          </button>
+
+          <button
+            type="button"
+            className="cv-stage-tool-btn"
+            data-testid="quick-add-image-btn"
+            onClick={() => quickImgRef.current?.click()}
+          >
+            <ImagePlus size={14} />
+            <span>{t('+ صورة', '+ Image')}</span>
+          </button>
+
+          <button
+            type="button"
+            className="cv-stage-tool-btn"
+            data-testid="quick-add-shape-btn"
+            onClick={quickAddShape}
+          >
+            <Shapes size={14} />
+            <span>{t('+ شكل', '+ Shape')}</span>
+          </button>
+
+          {onOpenTab && (
+            <button
+              type="button"
+              className="cv-stage-tool-btn"
+              data-testid="quick-open-layers-btn"
+              onClick={() => onOpenTab('layers')}
+            >
+              <Layers size={14} />
+              <span>
+                {t('الطبقات', 'Layers')}
+                {layersCount > 0 ? ` (${layersCount})` : ''}
+              </span>
+            </button>
+          )}
+
+          <input
+            hidden
+            ref={quickImgRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = () => {
+                if (typeof reader.result === 'string') {
+                  const el = createCanvasImageElement(reader.result, {
+                    name: file.name.replace(/\.[^.]+$/, '').slice(0, 26) || t('صورة', 'Image'),
+                    accentColor: resume.design.accentColor || '#24795e',
+                    existing: resume.canvasElements,
+                  });
+                  updateResume((prev) => ({
+                    ...prev,
+                    canvasElements: [...(prev.canvasElements || []), el],
+                  }));
+                  setCanvasSelection({ kind: 'element', id: el.id });
+                  onOpenTab?.('layers');
+                  notify(t('تمت إضافة الصورة للورقة', 'Image placed on sheet'));
+                }
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
+        </div>
+
         <div className="cv-zoom-controls">
           <button
             type="button"
             className="cv-icon-btn"
             aria-label={t('تصغير المعاينة', 'Zoom out')}
-            onClick={() => setZoomMode((z) => Math.max(0.35, Number(((z === 'fit' ? fitZoom : z) - 0.1).toFixed(2))))}
+            onClick={() =>
+              setZoomMode((z) =>
+                Math.max(0.35, Number(((z === 'fit' ? fitZoom : z) - 0.1).toFixed(2))),
+              )
+            }
           >
             <ZoomOut size={15} />
           </button>
@@ -590,7 +402,11 @@ export function A4Preview({
             type="button"
             className="cv-icon-btn"
             aria-label={t('تكبير المعاينة', 'Zoom in')}
-            onClick={() => setZoomMode((z) => Math.min(1.35, Number(((z === 'fit' ? fitZoom : z) + 0.1).toFixed(2))))}
+            onClick={() =>
+              setZoomMode((z) =>
+                Math.min(1.35, Number(((z === 'fit' ? fitZoom : z) + 0.1).toFixed(2))),
+              )
+            }
           >
             <ZoomIn size={15} />
           </button>
@@ -633,7 +449,24 @@ export function A4Preview({
         </div>
       </div>
 
-      <div className="cv-preview-stage" ref={stageRef}>
+      {interactive && (
+        <div className="cv-canvas-hint-strip no-print">
+          <span>
+            {t(
+              'انقر مرتين على أي نص بالورقة لتعديله مباشرة · اسحب أي قسم أو عنصر لتحريكه · استخدم تبويب «الطبقات والخصائص» للتحكم الكامل',
+              'Double-click any text on the sheet to edit inline · Drag any block or element to move · Open "Layers & Inspector" for full styling',
+            )}
+          </span>
+        </div>
+      )}
+
+      <div
+        className="cv-preview-stage"
+        ref={stageRef}
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) setCanvasSelection(null);
+        }}
+      >
         <div
           className="cv-scale-frame"
           style={{
@@ -649,7 +482,11 @@ export function A4Preview({
               transformOrigin: 'top left',
             }}
           >
-            <ResumeSheetCanvas doc={resume} />
+            <ResumeSheetCanvas
+              doc={resume}
+              canvas={canvasCallbacks}
+              onFocusInspector={() => onOpenTab?.('layers')}
+            />
           </div>
         </div>
       </div>

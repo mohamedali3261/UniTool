@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Crop, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Camera, Crop, Eye, EyeOff, Sliders, Trash2 } from 'lucide-react';
 import { useCvStudio } from '../../app/context';
 import { Modal } from '../../components/Modal';
+import type { ImageFrameShape } from '../../core/types';
 
-export function PersonalInfoSection() {
-  const { resume, updateResume, notify, t } = useCvStudio();
+export function PersonalInfoSection({
+  onEditPhotoInspector,
+}: {
+  onEditPhotoInspector?: () => void;
+}) {
+  const { resume, updateResume, setCanvasSelection, notify, t } = useCvStudio();
   const { personal } = resume;
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -125,20 +130,39 @@ export function PersonalInfoSection() {
           {personal.photoDataUrl && (
             <div className="cv-photo-shape-row">
               <span>{t('إطار الصورة:', 'Photo frame:')}</span>
-              <button
-                type="button"
-                className={`cv-chip ${personal.photoShape === 'circle' ? 'active' : ''}`}
-                onClick={() => setField('photoShape', 'circle')}
-              >
-                {t('دائري', 'Circular')}
-              </button>
-              <button
-                type="button"
-                className={`cv-chip ${personal.photoShape === 'rounded' ? 'active' : ''}`}
-                onClick={() => setField('photoShape', 'rounded')}
-              >
-                {t('مربع ناعم', 'Rounded Square')}
-              </button>
+              {(
+                [
+                  { id: 'circle', ar: 'دائري', en: 'Circle' },
+                  { id: 'rounded', ar: 'ناعم', en: 'Rounded' },
+                  { id: 'square', ar: 'مربع', en: 'Square' },
+                  { id: 'arch', ar: 'قوس', en: 'Arch' },
+                  { id: 'hexagon', ar: 'سداسي', en: 'Hexagon' },
+                  { id: 'diamond', ar: 'معين', en: 'Diamond' },
+                ] as { id: ImageFrameShape; ar: string; en: string }[]
+              ).map((sh) => (
+                <button
+                  key={sh.id}
+                  type="button"
+                  className={`cv-chip ${personal.photoShape === sh.id ? 'active' : ''}`}
+                  onClick={() => setField('photoShape', sh.id)}
+                >
+                  {t(sh.ar, sh.en)}
+                </button>
+              ))}
+              {onEditPhotoInspector && (
+                <button
+                  type="button"
+                  className="cv-btn soft"
+                  data-testid="open-photo-filters-btn"
+                  onClick={() => {
+                    setCanvasSelection({ kind: 'block', blockKey: 'photo' });
+                    onEditPhotoInspector();
+                  }}
+                >
+                  <Sliders size={13} />
+                  <span>{t('فلاتر وتعديل الصورة', 'Filters & Adjust')}</span>
+                </button>
+              )}
             </div>
           )}
           <small className="cv-calm-note">
