@@ -74,7 +74,7 @@
   color: var(--studio-ui-ink, #b4c8bd);
   border: 0;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   flex-shrink: 0;
 }
 .stock-search .stock-search-submit {
@@ -120,7 +120,7 @@
   white-space: nowrap;
   font: inherit;
   font-size: 10px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .stock-results-heading {
   display: flex;
@@ -164,7 +164,7 @@
   overflow: hidden;
   border: 0;
   background: var(--studio-ui-surface, #1c2d22);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   color: white;
 }
 .stock-card-preview img {
@@ -243,7 +243,7 @@
   background: transparent;
   color: var(--studio-night-accent-ink, #87edb6);
   border: 0;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   border-radius: 8px;
 }
 .stock-card-footer > button:hover {
@@ -251,7 +251,7 @@
 }
 .stock-card-footer > button:disabled {
   opacity: 0.35;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .stock-skeleton {
   aspect-ratio: 0.89;
@@ -289,7 +289,7 @@
   background: transparent;
   border: 0;
   color: inherit;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .stock-message {
   display: flex;
@@ -311,7 +311,7 @@
   border: 0;
   color: inherit;
   margin-inline-start: auto;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .stock-download {
   padding: 11px;
@@ -333,7 +333,7 @@
   color: var(--studio-ui-ink, #bde6ca);
   min-width: 36px;
   min-height: 36px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .stock-download progress {
   width: 100%;
@@ -417,7 +417,7 @@
   border-radius: 12px;
   background: var(--studio-ui-surface, #213327);
   color: var(--studio-ui-ink, #d7eee0);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .stock-preview-media {
   background: var(--studio-ui-surface, #08100b);

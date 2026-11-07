@@ -28,14 +28,14 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 button {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   color: inherit;
   background: none;
   border: 0;
 }
 button:disabled {
   opacity: 0.35;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 button,
 a {
@@ -1210,7 +1210,7 @@ input[type="range"] {
   background: var(--studio-ui-surface, #343943);
   height: 3px;
   border-radius: 5px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   accent-color: var(--mint);
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -1319,7 +1319,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 28px;
   position: relative;
   border-bottom: 1px solid #ffffff05;
-  cursor: crosshair;
+  cursor: var(--ut-cursor-crosshair, crosshair);
 }
 .ruler > span {
   position: absolute;
@@ -2364,7 +2364,7 @@ input[type="range"]::-webkit-slider-thumb {
 .timeline-resize {
   height: 10px;
   flex-shrink: 0;
-  cursor: ns-resize;
+  cursor: var(--ut-cursor-ns-resize, ns-resize);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2463,7 +2463,7 @@ input[type="range"]::-webkit-slider-thumb {
   touch-action: none;
 }
 .timeline-enhanced .timeline-clip {
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   padding: 5px 10px;
   touch-action: none;
   user-select: none;
@@ -2471,7 +2471,7 @@ input[type="range"]::-webkit-slider-thumb {
 .timeline-enhanced .timeline-clip.moving {
   border-color: var(--mint);
   opacity: 0.7;
-  cursor: grabbing;
+  cursor: var(--ut-cursor-grabbing, grabbing);
   box-shadow: 0 0 0 2px #b7f56822;
 }
 .timeline-enhanced .timeline-clip .clip-caption {
@@ -2498,7 +2498,7 @@ input[type="range"]::-webkit-slider-thumb {
   bottom: 0;
   width: 7px;
   z-index: 4;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
   touch-action: none;
   background: #ffffff09;
   margin: 0 !important;
@@ -2542,7 +2542,7 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden;
   white-space: nowrap;
   padding: 3px 10px;
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   touch-action: none;
 }
 .timeline-text > span:not(.trim-handle) {
@@ -2566,7 +2566,7 @@ input[type="range"]::-webkit-slider-thumb {
   top: 5px;
   height: 35px;
   border: 1px solid #447c8f80;
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   touch-action: none;
   padding: 0;
 }
@@ -2602,7 +2602,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .timeline-enhanced .playhead {
   pointer-events: auto;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
   width: 9px;
   transform: translateX(-4px);
   background: transparent;
@@ -3110,7 +3110,7 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 9px 10px;
   font-size: 10px;
   color: var(--studio-ui-muted, #9da8b7);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   min-height: 36px;
 }
 .performance-menu summary::-webkit-details-marker {
@@ -4108,7 +4108,7 @@ input[type="range"]::-webkit-slider-thumb {
   font: inherit;
   font-size: 12px;
   text-align: start;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   transition:
     border-color 0.16s,
     box-shadow 0.16s;
@@ -4134,7 +4134,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .studio-select:disabled {
   opacity: 0.45;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .studio-select-menu {
   z-index: 150;
@@ -4165,7 +4165,7 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 10px 12px;
   border-radius: 9px;
   font-size: 12px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   outline: 0;
   user-select: none;
 }
@@ -4221,7 +4221,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: transparent;
   font: inherit;
   font-size: 12px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .studio-segmented > button[aria-pressed="true"] {
   background: var(--studio-ui-surface, #233e34);
@@ -4335,7 +4335,7 @@ input[type="range"]::-webkit-slider-thumb {
 .layer-editor summary,
 .layer-properties summary,
 .text-motion-controls summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   min-height: 44px;
   display: list-item;
   font-size: 12px;
@@ -4681,7 +4681,7 @@ input[type="range"]::-webkit-slider-thumb {
   z-index: 3;
   outline: none;
   overflow: visible;
-  cursor: crosshair;
+  cursor: var(--ut-cursor-crosshair, crosshair);
 }
 .preview-interaction:focus-visible {
   outline: 1px dashed #b7f568;
@@ -4739,17 +4739,17 @@ input[type="range"]::-webkit-slider-thumb {
 .resize-nw {
   left: -22px;
   top: -22px;
-  cursor: nwse-resize;
+  cursor: var(--ut-cursor-nwse-resize, nwse-resize);
 }
 .resize-se {
   right: -22px;
   bottom: -22px;
-  cursor: nwse-resize;
+  cursor: var(--ut-cursor-nwse-resize, nwse-resize);
 }
 .rotate-handle {
   right: -22px;
   top: -50px;
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   background: #b7f568 !important;
   border: 2px solid var(--studio-ui-line, #233d24);
   border-radius: 50%;
@@ -4789,7 +4789,7 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 10px;
   border-radius: 12px;
   box-shadow: 0 12px 35px #0008;
-  cursor: default;
+  cursor: var(--ut-cursor-default, default);
   touch-action: auto;
 }
 .preview-inline-editor textarea {
@@ -4987,7 +4987,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-top: 1px solid var(--studio-ui-line, #34412d);
 }
 .text-advanced summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   padding: 15px 0;
   font-size: 11px;
   line-height: 1.8;
@@ -5244,7 +5244,7 @@ input[type="range"]::-webkit-slider-thumb {
   outline-offset: -2px;
 }
 .timeline-pro .item-locked {
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
   filter: saturate(0.45);
 }
 .timeline-pro .track-hidden {
@@ -5308,7 +5308,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 18px;
   padding: 0;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
   touch-action: none;
   z-index: 5;
 }

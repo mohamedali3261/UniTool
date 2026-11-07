@@ -89,7 +89,7 @@
   min-width: 20px;
   width: 100%;
   accent-color: var(--accent);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .ld-motion-transport > output {
   font: 11px monospace;
@@ -196,7 +196,7 @@
   overflow: hidden;
 }
 .ld-motion-lesson > summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   padding: 14px;
   font-weight: 600;
   font-size: 12px;
@@ -319,7 +319,7 @@
 .ld-motion-timeline > summary,
 .ld-motion-options summary {
   padding: 12px 14px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   font-size: 12px;
   font-weight: 600;
   outline-offset: -4px;
@@ -407,14 +407,14 @@
   background: var(--accent);
   border: 1px solid var(--accent);
   border-radius: 5px;
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   touch-action: none;
   min-width: 8px;
   user-select: none;
   color: var(--on-accent);
 }
 .ld-motion-track-bar:active {
-  cursor: grabbing;
+  cursor: var(--ut-cursor-grabbing, grabbing);
 }
 .ld-motion-track-bar:focus-visible {
   outline: 2px solid var(--ink);
@@ -424,7 +424,7 @@
   width: 12px;
   flex: none;
   background: #ffffff50;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
   border-radius: 3px;
   z-index: 1;
 }

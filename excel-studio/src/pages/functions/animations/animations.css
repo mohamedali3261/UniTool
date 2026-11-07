@@ -151,7 +151,7 @@
   min-height: 28px;
   border: 1px solid #d5dfca;
   background: #e7ecdf;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   border-radius: 5px;
   color: #738065;
   font: 10px Arial;
@@ -203,7 +203,7 @@
 }
 .xs-formula-animation button:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .xs-example-layout > div {
   min-width: 0;
@@ -343,7 +343,7 @@
     monospace;
   color: #26472c;
   direction: ltr;
-  cursor: default;
+  cursor: var(--ut-cursor-default, default);
   pointer-events: none;
 }
 .xs-demo-output .is-typing {
@@ -479,7 +479,7 @@
   border-bottom: 1px solid #dce6d3;
 }
 .xs-demo-details summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .xs-demo-details p {
   margin: 6px 0;

@@ -20,7 +20,7 @@
   box-sizing: border-box;
   border: calc(2 * var(--crop-unit)) solid #a8f3d3;
   box-shadow: 0 0 0 20000px #0009;
-  cursor: move;
+  cursor: var(--ut-cursor-move, move);
   touch-action: none;
 }
 .dc-canvas-crop-region:before,
@@ -57,42 +57,42 @@
 .handle-nw {
   left: 0;
   top: 0;
-  cursor: nwse-resize;
+  cursor: var(--ut-cursor-nwse-resize, nwse-resize);
 }
 .handle-n {
   left: 50%;
   top: 0;
-  cursor: ns-resize;
+  cursor: var(--ut-cursor-ns-resize, ns-resize);
 }
 .handle-ne {
   left: 100%;
   top: 0;
-  cursor: nesw-resize;
+  cursor: var(--ut-cursor-nesw-resize, nesw-resize);
 }
 .handle-e {
   left: 100%;
   top: 50%;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
 }
 .handle-se {
   left: 100%;
   top: 100%;
-  cursor: nwse-resize;
+  cursor: var(--ut-cursor-nwse-resize, nwse-resize);
 }
 .handle-s {
   left: 50%;
   top: 100%;
-  cursor: ns-resize;
+  cursor: var(--ut-cursor-ns-resize, ns-resize);
 }
 .handle-sw {
   left: 0;
   top: 100%;
-  cursor: nesw-resize;
+  cursor: var(--ut-cursor-nesw-resize, nesw-resize);
 }
 .handle-w {
   left: 0;
   top: 50%;
-  cursor: ew-resize;
+  cursor: var(--ut-cursor-ew-resize, ew-resize);
 }
 .dc-image-actions {
   position: fixed;
@@ -114,7 +114,7 @@
   place-items: center;
   color: var(--studio-ui-ink, #d9eee7);
   background: transparent;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .dc-image-actions button:hover {
   background: var(--studio-ui-surface, #28483e);

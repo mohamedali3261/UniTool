@@ -34,7 +34,7 @@
 .ut-site-nav .ut-nav-desktop > a:hover,
 .ut-site-nav .ut-nav-sections > summary:hover { background: var(--ut-nav-selected); color: var(--ut-nav-ink); }
 .ut-site-nav .ut-nav-actions { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
-.ut-site-nav button, .ut-site-nav summary { font: inherit; cursor: pointer; }
+.ut-site-nav button, .ut-site-nav summary { font: inherit; cursor: var(--ut-cursor-pointer, pointer); }
 .ut-site-nav .ut-nav-actions > button {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid var(--ut-nav-line); background: var(--ut-nav-surface); color: var(--ut-nav-ink);
@@ -91,7 +91,7 @@
   .ut-site-nav .ut-nav-backdrop {
     display: block; position: fixed; inset: 64px 0 0; width: 100%; height: calc(100dvh - 64px);
     border: 0 !important; border-radius: 0 !important; background: #0006 !important; z-index: -1;
-    cursor: default; padding: 0; margin: 0; touch-action: none;
+    cursor: var(--ut-cursor-default, default); padding: 0; margin: 0; touch-action: none;
   }
   .ut-site-nav .ut-nav-mobile {
     position: absolute; inset: calc(100% + 8px) 12px auto; display: grid; grid-template-columns: minmax(0, 1fr);

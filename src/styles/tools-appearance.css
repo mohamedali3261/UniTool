@@ -108,7 +108,7 @@ html:is([data-tools-theme], [data-site-theme]) .tools-mega-menu a:hover { backgr
 html:is([data-tools-theme], [data-site-theme]) .tools-mega-menu span[class*='bg-gradient'] { background: #24795e; }
 html:is([data-tools-theme], [data-site-theme]) .tools-app-shell { background: #f5f7f4; }
 html:is([data-tools-theme='dark'], [data-site-theme='dark']) .tools-app-shell { background: #101010; }
-html:is([data-tools-theme], [data-site-theme]) button:disabled { cursor: not-allowed; opacity: .5; }
+html:is([data-tools-theme], [data-site-theme]) button:disabled { cursor: var(--ut-cursor-not-allowed, not-allowed); opacity: .5; }
 html:is([data-tools-theme], [data-site-theme]) :is(button,a,input,textarea,select):focus-visible { outline: 2px solid #438c6f; outline-offset: 2px; }
 
 html:is([data-tools-theme], [data-site-theme]) .tools-app-shell [class~='bg-clip-text'] { color: var(--tools-accent-ink); background: none; }

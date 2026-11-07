@@ -247,7 +247,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
         left: element.x,
         width: element.width,
         height: element.height,
-        cursor: 'move',
+        cursor: 'var(--ut-cursor-move, move)',
         zIndex: isSelected ? 30 : 20,
         rotate: `${element.rotation || 0}deg`,
         opacity: element.opacity !== undefined ? element.opacity : 1,

@@ -56,11 +56,11 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 button {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 button:disabled {
   opacity: 0.42;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 a {
   color: inherit;

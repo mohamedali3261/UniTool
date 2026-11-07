@@ -476,7 +476,7 @@ export default function Canvas() {
                           e.stopPropagation();
                           start(e, n.id, true);
                         }}
-                        style={{ cursor: "nwse-resize" }}
+                        style={{ cursor: "var(--ut-cursor-nwse-resize, nwse-resize)" }}
                       />
                     )}
                 </g>

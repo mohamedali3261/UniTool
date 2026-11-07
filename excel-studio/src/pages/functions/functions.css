@@ -257,7 +257,7 @@
 .xs-function-detail details summary {
   font-size: 11px;
   color: var(--site-night-accent, #769067);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   padding: 10px 0;
 }
 .xs-example-layout {
@@ -423,7 +423,7 @@
   border-radius: 12px;
   background: var(--site-night-paper, #f7faf3);
   color: var(--site-night-accent, #506246);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   font: inherit;
   font-size: 12px;
   text-align: start;

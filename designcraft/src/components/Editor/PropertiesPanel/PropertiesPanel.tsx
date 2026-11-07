@@ -16,6 +16,7 @@ interface PropertiesPanelProps {
   activeProperties: ActiveObjectProperties | null;
   canvasWidth: number;
   canvasHeight: number;
+  isPackaging?: boolean;
   backgroundColor: string;
   onUpdateProperty: (key: string, value: any) => void;
   onAlign: (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
@@ -39,6 +40,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   activeProperties, onStartCrop,
   canvasWidth,
   canvasHeight,
+  isPackaging,
   backgroundColor,
   onUpdateProperty,
   onAlign,
@@ -103,8 +105,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <h3 className="text-xs font-bold text-white leading-tight">
               {activeProperties ? `${t.propsElement} · ${{text:lang==='ar'?'نص':'Text',image:lang==='ar'?'صورة':'Image',line:lang==='ar'?'خط':'Line',group:lang==='ar'?'مجموعة':'Group',shape:lang==='ar'?'شكل':'Shape',object:lang==='ar'?'عنصر':'Object'}[elementKind(activeProperties.type)]}` : t.propsCanvas}
             </h3>
-            <p className="text-[9px] text-slate-400 font-mono leading-none">
-              {activeProperties ? (isText ? (lang === 'ar' ? 'نص قابل للتعديل' : 'Editable text') : isImage ? (lang === 'ar' ? 'صورة' : 'Image') : isGroupOrIcon ? (lang === 'ar' ? 'مجموعة عناصر' : 'Object group') : (lang === 'ar' ? 'شكل' : 'Shape')) : `${canvasWidth} × ${canvasHeight} PX`}
+            <p dir="ltr" className="text-[9px] text-slate-400 font-mono leading-none">
+              {activeProperties ? (isText ? (lang === 'ar' ? 'نص قابل للتعديل' : 'Editable text') : isImage ? (lang === 'ar' ? 'صورة' : 'Image') : isGroupOrIcon ? (lang === 'ar' ? 'مجموعة عناصر' : 'Object group') : (lang === 'ar' ? 'شكل' : 'Shape')) : `${Math.round(canvasWidth)} × ${Math.round(canvasHeight)} px`}
             </p>
           </div>
         </div>
@@ -193,6 +195,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <CanvasProperties
             width={canvasWidth}
             height={canvasHeight}
+            isPackaging={isPackaging}
             backgroundColor={backgroundColor}
             onResizeCanvas={onResizeCanvas}
             onSetBackgroundColor={onSetBackgroundColor}

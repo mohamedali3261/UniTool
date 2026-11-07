@@ -54,7 +54,7 @@ const linkStyle: React.CSSProperties = {
   color: "#7c7f8a",
   textDecoration: "none",
   fontWeight: 500,
-  cursor: "pointer",
+  cursor: "var(--ut-cursor-pointer, pointer)",
   transition: "color .2s",
   background: "none",
   border: "none",
@@ -71,7 +71,7 @@ const iconBtnStyle: React.CSSProperties = {
   border: "1px solid transparent",
   background: "transparent",
   color: "#7c7f8a",
-  cursor: "pointer",
+  cursor: "var(--ut-cursor-pointer, pointer)",
   transition: "all .2s",
 };
 

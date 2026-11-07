@@ -28,7 +28,7 @@
   height: 16px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
   transition: all 0.2s ease;
 }
@@ -44,7 +44,7 @@
   border: none;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
   transition: all 0.2s ease;
 }
@@ -61,7 +61,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f97316, #fbbf24);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
   transition: all 0.2s ease;
   position: relative;
@@ -84,7 +84,7 @@ input[type="range"]::-moz-range-thumb {
   border: none;
   border-radius: 50%;
   background: linear-gradient(135deg, #f97316, #fbbf24);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
   transition: all 0.2s ease;
 }

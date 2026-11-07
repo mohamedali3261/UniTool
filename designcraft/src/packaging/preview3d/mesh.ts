@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { cartonAssembly, piecePose, type CartonPiece } from "./assembly";
 import type { CartonSize } from "../geometry";
+
+export type CartonFinish = "matte" | "satin" | "glossy" | "kraft";
+
 export function pieceGeometry(
   piece: CartonPiece,
   atlas: { width: number; height: number },
@@ -64,6 +67,7 @@ export function pieceGeometry(
   geometry.computeVertexNormals();
   return geometry;
 }
+
 export function buildCarton(
   size: CartonSize,
   texture: THREE.Texture,
@@ -73,18 +77,24 @@ export function buildCarton(
   const root = new THREE.Group(),
     pieces = cartonAssembly(size),
     groups = new Map<string, THREE.Group>();
-  const materials = [
-    new THREE.MeshPhysicalMaterial({
-      map: texture,
-      color: 0xffffff,
-      roughness: 0.68,
-      clearcoat: 0,
-      clearcoatRoughness: 0.35,
-      metalness: 0,
-    }),
-    new THREE.MeshStandardMaterial({ color: 0xeee9dc, roughness: 1 }),
-    new THREE.MeshStandardMaterial({ color: 0xbfb49d, roughness: 1 }),
-  ];
+  const printed = new THREE.MeshPhysicalMaterial({
+    map: texture,
+    color: 0xffffff,
+    roughness: 0.68,
+    clearcoat: 0,
+    clearcoatRoughness: 0.35,
+    metalness: 0,
+  });
+  const interior = new THREE.MeshStandardMaterial({
+    color: 0xeee9dc,
+    roughness: 1,
+  });
+  const cutEdge = new THREE.MeshStandardMaterial({
+    color: 0xbfb49d,
+    roughness: 1,
+  });
+  const materials = [printed, interior, cutEdge];
+
   // Deterministic micro-grain height map; no download or persisted material image.
   const noise = new Uint8Array(128 * 128 * 4);
   let seed = 137;
@@ -101,10 +111,15 @@ export function buildCarton(
   grain.minFilter = THREE.LinearMipmapLinearFilter;
   grain.generateMipmaps = true;
   grain.needsUpdate = true;
-  const printed = materials[0] as THREE.MeshPhysicalMaterial;
   printed.bumpMap = grain;
   printed.bumpScale = 0.025;
+
+  let edgeMaterial: THREE.LineBasicMaterial | null = null;
   const geometries: THREE.BufferGeometry[] = [];
+  const pieceGeos: Array<{ group: THREE.Group; geometry: THREE.BufferGeometry }> = [];
+  const edgeLines: THREE.LineSegments[] = [];
+  let currentFinish: CartonFinish = "matte";
+
   for (const piece of pieces) {
     const group = new THREE.Group();
     group.name = piece.id;
@@ -117,8 +132,13 @@ export function buildCarton(
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
+    pieceGeos.push({ group, geometry });
   }
-  const setFold = (progress: number) =>
+
+  let currentFold = -1;
+  const setFold = (progress: number) => {
+    if (progress === currentFold) return false;
+    currentFold = progress;
     pieces.forEach((piece) => {
       const pose = piecePose(piece, progress, thickness),
         group = groups.get(piece.id)!;
@@ -126,19 +146,88 @@ export function buildCarton(
       group.rotation.set(0, 0, 0);
       group.rotation[piece.axis] = pose.rotation;
     });
+    return true;
+  };
   setFold(1);
+
   return {
     root,
     pieces,
     groups,
     setFold,
-    setFinish: (finish: "matte" | "satin") => {
-      printed.roughness = finish === "satin" ? 0.36 : 0.68;
-      printed.clearcoat = finish === "satin" ? 0.32 : 0;
+    setFinish: (finish: CartonFinish) => {
+      if (finish === currentFinish) return false;
+      currentFinish = finish;
+      if (finish === "satin") {
+        printed.color.setHex(0xffffff);
+        printed.roughness = 0.36;
+        printed.clearcoat = 0.32;
+        printed.clearcoatRoughness = 0.28;
+        printed.bumpScale = 0.018;
+        interior.color.setHex(0xeee9dc);
+        cutEdge.color.setHex(0xbfb49d);
+      } else if (finish === "glossy") {
+        printed.color.setHex(0xffffff);
+        printed.roughness = 0.16;
+        printed.clearcoat = 0.88;
+        printed.clearcoatRoughness = 0.08;
+        printed.bumpScale = 0.008;
+        interior.color.setHex(0xf3efe6);
+        cutEdge.color.setHex(0xc8beaa);
+      } else if (finish === "kraft") {
+        printed.color.setHex(0xf3e2c7);
+        printed.roughness = 0.86;
+        printed.clearcoat = 0;
+        printed.clearcoatRoughness = 0.5;
+        printed.bumpScale = 0.042;
+        interior.color.setHex(0xd4ba92);
+        cutEdge.color.setHex(0xb3946a);
+      } else {
+        printed.color.setHex(0xffffff);
+        printed.roughness = 0.68;
+        printed.clearcoat = 0;
+        printed.clearcoatRoughness = 0.35;
+        printed.bumpScale = 0.025;
+        interior.color.setHex(0xeee9dc);
+        cutEdge.color.setHex(0xbfb49d);
+      }
       printed.needsUpdate = true;
+      interior.needsUpdate = true;
+      cutEdge.needsUpdate = true;
+      return true;
+    },
+    setEdgesVisible: (visible: boolean) => {
+      if (!visible && edgeLines.length === 0) return false;
+      if (visible && edgeLines.length === 0) {
+        edgeMaterial = new THREE.LineBasicMaterial({
+          color: 0x24795e,
+          transparent: true,
+          opacity: 0.72,
+          depthTest: true,
+        });
+        for (const { group, geometry } of pieceGeos) {
+          const edgeGeo = new THREE.EdgesGeometry(geometry, 20);
+          geometries.push(edgeGeo);
+          const lines = new THREE.LineSegments(edgeGeo, edgeMaterial);
+          lines.name = group.name + "-edges";
+          lines.renderOrder = 2;
+          edgeLines.push(lines);
+          group.add(lines);
+        }
+        return true;
+      }
+      let changed = false;
+      edgeLines.forEach((line) => {
+        if (line.visible !== visible) {
+          line.visible = visible;
+          changed = true;
+        }
+      });
+      return changed;
     },
     dispose: () => {
       grain.dispose();
+      edgeMaterial?.dispose();
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
     },

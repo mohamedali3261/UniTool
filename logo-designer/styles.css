@@ -12,11 +12,11 @@ select {
   font: inherit;
 }
 button {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 button:disabled {
   opacity: 0.38;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 button:focus-visible,
 a:focus-visible,
@@ -122,7 +122,7 @@ textarea:focus-visible,
   border-radius: 8px;
   padding: 3px;
   background: var(--subtle);
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .ld-app input[type="checkbox"],
 .ld-app input[type="range"],
@@ -1221,7 +1221,7 @@ kbd {
   background-size: 16px 16px;
 }
 .ld-canvas-viewport.is-hand {
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
 }
 .ld-artboard {
   position: relative;
@@ -1868,10 +1868,10 @@ kbd {
   touch-action: none;
 }
 .ld-path-editor circle {
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
 }
 .ld-path-editor circle:active {
-  cursor: grabbing;
+  cursor: var(--ut-cursor-grabbing, grabbing);
 }
 .ld-variant-grid,
 .ld-personal-grid {

@@ -28,7 +28,7 @@
 .element-properties input[type="color"] {
   height: 32px;
   padding: 3px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 @media (max-width: 700px) {
   .editor-shell .element-properties {
