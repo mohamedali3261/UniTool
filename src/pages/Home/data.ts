@@ -7,6 +7,7 @@ import {
   Table2,
   FileText,
   FileUser,
+  Presentation,
 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
@@ -31,6 +32,27 @@ export const studios = [
     },
     action: { ar: "افتح ستوديو السيرة", en: "Open CV Studio" },
     color: "#9ed6be",
+  },
+  {
+    id: "teacherBoard",
+    href: "/teacher-board/",
+    icon: Presentation,
+    name: { ar: "سبورة المعلم الذكية", en: "Teacher Smartboard" },
+    eyebrow: "SMART CLASSROOM BOARD.",
+    description: {
+      ar: "اشرح مادتك بوضوح، من غير زحمة.",
+      en: "Teach every subject clearly. Without clutter.",
+    },
+    detail: {
+      ar: "سبورة تفاعلية بأوضاع متعددة، أدوات هندسة ومعادلات، قوالب للمواد، ومؤقت وقرعة لإدارة الفصل.",
+      en: "Interactive multi-surface smartboard with geometry tools, STEM formulas, subject templates, and class timer & picker.",
+    },
+    tags: {
+      ar: ["أوضاع وتسطير", "هندسة ومعادلات", "تصدير PDF"],
+      en: ["Board modes", "Geometry & STEM", "PDF export"],
+    },
+    action: { ar: "افتح سبورة المعلم", en: "Open Smartboard" },
+    color: "#a9cfa8",
   },
   {
     id: "sheets",

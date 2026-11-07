@@ -105,21 +105,34 @@ for (const mobile of [false, true])
         .locator("#editor-layout")
         .getByRole("button", { name: "إغلاق", exact: true })
         .click();
-    if (
+    if (mobile) {
+      await page
+        .locator("#mobile-bottom-nav")
+        .getByRole("button", { name: "الخصائص", exact: true })
+        .click();
+    } else if (
       await page
         .getByRole("button", { name: "إظهار الخصائص", exact: true })
         .count()
-    )
+    ) {
       await page
         .getByRole("button", { name: "إظهار الخصائص", exact: true })
         .click();
+    }
     await expect(
       page.locator("#editor-properties-panel").filter({ visible: true }),
     ).toBeVisible();
     await audit("selected object properties");
-    await page
-      .getByRole("button", { name: "إخفاء الخصائص", exact: true })
-      .click();
+    if (mobile) {
+      await page
+        .locator("#mobile-bottom-nav")
+        .getByRole("button", { name: "الخصائص", exact: true })
+        .click();
+    } else {
+      await page
+        .getByRole("button", { name: "إخفاء الخصائص", exact: true })
+        .click();
+    }
     await page.getByRole("button", { name: /استيراد \/ تصدير/ }).focus();
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#designer-file-actions")).toBeVisible();

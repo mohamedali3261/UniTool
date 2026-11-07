@@ -47,6 +47,7 @@ export function ToolDirectory({
   const featuredIds = [
     "siteStorage",
     "cvStudio",
+    "teacherBoard",
     "excelStudio",
     "pdfMerger",
     "imageCropper",
@@ -54,7 +55,6 @@ export function ToolDirectory({
     "compress",
     "qrCode",
     "pdfSigner",
-    "imageCompressor",
   ];
   const visible =
     q || expanded || category !== "all"

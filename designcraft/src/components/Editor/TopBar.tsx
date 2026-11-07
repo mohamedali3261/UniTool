@@ -14,7 +14,6 @@ import {
   Grid,
   PanelLeftClose,
   PanelLeftOpen,
-  SlidersHorizontal,
   Plus,
   X,
   Box,
@@ -315,19 +314,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <Grid style={{ width: 13, height: 13 }} />
               </button>
             </div>
-
-            {onToggleProperties && (
-              <button
-                type="button"
-                onClick={onToggleProperties}
-                title={isPropertiesOpen ? t.hideProps : t.showProps}
-                aria-label={isPropertiesOpen ? t.hideProps : t.showProps}
-                className={`dc-unified-btn ${isPropertiesOpen ? 'is-active' : ''}`}
-              >
-                <SlidersHorizontal style={{ width: 13, height: 13 }} />
-                <span className="hidden xl:inline">{isAr ? 'الخصائص' : 'Properties'}</span>
-              </button>
-            )}
 
             <button
               type="button"

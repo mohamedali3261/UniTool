@@ -740,11 +740,17 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     setIsExportModalOpen(true);
   }, []);
 
-  // Open Preview Modal
+  // Open Preview Modal (crisp HD raster within device budget for 360° 3D card & 2D views)
   const handleOpenPreview = useCallback(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    const url = exportCanvasImage(canvas, 'png', 1, Math.min(1, 1200 / Math.max(canvasWidth, canvasHeight)), canvasWidth, canvasHeight);
+    const maxEdge = Math.max(1, canvasWidth, canvasHeight);
+    let mult = Math.min(2.5, 1600 / maxEdge);
+    const budget = deviceRasterBudget();
+    if (!rasterWithinBudget(canvasWidth, canvasHeight, mult, budget)) {
+      mult = Math.min(1, 1000 / maxEdge);
+    }
+    const url = exportCanvasImage(canvas, 'png', 1, mult, canvasWidth, canvasHeight);
     setPreviewUrl(url);
     setIsPreviewModalOpen(true);
   }, [canvasWidth, canvasHeight]);
@@ -1614,6 +1620,12 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           activeTab={isSidebarOpen ? activeSidebarTab : null}
           onSelectTab={handleSelectSidebarTab}
           variant="rail"
+          hasSelection={!!activeProperties}
+          isPropertiesOpen={isPropertiesOpen}
+          onToggleProperties={() => {
+            setIsPropertiesOpen(!isPropertiesOpen);
+            if (window.innerWidth < 1100) setIsSidebarOpen(false);
+          }}
         />
 
         {/* Desktop Sidebar Expanded Drawer Panel */}
@@ -1746,42 +1758,33 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         isPropertiesOpen={isPropertiesOpen}
       />
 
-      {/* 4. Mobile Bottom Sheet Drawer for Sidebar Tools */}
+      {/* 4. Mobile In-flow Sidebar Dock (matches Properties dock so Canvas stays visible while editing) */}
       {isSidebarOpen && activeSidebarTab && (
-        <div className="md:hidden fixed inset-x-0 top-0 bottom-14 z-40">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-x-0 top-0 bottom-14 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-
-          {/* Bottom Sheet Modal */}
-          <div className="fixed inset-x-0 bottom-14 z-50 h-[72vh] max-h-[560px] bg-[#1C2541] rounded-t-3xl border-t border-sky-500/40 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
-            {/* Sheet Handle & Header */}
-            <div className="px-4 pt-3 pb-2 border-b border-slate-700/70 bg-[#0B132B] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-1 bg-slate-600 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
-                <span className="text-sm font-bold text-white mt-1">
-                  {getTabTitle(activeSidebarTab)}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(false)}
-                aria-label={t.close}
-                title={t.close}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Sheet Scrollable Body */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {renderSidebarContent()}
-            </div>
+        <section
+          id="mobile-sidebar-dock"
+          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+          className="md:hidden shrink-0 overflow-hidden flex flex-col dc-sidebar-dock bg-[#101a30]"
+          aria-label={getTabTitle(activeSidebarTab)}
+        >
+          <div className="min-h-11 py-1.5 px-3 border-b border-slate-700/70 flex items-center justify-between bg-[#0B132B] shrink-0">
+            <span className="text-xs font-bold text-white truncate">
+              {getTabTitle(activeSidebarTab)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label={t.close}
+              title={t.close}
+              className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+
+          <div className="properties-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3">
+            {renderSidebarContent()}
+          </div>
+        </section>
       )}
 
       {/* In-flow inspector: reserve canvas space instead of covering the preview. */}

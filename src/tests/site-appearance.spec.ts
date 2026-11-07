@@ -3,6 +3,7 @@ const pages = [
   { id: 'home', url: '/index.html', surface: '.home-page' },
   { id: 'excel', url: '/excel-studio/', surface: '.xs-app' },
   { id: 'cv', url: '/cv-studio/', surface: '.cv-studio-app' },
+  { id: 'teacherBoard', url: '/teacher-board/', surface: '.tb-app' },
   { id: 'logo', url: '/logo-designer/', surface: '.ld-app' },
   { id: 'reader', url: '/the-audio-reader.html', surface: '.reader-app' },
   { id: 'svg', url: '/unitool-svg.html', surface: 'body' },
@@ -118,7 +119,7 @@ test('reader day/night and warm paper preserve Arabic text and settings', async 
 });
 
 test('unified green arrow cursor and all companion cursor icons apply across site pages and themes', async ({ page }) => {
-  for (const url of ['/index.html', '/app.html', '/designcraft.html', '/excel-studio/', '/cv-studio/', '/logo-designer/', '/video-studio.html', '/storage.html', '/the-audio-reader.html', '/unitool-svg.html']) {
+  for (const url of ['/index.html', '/app.html', '/designcraft.html', '/excel-studio/', '/cv-studio/', '/teacher-board/', '/logo-designer/', '/video-studio.html', '/storage.html', '/the-audio-reader.html', '/unitool-svg.html']) {
     await page.goto(url);
     await expect(page.locator('button:not(:disabled), a[href]').first()).toBeVisible();
     const cursors = await page.evaluate(() => {

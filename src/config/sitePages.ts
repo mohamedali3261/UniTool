@@ -10,4 +10,5 @@ export const sitePages = [
   { href: "/unitool-svg.html", ar: "UniTool SVG", en: "UniTool SVG" },
   { href: "/logo-designer/", ar: "مصمم الشعارات", en: "Logo Designer" },
   { href: "/video-studio.html", ar: "استوديو الفيديو", en: "Video Studio" },
+  { href: "/teacher-board/", ar: "سبورة المعلم", en: "Teacher Board" },
 ];

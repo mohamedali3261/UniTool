@@ -1,12 +1,12 @@
-import { House, Grid2X2, Palette, Film, PenTool, Shapes, Table2, FileUser, BookOpen, HardDrive } from 'lucide-react';
+import { House, Grid2X2, Palette, Film, PenTool, Shapes, Presentation, Table2, FileUser, BookOpen, HardDrive } from 'lucide-react';
 import { sitePages } from '../config/sitePages';
 
 /** Navigation-only grouping. Removing a link never removes its workspace. */
-const icons = [House, Grid2X2, Palette, Film, PenTool, Shapes, Table2, FileUser, BookOpen, HardDrive];
+const icons = [House, Grid2X2, Palette, Film, PenTool, Shapes, Presentation, Table2, FileUser, BookOpen, HardDrive];
 const groups = [
   { id: 'start', ar: 'ابدأ من هنا', en: 'Start here', hrefs: ['/index.html', '/app.html'] },
   { id: 'create', ar: 'التصميم والإبداع', en: 'Design & create', hrefs: ['/designcraft.html', '/video-studio.html', '/logo-designer/', '/unitool-svg.html'] },
-  { id: 'work', ar: 'القراءة والبيانات', en: 'Read & organize', hrefs: ['/excel-studio/', '/cv-studio/', '/the-audio-reader.html', '/storage.html'] },
+  { id: 'work', ar: 'التعليم والبيانات', en: 'Teach & organize', hrefs: ['/teacher-board/', '/excel-studio/', '/cv-studio/', '/the-audio-reader.html', '/storage.html'] },
 ];
 let index = 0;
 export const navbarSections = groups.map(group => ({
