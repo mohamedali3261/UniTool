@@ -6,10 +6,32 @@ import {
   Braces,
   Table2,
   FileText,
+  Presentation,
 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
   { id: 'storage', href: '/storage.html', icon: FileText, name: {ar:'التخزين والنسخ الاحتياطي', en:'Storage & backup'}, eyebrow:'YOUR WORK, WITH YOU.', description:{ar:'كل شغلك المحفوظ، معاك.',en:'Your saved work. Anywhere.'}, detail:{ar:'نزّل نسخة مضغوطة ومنظمة واستعد بيانات الموقع المحفوظة على جهاز آخر.',en:'Download an organized ZIP backup and restore saved site data on another device.'}, tags:{ar:['نسخة ZIP','مجلد لكل قسم','استعادة آمنة'],en:['ZIP archive','Organized sections','Safe restore']},action:{ar:'افتح التخزين العام',en:'Open site storage'},color:'#a9cfa8'},
+  {
+    id: "teacherBoard",
+    href: "/teacher-board/",
+    icon: Presentation,
+    name: { ar: "سبورة المعلم الذكية", en: "Teacher Smartboard" },
+    eyebrow: "SMART CLASSROOM BOARD.",
+    description: {
+      ar: "اشرح مادتك بوضوح، من غير زحمة.",
+      en: "Teach every subject clearly. Without clutter.",
+    },
+    detail: {
+      ar: "سبورة تفاعلية بأوضاع متعددة، أدوات هندسة ومعادلات، قوالب للمواد، ومؤقت وقرعة لإدارة الفصل.",
+      en: "Interactive multi-surface smartboard with geometry tools, STEM formulas, subject templates, and class timer & picker.",
+    },
+    tags: {
+      ar: ["أوضاع وتسطير", "هندسة ومعادلات", "تصدير PDF"],
+      en: ["Board modes", "Geometry & STEM", "PDF export"],
+    },
+    action: { ar: "افتح سبورة المعلم", en: "Open Smartboard" },
+    color: "#a9cfa8",
+  },
   {
     id: "sheets",
     href: "/excel-studio/",

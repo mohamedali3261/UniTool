@@ -2,7 +2,7 @@ import {
   FileText, Image, Type, Shrink, Merge, Scissors, Lock, Unlock, ScanLine, Files,
   LayoutGrid, Percent, Film, Subtitles, Plus, Combine, Video, Images,
   AudioLines, FileAudio, MessageSquareText, Zap, QrCode, ScanQrCode, Briefcase, Sparkles,
-  FileSignature, ArrowLeftRight, Table2,
+  FileSignature, ArrowLeftRight, Table2, Presentation,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -317,5 +317,32 @@ export const toolCategories: ToolCategory[] = [
 ];
 
 toolCategories[toolCategories.length - 1].tools.push({ id: 'siteStorage', href: '/storage.html', icon: FileText, titleAr: 'التخزين والنسخ الاحتياطي', titleEn: 'Storage & backup', descAr: 'نسخة مضغوطة لبيانات الموقع المحفوظة ونقلها بين الأجهزة', descEn: 'Back up and restore saved site data across devices', gradient: 'from-emerald-500 to-cyan-600', border: 'border-emerald-500/25', glow: 'hover:shadow-emerald-500/20' });
+
+toolCategories.push({
+  id: 'education',
+  titleAr: 'التعليم والشرح التفاعلي',
+  titleEn: 'Teaching & Smartboard',
+  taglineAr: 'سبورة ذكية للمعلمين بأوضاع متعددة وأدوات هندسة وفصل',
+  taglineEn: 'Interactive multi-mode classroom smartboard for teachers',
+  icon: Presentation,
+  accent: 'from-emerald-500 to-teal-600',
+  soft: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+  tools: [
+    {
+      id: 'teacherBoard',
+      href: '/teacher-board/',
+      icon: Presentation,
+      titleAr: 'سبورة المعلم الذكية',
+      titleEn: 'Teacher Smartboard',
+      descAr: 'سبورة تفاعلية بأوضاع وتسطير للمواد، هندسة ومعادلات، وإدارة الفصل',
+      descEn: 'Multi-mode teaching board with geometry kit, STEM formulas, and classroom tools',
+      gradient: 'from-emerald-500 to-teal-600',
+      border: 'border-emerald-500/25 hover:border-emerald-400/50',
+      glow: 'group-hover:shadow-emerald-500/20',
+      badgeAr: 'جديد',
+      badgeEn: 'New',
+    },
+  ],
+});
 
 export const totalToolCount = toolCategories.reduce((sum, c) => sum + c.tools.length, 0);

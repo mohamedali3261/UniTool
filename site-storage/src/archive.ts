@@ -19,7 +19,7 @@ function keyIdentity(key: IDBValidKey): string {
 const utf8 = new TextEncoder();
 const hash = async (data: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data.slice().buffer))).map(n => n.toString(16).padStart(2, '0')).join('');
 const json = (v: any) => utf8.encode(JSON.stringify(v));
-const validPath = (path: string) => typeof path === 'string' && /^(sections\/(design|logos|video|sheets|audio|svg|settings)\/[a-zA-Z0-9_.-]+\.json|assets\/(design|logos|video|sheets|audio|svg|settings)\/\d+\.bin)$/.test(path) && !path.includes('..');
+const validPath = (path: string) => typeof path === 'string' && /^(sections\/(design|logos|video|sheets|board|audio|svg|settings)\/[a-zA-Z0-9_.-]+\.json|assets\/(design|logos|video|sheets|board|audio|svg|settings)\/\d+\.bin)$/.test(path) && !path.includes('..');
 export async function exportSite(progress: (text: string) => void = () => {}) {
   const zip = new JSZip();
   const entries: Entry[] = [];

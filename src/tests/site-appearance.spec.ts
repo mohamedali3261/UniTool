@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 const pages = [
   { id: 'home', url: '/index.html', surface: '.home-page' },
   { id: 'excel', url: '/excel-studio/', surface: '.xs-app' },
+  { id: 'teacherBoard', url: '/teacher-board/', surface: '.tb-app' },
   { id: 'logo', url: '/logo-designer/', surface: '.ld-app' },
   { id: 'reader', url: '/the-audio-reader.html', surface: '.reader-app' },
   { id: 'svg', url: '/unitool-svg.html', surface: 'body' },
