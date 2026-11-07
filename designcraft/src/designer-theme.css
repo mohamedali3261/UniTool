@@ -506,3 +506,87 @@ html[data-dc-theme='light'] .dc-floating-zoom-pill button[data-testid='floating-
   color: #ffffff;
   background: #c8283d;
 }
+
+/* Preview Modal & 360° 3D Card Stage (Night + Day Studio Themes) */
+.dc-card3d-stage-wrap {
+  background: radial-gradient(circle at 50% 38%, #272b29 0%, #151716 68%, #101111 100%);
+}
+.dc-card3d-badge {
+  background: rgba(20, 22, 21, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d7e5dd;
+}
+.dc-card3d-controls {
+  background: rgba(23, 23, 23, 0.94);
+  border-color: #2e2e2e;
+}
+.dc-card3d-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 9px;
+  border: 1px solid #353535;
+  background: #222222;
+  color: #e3ece7;
+  font-size: 11px;
+  font-weight: 700;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.dc-card3d-btn:hover {
+  background: #2c2c2c;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+.dc-card3d-btn.is-active {
+  background: #24795e;
+  border-color: #2f9977;
+  color: #ffffff;
+}
+
+html[data-dc-theme='light'] .dc-preview-modal {
+  background: #f5f7f3;
+  border-color: #c6d4c7;
+  color: #1c3327;
+}
+html[data-dc-theme='light'] .dc-preview-modal__header {
+  background: #eef3ec;
+  border-color: #cbd8cc;
+}
+html[data-dc-theme='light'] .dc-preview-modal__header h2 {
+  color: #1c3327;
+}
+html[data-dc-theme='light'] .dc-preview-modal__modes {
+  background: #e2ebe1;
+  border-color: #c2d2c4;
+}
+html[data-dc-theme='light'] .dc-card3d-stage-wrap {
+  background: radial-gradient(circle at 50% 36%, #ffffff 0%, #edf2eb 65%, #e1e9df 100%);
+}
+html[data-dc-theme='light'] .dc-card3d-badge {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: #c3d2c5;
+  color: #1f4434;
+}
+html[data-dc-theme='light'] .dc-card3d-controls {
+  background: #eef3ec;
+  border-color: #cbd8cc;
+}
+html[data-dc-theme='light'] .dc-card3d-btn {
+  background: #ffffff;
+  border-color: #c4d3c6;
+  color: #214031;
+}
+html[data-dc-theme='light'] .dc-card3d-btn:hover {
+  background: #e6f0e8;
+  border-color: #8eb39e;
+  color: #153124;
+}
+html[data-dc-theme='light'] .dc-card3d-btn.is-active {
+  background: #24795e;
+  border-color: #1d634b;
+  color: #ffffff;
+}
+

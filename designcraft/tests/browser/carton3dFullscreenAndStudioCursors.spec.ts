@@ -141,7 +141,7 @@ test("solid green custom cursor and companion cursors apply to every visible ele
 test("designer unified navbar, compact floating delete pill, simplified properties dimensions, and smooth canvas zoom", async ({
   page,
 }) => {
-  const base = process.env.PREVIEW_URL || "http://127.0.0.1:4173";
+  const base = process.env.PREVIEW_URL || process.env.DESIGN_QA_URL || "http://localhost:3000";
   const pageErrors: string[] = [];
   page.on("pageerror", (err) => pageErrors.push(err.message));
 

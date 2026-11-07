@@ -11,6 +11,7 @@ export function allowedLocal(key: string) {
   return !secretKey(key) && /^(unitool[-_.:]|designcraft[-_.]|logo[-_.]|excel-studio[.]|sawti_|audioflow_stt_|bloub:|pdf_editor_elements$|text-studio[.-]|pdf-studio[.-])/.test(key);
 }
 export function sectionFor(key: string) {
+  if (/teacher-board/.test(key)) return 'board';
   if (/designcraft/.test(key)) return 'design';
   if (/logo/.test(key)) return 'logos';
   if (/excel/.test(key)) return 'sheets';

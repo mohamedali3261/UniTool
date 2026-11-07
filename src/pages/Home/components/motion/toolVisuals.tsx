@@ -983,6 +983,31 @@ export function ToolArtwork({ id }: { id: string }): ReactNode {
       );
       break;
 
+    case "teacherBoard":
+      scene = (
+        <>
+          <rect x="18" y="14" width="274" height="126" rx="10" fill={C.card} stroke={C.line} />
+          <line x1="36" y1="78" x2="186" y2="78" stroke={C.line} strokeWidth="1.5" />
+          <line x1="110" y1="26" x2="110" y2="126" stroke={C.line} strokeWidth="1.5" />
+          <path
+            d="M 46 112 Q 96 34 176 58"
+            fill="none"
+            stroke={C.accent}
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
+          <rect x="196" y="26" width="84" height="44" rx="7" fill={C.tint} stroke={C.accent} />
+          <text x="238" y="46" textAnchor="middle" fontSize="9.5" fontWeight="700" fill={C.accent}>
+            a² + b² = c²
+          </text>
+          <text x="238" y="60" textAnchor="middle" fontSize="8" fill={C.muted}>
+            180° · Ruler
+          </text>
+          <Badge x={200} y={84} w={76} text="SMARTBOARD" />
+        </>
+      );
+      break;
+
     default:
       scene = (
         <>
