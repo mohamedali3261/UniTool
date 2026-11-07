@@ -217,7 +217,7 @@
   .desktop-panel-divider {
     display: block;
     grid-row: 1 / 3;
-    cursor: col-resize;
+    cursor: var(--ut-cursor-col-resize, col-resize);
     touch-action: none;
     position: relative;
     outline-offset: -1px;

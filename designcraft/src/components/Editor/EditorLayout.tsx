@@ -19,7 +19,7 @@ import {PackagingPrintDialog} from '../../packaging/PackagingPrintDialog';
 import {applyCartonBoundary,isCartonGuide} from '../../packaging/boundary';
 import {packagingPrint} from '../../packaging/print';
 import {physicalCartonSvg} from "../../packaging/physicalSvg";
-import React, { useState, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
 import { useDcLang } from '../../hooks/useDcLang';
 import { fabric } from 'fabric';
 import {
@@ -38,7 +38,7 @@ import {
   X
 } from 'lucide-react';
 import { TopBar } from './TopBar';
-import { DesignTabs, DesignTabItem } from './DesignTabs';
+import type { DesignTabItem } from './DesignTabs';
 import { SidebarTabs } from './Sidebar/SidebarTabs';
 import { TextTab } from './Sidebar/TextTab';
 import { ElementsTab } from './Sidebar/ElementsTab';
@@ -1450,12 +1450,28 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     setIsPropertiesOpen(false); setIsSidebarOpen(false); setCropRequest(n=>n+1);
   };
 
+  const canvasOverlaysNode = useMemo(
+    () =>
+      packaging ? (
+        <CanvasOverlays
+          size={packaging.size}
+          settings={studioSettings}
+          width={canvasWidth}
+          height={canvasHeight}
+          selected={activeFace}
+          ar={lang === 'ar'}
+        />
+      ) : undefined,
+    [packaging, studioSettings, canvasWidth, canvasHeight, activeFace, lang]
+  );
+
   const renderPropertiesPanelContent = () => (
     <PropertiesPanel
       onStartCrop={startImageCrop}
       activeProperties={activeProperties}
       canvasWidth={canvasWidth}
       canvasHeight={canvasHeight}
+      isPackaging={!!packaging}
       backgroundColor={backgroundColor}
       onUpdateProperty={handleUpdateProperty}
       onAlign={(alignment) => {
@@ -1580,20 +1596,18 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onToggleProperties={() => { setIsPropertiesOpen(!isPropertiesOpen); if (window.innerWidth < 1100) setIsSidebarOpen(false); }}
         isPanMode={isPanMode}
         onTogglePanMode={() => setIsPanMode(!isPanMode)}
-      />
-
-      {packaging && <div className="carton-editor-bar" dir={lang==='ar'?'rtl':'ltr'}><span>{packaging.size.construction==='hinged-lid'?(lang==='ar'?'ارتفاع × عرض × طول القاعدة':'Height × width × base length'):(lang==='ar'?'طول × عرض × عمق':'Length × width × depth')} · <bdi dir="ltr">{packaging.size.height} × {packaging.size.width} × {packaging.size.depth} mm</bdi></span><button type="button" onClick={()=>setIsPackagingOpen(true)}>{lang==='ar'?'تعديل المقاسات':'Edit dimensions'}</button><button type="button" aria-label={lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'} title={lang==='ar'?'معاينة ثلاثية الأبعاد 360°':'3D preview · 360°'} onClick={()=>setIsCarton3DOpen(true)}>{lang==='ar'?'معاينة 3D':'3D · 360°'}</button><button type="button" onClick={()=>setIsPrintOpen(true)}>{lang==='ar'?'تصدير للطباعة':'Print export'}</button></div>}
-      {/* 2. Open Design Tabs */}
-      <DesignTabs
         tabs={tabs}
         activeTabId={activeTabId}
-        onSelectTab={onSelectTab}
+        onSwitchTab={onSelectTab}
         onCloseTab={onCloseTab}
         onNewTab={onNewTab}
-        onBackToDashboard={onBackToDashboard}
+        packagingSize={packaging ? packaging.size : null}
+        onOpenResizeCarton={packaging ? () => setIsPackagingOpen(true) : undefined}
+        onOpenCarton3D={packaging ? () => setIsCarton3DOpen(true) : undefined}
+        onOpenPrintExport={packaging ? () => setIsPrintOpen(true) : undefined}
       />
 
-      {/* 3. Workspace Body: Rail + Drawer + Canvas Area + Properties Panel */}
+      {/* 2. Workspace Body: Rail + Drawer + Canvas Area + Properties Panel */}
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         {/* Leftmost Sidebar Icon Rail (Desktop only) */}
         <SidebarTabs
@@ -1679,7 +1693,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           <CanvasArea
             cropRequest={cropRequest}
             onApplyCrop={handleCropImage}
-            overlays={packaging?<CanvasOverlays size={packaging.size} settings={studioSettings} width={canvasWidth} height={canvasHeight} selected={activeFace} ar={lang==='ar'}/>:undefined}
+            overlays={canvasOverlaysNode}
             width={canvasWidth}
             height={canvasHeight}
             backgroundColor={backgroundColor}

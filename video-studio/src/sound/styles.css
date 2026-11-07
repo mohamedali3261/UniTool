@@ -179,7 +179,7 @@
   background: #ffffff03;
 }
 .sound-local-files > summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   padding: 12px;
   color: var(--studio-ui-ink, #aac7d2);
   font-size: 11px;

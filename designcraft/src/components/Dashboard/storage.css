@@ -45,12 +45,12 @@
   color: var(--studio-ui-ink, #c9d9e5);
   background: var(--studio-ui-surface, #172237);
   font-size: 11px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   text-decoration: none;
 }
 .storage-workspace button:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: var(--ut-cursor-default, default);
 }
 .storage-workspace button:hover:not(:disabled),
 .storage-heading a:hover {

@@ -8,6 +8,7 @@ import { useDcLang } from '../../../hooks/useDcLang';
 interface CanvasPropertiesProps {
   width: number;
   height: number;
+  isPackaging?: boolean;
   backgroundColor: string;
   onResizeCanvas: (width: number, height: number) => void;
   onSetBackgroundColor: (color: string) => void;
@@ -17,6 +18,7 @@ interface CanvasPropertiesProps {
 export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
   width,
   height,
+  isPackaging,
   backgroundColor,
   onResizeCanvas,
   onSetBackgroundColor,
@@ -24,6 +26,8 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
 }) => {
   const { lang, t } = useDcLang();
   const isAr = lang === 'ar';
+  const roundedW = Math.round(width);
+  const roundedH = Math.round(height);
   return (
     <div className="space-y-5 select-none">
       <div className="space-y-1">
@@ -40,8 +44,12 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
           <span className="flex items-center gap-1">
             <Sliders className="w-3.5 h-3.5 text-sky-400" /> {t.cpDimensions}
           </span>
-          <span className="font-mono text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded-md border border-sky-800/50">
-            {width} × {height} px
+          <span
+            dir="ltr"
+            data-testid="properties-canvas-dimensions"
+            className="font-mono text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded-md border border-sky-800/50 whitespace-nowrap shrink-0"
+          >
+            {roundedW} × {roundedH} px
           </span>
         </div>
 
@@ -52,8 +60,15 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
               type="number"
               min="200"
               max="4000"
-              value={width}
-              onChange={(e) => onResizeCanvas(parseInt(e.target.value) || width, height)}
+              step="1"
+              readOnly={!!isPackaging}
+              aria-label={t.cpWidth}
+              value={roundedW}
+              onChange={(e) => {
+                if (isPackaging) return;
+                const val = Math.round(Number(e.target.value));
+                if (Number.isFinite(val) && val > 0) onResizeCanvas(val, height);
+              }}
               className="w-full bg-[#1C2541] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
             />
           </div>
@@ -64,8 +79,15 @@ export const CanvasProperties: React.FC<CanvasPropertiesProps> = ({
               type="number"
               min="200"
               max="4000"
-              value={height}
-              onChange={(e) => onResizeCanvas(width, parseInt(e.target.value) || height)}
+              step="1"
+              readOnly={!!isPackaging}
+              aria-label={t.cpHeight}
+              value={roundedH}
+              onChange={(e) => {
+                if (isPackaging) return;
+                const val = Math.round(Number(e.target.value));
+                if (Number.isFinite(val) && val > 0) onResizeCanvas(width, val);
+              }}
               className="w-full bg-[#1C2541] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
             />
           </div>

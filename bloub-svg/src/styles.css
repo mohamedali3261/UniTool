@@ -146,7 +146,7 @@
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 
 .plage::-webkit-slider-runnable-track {

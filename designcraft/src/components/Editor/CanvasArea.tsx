@@ -94,10 +94,64 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   // may transform it on a subsequent gesture. First-drag always navigates.
   const pendingSelection = useRef<{ target: fabric.Object | null; x: number; y: number; moved: boolean } | null>(null);
   const artboardFrameRef = useRef<HTMLDivElement | null>(null);
+  const artboardWrapperRef = useRef<HTMLDivElement | null>(null);
+  const zoomReadoutRef = useRef<HTMLSpanElement | null>(null);
+  const liveZoomRef = useRef<number>(zoom);
+  const interactiveZoomRafRef = useRef<number | null>(null);
+  const zoomCommitTimerRef = useRef<number | null>(null);
+  const sizeRef = useRef<{ width: number; height: number }>({ width, height });
+  sizeRef.current = { width, height };
   const panOffsetRef = useRef({ x: 0, y: 0 });
   const viewportFrame = useRef<number | null>(null);
   const pendingViewport = useRef<{ left: number; top: number; x: number; y: number } | null>(null);
   const pendingZoom = useRef<number | null>(null);
+
+  const scheduleInteractiveZoom = useCallback(
+    (nextZoom: number, anchor?: { x: number; y: number; worldX: number; worldY: number } | null) => {
+      const clamped = Math.max(0.1, Math.min(3.0, +nextZoom.toFixed(3)));
+      liveZoomRef.current = clamped;
+      if (anchor) wheelAnchor.current = anchor;
+
+      if (interactiveZoomRafRef.current === null) {
+        interactiveZoomRafRef.current = requestAnimationFrame(() => {
+          interactiveZoomRafRef.current = null;
+          const canvas = fabricCanvasRef.current;
+          const z = liveZoomRef.current;
+          const { width: w, height: h } = sizeRef.current;
+          if (zoomReadoutRef.current) {
+            zoomReadoutRef.current.textContent = `${Math.round(z * 100)}%`;
+          }
+          if (canvas && canvas.upperCanvasEl) {
+            const cssW = Math.max(1, Math.round(w * z));
+            const cssH = Math.max(1, Math.round(h * z));
+            canvas.setDimensions({ width: `${cssW}px`, height: `${cssH}px` }, { cssOnly: true });
+            if (artboardWrapperRef.current) {
+              artboardWrapperRef.current.style.width = `${cssW}px`;
+              artboardWrapperRef.current.style.height = `${cssH}px`;
+            }
+            const curAnchor = wheelAnchor.current;
+            if (curAnchor && containerRef.current) {
+              const newRect = canvas.upperCanvasEl.getBoundingClientRect();
+              containerRef.current.scrollLeft += newRect.left + curAnchor.worldX * z - curAnchor.x;
+              containerRef.current.scrollTop += newRect.top + curAnchor.worldY * z - curAnchor.y;
+              wheelAnchor.current = null;
+            }
+          }
+        });
+      }
+
+      if (zoomCommitTimerRef.current !== null) {
+        window.clearTimeout(zoomCommitTimerRef.current);
+      }
+      zoomCommitTimerRef.current = window.setTimeout(() => {
+        zoomCommitTimerRef.current = null;
+        const committed = Math.max(0.1, Math.min(3.0, +liveZoomRef.current.toFixed(2)));
+        setZoom(committed);
+      }, 90);
+    },
+    [setZoom]
+  );
+
   // Latest event wins: navigation never re-renders React or Fabric per move.
   const flushViewport = () => {
     if (viewportFrame.current !== null) cancelAnimationFrame(viewportFrame.current);
@@ -112,11 +166,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (pendingZoom.current !== null) {
       const nextZoom = pendingZoom.current;
       pendingZoom.current = null;
-      setZoom(nextZoom);
+      scheduleInteractiveZoom(nextZoom);
     }
   };
   useEffect(() => () => {
     if (viewportFrame.current !== null) cancelAnimationFrame(viewportFrame.current);
+    if (interactiveZoomRafRef.current !== null) cancelAnimationFrame(interactiveZoomRafRef.current);
+    if (zoomCommitTimerRef.current !== null) window.clearTimeout(zoomCommitTimerRef.current);
     pendingViewport.current = null;
     pendingZoom.current = null;
   }, []);
@@ -167,7 +223,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       stopContextMenu: true,
       fireRightClick: true,
       enableRetinaScaling: true, // Crisp rendering on high-DPI/Retina screens without pixelation
-      imageSmoothingEnabled: true
+      imageSmoothingEnabled: true,
+      defaultCursor: 'var(--ut-cursor-default, default)',
+      hoverCursor: 'var(--ut-cursor-move, move)',
+      moveCursor: 'var(--ut-cursor-grabbing, grabbing)',
+      freeDrawingCursor: 'var(--ut-cursor-crosshair, crosshair)',
+      rotationCursor: 'var(--ut-cursor-grab, crosshair)',
+      notAllowedCursor: 'var(--ut-cursor-not-allowed, not-allowed)',
     });
 
     let alive = true;
@@ -358,7 +420,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     };
   }, []);
 
-  // 3. Synchronize Canvas Dimensions and Fabric Zoom
+  // 3. Synchronize Canvas Dimensions and Fabric Zoom (Bounded High-DPI Backstore)
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -367,12 +429,42 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       if (zoom !== initialZoomPending.current) return;
       initialZoomPending.current = null;
     }
-    canvas.setDimensions({
-      width: Math.round(width * zoom),
-      height: Math.round(height * zoom)
-    });
-    canvas.setZoom(zoom);
-    canvas.renderAll();
+
+    if (zoomCommitTimerRef.current !== null) {
+      window.clearTimeout(zoomCommitTimerRef.current);
+      zoomCommitTimerRef.current = null;
+    }
+    liveZoomRef.current = zoom;
+    if (zoomReadoutRef.current) {
+      zoomReadoutRef.current.textContent = `${Math.round(zoom * 100)}%`;
+    }
+
+    const MAX_BACKSTORE_EDGE = 3200;
+    const cssW = Math.max(1, Math.round(width * zoom));
+    const cssH = Math.max(1, Math.round(height * zoom));
+    const dpr = typeof window !== 'undefined' ? Math.max(1, window.devicePixelRatio || 1) : 1;
+    const useRetina = Math.max(cssW, cssH) * dpr <= MAX_BACKSTORE_EDGE;
+    (canvas as any).enableRetinaScaling = useRetina;
+    const maxLogicalEdge = useRetina ? Math.floor(MAX_BACKSTORE_EDGE / dpr) : MAX_BACKSTORE_EDGE;
+    const fabricZoom = Math.min(zoom, maxLogicalEdge / Math.max(1, width, height));
+    const backW = Math.max(1, Math.round(width * fabricZoom));
+    const backH = Math.max(1, Math.round(height * fabricZoom));
+
+    if (Math.abs(fabricZoom - zoom) < 1e-4) {
+      canvas.setDimensions({ width: backW, height: backH });
+    } else {
+      canvas.setDimensions({ width: backW, height: backH }, { backstoreOnly: true });
+      canvas.setDimensions({ width: `${cssW}px`, height: `${cssH}px` }, { cssOnly: true });
+    }
+    if (artboardWrapperRef.current) {
+      artboardWrapperRef.current.style.width = `${cssW}px`;
+      artboardWrapperRef.current.style.height = `${cssH}px`;
+    }
+    (canvas as any).__displayZoom = zoom;
+    canvas.setZoom(fabricZoom);
+    canvas.calcOffset();
+    canvas.requestRenderAll();
+
     const anchor = wheelAnchor.current;
     if (anchor && containerRef.current) {
       const rect = canvas.upperCanvasEl.getBoundingClientRect();
@@ -388,33 +480,38 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (!canvas) return;
 
     canvas.setBackgroundColor(backgroundColor || '#FFFFFF', () => {
-      canvas.renderAll();
+      canvas.requestRenderAll();
     });
   }, [backgroundColor]);
 
-  // 5. Smooth Pointer-Centered Mouse Wheel Zoom
+  // 5. Smooth Pointer-Centered Mouse Wheel Zoom (60/120fps CSS-first + debounced crisp commit)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if ((e.target as HTMLElement).closest('button, input, textarea, select, #floating-object-hud')) return;
+      if ((e.target as HTMLElement).closest('button, input, textarea, select, #floating-object-hud, #floating-zoom-pill')) return;
       if (!e.deltaY) return;
       const canvas = fabricCanvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.upperCanvasEl.getBoundingClientRect();
-      wheelAnchor.current = { x: e.clientX, y: e.clientY, worldX: (e.clientX - rect.left) / canvas.getZoom(), worldY: (e.clientY - rect.top) / canvas.getZoom() };
+      if (!canvas || !canvas.upperCanvasEl) return;
       e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.05 : -0.05;
-      setZoom((prev) => {
-        const next = Math.max(0.1, Math.min(3.0, +(prev + delta).toFixed(2)));
-        return next;
-      });
+      const rect = canvas.upperCanvasEl.getBoundingClientRect();
+      const curZoom = liveZoomRef.current || zoom || 1;
+      const anchor = {
+        x: e.clientX,
+        y: e.clientY,
+        worldX: (e.clientX - rect.left) / Math.max(0.05, curZoom),
+        worldY: (e.clientY - rect.top) / Math.max(0.05, curZoom)
+      };
+      const clampedDelta = Math.max(-120, Math.min(120, e.deltaY));
+      const factor = Math.exp(-clampedDelta * 0.0022);
+      const next = Math.max(0.1, Math.min(3.0, +(curZoom * factor).toFixed(3)));
+      scheduleInteractiveZoom(next, anchor);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
-  }, [setZoom]);
+  }, [scheduleInteractiveZoom, zoom]);
 
   // 6. Keyboard Shortcuts
   // Undo/redo/duplicate/delete live in EditorLayout's global handler — handling
@@ -509,7 +606,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         beginViewportPan();
         initialPinchDistRef.current = dist;
-        initialZoomRef.current = fabricCanvasRef.current?.getZoom() || zoom;
+        initialZoomRef.current = liveZoomRef.current || fabricCanvasRef.current?.getZoom() || zoom;
 
         const midX = (touch1.clientX + touch2.clientX) / 2;
         const midY = (touch1.clientY + touch2.clientY) / 2;
@@ -592,8 +689,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     const pan = !!(isPanMode || isSpacePressed);
     canvas.skipTargetFind = pan;
     canvas.selection = !pan;
-    canvas.defaultCursor = pan ? 'grab' : 'default';
-    canvas.hoverCursor = pan ? 'grab' : 'move';
+    canvas.defaultCursor = pan ? 'var(--ut-cursor-grab, grab)' : 'var(--ut-cursor-default, default)';
+    canvas.hoverCursor = pan ? 'var(--ut-cursor-grab, grab)' : 'var(--ut-cursor-move, move)';
   }, [isPanMode, isSpacePressed]);
 
   // 8. Mouse Pan dragging
@@ -661,7 +758,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       let attempts=0;
       const waitForZoom=()=>{
         if(fabricCanvasRef.current!==canvas)return;
-        if(Math.abs(canvas.getZoom()-desiredZoom)>.00001 && attempts++<30){first=requestAnimationFrame(waitForZoom);return;}
+        const currentDisplayZoom = (canvas as any).__displayZoom ?? canvas.getZoom();
+        if(Math.abs(currentDisplayZoom-desiredZoom)>.00001 && attempts++<30){first=requestAnimationFrame(waitForZoom);return;}
         second=requestAnimationFrame(()=>{
         if(fabricCanvasRef.current!==canvas || canvas.getActiveObject()!==active || !canvas.upperCanvasEl)return;
         const rect=canvas.upperCanvasEl.getBoundingClientRect(), outer=container.getBoundingClientRect(), center=fabric.util.transformPoint(active.getCenterPoint(),canvas.viewportTransform!);
@@ -765,6 +863,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         </div>
 
         <div
+          ref={artboardWrapperRef}
           id="fabric-canvas-artboard-wrapper"
           className="relative shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.15)] rounded-md overflow-hidden bg-white ring-2 ring-sky-500/20 transition-shadow hover:shadow-[0_30px_70px_-15px_rgba(56,189,248,0.2)] touch-none"
         >
@@ -775,60 +874,78 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
     </div>
       {fabricCanvasRef.current && <CanvasImageCrop canvas={fabricCanvasRef.current} request={cropRequest} onApply={onApplyCrop} onDelete={onDelete}/>}
-      {/* Outside the scrolling/transforming viewport: controls stay docked. */}
+      {/* Outside the scrolling/transforming viewport: compact floating canvas pill + Delete action */}
       <div
         id="floating-zoom-pill"
         role="group"
         aria-label={lang === 'ar' ? 'تكبير وعرض اللوحة' : 'Canvas zoom controls'}
-        className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-[#1C2541]/95 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl text-xs max-w-[calc(100%-16px)] whitespace-nowrap"
-        style={{ bottom: 'calc(var(--canvas-controls-bottom, 64px) + env(safe-area-inset-bottom, 0px))' }}
+        className="dc-floating-zoom-pill absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 bg-[#181818]/95 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-xl border border-[#383838] shadow-xl text-[11px] max-w-[calc(100%-12px)] whitespace-nowrap backdrop-blur-md"
+        style={{ bottom: 'calc(var(--canvas-controls-bottom, 58px) + env(safe-area-inset-bottom, 0px))' }}
       >
         <button
           type="button"
           onClick={() => setZoom((z) => Math.max(0.1, +(z - 0.1).toFixed(2)))}
-          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
+          className="w-7 h-7 sm:w-6 sm:h-6 inline-flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
           title={t.caZoomOut}
           aria-label={t.caZoomOut}
           disabled={zoom <= .1}
         >
-          <ZoomOut className="w-3.5 h-3.5" />
+          <ZoomOut className="w-3 h-3" />
         </button>
 
-        <span className="font-mono font-bold text-sky-400 px-1 text-[11px] min-w-[38px] sm:min-w-[42px] text-center">
+        <span
+          ref={zoomReadoutRef}
+          className="font-mono font-bold text-[#3ea67f] px-0.5 text-[10px] min-w-[34px] text-center select-none"
+        >
           {Math.round(zoom * 100)}%
         </span>
 
         <button
           type="button"
           onClick={() => setZoom((z) => Math.min(3.0, +(z + 0.1).toFixed(2)))}
-          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
+          className="w-7 h-7 sm:w-6 sm:h-6 inline-flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-35 disabled:cursor-not-allowed"
           title={t.caZoomIn}
           aria-label={t.caZoomIn}
           disabled={zoom >= 3}
         >
-          <ZoomIn className="w-3.5 h-3.5" />
+          <ZoomIn className="w-3 h-3" />
         </button>
 
-        <div className="h-3.5 w-px bg-slate-700 mx-0.5 sm:mx-1" />
+        <div className="h-3 w-px bg-white/15 mx-0.5" />
 
         <button
           type="button"
           onClick={fitToScreen}
-          className="min-w-9 min-h-9 sm:min-w-0 sm:min-h-0 p-1 text-slate-300 hover:text-sky-300 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 text-[11px] font-medium"
+          className="h-7 sm:h-6 px-1.5 inline-flex items-center justify-center gap-1 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition text-[10px] font-medium"
           title={t.caFitScreen}
           aria-label={t.caFitScreen}
         >
-          <Maximize2 className="w-3 h-3" />
+          <Maximize2 className="w-2.5 h-2.5" />
           <span className="hidden sm:inline">{t.caFitLabel}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setZoom(1)}
-          className="min-h-9 sm:min-h-0 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 rounded font-mono transition"
+          className="h-7 sm:h-6 px-1.5 inline-flex items-center justify-center text-[10px] text-slate-300 hover:text-white hover:bg-white/10 rounded-lg font-mono transition"
           title={t.caActualSize}
         >
           100%
+        </button>
+
+        <div className="h-3 w-px bg-white/15 mx-0.5" />
+
+        <button
+          type="button"
+          data-testid="floating-delete-btn"
+          onClick={onDelete}
+          disabled={!hasSelection || isLocked}
+          className="h-7 sm:h-6 px-1.5 inline-flex items-center justify-center gap-1 rounded-lg transition text-[10px] font-semibold text-rose-400 hover:text-white hover:bg-rose-600/85 disabled:text-slate-500 disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+          title={lang === 'ar' ? 'حذف العنصر المحدد (Delete)' : 'Delete selected item (Delete)'}
+          aria-label={lang === 'ar' ? 'حذف العنصر المحدد' : 'Delete selected item'}
+        >
+          <Trash2 className="w-3 h-3" />
+          <span className="hidden sm:inline">{lang === 'ar' ? 'حذف' : 'Delete'}</span>
         </button>
       </div>
     </div>

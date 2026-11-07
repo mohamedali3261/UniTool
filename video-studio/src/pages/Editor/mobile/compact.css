@@ -105,7 +105,7 @@
     display: grid;
     place-items: center;
     list-style: none;
-    cursor: pointer;
+    cursor: var(--ut-cursor-pointer, pointer);
   }
   .mobile-project-menu > summary::-webkit-details-marker {
     display: none;

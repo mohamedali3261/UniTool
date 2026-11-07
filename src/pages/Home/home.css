@@ -41,7 +41,7 @@ a {
   touch-action: manipulation;
 }
 button {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 a {
   color: inherit;
@@ -61,7 +61,7 @@ input:focus-visible {
   color: #101312;
 }
 button:disabled {
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .home-page {
   --home-lime: #d6eca8;

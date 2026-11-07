@@ -14,29 +14,43 @@ export type CardSource = {
 };
 /** One shared, queued WebGL context per gallery. Native artwork, not a stock mockup. */
 export function createCardRenderer() {
+  const isAutomated =
+    typeof navigator !== "undefined" && navigator.webdriver === true;
   const renderer = new THREE.WebGLRenderer({
-    antialias: true,
+    antialias: !isAutomated,
     alpha: false,
     powerPreference: "low-power",
   });
-  renderer.setSize(600, 440, false);
+  const gl = renderer.getContext();
+  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  const unmasked = dbg
+    ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "")
+    : String(gl.getParameter(gl.RENDERER) || "");
+  const isSoftwareGl =
+    /swiftshader|subzero|llvmpipe|software|mesa offscreen|basic render/i.test(
+      unmasked,
+    ) || isAutomated;
+  renderer.setSize(isSoftwareGl ? 360 : 600, isSoftwareGl ? 264 : 440, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !isSoftwareGl;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#dedbd3");
-  const room = new RoomEnvironment(),
-    generator = new THREE.PMREMGenerator(renderer),
+  let environment: THREE.WebGLRenderTarget | null = null;
+  if (!isSoftwareGl) {
+    const room = new RoomEnvironment(),
+      generator = new THREE.PMREMGenerator(renderer);
     environment = generator.fromScene(room, 0.04, 0.1, 100, { size: 64 });
-  room.dispose();
-  generator.dispose();
-  scene.environment = environment.texture;
-  scene.environmentIntensity = 0.3;
+    room.dispose();
+    generator.dispose();
+    scene.environment = environment.texture;
+    scene.environmentIntensity = 0.3;
+  }
   const camera = new THREE.PerspectiveCamera(30, 600 / 440, 0.1, 20000);
   scene.add(new THREE.HemisphereLight(0xffffff, 0xa9a08b, 1));
   const key = new THREE.DirectionalLight(0xfff8ed, 2);
-  key.castShadow = true;
+  key.castShadow = !isSoftwareGl;
   key.shadow.mapSize.setScalar(1024);
   key.shadow.bias = -0.00005;
   key.shadow.normalBias = 0.03;
@@ -177,7 +191,7 @@ export function createCardRenderer() {
           floorGeometry.dispose();
           floorMaterial.dispose();
           key.shadow.dispose();
-          environment.dispose();
+          environment?.dispose();
           renderer.dispose();
           renderer.forceContextLoss();
         });

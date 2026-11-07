@@ -151,14 +151,14 @@
   color: var(--studio-ui-ink, #c4d1d5);
   background: #ffffff05;
   font-size: 11px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .timeline-settings button:hover:not(:disabled) {
   background: #ffffff12;
 }
 .timeline-settings button:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .timeline-settings .icon-button {
   width: auto;

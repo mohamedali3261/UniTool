@@ -16,15 +16,15 @@
   background: var(--studio-ui-glass, #101a23df);
   color: var(--studio-ui-ink, #d6f2f4);
   font: 11px monospace;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .canvas-stage.is-panning,
 .canvas-stage.is-panning .preview-interaction {
-  cursor: grab;
+  cursor: var(--ut-cursor-grab, grab);
   touch-action: none;
 }
 .canvas-stage.is-panning:active {
-  cursor: grabbing;
+  cursor: var(--ut-cursor-grabbing, grabbing);
 }
 .preview-composition-guides {
   position: absolute;
@@ -90,11 +90,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .preview-view-panel button:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
 }
 .preview-view-panel button[aria-pressed="true"] {
   background: var(--studio-night-accent-wash, #25c9ce20);

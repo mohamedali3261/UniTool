@@ -382,7 +382,7 @@
   color: #b6c7a4;
 }
 .element-library-help summary {
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
   font-size: 13px;
   line-height: 1.8;
 }
@@ -490,10 +490,10 @@
   border-radius: 5px;
   border: 1px solid #ffffff30;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--ut-cursor-pointer, pointer);
 }
 .element-color input:disabled {
-  cursor: not-allowed;
+  cursor: var(--ut-cursor-not-allowed, not-allowed);
   opacity: 0.4;
 }
 .element-export-actions {
@@ -597,7 +597,7 @@
   .elements-mobile-menu summary {
     list-style: none;
     padding: 10px;
-    cursor: pointer;
+    cursor: var(--ut-cursor-pointer, pointer);
   }
   .elements-mobile-menu summary::-webkit-details-marker {
     display: none;
@@ -777,7 +777,7 @@
 }
 .element-export-actions > button:disabled {
   opacity: 0.45;
-  cursor: wait;
+  cursor: var(--ut-cursor-wait, wait);
 }
 @media (max-width: 700px) {
   .elements-hero-symbol {
