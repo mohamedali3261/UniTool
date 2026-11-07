@@ -46,13 +46,13 @@ export function ToolDirectory({
       : [];
   const featuredIds = [
     "siteStorage",
+    "cvStudio",
     "excelStudio",
     "pdfMerger",
     "imageCropper",
     "videoMerger",
     "compress",
     "qrCode",
-    "formatConverter",
     "pdfSigner",
     "imageCompressor",
   ];

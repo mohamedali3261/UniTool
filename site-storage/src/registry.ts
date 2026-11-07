@@ -4,16 +4,18 @@ export const DATABASES: Record<string, { section: string; stores: Record<string,
   'unitool-logo-designer': { section: 'logos', stores: { projects: 'id' } },
   'unitool-logo-personal-assets': { section: 'logos', stores: { assets: 'id' } },
   'unitool-video-studio': { section: 'video', stores: { projects: 'id', media: 'key' } },
+  'unitool-cv-studio': { section: 'cv', stores: { resumes: 'id' } },
 };
 export const secretKey = (key: string) => /api.?key|token|secret|password|credential|authorization|cookie/i.test(key);
 export const secretField = (key: string) => /^(api.?key|access.?token|refresh.?token|secret|password|authorization|credentials|cookie)$/i.test(key);
 export function allowedLocal(key: string) {
-  return !secretKey(key) && /^(unitool[-_.:]|designcraft[-_.]|logo[-_.]|excel-studio[.]|sawti_|audioflow_stt_|bloub:|pdf_editor_elements$|text-studio[.-]|pdf-studio[.-])/.test(key);
+  return !secretKey(key) && /^(unitool[-_.:]|designcraft[-_.]|logo[-_.]|excel-studio[.]|cv-studio[.-]|sawti_|audioflow_stt_|bloub:|pdf_editor_elements$|text-studio[.-]|pdf-studio[.-])/.test(key);
 }
 export function sectionFor(key: string) {
   if (/designcraft/.test(key)) return 'design';
   if (/logo/.test(key)) return 'logos';
   if (/excel/.test(key)) return 'sheets';
+  if (/^(cv-studio|unitool\.cv\.|unitool-cv-studio)/.test(key)) return 'cv';
   if (/sawti|audioflow/.test(key)) return 'audio';
   if (/^(unitool-text-studio|text-studio|pdf-studio)/.test(key)) return 'settings';
   if (/studio|video/.test(key)) return 'video';

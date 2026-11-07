@@ -2,6 +2,7 @@
 export const sitePages = [
   { href: "/storage.html", ar: "التخزين العام", en: "Storage & backup" },
   { href: "/excel-studio/", ar: "استوديو الجداول", en: "Sheet Studio" },
+  { href: "/cv-studio/", ar: "ستوديو السيرة الذاتية", en: "CV Studio" },
   { href: "/index.html", ar: "الرئيسية", en: "Home" },
   { href: "/app.html", ar: "الأدوات", en: "Tools" },
   { href: "/designcraft.html", ar: "مصمم الجرافيك", en: "Design Craft" },
