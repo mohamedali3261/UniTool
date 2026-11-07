@@ -57,7 +57,7 @@ function App() {
       <aside className="notice"><ShieldCheck size={18}/><span>{text('احفظ عملك وأغلق التبويبات الأخرى أولًا. النسخة غير مشفّرة؛ احتفظ بها بأمان.', 'Save your work and close other tabs first. Backups are not encrypted; keep them safe.')}</span></aside>
       <div className="cards">
         <section className="card"><span className="step">01 / EXPORT</span><h2><Download size={22}/>{text('خذ نسخة من شغلك', 'Take your work with you')}</h2><p>{text('ملف ZIP واحد، بمجلد مستقل لكل قسم.', 'One ZIP, with a folder for every section.')}</p>
-          <ul>{[['تصميمات','Designs'],['شعارات','Logos'],['فيديو','Video'],['جداول','Sheets'],['صوت','Audio'],['SVG','SVG']].map(([a,e])=><li key={e}>{text(a,e)}</li>)}</ul>
+          <ul>{[['تصميمات','Designs'],['شعارات','Logos'],['فيديو','Video'],['جداول','Sheets'],['سيرة ذاتية','CV Studio'],['صوت','Audio'],['SVG','SVG']].map(([a,e])=><li key={e}>{text(a,e)}</li>)}</ul>
           <p className="muted">{text('حتى 128 MB قبل الضغط. احتفظ بالوسائط الكبيرة منفصلة.', 'Up to 128 MB before compression. Keep large media files separately.')}</p>
           <button className="primary" disabled={busy} onClick={() => run(download)}>{text('تنزيل نسخة ZIP كاملة', 'Download full ZIP backup')}</button>
         </section>
@@ -92,6 +92,7 @@ function App() {
           <p><b>{text('التصميم والشعارات', 'Design & logos')}</b><br/>{text('مشروعات محفوظة واسترداد تلقائي؛ راقب حالة الحفظ قبل الإغلاق.', 'Saved projects and automatic recovery; check save status before closing.')}</p>
           <p><b>{text('الفيديو', 'Video')}</b><br/>{text('المشروع والوسائط المستخدمة المحفوظة؛ الملفات الأصلية الكبيرة تحتاج مساحة حقيقية.', 'Saved project and referenced media; large original files require real space.')}</p>
           <p><b>{text('الجداول', 'Spreadsheets')}</b><br/>{text('حفظ تلقائي للمصنف الحالي. صدّر ملفًا قبل استبداله بمصنف آخر.', 'Autosaves the current workbook. Export before replacing it with another workbook.')}</p>
+          <p><b>{text('السيرة الذاتية', 'CV Studio')}</b><br/>{text('جميع نسخ السير الذاتية وخطابات التقديم المحفوظة محليًا في مجلد مستقل.', 'All locally saved resumes and cover letters in a dedicated section.')}</p>
           <p><b>{text('القارئ الصوتي', 'Audio reader')}</b><br/>{text('إعدادات وعلامات وتقدم القراءة وآخر 5 كتب؛ ليست مكتبة غير محدودة.', 'Settings, bookmarks, progress and the last 5 books, not an unlimited library.')}</p>
           <p><b>{text('SVG والتفضيلات', 'SVG & preferences')}</b><br/>{text('البيانات التي يحفظها المحرر بالفعل. ملف لم تحفظه لا يدخل النسخة.', 'Data the editor actually persists. Unsaved files are not included.')}</p>
           <p><b>{text('التحويل والضغط والمسح', 'Conversion, compression & scanning')}</b><br/>{text('غالبًا إعدادات فقط. ملفات الإدخال والنتائج المؤقتة لازم تنزّلها بنفسك قبل الإغلاق.', 'Usually settings only. Download input/output working files yourself before closing.')}</p>

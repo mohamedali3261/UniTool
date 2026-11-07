@@ -94,6 +94,24 @@ test('missing databases are not left behind by a backup scan', async () => {
   await exportSite();
   assert.deepEqual(await indexedDB.databases(), []);
 });
+test('CV Studio database and settings round-trip cleanly under independent sections/cv folder', async () => {
+  localStorage.setItem('cv-studio.active-id', 'cv-qa-1');
+  await mergeDatabase({ name: 'unitool-cv-studio', stores: [
+    { name: 'resumes', keyPath: 'id', records: [{ key: 'cv-qa-1', value: { id: 'cv-qa-1', title: 'سيرة مهندس', personal: { fullName: 'كريم عادل' } } }] },
+  ] });
+  const archive = await exportSite();
+  const zip = await JSZip.loadAsync(archive);
+  assert.ok(zip.file('sections/cv/unitool-cv-studio.json'));
+  assert.ok(zip.file('sections/cv/settings.json'));
+  assert.equal(zip.file('sections/video/settings.json'), null);
+  newDevice();
+  const prepared = await prepareArchive(archive);
+  const res = await restoreSite(prepared);
+  assert.equal(res.added, 2);
+  const cvDb = await readDatabase('unitool-cv-studio');
+  assert.equal(cvDb!.stores[0].records[0].value.personal.fullName, 'كريم عادل');
+  assert.equal(localStorage.getItem('cv-studio.active-id'), 'cv-qa-1');
+});
 test('a transaction failure rolls back its database and reports a partial restore honestly', async () => {
   const prepared = await prepareArchive(await seed());
   newDevice();

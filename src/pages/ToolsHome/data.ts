@@ -2,7 +2,7 @@ import {
   FileText, Image, Type, Shrink, Merge, Scissors, Lock, Unlock, ScanLine, Files,
   LayoutGrid, Percent, Film, Subtitles, Plus, Combine, Video, Images,
   AudioLines, FileAudio, MessageSquareText, Zap, QrCode, ScanQrCode, Briefcase, Sparkles,
-  FileSignature, ArrowLeftRight, Table2, Presentation,
+  FileSignature, ArrowLeftRight, Table2, FileUser, Presentation,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -34,6 +34,7 @@ export interface ToolCategory {
 }
 
 export const toolCategories: ToolCategory[] = [
+ {id:'career',titleAr:'السيرة والتوظيف',titleEn:'CV & Career',taglineAr:'سيرة ذاتية احترافية وخطاب تقديم وفاحص ATS',taglineEn:'ATS-ready resumes, cover letters, and job keyword matcher',icon:FileUser,accent:'from-emerald-500 to-teal-600',soft:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',tools:[{id:'cvStudio',href:'/cv-studio/',icon:FileUser,titleAr:'ستوديو السيرة الذاتية الاحترافية',titleEn:'CV & Cover Letter Studio',descAr:'صمّم سيرتك الذاتية وخطاب التقديم بأربعة أوضاع، فاحص ATS ومطابقة الوظائف، وتصدير PDF حاد',descEn:'Craft ATS-ready CVs & cover letters with live A4 preview, JD keyword matching, and crisp PDF export',gradient:'from-emerald-600 to-teal-600',border:'border-emerald-500/25 hover:border-emerald-400/50',glow:'group-hover:shadow-emerald-500/20',badgeAr:'جديد',badgeEn:'New'}]},
  {id:'spreadsheets',titleAr:'جداول وبيانات',titleEn:'Spreadsheets',taglineAr:'جداول ومعادلات Excel بسهولة',taglineEn:'Easy tables and Excel formulas',icon:Table2,accent:'from-emerald-500 to-green-600',soft:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',tools:[{id:'excelStudio',href:'/excel-studio/',icon:Table2,titleAr:'استوديو الجداول',titleEn:'Sheet Studio',descAr:'صمم جدولك وتعلّم المعادلات بالأمثلة، مع استيراد وتصدير Excel',descEn:'Build tables, learn formulas with examples, import and export Excel',gradient:'from-emerald-500 to-green-600',border:'border-emerald-500/25 hover:border-emerald-400/50',glow:'group-hover:shadow-emerald-500/20',badgeAr:'جديد',badgeEn:'New'}]},
   {
     id: 'pdf',

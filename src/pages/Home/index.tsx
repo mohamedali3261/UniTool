@@ -1,6 +1,7 @@
 import { useSiteAppearance, SiteAppearanceToggle } from '../../hooks/useSiteAppearance';
 import { SiteNavbar } from '../../components/SiteNavbar';
 import {StorageArt} from './components/StorageArt';
+import { CvStudioArt } from './components/CvStudioArt';
 import { ScrollJourney } from "./components/scroll/ScrollJourney";
 import { useScrollMotion } from "./components/scroll/useScrollMotion";
 import { HeroMotion } from "./components/motion/HeroMotion";
@@ -297,6 +298,8 @@ export default function HomePage() {
                 >
                   {s.id === "storage" ? (
                     <StorageArt lang={lang} />
+                  ) : s.id === "cv" ? (
+                    <CvStudioArt lang={lang} />
                   ) : s.id === "sheets" ? (
                     <SheetsArt lang={lang} />
                   ) : s.id === "design" ? (

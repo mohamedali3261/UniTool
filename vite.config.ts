@@ -22,6 +22,7 @@ export default defineConfig(() => {
           landing: path.resolve(__dirname, 'index.html'),
           logoDesigner: path.resolve(__dirname, 'logo-designer/index.html'),
           excelStudio: path.resolve(__dirname, 'excel-studio/index.html'),
+          cvStudio: path.resolve(__dirname, 'cv-studio/index.html'),
           elements: path.resolve(__dirname, 'elements.html'),
           main: path.resolve(__dirname, 'app.html'),
           designcraft: path.resolve(__dirname, 'designcraft.html'),

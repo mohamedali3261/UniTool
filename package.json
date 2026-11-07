@@ -28,6 +28,8 @@
     "test:audio-reader:browser": "playwright test --config the-audio-reader/tests/playwright.config.ts",
     "test:excel-studio": "tsx --test excel-studio/tests/*.test.ts",
     "test:excel-studio:browser": "playwright test --config excel-studio/tests/playwright.config.ts",
+    "test:cv-studio": "tsx --test cv-studio/tests/*.test.ts",
+    "test:cv-studio:browser": "playwright test --config cv-studio/tests/playwright.config.ts",
     "test:teacher-board": "tsx --test teacher-board/tests/*.test.ts",
     "test:teacher-board:browser": "playwright test --config teacher-board/tests/playwright.config.ts",
     "catalog:excel-studio": "tsx excel-studio/scripts/build-catalog.ts",

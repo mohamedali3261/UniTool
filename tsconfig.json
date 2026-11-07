@@ -27,6 +27,8 @@
   "include": [
     "excel-studio/**/*.ts",
     "excel-studio/**/*.tsx",
+    "cv-studio/**/*.ts",
+    "cv-studio/**/*.tsx",
     "teacher-board/**/*.ts",
     "teacher-board/**/*.tsx",
     "the-audio-reader/**/*.ts",

@@ -6,11 +6,33 @@ import {
   Braces,
   Table2,
   FileText,
+  FileUser,
   Presentation,
 } from "lucide-react";
 export type Language = "ar" | "en";
 export const studios = [
   { id: 'storage', href: '/storage.html', icon: FileText, name: {ar:'التخزين والنسخ الاحتياطي', en:'Storage & backup'}, eyebrow:'YOUR WORK, WITH YOU.', description:{ar:'كل شغلك المحفوظ، معاك.',en:'Your saved work. Anywhere.'}, detail:{ar:'نزّل نسخة مضغوطة ومنظمة واستعد بيانات الموقع المحفوظة على جهاز آخر.',en:'Download an organized ZIP backup and restore saved site data on another device.'}, tags:{ar:['نسخة ZIP','مجلد لكل قسم','استعادة آمنة'],en:['ZIP archive','Organized sections','Safe restore']},action:{ar:'افتح التخزين العام',en:'Open site storage'},color:'#a9cfa8'},
+  {
+    id: "cv",
+    href: "/cv-studio/",
+    icon: FileUser,
+    name: { ar: "ستوديو السيرة الذاتية الاحترافية", en: "CV & Cover Letter Studio" },
+    eyebrow: "ATS-READY RESUMES.",
+    description: {
+      ar: "سيرتك المهنية، بهدوء ووضوح.",
+      en: "Your career story, clear and print-ready.",
+    },
+    detail: {
+      ar: "محرر سيرة ذاتية وخطاب تقديم بأربعة أوضاع احترافية، فاحص ATS ومطابقة الوظائف، وتصدير PDF حاد بالعربية والإنجليزية.",
+      en: "Craft ATS-ready or executive CVs and matching cover letters with live A4 preview, JD keyword matching, and crisp PDF export.",
+    },
+    tags: {
+      ar: ["متوافق مع ATS", "خطاب تقديم", "تصدير PDF حاد"],
+      en: ["100% ATS mode", "Cover letter", "Crisp PDF"],
+    },
+    action: { ar: "افتح ستوديو السيرة", en: "Open CV Studio" },
+    color: "#9ed6be",
+  },
   {
     id: "teacherBoard",
     href: "/teacher-board/",
