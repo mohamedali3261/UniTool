@@ -92,24 +92,44 @@ export function SectionNavigator({
         </div>
 
         <div className="cv-sec-quick-tools">
-          <button
-            type="button"
-            className="cv-btn"
-            onClick={() => setOrderOpen(true)}
-            title={t('ترتيب وإظهار/إخفاء الأقسام', 'Reorder & toggle sections')}
-          >
-            <ListOrdered size={15} />
-            <span>{t('ترتيب الأقسام', 'Order & Visibility')}</span>
-          </button>
-          <button
-            type="button"
-            className="cv-btn soft cv-desktop-only"
-            onClick={onOpenDesign}
-            data-testid="open-design-modal-btn"
-          >
-            <SlidersHorizontal size={15} />
-            <span>{t('التصميم والأوضاع', 'Design & Modes')}</span>
-          </button>
+          <div className="cv-completeness-bar" title={t('مؤشر اكتمال أقسام السيرة الأساسية', 'Core resume completeness')}>
+            <span className="cv-completeness-label">
+              {t('اكتمال السيرة', 'Completeness')}:{' '}
+              <strong>
+                {Math.min(
+                  100,
+                  (resume.personal.fullName.trim() ? 20 : 0) +
+                    (resume.personal.email.trim() || resume.personal.phone.trim() ? 15 : 0) +
+                    (resume.summary.trim().length > 25 ? 20 : 0) +
+                    (resume.experience.length > 0 ? 25 : 0) +
+                    (resume.education.length > 0 ? 10 : 0) +
+                    (resume.skills.length >= 3 ? 10 : 0),
+                )}
+                %
+              </strong>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              className="cv-btn"
+              onClick={() => setOrderOpen(true)}
+              title={t('ترتيب وإظهار/إخفاء الأقسام', 'Reorder & toggle sections')}
+            >
+              <ListOrdered size={15} />
+              <span>{t('ترتيب الأقسام', 'Order & Visibility')}</span>
+            </button>
+            <button
+              type="button"
+              className="cv-btn soft cv-desktop-only"
+              onClick={onOpenDesign}
+              data-testid="open-design-modal-btn"
+            >
+              <SlidersHorizontal size={15} />
+              <span>{t('التصميم والأوضاع', 'Design & Modes')}</span>
+            </button>
+          </div>
         </div>
       </div>
 

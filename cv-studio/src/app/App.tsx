@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalmToast } from '../components/CalmToast';
 import { StudioHeader } from '../components/StudioHeader';
-import { evaluateAts } from '../core/atsEngine';
 import { exportProjectUtcv, exportSheetsToPdf, exportSheetsToPng } from '../core/exportEngine';
 import { tr } from '../core/i18n';
 import { parseUtcvProject, readSafeLocal, UI_LANG_KEY, writeSafeLocal } from '../core/storage';
 import type { CanvasSelection, StudioPageId, TemplatePreset, UiLang } from '../core/types';
 import { applyTemplatePreservingData, createResumeFromTemplate } from '../data/templates';
-import { AtsCheckerPage } from '../pages/ats-checker/AtsCheckerPage';
 import { CoverLetterPage } from '../pages/cover-letter/CoverLetterPage';
 import { EditorPage } from '../pages/editor/EditorPage';
 import { ResumesPage } from '../pages/resumes/ResumesPage';
@@ -21,7 +19,6 @@ function readInitialPage(): StudioPageId {
   const hash = location.hash.replace(/^#/, '');
   if (
     hash === 'templates' ||
-    hash === 'ats-checker' ||
     hash === 'cover-letter' ||
     hash === 'resumes'
   ) {
@@ -191,8 +188,6 @@ export default function App() {
     [store, notify, t, navigate],
   );
 
-  const atsReport = useMemo(() => evaluateAts(store.activeResume), [store.activeResume]);
-
   const ctxValue: CvStudioContextValue = {
     lang,
     t,
@@ -213,7 +208,6 @@ export default function App() {
     removeResume: store.removeResume,
     applyTemplateKeepData,
     applyTemplateWithSample,
-    atsReport,
     undo: store.undo,
     redo: store.redo,
     canUndo: store.canUndo,
@@ -234,7 +228,6 @@ export default function App() {
         <main className="cv-studio-main">
           {page === 'editor' && <EditorPage />}
           {page === 'templates' && <TemplatesPage />}
-          {page === 'ats-checker' && <AtsCheckerPage />}
           {page === 'cover-letter' && <CoverLetterPage />}
           {page === 'resumes' && <ResumesPage />}
         </main>

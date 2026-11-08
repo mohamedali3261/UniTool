@@ -159,16 +159,25 @@ test('UTCV project export/import and IndexedDB CRUD round-trip safely', async ()
   assert.equal(afterDelete.length, 0);
 });
 
-test('every built-in CV template lives in its own separate file and has a unique visual architecture', () => {
+test('every built-in CV template lives in its own separate file, has a unique visual architecture, and ATS Checker page is removed', () => {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const templatesDir = path.resolve(__dirname, '../src/templates');
+  const atsCheckerDir = path.resolve(__dirname, '../src/pages/ats-checker');
+
+  assert.equal(fs.existsSync(atsCheckerDir), false, 'ATS Checker page directory must be removed');
 
   const standaloneTemplateFiles = [
     'atsStandard.tsx',
     'modernEmeraldExec.tsx',
     'techOnePage.tsx',
+    'royalGoldExecutive.tsx',
+    'creativeStudioSplit.tsx',
     'financeCorporate.tsx',
     'modernBannerCreative.tsx',
+    'medicalClinicalClean.tsx',
+    'infographicTimelinePro.tsx',
+    'editorialMagazineSerif.tsx',
+    'compactStartupGrid.tsx',
     'academicMultipage.tsx',
     'freshGradStarter.tsx',
     'minimalistNordic.tsx',
@@ -179,14 +188,14 @@ test('every built-in CV template lives in its own separate file and has a unique
     assert.ok(fs.existsSync(fullPath), `Expected standalone template file ${filename} to exist`);
   }
 
-  assert.equal(CV_TEMPLATES.length, 8);
-  assert.equal(CV_TEMPLATE_MODULES.length, 8);
+  assert.equal(CV_TEMPLATES.length, 14);
+  assert.equal(CV_TEMPLATE_MODULES.length, 14);
 
   const uniqueVisualStyles = new Set(CV_TEMPLATES.map((t) => t.design.visualStyle));
-  assert.equal(uniqueVisualStyles.size, 8, 'Every built-in template must have a distinct visualStyle');
+  assert.equal(uniqueVisualStyles.size, 14, 'Every built-in template must have a distinct visualStyle');
 
   const uniqueTagsEn = new Set(CV_TEMPLATES.map((t) => t.structureTagEn));
-  assert.equal(uniqueTagsEn.size, 8, 'Every built-in template must have a distinct structural tag');
+  assert.equal(uniqueTagsEn.size, 14, 'Every built-in template must have a distinct structural tag');
 
   for (const tpl of CV_TEMPLATES) {
     const doc = createResumeFromTemplate(tpl, 'ar');

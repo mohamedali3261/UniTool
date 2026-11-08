@@ -23,8 +23,8 @@ export const studios = [
       en: "Your career story, clear and print-ready.",
     },
     detail: {
-      ar: "محرر سيرة ذاتية وخطاب تقديم بأربعة أوضاع احترافية، فاحص ATS ومطابقة الوظائف، وتصدير PDF حاد بالعربية والإنجليزية.",
-      en: "Craft ATS-ready or executive CVs and matching cover letters with live A4 preview, JD keyword matching, and crisp PDF export.",
+      ar: "محرر سيرة ذاتية وخطاب تقديم تفاعلي بـ 14 قالباً معمارياً مختلفاً، تحريك حر، طبقات وأشكال، وتصدير PDF حاد بالعربية والإنجليزية.",
+      en: "Interactive CV & cover letter studio with 14 distinct templates, smooth drag-and-drop layers & shapes, signature pad, and crisp PDF export.",
     },
     tags: {
       ar: ["متوافق مع ATS", "خطاب تقديم", "تصدير PDF حاد"],

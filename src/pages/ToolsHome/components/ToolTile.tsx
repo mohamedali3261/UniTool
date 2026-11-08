@@ -67,7 +67,7 @@ export function ToolTile({ tool, lang, delay, onNavigate }: Props) {
                 />
               </div>
               <div className="min-w-0 flex-1 text-[7.5px] font-semibold text-emerald-400">
-                {lang === 'ar' ? 'معاينة A4 حية · فاحص ATS 96%' : 'Live A4 Sheet · ATS 96%'}
+                {lang === 'ar' ? 'معاينة A4 تفاعلية · 14 قالباً' : 'Live A4 Canvas · 14 Templates'}
               </div>
             </div>
           )}

@@ -18,12 +18,13 @@ export function TemplateFilterBar({
   const { t } = useCvStudio();
 
   const categories: { id: TemplateCategory; ar: string; en: string }[] = [
-    { id: 'all', ar: 'جميع القوالب', en: 'All Templates' },
+    { id: 'all', ar: 'جميع القوالب (14)', en: 'All Templates (14)' },
     { id: 'ats', ar: 'قياسي ATS 100%', en: '100% ATS' },
     { id: 'executive', ar: 'تنفيذي وإدارة', en: 'Executive' },
     { id: 'tech', ar: 'هندسة وتقنية', en: 'Tech & Engineering' },
+    { id: 'creative', ar: 'تصميم وتحريري', en: 'Product & Creative' },
     { id: 'finance', ar: 'مالية ومحاسبة', en: 'Finance' },
-    { id: 'creative', ar: 'تصميم وتسويق', en: 'Product & Creative' },
+    { id: 'medical', ar: 'طب ورعاية صحية', en: 'Medical & Clinical' },
     { id: 'academic', ar: 'أكاديمي وبحثي', en: 'Academic' },
     { id: 'fresh-grad', ar: 'خريج جديد', en: 'Fresh Graduate' },
   ];

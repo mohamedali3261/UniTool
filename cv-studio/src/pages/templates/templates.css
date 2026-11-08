@@ -643,3 +643,232 @@
   font-size: 6.8px;
 }
 
+/* ============================================================
+   6 New Distinct Miniature Preview Cards (Templates 9..14)
+   ============================================================ */
+
+/* 9. Royal Gold Executive */
+.mini-royal-box {
+  margin: 8px 9px 2px;
+  padding: 8px 9px;
+  border-radius: 6px;
+  border: 1.5px solid #b45309;
+  color: #ffffff !important;
+}
+.mini-royal-box em {
+  display: block;
+  font-style: normal;
+  font-size: 5.8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.mini-royal-box strong {
+  display: block;
+  font-size: 9.8px;
+  color: #ffffff !important;
+}
+.mini-royal-box span {
+  display: block;
+  font-size: 7px;
+}
+.mini-royal-sec {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid #fde68a;
+  padding-bottom: 2px;
+}
+.mini-royal-sec u {
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  display: inline-block;
+}
+.mini-royal-sec small {
+  font-size: 6.6px;
+  font-weight: 800;
+}
+
+/* 10. Dark Contrast Studio Sidebar */
+.mini-dark-studio .mini-dark-col {
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #ffffff !important;
+}
+.mini-dark-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0f766e;
+  background: rgba(255, 255, 255, 0.16);
+}
+.mini-dark-col strong {
+  font-size: 8.8px;
+  color: #ffffff !important;
+}
+.mini-dark-col small {
+  font-size: 6.5px;
+}
+.mini-dark-tags {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.mini-dark-tags i {
+  font-style: normal;
+  font-size: 6px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #f8fafc !important;
+}
+
+/* 11. Medical Clinical Board */
+.mini-clinical-head {
+  margin: 9px 10px 2px;
+  padding: 7px 8px;
+  border: 1px solid #bae6fd;
+  border-top-width: 3px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-clinical-plus {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.mini-clinical-head strong {
+  display: block;
+  font-size: 9.2px;
+}
+.mini-clinical-head span {
+  display: block;
+  font-size: 6.8px;
+}
+.mini-clinical-pill {
+  align-self: flex-start;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  color: #ffffff !important;
+  font-size: 6.2px;
+  font-weight: 800;
+}
+
+/* 12. Infographic Spine */
+.mini-info-top {
+  padding: 9px 11px 6px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mini-info-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-info-pillar {
+  width: 5px;
+  height: 22px;
+  border-radius: 3px;
+}
+.mini-info-id strong {
+  display: block;
+  font-size: 9.6px;
+}
+.mini-info-id span {
+  display: block;
+  font-size: 7px;
+}
+
+/* 13. Editorial Magazine */
+.mini-edit-mast {
+  margin: 9px 11px 4px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #111827;
+}
+.mini-edit-mast strong {
+  display: block;
+  font-size: 10.6px;
+  font-weight: 900;
+}
+.mini-edit-mast span {
+  display: block;
+  font-size: 7px;
+}
+.mini-edit-quote {
+  margin: 2px 11px;
+  padding: 5px 6px;
+  border-inline-start: 3px solid #9f1239;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.mini-edit-quote b {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* 14. Bento Modular Grid */
+.mini-bento {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mini-bento-hero {
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid #a7f3d0;
+}
+.mini-bento-hero strong {
+  display: block;
+  font-size: 9.4px;
+}
+.mini-bento-hero span {
+  display: block;
+  font-size: 6.8px;
+}
+.mini-bento-wide {
+  padding: 5px 7px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mini-bento-wide small,
+.mini-bento-cell small {
+  font-size: 6.2px;
+  font-weight: 800;
+}
+.mini-bento-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  flex: 1;
+}
+.mini-bento-cell {
+  padding: 5px 6px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
