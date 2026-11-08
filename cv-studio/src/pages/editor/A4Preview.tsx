@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Grid3X3,
   ImagePlus,
   Layers,
+  Magnet,
   Maximize2,
   Minimize2,
   MousePointerClick,
+  PenTool,
   Printer,
   RotateCcw,
   Shapes,
@@ -15,16 +18,18 @@ import {
 import { useCvStudio } from '../../app/context';
 import { LAYOUT_MODE_LABELS } from '../../core/i18n';
 import { computeOnePageAdjustments, getPaperDimensions, paginateResume } from '../../core/pagination';
-import type { EditorSectionKey, ResumeDocument, WorkspaceViewMode } from '../../core/types';
+import type { CanvasElement, EditorSectionKey, ResumeDocument, WorkspaceViewMode } from '../../core/types';
 import { resolveTemplateModuleForDoc } from '../../data/templates';
 import { resolveFontFamily } from '../../data/themes';
-import type { SheetInteractiveCallbacks } from '../../templates/TemplateBlockHelpers';
+import { RenderPageFrame, type SheetInteractiveCallbacks } from '../../templates/TemplateBlockHelpers';
 import {
   createCanvasImageElement,
   createCanvasShapeElement,
   createCanvasTextElement,
+  nextElementZIndex,
 } from './canvas/canvasDefaults';
 import { CanvasOverlayLayer } from './canvas/CanvasOverlayLayer';
+import { SignaturePadModal } from './canvas/SignaturePadModal';
 
 export function ResumeSheetCanvas({
   doc,
@@ -77,13 +82,16 @@ export function ResumeSheetCanvas({
           accent,
           canvas,
           renderCanvasUnderlay: () => (
-            <CanvasOverlayLayer
-              doc={doc}
-              pageIndex={idx}
-              plane="underlay"
-              canvas={canvas}
-              onFocusInspector={onFocusInspector}
-            />
+            <>
+              <RenderPageFrame doc={doc} accent={accent} />
+              <CanvasOverlayLayer
+                doc={doc}
+                pageIndex={idx}
+                plane="underlay"
+                canvas={canvas}
+                onFocusInspector={onFocusInspector}
+              />
+            </>
           ),
           renderCanvasOverlay: () => (
             <CanvasOverlayLayer
@@ -122,9 +130,13 @@ export function A4Preview({
 
   const stageRef = useRef<HTMLDivElement>(null);
   const quickImgRef = useRef<HTMLInputElement>(null);
+  const clipboardRef = useRef<CanvasElement | null>(null);
   const [zoomMode, setZoomMode] = useState<'fit' | number>('fit');
   const [fitZoom, setFitZoom] = useState(0.76);
   const [interactive, setInteractive] = useState(true);
+  const [snapToGuides, setSnapToGuides] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
+  const [sigModalOpen, setSigModalOpen] = useState(false);
 
   const dims = getPaperDimensions(resume.design.paperSize);
 
@@ -206,18 +218,64 @@ export function A4Preview({
           }));
           setCanvasSelection(null);
         }
+      } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyD' && canvasSelection.kind === 'element') {
+        const target = (resume.canvasElements || []).find((x) => x.id === canvasSelection.id);
+        if (target) {
+          e.preventDefault();
+          const newId = `${target.type}-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+          updateResume((prev) => {
+            const list = prev.canvasElements || [];
+            const clone: CanvasElement = {
+              ...JSON.parse(JSON.stringify(target)),
+              id: newId,
+              name: `${target.name} (نسخة)`,
+              x: target.x + 18,
+              y: target.y + 18,
+              locked: false,
+              zIndex: nextElementZIndex(list),
+            };
+            return { ...prev, canvasElements: [...list, clone] };
+          });
+          setCanvasSelection({ kind: 'element', id: newId });
+          notify(t('تم تكرار العنصر (Ctrl+D)', 'Element duplicated (Ctrl+D)'));
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyC' && canvasSelection.kind === 'element') {
+        const target = (resume.canvasElements || []).find((x) => x.id === canvasSelection.id);
+        if (target) {
+          clipboardRef.current = JSON.parse(JSON.stringify(target));
+          notify(t('تم نسخ العنصر (Ctrl+V للصق)', 'Copied element (Ctrl+V to paste)'));
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV' && clipboardRef.current) {
+        e.preventDefault();
+        const src = clipboardRef.current;
+        const newId = `${src.type}-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+        updateResume((prev) => {
+          const list = prev.canvasElements || [];
+          const pasted: CanvasElement = {
+            ...JSON.parse(JSON.stringify(src)),
+            id: newId,
+            x: src.x + 22,
+            y: src.y + 22,
+            locked: false,
+            zIndex: nextElementZIndex(list),
+          };
+          return { ...prev, canvasElements: [...list, pasted] };
+        });
+        setCanvasSelection({ kind: 'element', id: newId });
       } else if (e.key === 'Escape') {
         setCanvasSelection(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [interactive, canvasSelection, resume.canvasElements, updateResume, setCanvasSelection]);
+  }, [interactive, canvasSelection, resume.canvasElements, updateResume, setCanvasSelection, notify, t]);
 
   const canvasCallbacks: SheetInteractiveCallbacks = useMemo(
     () => ({
       interactive,
       zoomScale: scale,
+      snapToGuides,
+      showGrid,
       selection: canvasSelection,
       onSelect: (sel) => {
         setCanvasSelection(sel);
@@ -229,6 +287,8 @@ export function A4Preview({
     [
       interactive,
       scale,
+      snapToGuides,
+      showGrid,
       canvasSelection,
       setCanvasSelection,
       updateResume,
@@ -329,6 +389,38 @@ export function A4Preview({
           >
             <Shapes size={14} />
             <span>{t('+ شكل', '+ Shape')}</span>
+          </button>
+
+          <button
+            type="button"
+            className="cv-stage-tool-btn"
+            data-testid="quick-add-signature-btn"
+            onClick={() => setSigModalOpen(true)}
+            title={t('إدراج توقيع إلكتروني شفاف', 'Add transparent electronic signature')}
+          >
+            <PenTool size={14} />
+            <span>{t('+ توقيع', '+ Signature')}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`cv-stage-tool-btn ${snapToGuides ? 'is-on' : ''}`}
+            data-testid="toggle-snap-guides-btn"
+            onClick={() => setSnapToGuides((v) => !v)}
+            title={t('مغناطيس المحاذاة الذكية (Alt للتجاوز المؤقت)', 'Magnetic smart snap guides')}
+          >
+            <Magnet size={13} />
+            <span>{t('مغناطيس', 'Snap')}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`cv-stage-tool-btn ${showGrid ? 'is-on' : ''}`}
+            data-testid="toggle-helper-grid-btn"
+            onClick={() => setShowGrid((v) => !v)}
+            title={t('إظهار/إخفاء شبكة المحاذاة المساعدة (لا تظهر في الطباعة)', 'Toggle helper alignment grid')}
+          >
+            <Grid3X3 size={13} />
           </button>
 
           {onOpenTab && (
@@ -453,12 +545,18 @@ export function A4Preview({
         <div className="cv-canvas-hint-strip no-print">
           <span>
             {t(
-              'انقر مرتين على أي نص بالورقة لتعديله مباشرة · اسحب أي قسم أو عنصر لتحريكه · استخدم تبويب «الطبقات والخصائص» للتحكم الكامل',
-              'Double-click any text on the sheet to edit inline · Drag any block or element to move · Open "Layers & Inspector" for full styling',
+              'انقر مرتين على أي نص بالورقة لتعديله مباشرة · اسحب أي عنصر أو قسم بسلاسة مع مغناطيس المحاذاة الذكي · Ctrl+D للتكرار',
+              'Double-click any text to edit inline · Smooth 120fps dragging with smart snap guides · Ctrl+D to duplicate',
             )}
           </span>
         </div>
       )}
+
+      <SignaturePadModal
+        open={sigModalOpen}
+        onClose={() => setSigModalOpen(false)}
+        onInserted={() => onOpenTab?.('layers')}
+      />
 
       <div
         className="cv-preview-stage"

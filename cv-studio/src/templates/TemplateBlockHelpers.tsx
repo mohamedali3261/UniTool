@@ -23,11 +23,93 @@ import {
 export interface SheetInteractiveCallbacks {
   interactive: boolean;
   zoomScale: number;
+  snapToGuides?: boolean;
+  showGrid?: boolean;
   selection: CanvasSelection;
   onSelect: (sel: CanvasSelection) => void;
   onUpdateDoc: (updater: (prev: ResumeDocument) => ResumeDocument) => void;
   onUpdateDocTransient: (updater: (prev: ResumeDocument) => ResumeDocument) => void;
   onCommitHistory: () => void;
+}
+
+/**
+ * Optional print-crisp decorative paper frame inside [data-cv-sheet]
+ */
+export function RenderPageFrame({ doc, accent }: { doc: ResumeDocument; accent: string }) {
+  const frame = doc.design.pageFrame || 'none';
+  if (frame === 'none') return null;
+
+  if (frame === 'classic-border') {
+    return (
+      <div
+        className="cvp-page-frame frame-classic"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: '6mm',
+          border: `1px solid ${accent}45`,
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      />
+    );
+  }
+
+  if (frame === 'double-frame') {
+    return (
+      <div
+        className="cvp-page-frame frame-double"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: '5.5mm',
+          border: `3px double ${accent}66`,
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      />
+    );
+  }
+
+  if (frame === 'top-ribbon') {
+    return (
+      <div
+        className="cvp-page-frame frame-ribbon"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 0,
+          insetInline: 0,
+          height: '6px',
+          background: `linear-gradient(90deg, ${accent}, ${accent}aa)`,
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}
+      />
+    );
+  }
+
+  if (frame === 'corner-accents') {
+    const cornerBase: React.CSSProperties = {
+      position: 'absolute',
+      width: '22px',
+      height: '22px',
+      borderColor: accent,
+      borderStyle: 'solid',
+      pointerEvents: 'none',
+      zIndex: 2,
+    };
+    return (
+      <>
+        <span aria-hidden="true" style={{ ...cornerBase, top: '6mm', left: '6mm', borderWidth: '2px 0 0 2px' }} />
+        <span aria-hidden="true" style={{ ...cornerBase, top: '6mm', right: '6mm', borderWidth: '2px 2px 0 0' }} />
+        <span aria-hidden="true" style={{ ...cornerBase, bottom: '6mm', left: '6mm', borderWidth: '0 0 2px 2px' }} />
+        <span aria-hidden="true" style={{ ...cornerBase, bottom: '6mm', right: '6mm', borderWidth: '0 2px 2px 0' }} />
+      </>
+    );
+  }
+
+  return null;
 }
 
 export interface TemplateRenderPageProps {
@@ -169,6 +251,8 @@ export function InteractiveBlock({
   style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
+  const blockRef = useRef<HTMLDivElement>(null);
+  const deltaBadgeRef = useRef<HTMLSpanElement>(null);
   const override: BlockOverrideStyle | undefined = doc.blockStyles?.[blockKey];
   if (override?.hidden) return null;
 
@@ -183,7 +267,7 @@ export function InteractiveBlock({
   const customStyle: React.CSSProperties = {
     ...style,
     position: 'relative',
-    transform: dx !== 0 || dy !== 0 ? `translate(${dx}px, ${dy}px)` : style?.transform,
+    transform: dx !== 0 || dy !== 0 ? `translate3d(${dx}px, ${dy}px, 0)` : style?.transform,
     width: override?.widthDelta ? `calc(100% + ${override.widthDelta}px)` : style?.width,
     fontFamily: override?.fontFamily ? resolveFontFamily(override.fontFamily) : style?.fontFamily,
     fontSize: override?.fontSizeScale ? `${Math.round(override.fontSizeScale * 100)}%` : style?.fontSize,
@@ -198,7 +282,8 @@ export function InteractiveBlock({
     padding: override?.padding !== undefined ? `${override.padding}px` : style?.padding,
     textAlign: override?.textAlign || style?.textAlign,
     opacity: override?.opacity !== undefined ? override.opacity : style?.opacity,
-    zIndex: isSelected ? 6 : dx !== 0 || dy !== 0 ? 3 : undefined,
+    zIndex: isSelected ? 8 : dx !== 0 || dy !== 0 ? 4 : undefined,
+    touchAction: canvas?.interactive ? 'none' : undefined,
   };
 
   const startDrag = (e: React.PointerEvent, forceDrag = false) => {
@@ -208,50 +293,92 @@ export function InteractiveBlock({
       return;
     }
     e.stopPropagation();
-    canvas.onSelect({ kind: 'block', blockKey });
+    if (forceDrag) {
+      e.preventDefault();
+    }
 
-    if (isLocked) return;
-    if (e.button !== 0) return;
+    if (!isSelected) {
+      canvas.onSelect({ kind: 'block', blockKey });
+    }
+
+    if (isLocked || e.button !== 0) return;
+
+    const node = blockRef.current;
+    if (!node) return;
+
+    const sheetEl = node.closest('[data-cv-sheet]') as HTMLElement | null;
+    const scale =
+      sheetEl && sheetEl.offsetWidth > 0
+        ? sheetEl.getBoundingClientRect().width / sheetEl.offsetWidth
+        : canvas.zoomScale || 1;
+
+    const pointerId = e.pointerId;
+    if (forceDrag) {
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(pointerId);
+      } catch {
+        /* ignore */
+      }
+    }
 
     const startClientX = e.clientX;
     const startClientY = e.clientY;
     const origDx = dx;
     const origDy = dy;
-    const scale = canvas.zoomScale || 1;
     let moved = false;
+    let latestDx = origDx;
+    let latestDy = origDy;
 
     const onMove = (ev: PointerEvent) => {
       const rawX = ev.clientX - startClientX;
       const rawY = ev.clientY - startClientY;
-      if (!moved && !forceDrag && Math.hypot(rawX, rawY) < 5) {
+      if (!moved && !forceDrag && Math.hypot(rawX, rawY) < 3.5) {
         return;
       }
       if (!moved) {
         moved = true;
-        canvas.onCommitHistory();
+        try {
+          window.getSelection()?.removeAllRanges();
+        } catch {
+          /* ignore */
+        }
+        document.body.classList.add('cv-dragging-active');
+        node.classList.add('is-dragging-live');
       }
-      const nextDx = Math.round(origDx + rawX / scale);
-      const nextDy = Math.round(origDy + rawY / scale);
-      canvas.onUpdateDocTransient((prev) => ({
-        ...prev,
-        blockStyles: {
-          ...(prev.blockStyles || {}),
-          [blockKey]: {
-            ...(prev.blockStyles?.[blockKey] || {}),
-            dx: nextDx,
-            dy: nextDy,
-          },
-        },
-      }));
+
+      latestDx = Math.round(origDx + rawX / scale);
+      latestDy = Math.round(origDy + rawY / scale);
+      node.style.transform = `translate3d(${latestDx}px, ${latestDy}px, 0)`;
+      if (deltaBadgeRef.current) {
+        deltaBadgeRef.current.textContent = `${latestDx > 0 ? `+${latestDx}` : latestDx}, ${latestDy > 0 ? `+${latestDy}` : latestDy}`;
+      }
     };
 
-    const onUp = () => {
+    const finish = () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      document.body.classList.remove('cv-dragging-active');
+      node.classList.remove('is-dragging-live');
+
+      if (moved && (latestDx !== origDx || latestDy !== origDy)) {
+        canvas.onUpdateDoc((prev) => ({
+          ...prev,
+          blockStyles: {
+            ...(prev.blockStyles || {}),
+            [blockKey]: {
+              ...(prev.blockStyles?.[blockKey] || {}),
+              dx: latestDx,
+              dy: latestDy,
+            },
+          },
+        }));
+      }
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
   };
 
   const resetOffset = (e: React.MouseEvent) => {
@@ -271,11 +398,22 @@ export function InteractiveBlock({
 
   return (
     <div
+      ref={blockRef}
       data-cv-block={blockKey}
       className={`cvp-interactive-block ${className || ''} ${canvas?.interactive ? 'is-interactive' : ''} ${isSelected ? 'is-canvas-selected' : ''}`.trim()}
       style={customStyle}
       onPointerDown={(e) => startDrag(e, false)}
     >
+      {canvas?.interactive && !isLocked && !isSelected && (
+        <span
+          className="cv-block-hover-grip no-print"
+          data-canvas-ui-chrome="true"
+          title={doc.design.paperLang === 'ar' ? 'اسحب لتحريك القسم بحرية' : 'Drag freely to move block'}
+          onPointerDown={(e) => startDrag(e, true)}
+        >
+          <Move size={10} />
+        </span>
+      )}
       {canvas?.interactive && isSelected && (
         <div
           className="cv-block-floating-pill no-print"
@@ -284,6 +422,9 @@ export function InteractiveBlock({
         >
           <Move size={11} />
           <span>{label}</span>
+          <span ref={deltaBadgeRef} className="cv-block-delta-readout">
+            {dx !== 0 || dy !== 0 ? `${dx}, ${dy}` : ''}
+          </span>
           {isLocked && <Lock size={11} />}
           {(dx !== 0 || dy !== 0) && (
             <button
@@ -496,7 +637,11 @@ export type HeadingVisualVariant =
   | 'corporate-centered'
   | 'tech-bracket'
   | 'academic-caps'
-  | 'nordic-minimal';
+  | 'nordic-minimal'
+  | 'royal-gold'
+  | 'clinical-badge'
+  | 'bento-header'
+  | 'dark-sidebar';
 
 export function TemplateSectionHeading({
   title,
@@ -584,6 +729,47 @@ export function TemplateSectionHeading({
   if (variant === 'nordic-minimal') {
     return (
       <h2 className="cvp-sec-heading cvp-sec-nordic" style={{ color }}>
+        <InlineEditableText value={title} canvas={canvas} onCommit={onCommitTitle} />
+        {suffix}
+      </h2>
+    );
+  }
+
+  if (variant === 'royal-gold') {
+    return (
+      <h2 className="cvp-sec-heading cvp-sec-royal" style={{ color: '#0f172a', borderBottomColor: `${color}55` }}>
+        <span className="cvp-royal-diamond" style={{ backgroundColor: color }} aria-hidden="true" />
+        <InlineEditableText value={title} canvas={canvas} onCommit={onCommitTitle} />
+        {suffix}
+      </h2>
+    );
+  }
+
+  if (variant === 'clinical-badge') {
+    return (
+      <h2
+        className="cvp-sec-heading cvp-sec-clinical"
+        style={{ backgroundColor: color, color: '#ffffff' }}
+      >
+        <InlineEditableText value={title} canvas={canvas} onCommit={onCommitTitle} />
+        {suffix}
+      </h2>
+    );
+  }
+
+  if (variant === 'bento-header') {
+    return (
+      <h2 className="cvp-sec-heading cvp-sec-bento" style={{ color }}>
+        <span className="cvp-bento-dot" style={{ backgroundColor: color }} aria-hidden="true" />
+        <InlineEditableText value={title} canvas={canvas} onCommit={onCommitTitle} />
+        {suffix}
+      </h2>
+    );
+  }
+
+  if (variant === 'dark-sidebar') {
+    return (
+      <h2 className="cvp-sec-heading cvp-sec-dark-aside" style={{ color: '#f8fafc', borderBottomColor: 'rgba(255,255,255,0.22)' }}>
         <InlineEditableText value={title} canvas={canvas} onCommit={onCommitTitle} />
         {suffix}
       </h2>

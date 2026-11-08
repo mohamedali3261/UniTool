@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
 import type {
-  AtsReport,
   CanvasSelection,
   ResumeDocument,
   StudioPageId,
@@ -29,7 +28,6 @@ export interface CvStudioContextValue {
   removeResume: (id: string) => Promise<void>;
   applyTemplateKeepData: (template: TemplatePreset) => void;
   applyTemplateWithSample: (template: TemplatePreset) => Promise<void>;
-  atsReport: AtsReport;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;

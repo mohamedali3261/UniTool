@@ -8,6 +8,6 @@ Standalone CV & Cover Letter Studio for UniTool (`/cv-studio/`), built with a cl
 - `src/app/` — Studio state store (`useResumeStore.ts`), physical-keycode keyboard shortcuts (`useShortcuts.ts` supporting Arabic & English keyboard layouts), context, and UniTool theme + print isolation (`styles.css`).
 - `src/components/` — Unified `StudioHeader.tsx` (`SiteNavbar` + studio subbar), `Modal.tsx`, and single non-stacking `CalmToast.tsx`.
 - `src/core/` — Typed schema (`types.ts`), AR/EN i18n (`i18n.ts`), A4/Letter geometry & multi-page paginator (`pagination.ts`), ATS evaluator & JD keyword matcher (`atsEngine.ts`), IndexedDB + `.utcv.json` storage (`storage.ts`), and crisp PDF/PNG/TXT export (`exportEngine.ts`).
-- `src/data/` — 7 realistic bilingual CV templates (`templates.ts`), metric-backed achievement phrases & cover letter presets (`phrases.ts`), and calm typography/color identity (`themes.ts`).
-- `src/pages/` — 5 dedicated page directories (`editor/`, `templates/`, `ats-checker/`, `cover-letter/`, `resumes/`), with each section/feature isolated in its own file.
+- `src/templates/` — 14 standalone bilingual CV template modules (each in its own `.tsx` file with a distinct visual architecture and miniature gallery preview).
+- `src/pages/` — 4 dedicated page directories (`editor/`, `templates/`, `cover-letter/`, `resumes/`), including the 120fps GPU interactive canvas (`editor/canvas/`), Shapes & Elements library, Electronic Signature Pad, and Layers & Inspector panel.
 - `tests/` — Vitest unit tests (`core.test.ts`) and Playwright desktop/mobile + light/dark browser suite (`studio.spec.ts`).

@@ -8,11 +8,17 @@ import type {
 import { defaultFontForPaperLang } from '../data/themes';
 import { academicMultipageTemplate } from './academicMultipage';
 import { atsStandardTemplate } from './atsStandard';
+import { compactStartupGridTemplate } from './compactStartupGrid';
+import { creativeStudioSplitTemplate } from './creativeStudioSplit';
+import { editorialMagazineSerifTemplate } from './editorialMagazineSerif';
 import { financeCorporateTemplate } from './financeCorporate';
 import { freshGradStarterTemplate } from './freshGradStarter';
+import { infographicTimelineProTemplate } from './infographicTimelinePro';
+import { medicalClinicalCleanTemplate } from './medicalClinicalClean';
 import { minimalistNordicTemplate } from './minimalistNordic';
 import { modernBannerCreativeTemplate } from './modernBannerCreative';
 import { modernEmeraldExecTemplate } from './modernEmeraldExec';
+import { royalGoldExecutiveTemplate } from './royalGoldExecutive';
 import {
   defaultCoverLetterAr,
   defaultCoverLetterEn,
@@ -24,14 +30,20 @@ import type { TemplateModule } from './TemplateBlockHelpers';
 export {
   academicMultipageTemplate,
   atsStandardTemplate,
+  compactStartupGridTemplate,
+  creativeStudioSplitTemplate,
   defaultCoverLetterAr,
   defaultCoverLetterEn,
   defaultSectionOrder,
+  editorialMagazineSerifTemplate,
   financeCorporateTemplate,
   freshGradStarterTemplate,
+  infographicTimelineProTemplate,
+  medicalClinicalCleanTemplate,
   minimalistNordicTemplate,
   modernBannerCreativeTemplate,
   modernEmeraldExecTemplate,
+  royalGoldExecutiveTemplate,
   techOnePageTemplate,
 };
 export type { TemplateModule };
@@ -40,8 +52,14 @@ export const CV_TEMPLATE_MODULES: TemplateModule[] = [
   atsStandardTemplate,
   modernEmeraldExecTemplate,
   techOnePageTemplate,
+  royalGoldExecutiveTemplate,
+  creativeStudioSplitTemplate,
   financeCorporateTemplate,
   modernBannerCreativeTemplate,
+  medicalClinicalCleanTemplate,
+  infographicTimelineProTemplate,
+  editorialMagazineSerifTemplate,
+  compactStartupGridTemplate,
   academicMultipageTemplate,
   freshGradStarterTemplate,
   minimalistNordicTemplate,

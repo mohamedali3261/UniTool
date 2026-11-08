@@ -538,6 +538,54 @@ export function LayersAndInspectorPanel() {
             </div>
           </div>
 
+          {/* Quick Page Alignment Bar */}
+          <div className="cv-field">
+            <label>{t('محاذاة سريعة بالصفحة', 'Quick Page Alignment')}</label>
+            <div className="cv-chip-row">
+              <button
+                type="button"
+                className="cv-chip"
+                onClick={() => patchSelectedEl({ x: 48 })}
+              >
+                {t('أقصى اليسار', 'Left Edge')}
+              </button>
+              <button
+                type="button"
+                className="cv-chip"
+                data-testid="align-el-center-x"
+                onClick={() =>
+                  patchSelectedEl({
+                    x: Math.round(((resume.design.paperSize === 'letter' ? 816 : 794) - selectedEl.width) / 2),
+                  })
+                }
+              >
+                {t('توسيط أفقي', 'Center X')}
+              </button>
+              <button
+                type="button"
+                className="cv-chip"
+                onClick={() =>
+                  patchSelectedEl({
+                    x: Math.round((resume.design.paperSize === 'letter' ? 816 : 794) - selectedEl.width - 48),
+                  })
+                }
+              >
+                {t('أقصى اليمين', 'Right Edge')}
+              </button>
+              <button
+                type="button"
+                className="cv-chip"
+                onClick={() =>
+                  patchSelectedEl({
+                    y: Math.round(((resume.design.paperSize === 'letter' ? 1056 : 1123) - selectedEl.height) / 2),
+                  })
+                }
+              >
+                {t('توسيط رأسي', 'Center Y')}
+              </button>
+            </div>
+          </div>
+
           {/* Geometry: X, Y, W, H, Rotation, Opacity */}
           <div className="cv-grid-4">
             <div className="cv-field">

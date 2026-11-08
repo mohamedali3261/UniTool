@@ -3,6 +3,7 @@ import {
   ImagePlus,
   Layers,
   Minus,
+  PenTool,
   QrCode,
   Shapes,
   Sparkles,
@@ -24,6 +25,7 @@ import {
   generateSamplePortraitDataUrl,
 } from './canvasDefaults';
 import { CANVAS_ICON_LIST, CANVAS_ICON_MAP, CanvasShapeSvg } from './CanvasShapeSvg';
+import { SignaturePadModal } from './SignaturePadModal';
 
 const SHAPE_PRESETS: { kind: CanvasShapeKind; ar: string; en: string }[] = [
   { kind: 'rect', ar: 'مستطيل حاد', en: 'Rectangle' },
@@ -60,6 +62,7 @@ export function ElementsShapesPanel({
   const { resume, updateResume, setCanvasSelection, notify, t } = useCvStudio();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [placeUnderlay, setPlaceUnderlay] = useState(false);
+  const [sigOpen, setSigOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState(
     resume.personal.linkedin
       ? `https://${resume.personal.linkedin.replace(/^https?:\/\//, '')}`
@@ -263,6 +266,16 @@ export function ElementsShapesPanel({
             <span>{t('إدراج صورة جاهزة للتجربة', 'Insert Sample Portrait')}</span>
           </button>
 
+          <button
+            type="button"
+            className="cv-btn soft"
+            data-testid="open-signature-pad-btn"
+            onClick={() => setSigOpen(true)}
+          >
+            <PenTool size={15} />
+            <span>{t('رسم / كتابة توقيع إلكتروني', 'Electronic Signature')}</span>
+          </button>
+
           <input
             hidden
             ref={imageInputRef}
@@ -464,6 +477,12 @@ export function ElementsShapesPanel({
           })}
         </div>
       </div>
+
+      <SignaturePadModal
+        open={sigOpen}
+        onClose={() => setSigOpen(false)}
+        onInserted={onOpenInspector}
+      />
     </div>
   );
 }

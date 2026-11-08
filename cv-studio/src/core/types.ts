@@ -24,7 +24,20 @@ export type TemplateVisualStyle =
   | 'creative-banner-timeline'
   | 'academic-hanging'
   | 'fresh-grad-cards'
-  | 'nordic-minimal';
+  | 'nordic-minimal'
+  | 'royal-split-header'
+  | 'creative-bold-aside'
+  | 'clinical-structured-grid'
+  | 'spine-timeline-infographic'
+  | 'editorial-magazine'
+  | 'bento-modular-cards';
+
+export type PageFrameStyle =
+  | 'none'
+  | 'classic-border'
+  | 'double-frame'
+  | 'corner-accents'
+  | 'top-ribbon';
 
 export type SkillDisplayMode = 'badges' | 'bars' | 'bullets' | 'comma' | 'dots';
 
@@ -50,7 +63,6 @@ export type EditorSectionKey =
 export type StudioPageId =
   | 'editor'
   | 'templates'
-  | 'ats-checker'
   | 'cover-letter'
   | 'resumes';
 
@@ -282,6 +294,7 @@ export interface DesignSettings {
   marginMm: number; // 10 .. 24
   accentColor: string;
   skillDisplay: SkillDisplayMode;
+  pageFrame?: PageFrameStyle;
 }
 
 export interface CoverLetterData {
@@ -338,6 +351,7 @@ export type TemplateCategory =
   | 'finance'
   | 'creative'
   | 'academic'
+  | 'medical'
   | 'fresh-grad';
 
 export interface TemplatePreset {

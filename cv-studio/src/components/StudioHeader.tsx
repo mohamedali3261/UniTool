@@ -1,7 +1,6 @@
 import {
   CheckCircle2,
   Download,
-  FileCheck2,
   FileText,
   FolderOpen,
   LayoutTemplate,
@@ -25,7 +24,6 @@ export function StudioHeader() {
     navigate,
     resume,
     updateResume,
-    atsReport,
     undo,
     redo,
     canUndo,
@@ -38,13 +36,6 @@ export function StudioHeader() {
   const navItems: { id: StudioPageId; ar: string; en: string; icon: typeof FileText; badge?: string }[] = [
     { id: 'editor', ar: 'المحرر والمعاينة', en: 'Editor', icon: FileText },
     { id: 'templates', ar: 'القوالب', en: 'Templates', icon: LayoutTemplate },
-    {
-      id: 'ats-checker',
-      ar: 'فاحص ATS',
-      en: 'ATS Checker',
-      icon: FileCheck2,
-      badge: `${atsReport.totalScore}%`,
-    },
     { id: 'cover-letter', ar: 'خطاب التقديم', en: 'Cover Letter', icon: MailCheck },
     { id: 'resumes', ar: 'سيرتي والتصدير', en: 'My Resumes', icon: FolderOpen },
   ];

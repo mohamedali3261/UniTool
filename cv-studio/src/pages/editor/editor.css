@@ -1838,3 +1838,508 @@
   color: var(--cv-accent-ink);
 }
 
+/* ============================================================
+   120fps GPU Dragging, Magnetic Snap Guides & Signature Studio
+   ============================================================ */
+body.cv-dragging-active,
+body.cv-dragging-active * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: grabbing !important;
+}
+
+.cv-canvas-el.is-interactive:not(.is-locked) {
+  cursor: grab;
+  will-change: transform, left, top, width, height;
+}
+
+.cv-canvas-el.is-dragging-live,
+.cvp-interactive-block.is-dragging-live {
+  will-change: transform;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.cv-canvas-live-hud {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #0f172a;
+  color: #ffffff !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+
+.cv-snap-guide-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1.5px dashed #ec4899;
+  pointer-events: none;
+  z-index: 55;
+}
+
+.cv-snap-guide-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1.5px dashed #ec4899;
+  pointer-events: none;
+  z-index: 55;
+}
+
+.cv-block-hover-grip {
+  position: absolute;
+  top: -10px;
+  inset-inline-start: 6px;
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+  background: #24795e;
+  color: #ffffff !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  cursor: grab;
+  z-index: 18;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+.cvp-interactive-block.is-interactive:hover > .cv-block-hover-grip {
+  opacity: 0.92;
+}
+
+.cv-block-delta-readout {
+  font-family: ui-monospace, monospace;
+  font-size: 9.5px;
+  opacity: 0.88;
+}
+
+.cv-completeness-bar {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--cv-accent-soft);
+  color: var(--cv-accent-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* Signature Pad Modal */
+.cv-sig-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cv-sig-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cv-sig-thickness {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cv-sig-pad-frame {
+  position: relative;
+  border-radius: 12px;
+  border: 1.5px dashed var(--cv-line);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.cv-sig-canvas {
+  width: 100%;
+  height: 180px;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.cv-sig-baseline {
+  position: absolute;
+  bottom: 42px;
+  inset-inline: 36px;
+  height: 1px;
+  background: #cbd5e1;
+  pointer-events: none;
+}
+
+.cv-sig-clear-btn {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  height: 28px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+.cv-sig-typed-preview {
+  margin-top: 8px;
+  padding: 20px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  font-family: Georgia, 'Amiri', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 32px;
+}
+
+/* ============================================================
+   6 New Distinct Sheet Architectures (Templates 9..14)
+   ============================================================ */
+
+/* 9. Royal Gold Executive Crest */
+.cvp-royal-crest {
+  padding: 5px;
+  border-radius: 8px;
+  margin-bottom: var(--cvp-gap, 14px);
+}
+.cvp-royal-inner {
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 5px;
+  padding: 15px 18px 12px;
+}
+.cvp-royal-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.cvp-royal-copy {
+  flex: 1;
+  min-width: 0;
+}
+.cvp-royal-kicker {
+  display: block;
+  font-size: 0.72em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-bottom: 3px;
+}
+.cvp-royal-crest h1 {
+  font-size: 1.98em;
+  font-weight: 800;
+  color: #ffffff !important;
+}
+.cvp-royal-role {
+  margin-top: 3px !important;
+  font-size: 1.04em;
+  font-weight: 700;
+}
+.cvp-royal-ribbon {
+  margin-top: 11px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(251, 191, 36, 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  font-size: 0.84em;
+  color: #e2e8f0 !important;
+}
+.cvp-royal-ribbon span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cvp-royal-ribbon i {
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  display: inline-block;
+}
+.cvp-sec-royal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #d9770655;
+}
+.cvp-royal-diamond {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* 10. Dark Contrast Studio Sidebar */
+.cvp-dark-aside-col {
+  position: relative;
+  padding: 18mm 12mm;
+  color: #f8fafc !important;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.cvp-dark-aside-accent {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 6px;
+}
+.cvp-dark-identity h1 {
+  font-size: 1.62em;
+  font-weight: 800;
+  color: #ffffff !important;
+}
+.cvp-dark-role {
+  margin-top: 4px !important;
+  font-size: 0.96em;
+  font-weight: 700;
+}
+.cvp-dark-contacts {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.84em;
+  color: #cbd5e1 !important;
+  overflow-wrap: anywhere;
+}
+.cvp-sec-dark-aside {
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+.cvp-dark-sections-invert .cvp-skill-badge {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #f8fafc !important;
+}
+.cvp-dark-sections-invert .cvp-lang-item,
+.cvp-dark-sections-invert .cvp-cert-row,
+.cvp-dark-sections-invert .cvp-skill-bar-top,
+.cvp-dark-sections-invert .cvp-skills-comma,
+.cvp-dark-sections-invert .cvp-skills-bullets {
+  color: #f1f5f9 !important;
+}
+.cvp-dark-sections-invert .cvp-lang-item span {
+  color: #94a3b8 !important;
+}
+
+/* 11. Medical & Clinical Board CV */
+.cvp-clinical-card {
+  padding: 14px 16px;
+  border: 1.5px solid #bae6fd;
+  border-top-width: 4px;
+  border-radius: 10px;
+  margin-bottom: var(--cvp-gap, 14px);
+}
+.cvp-clinical-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cvp-clinical-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: #ffffff !important;
+  font-size: 1.55em;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cvp-clinical-card h1 {
+  font-size: 1.9em;
+  font-weight: 800;
+}
+.cvp-clinical-contacts {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #bae6fd;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  font-size: 0.85em;
+  color: #334155 !important;
+}
+.cvp-sec-clinical {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 0.94em;
+  letter-spacing: 0.02em;
+}
+
+/* 12. Infographic Spine & Metrics */
+.cvp-info-header {
+  padding-bottom: 12px;
+  margin-bottom: var(--cvp-gap, 14px);
+  border-bottom: 1.5px solid #e2e8f0;
+}
+.cvp-info-head-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cvp-info-accent-block {
+  width: 8px;
+  height: 54px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.cvp-info-header h1 {
+  font-size: 1.96em;
+  font-weight: 800;
+}
+.cvp-info-capsules {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cvp-info-capsule {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+/* 13. Editorial Magazine & Pull-Quote */
+.cvp-editorial-masthead {
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 2.5px solid #111827;
+}
+.cvp-editorial-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.cvp-editorial-masthead h1 {
+  font-size: 2.25em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cvp-editorial-subtitle {
+  margin-top: 2px !important;
+  font-size: 1.08em;
+  font-weight: 700;
+}
+.cvp-editorial-dateline {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 0.85em;
+  color: #475569 !important;
+}
+.cvp-editorial-pullquote {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-inline-start: 4px solid #9f1239;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.cvp-quote-mark {
+  font-size: 1.8em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cvp-editorial-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+  gap: 18px;
+}
+.cvp-editorial-main,
+.cvp-editorial-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cvp-gap, 13px);
+}
+.cvp-editorial-aside {
+  padding-inline-start: 14px;
+  border-inline-start: 1px solid #e2e8f0;
+}
+
+/* 14. Modern Bento Modular Grid */
+.cvp-bento-hero-tile {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #a7f3d0;
+  margin-bottom: 10px;
+}
+.cvp-bento-hero-tile h1 {
+  font-size: 1.88em;
+  font-weight: 800;
+}
+.cvp-bento-chips {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.cvp-bento-contact-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82em;
+  color: #334155 !important;
+}
+.cvp-bento-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.cvp-bento-tile {
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc !important;
+}
+.cvp-bento-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.cvp-bento-grid-2 > :only-child {
+  grid-column: 1 / -1;
+}
+.cvp-sec-bento {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.98em;
+}
+.cvp-bento-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+

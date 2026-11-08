@@ -366,3 +366,77 @@ export const SAMPLE_AR_EXEC: SampleResumePayload = {
   canvasElements: [],
   blockStyles: {},
 };
+
+export const SAMPLE_AR_MEDICAL: SampleResumePayload = {
+  ...SAMPLE_AR_TECH,
+  title: 'سيرة استشاري أمراض القلب — د. يوسف عبد الحميد',
+  targetCompany: 'مستشفى دار الفؤاد التخصصي',
+  personal: {
+    ...SAMPLE_AR_TECH.personal,
+    fullName: 'د. يوسف نبيل عبد الحميد',
+    jobTitle: 'استشاري أمراض القلب والقسطرة التداخلية (MD, MRCP)',
+    email: 'dr.youssef.cardio@example.com',
+    phone: '+20 109 334 7810',
+    location: 'القاهرة، مصر',
+    linkedin: 'linkedin.com/in/dr-youssef-cardio',
+    website: '',
+    github: '',
+  },
+  summary:
+    'استشاري أمراض القلب والأوعية الدموية بخبرة إكلينيكية تتجاوز 10 سنوات في القسطرة التداخلية الطارئة ورعاية الحالات الحرجة بوحدات العناية القلبية المركزة (CCU). أجرى أكثر من 1,400 عملية قسطرة تشخيصية وعلاجية بنسب نجاح قياسية، وشارك في تدريب الأطباء المقيمين ونشر أبحاث سريرية محكّمة.',
+  experience: [
+    {
+      id: 'exp-med-1',
+      role: 'استشاري أمراض القلب والقسطرة التداخلية',
+      company: 'المجمع الطبي التخصصي للقلب',
+      location: 'القاهرة، مصر',
+      startDate: '2020-06',
+      endDate: '',
+      current: true,
+      highlights: [
+        'إجراء أكثر من 450 قسطرة شريان تاجي علاجية ودعامات دوائية سنوياً مع خفض زمن التدخل الطارئ (Door-to-Balloon) إلى أقل من 52 دقيقة.',
+        'الإشراف الإكلينيكي على وحدة العناية القلبية المركزة (18 سريراً) وتحديث بروتوكولات سلامة المرضى.',
+      ],
+    },
+    {
+      id: 'exp-med-2',
+      role: 'أخصائي أول أمراض القلب والأوعية الدموية',
+      company: 'مستشفيات جامعة عين شمس',
+      location: 'القاهرة، مصر',
+      startDate: '2016-03',
+      endDate: '2020-05',
+      current: false,
+      highlights: [
+        'تقييم ومتابعة أكثر من 60 مريضاً أسبوعياً بعيادات قصور عضلة القلب والموجات فوق الصوتية (Echocardiography).',
+        'تدريب وتوجيه 25 طبيباً مقيماً على قراءة تخطيط القلب والتعامل مع الطوارئ القلبية الحادة.',
+      ],
+    },
+  ],
+  education: [
+    {
+      id: 'edu-med-1',
+      degree: 'دكتوراه طب القلب والأوعية الدموية (MD Cardiology)',
+      school: 'كلية الطب — جامعة عين شمس',
+      location: 'القاهرة، مصر',
+      startDate: '2016',
+      endDate: '2020',
+      grade: 'امتياز',
+      notes: 'الزمالة البريطانية للأطباء الباطنيين MRCP (UK) — ترخيص مزاولة المهنة سارٍ.',
+    },
+  ],
+  certifications: [
+    { id: 'c-med-1', name: 'عضوية الكلية الملكية للأطباء الباطنيين MRCP (UK)', issuer: 'Royal Colleges of Physicians', date: '2021', credentialId: 'MRCP-9921' },
+    { id: 'c-med-2', name: 'دعم الحياة القلبي المتقدم ACLS & BLS', issuer: 'American Heart Association', date: '2024', credentialId: 'AHA-4410' },
+  ],
+  skills: [
+    { id: 'skm-1', name: 'القسطرة القلبية التداخلية (PCI)', level: 5 },
+    { id: 'skm-2', name: 'إيكو القلب عبر الصدر والمريء (TTE/TEE)', level: 5 },
+    { id: 'skm-3', name: 'إدارة العناية القلبية المركزة (CCU)', level: 5 },
+    { id: 'skm-4', name: 'تخطيط القلب والجهد (ECG & Stress Test)', level: 5 },
+    { id: 'skm-5', name: 'سلامة المرضى والجودة الإكلينيكية', level: 4 },
+  ],
+  projects: [],
+  coverLetter: defaultCoverLetterAr('د. يوسف نبيل عبد الحميد', 'استشاري أمراض القلب والقسطرة التداخلية', 'مستشفى دار الفؤاد التخصصي'),
+  canvasElements: [],
+  blockStyles: {},
+};

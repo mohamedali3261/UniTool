@@ -285,6 +285,31 @@ export function DesignCustomizerPanel() {
           ))}
         </div>
       </div>
+
+      <div className="cv-design-group">
+        <h4>{t('إطار وزخرفة الورقة (اختياري للطباعة)', 'Decorative Sheet Frame (Print-Ready)')}</h4>
+        <div className="cv-chip-row">
+          {(
+            [
+              { id: 'none', ar: 'بدون إطار (كلاسيكي ناصع)', en: 'None (Pure Sheet)' },
+              { id: 'classic-border', ar: 'إطار خطي رفيع', en: 'Classic Hairline' },
+              { id: 'double-frame', ar: 'إطار رسمي مزدوج', en: 'Formal Double Frame' },
+              { id: 'top-ribbon', ar: 'شريط علوي ملون', en: 'Top Accent Ribbon' },
+              { id: 'corner-accents', ar: 'زوايا هندسية', en: 'Corner Brackets' },
+            ] as const
+          ).map((fr) => (
+            <button
+              key={fr.id}
+              type="button"
+              data-testid={`page-frame-${fr.id}`}
+              className={`cv-chip ${(design.pageFrame || 'none') === fr.id ? 'active' : ''}`}
+              onClick={() => setDesign('pageFrame', fr.id)}
+            >
+              {t(fr.ar, fr.en)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

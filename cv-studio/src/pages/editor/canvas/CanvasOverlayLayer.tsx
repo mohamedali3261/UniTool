@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  AlignCenterHorizontal,
   ArrowDown,
   ArrowUp,
   Copy,
@@ -7,10 +8,12 @@ import {
   Lock,
   Pencil,
   RotateCw,
+  SlidersHorizontal,
   Star,
   Trash2,
   Unlock,
 } from 'lucide-react';
+import { getPaperDimensions } from '../../../core/pagination';
 import type { CanvasElement, ResumeDocument } from '../../../core/types';
 import { resolveFontFamily } from '../../../data/themes';
 import type { SheetInteractiveCallbacks } from '../../../templates/TemplateBlockHelpers';
@@ -30,19 +33,112 @@ import {
 type ResizeDir = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 const HANDLE_DIRS: ResizeDir[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const SNAP_THRESHOLD_PX = 5;
+
+function resolveExactSheetScale(node: HTMLElement | null, fallback: number): number {
+  const sheet = node?.closest('[data-cv-sheet]') as HTMLElement | null;
+  if (sheet && sheet.offsetWidth > 0) {
+    const rectW = sheet.getBoundingClientRect().width;
+    if (rectW > 20) {
+      return rectW / sheet.offsetWidth;
+    }
+  }
+  return fallback || 1;
+}
+
+interface SnapResult {
+  x: number;
+  y: number;
+  guideX: number | null;
+  guideY: number | null;
+}
+
+function computeMagneticSnap(
+  rawX: number,
+  rawY: number,
+  width: number,
+  height: number,
+  sheetW: number,
+  sheetH: number,
+  marginPx: number,
+  siblings: CanvasElement[],
+): SnapResult {
+  const xTargets: number[] = [marginPx, sheetW / 2, sheetW - marginPx];
+  const yTargets: number[] = [marginPx, sheetH / 2, sheetH - marginPx];
+
+  for (const sib of siblings) {
+    xTargets.push(sib.x, sib.x + sib.width / 2, sib.x + sib.width);
+    yTargets.push(sib.y, sib.y + sib.height / 2, sib.y + sib.height);
+  }
+
+  let bestX = rawX;
+  let minDiffX = SNAP_THRESHOLD_PX + 0.01;
+  let guideX: number | null = null;
+
+  const anchorsX = [
+    { offset: 0, val: rawX },
+    { offset: width / 2, val: rawX + width / 2 },
+    { offset: width, val: rawX + width },
+  ];
+
+  for (const anchor of anchorsX) {
+    for (const target of xTargets) {
+      const diff = Math.abs(anchor.val - target);
+      if (diff < minDiffX) {
+        minDiffX = diff;
+        bestX = target - anchor.offset;
+        guideX = target;
+      }
+    }
+  }
+
+  let bestY = rawY;
+  let minDiffY = SNAP_THRESHOLD_PX + 0.01;
+  let guideY: number | null = null;
+
+  const anchorsY = [
+    { offset: 0, val: rawY },
+    { offset: height / 2, val: rawY + height / 2 },
+    { offset: height, val: rawY + height },
+  ];
+
+  for (const anchor of anchorsY) {
+    for (const target of yTargets) {
+      const diff = Math.abs(anchor.val - target);
+      if (diff < minDiffY) {
+        minDiffY = diff;
+        bestY = target - anchor.offset;
+        guideY = target;
+      }
+    }
+  }
+
+  return { x: bestX, y: bestY, guideX, guideY };
+}
 
 function CanvasElementNode({
   el,
+  siblings,
+  sheetWidth,
+  sheetHeight,
+  marginPx,
   canvas,
   onFocusInspector,
+  onShowGuides,
 }: {
   el: CanvasElement;
+  siblings: CanvasElement[];
+  sheetWidth: number;
+  sheetHeight: number;
+  marginPx: number;
   canvas?: SheetInteractiveCallbacks;
   onFocusInspector?: () => void;
+  onShowGuides: (gx: number | null, gy: number | null) => void;
 }) {
   const [editingText, setEditingText] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
 
   const isSelected =
     Boolean(canvas?.interactive) &&
@@ -71,10 +167,21 @@ function CanvasElementNode({
     }
   }, [editingText]);
 
-  const updateEl = (patch: Partial<CanvasElement>, transient = false) => {
+  const setHudText = (label: string | null) => {
+    const hud = hudRef.current;
+    if (!hud) return;
+    if (!label) {
+      hud.style.display = 'none';
+      hud.textContent = '';
+    } else {
+      hud.style.display = 'inline-flex';
+      hud.textContent = label;
+    }
+  };
+
+  const updateEl = (patch: Partial<CanvasElement>) => {
     if (!canvas) return;
-    const fn = transient ? canvas.onUpdateDocTransient : canvas.onUpdateDoc;
-    fn((prev: ResumeDocument) => ({
+    canvas.onUpdateDoc((prev: ResumeDocument) => ({
       ...prev,
       canvasElements: (prev.canvasElements || []).map((item) =>
         item.id === el.id ? { ...item, ...patch } : item,
@@ -82,7 +189,14 @@ function CanvasElementNode({
     }));
   };
 
-  const handlePointerDownMove = (e: React.PointerEvent) => {
+  /**
+   * Ultra-smooth 120fps GPU-composited move handler:
+   * - Zero React state updates during pointermove (direct translate3d on boxRef)
+   * - Pointer capture prevents lost events on fast cursor movement
+   * - Magnetic smart snap guides to sheet center, margins & sibling elements
+   * - Commits final (x, y) ONCE on pointerup for instant Undo/Redo
+   */
+  const handlePointerDownMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!canvas?.interactive) return;
     const target = e.target as HTMLElement;
     if (
@@ -94,50 +208,133 @@ function CanvasElementNode({
     }
 
     e.stopPropagation();
-    canvas.onSelect({ kind: 'element', id: el.id });
-    onFocusInspector?.();
+    if (e.button !== 0) return;
 
-    if (el.locked || e.button !== 0) return;
+    // Prevent native browser image ghost-drag & accidental text range selection
+    e.preventDefault();
+
+    if (!isSelected) {
+      canvas.onSelect({ kind: 'element', id: el.id });
+    }
+
+    if (el.locked) return;
+
+    const node = boxRef.current;
+    if (!node) return;
+
+    const pointerId = e.pointerId;
+    try {
+      node.setPointerCapture(pointerId);
+    } catch {
+      /* ignore synthetic pointer events in headless tests */
+    }
 
     const startClientX = e.clientX;
     const startClientY = e.clientY;
     const origX = el.x;
     const origY = el.y;
-    const scale = canvas.zoomScale || 1;
+    const rotSuffix = el.rotation ? ` rotate(${el.rotation}deg)` : '';
+    const scale = resolveExactSheetScale(node, canvas.zoomScale);
+    const snapActive = canvas.snapToGuides !== false;
+
     let moved = false;
+    let latestX = origX;
+    let latestY = origY;
 
     const onMove = (ev: PointerEvent) => {
       const dxScreen = ev.clientX - startClientX;
       const dyScreen = ev.clientY - startClientY;
-      if (!moved && Math.hypot(dxScreen, dyScreen) < 3) return;
+      if (!moved && Math.hypot(dxScreen, dyScreen) < 2.5) return;
+
       if (!moved) {
         moved = true;
-        canvas.onCommitHistory();
+        document.body.classList.add('cv-dragging-active');
+        node.classList.add('is-dragging-live');
       }
-      const nextX = Math.round(origX + dxScreen / scale);
-      const nextY = Math.round(origY + dyScreen / scale);
-      updateEl({ x: nextX, y: nextY }, true);
+
+      let candidateX = origX + dxScreen / scale;
+      let candidateY = origY + dyScreen / scale;
+
+      if (snapActive && !ev.altKey) {
+        const snapped = computeMagneticSnap(
+          candidateX,
+          candidateY,
+          el.width,
+          el.height,
+          sheetWidth,
+          sheetHeight,
+          marginPx,
+          siblings,
+        );
+        candidateX = snapped.x;
+        candidateY = snapped.y;
+        onShowGuides(snapped.guideX, snapped.guideY);
+      } else {
+        onShowGuides(null, null);
+      }
+
+      latestX = Math.round(candidateX * 2) / 2;
+      latestY = Math.round(candidateY * 2) / 2;
+
+      const deltaX = latestX - origX;
+      const deltaY = latestY - origY;
+      node.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)${rotSuffix}`;
+      setHudText(`${Math.round(latestX)}, ${Math.round(latestY)}`);
     };
 
-    const onUp = () => {
+    const finish = () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      try {
+        if (node.hasPointerCapture?.(pointerId)) node.releasePointerCapture(pointerId);
+      } catch {
+        /* ignore */
+      }
+      document.body.classList.remove('cv-dragging-active');
+      node.classList.remove('is-dragging-live');
+      onShowGuides(null, null);
+      setHudText(null);
+
+      if (moved) {
+        // Apply final position directly to DOM before React commit to avoid any 1-frame jump
+        node.style.left = `${latestX}px`;
+        node.style.top = `${latestY}px`;
+        node.style.transform = el.rotation ? `rotate(${el.rotation}deg)` : '';
+        updateEl({ x: Math.round(latestX), y: Math.round(latestY) });
+      }
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
   };
 
-  const handleResizeStart = (dir: ResizeDir, e: React.PointerEvent) => {
-    if (!canvas?.interactive || el.locked) return;
+  /**
+   * Smooth 120fps direct-DOM resize handler across all 8 handles
+   */
+  const handleResizeStart = (dir: ResizeDir, e: React.PointerEvent<HTMLElement>) => {
+    if (!canvas?.interactive || el.locked || !boxRef.current) return;
     e.stopPropagation();
     e.preventDefault();
-    canvas.onCommitHistory();
+
+    const node = boxRef.current;
+    const pointerId = e.pointerId;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    document.body.classList.add('cv-dragging-active');
+    node.classList.add('is-dragging-live');
 
     const startClientX = e.clientX;
     const startClientY = e.clientY;
     const orig = { x: el.x, y: el.y, w: el.width, h: el.height };
-    const scale = canvas.zoomScale || 1;
+    const scale = resolveExactSheetScale(node, canvas.zoomScale);
+
+    let finalRect = { ...orig };
 
     const onMove = (ev: PointerEvent) => {
       const dx = (ev.clientX - startClientX) / scale;
@@ -148,61 +345,115 @@ function CanvasElementNode({
       let nextW = orig.w;
       let nextH = orig.h;
 
-      if (dir.includes('e')) nextW = Math.max(24, Math.round(orig.w + dx));
-      if (dir.includes('s')) nextH = Math.max(18, Math.round(orig.h + dy));
+      if (dir.includes('e')) nextW = Math.max(24, orig.w + dx);
+      if (dir.includes('s')) nextH = Math.max(16, orig.h + dy);
       if (dir.includes('w')) {
-        const w = Math.max(24, Math.round(orig.w - dx));
-        nextX = Math.round(orig.x + (orig.w - w));
+        const w = Math.max(24, orig.w - dx);
+        nextX = orig.x + (orig.w - w);
         nextW = w;
       }
       if (dir.includes('n')) {
-        const h = Math.max(18, Math.round(orig.h - dy));
-        nextY = Math.round(orig.y + (orig.h - h));
+        const h = Math.max(16, orig.h - dy);
+        nextY = orig.y + (orig.h - h);
         nextH = h;
       }
 
-      updateEl({ x: nextX, y: nextY, width: nextW, height: nextH }, true);
+      // Shift key locks aspect ratio on corner handles
+      if (ev.shiftKey && dir.length === 2 && orig.h > 0) {
+        const ratio = orig.w / orig.h;
+        nextH = Math.max(16, nextW / ratio);
+        if (dir.includes('n')) {
+          nextY = orig.y + (orig.h - nextH);
+        }
+      }
+
+      finalRect = {
+        x: Math.round(nextX),
+        y: Math.round(nextY),
+        w: Math.round(nextW),
+        h: Math.round(nextH),
+      };
+
+      node.style.left = `${finalRect.x}px`;
+      node.style.top = `${finalRect.y}px`;
+      node.style.width = `${finalRect.w}px`;
+      node.style.height = `${finalRect.h}px`;
+      setHudText(`${finalRect.w} × ${finalRect.h}`);
     };
 
-    const onUp = () => {
+    const finish = () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      document.body.classList.remove('cv-dragging-active');
+      node.classList.remove('is-dragging-live');
+      setHudText(null);
+      updateEl({
+        x: finalRect.x,
+        y: finalRect.y,
+        width: finalRect.w,
+        height: finalRect.h,
+      });
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
   };
 
-  const handleRotateStart = (e: React.PointerEvent) => {
+  /**
+   * Smooth 120fps direct-DOM rotation handler with 45° magnetic angle detents
+   */
+  const handleRotateStart = (e: React.PointerEvent<HTMLElement>) => {
     if (!canvas?.interactive || el.locked || !boxRef.current) return;
     e.stopPropagation();
     e.preventDefault();
-    canvas.onCommitHistory();
 
-    const rect = boxRef.current.getBoundingClientRect();
+    const node = boxRef.current;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    document.body.classList.add('cv-dragging-active');
+    node.classList.add('is-dragging-live');
+
+    const rect = node.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+    let finalDeg = el.rotation || 0;
 
     const onMove = (ev: PointerEvent) => {
       const rad = Math.atan2(ev.clientY - cy, ev.clientX - cx);
       let deg = Math.round((rad * 180) / Math.PI + 90);
       if (deg > 180) deg -= 360;
-      for (const snap of [-180, -90, -45, 0, 45, 90, 180]) {
-        if (Math.abs(deg - snap) <= 3) {
-          deg = snap;
-          break;
+      if (!ev.altKey) {
+        for (const snap of [-180, -135, -90, -45, 0, 45, 90, 135, 180]) {
+          if (Math.abs(deg - snap) <= 4) {
+            deg = snap;
+            break;
+          }
         }
       }
-      updateEl({ rotation: deg }, true);
+      finalDeg = deg;
+      node.style.transform = `rotate(${deg}deg)`;
+      setHudText(`${deg}°`);
     };
 
-    const onUp = () => {
+    const finish = () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      document.body.classList.remove('cv-dragging-active');
+      node.classList.remove('is-dragging-live');
+      setHudText(null);
+      updateEl({ rotation: finalDeg });
     };
 
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
   };
 
   const commitInlineText = () => {
@@ -210,7 +461,7 @@ function CanvasElementNode({
     if (!textRef.current) return;
     const next = (textRef.current.innerText ?? '').replace(/\r/g, '');
     if (next !== (el.text || '')) {
-      updateEl({ text: next }, false);
+      updateEl({ text: next });
     }
   };
 
@@ -232,6 +483,11 @@ function CanvasElementNode({
       return { ...prev, canvasElements: [...list, copy] };
     });
     canvas.onSelect({ kind: 'element', id: newId });
+  };
+
+  const centerHorizontally = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateEl({ x: Math.round((sheetWidth - el.width) / 2) });
   };
 
   const shiftZ = (delta: number, e: React.MouseEvent) => {
@@ -349,6 +605,7 @@ function CanvasElementNode({
                 filter: filterCss,
                 transform: transformCss,
                 transformOrigin: 'center center',
+                pointerEvents: 'none',
               }}
             />
           )}
@@ -378,7 +635,13 @@ function CanvasElementNode({
               src={el.src}
               alt="QR"
               draggable={false}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                pointerEvents: 'none',
+              }}
             />
           )}
         </div>
@@ -392,6 +655,7 @@ function CanvasElementNode({
             width: '100%',
             height: '100%',
             filter: el.shadow ? 'drop-shadow(0 6px 14px rgba(0,0,0,0.14))' : undefined,
+            pointerEvents: 'none',
           }}
         >
           <CanvasShapeSvg
@@ -407,16 +671,19 @@ function CanvasElementNode({
 
     if (el.type === 'divider') {
       return (
-        <CanvasDividerSvg
-          dividerStyle={el.dividerStyle}
-          strokeColor={el.strokeColor}
-          strokeWidth={el.strokeWidth}
-        />
+        <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+          <CanvasDividerSvg
+            dividerStyle={el.dividerStyle}
+            strokeColor={el.strokeColor}
+            strokeWidth={el.strokeWidth}
+          />
+        </div>
       );
     }
 
     if (el.type === 'icon') {
-      const IconComp = CANVAS_ICON_MAP[(el.iconName as CanvasIconKey) || 'Sparkles'] || CANVAS_ICON_MAP.Sparkles;
+      const IconComp =
+        CANVAS_ICON_MAP[(el.iconName as CanvasIconKey) || 'Sparkles'] || CANVAS_ICON_MAP.Sparkles;
       const iconDim = Math.max(14, Math.round(Math.min(el.width, el.height) * 0.58));
       return (
         <div
@@ -433,6 +700,7 @@ function CanvasElementNode({
                 : 'none',
             borderRadius: `${el.borderRadius ?? 12}px`,
             color: el.textColor || '#24795e',
+            pointerEvents: 'none',
           }}
         >
           <IconComp size={iconDim} />
@@ -454,6 +722,7 @@ function CanvasElementNode({
             justifyContent: 'space-between',
             gap: 3,
             color: el.textColor || '#24795e',
+            pointerEvents: 'none',
           }}
         >
           {Array.from({ length: max }).map((_, idx) => (
@@ -485,11 +754,20 @@ function CanvasElementNode({
         height: `${el.height}px`,
         transform: el.rotation ? `rotate(${el.rotation}deg)` : undefined,
         opacity: el.opacity ?? 1,
-        zIndex: el.zIndex || 10,
+        zIndex: isSelected ? Math.max(40, el.zIndex || 10) : el.zIndex || 10,
+        touchAction: canvas?.interactive && !editingText ? 'none' : undefined,
       }}
       onPointerDown={handlePointerDownMove}
     >
       {renderInnerContent()}
+
+      {/* Live 120fps Coordinate / Dimension / Rotation HUD */}
+      <div
+        ref={hudRef}
+        className="cv-canvas-live-hud no-print"
+        data-canvas-ui-chrome="true"
+        style={{ display: 'none' }}
+      />
 
       {isSelected && canvas?.interactive && (
         <>
@@ -529,6 +807,27 @@ function CanvasElementNode({
                 }}
               >
                 <Pencil size={12} />
+              </button>
+            )}
+            {onFocusInspector && (
+              <button
+                type="button"
+                title="فتح خصائص وفلاتر العنصر / Inspector"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFocusInspector();
+                }}
+              >
+                <SlidersHorizontal size={12} />
+              </button>
+            )}
+            {!el.locked && (
+              <button
+                type="button"
+                title="توسيط أفقي بالصفحة / Center Horizontally"
+                onClick={centerHorizontally}
+              >
+                <AlignCenterHorizontal size={12} />
               </button>
             )}
             <button type="button" title="تقديم للأمام / Bring forward" onClick={(e) => shiftZ(2, e)}>
@@ -592,11 +891,41 @@ export function CanvasOverlayLayer({
   canvas?: SheetInteractiveCallbacks;
   onFocusInspector?: () => void;
 }) {
-  const items = (doc.canvasElements || [])
-    .filter((el) => el.visible !== false && (el.pageIndex || 0) === pageIndex && el.layerPlane === plane)
+  const guideVRef = useRef<HTMLDivElement>(null);
+  const guideHRef = useRef<HTMLDivElement>(null);
+
+  const dims = getPaperDimensions(doc.design.paperSize);
+  const marginPx = Math.round((doc.design.marginMm || 15) * 3.78);
+
+  const pageElements = (doc.canvasElements || []).filter(
+    (el) => el.visible !== false && (el.pageIndex || 0) === pageIndex,
+  );
+  const items = pageElements
+    .filter((el) => el.layerPlane === plane)
     .sort((a, b) => (a.zIndex || 1) - (b.zIndex || 1));
 
-  if (items.length === 0) return null;
+  const showGuides = (gx: number | null, gy: number | null) => {
+    if (guideVRef.current) {
+      if (gx === null) {
+        guideVRef.current.style.display = 'none';
+      } else {
+        guideVRef.current.style.display = 'block';
+        guideVRef.current.style.left = `${gx}px`;
+      }
+    }
+    if (guideHRef.current) {
+      if (gy === null) {
+        guideHRef.current.style.display = 'none';
+      } else {
+        guideHRef.current.style.display = 'block';
+        guideHRef.current.style.top = `${gy}px`;
+      }
+    }
+  };
+
+  const showHelperGrid = Boolean(canvas?.interactive && canvas?.showGrid && plane === 'overlay');
+
+  if (items.length === 0 && !showHelperGrid) return null;
 
   return (
     <div
@@ -609,14 +938,48 @@ export function CanvasOverlayLayer({
         zIndex: plane === 'underlay' ? 0 : 12,
       }}
     >
+      {showHelperGrid && (
+        <div
+          className="cv-canvas-helper-grid no-print"
+          data-canvas-ui-chrome="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            backgroundImage:
+              'linear-gradient(to right, rgba(36,121,94,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(36,121,94,0.07) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+      )}
+
       {items.map((el) => (
         <CanvasElementNode
           key={el.id}
           el={el}
+          siblings={pageElements.filter((other) => other.id !== el.id)}
+          sheetWidth={dims.widthPx}
+          sheetHeight={dims.heightPx}
+          marginPx={marginPx}
           canvas={canvas}
           onFocusInspector={onFocusInspector}
+          onShowGuides={showGuides}
         />
       ))}
+
+      {/* Live Magnetic Smart Alignment Guide Lines (never exported to PDF/Print) */}
+      <div
+        ref={guideVRef}
+        className="cv-snap-guide-v no-print"
+        data-canvas-ui-chrome="true"
+        style={{ display: 'none' }}
+      />
+      <div
+        ref={guideHRef}
+        className="cv-snap-guide-h no-print"
+        data-canvas-ui-chrome="true"
+        style={{ display: 'none' }}
+      />
     </div>
   );
 }
