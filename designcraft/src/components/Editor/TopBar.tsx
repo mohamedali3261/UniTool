@@ -19,9 +19,11 @@ import {
   Box,
   Ruler,
   Printer,
+  Sparkles,
 } from 'lucide-react';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import type { CartonSize } from '../../packaging/geometry';
+import { formatUnitNumber } from '../../packaging/units';
 
 interface TopBarProps {
   title: string;
@@ -248,11 +250,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             )}
           </div>
 
-          {/* Group 2: Inline Carton & 3D Studio Bar (merged into unified navbar!) */}
-          {packagingSize && (
+          {/* Group 2: Inline Carton & 3D Studio Bar OR Graphic Studio Mode Pill */}
+          {packagingSize ? (
             <div className="carton-editor-bar" dir={isAr ? 'rtl' : 'ltr'}>
               <span className="carton-editor-bar__dims" dir="ltr">
                 {packagingSize.height} × {packagingSize.width} × {packagingSize.depth} mm
+              </span>
+              <span className="carton-editor-bar__cm hidden xl:inline-flex" dir="ltr">
+                {formatUnitNumber(packagingSize.height, 'cm')} × {formatUnitNumber(packagingSize.width, 'cm')} × {formatUnitNumber(packagingSize.depth, 'cm')} {isAr ? 'سم' : 'cm'}
               </span>
               {onOpenResizeCarton && (
                 <button type="button" onClick={onOpenResizeCarton}>
@@ -277,6 +282,16 @@ export const TopBar: React.FC<TopBarProps> = ({
                   {isAr ? 'تصدير للطباعة' : 'Print export'}
                 </button>
               )}
+            </div>
+          ) : (
+            <div
+              className="dc-graphic-editor-pill hidden xl:inline-flex"
+              data-testid="graphic-editor-mode-pill"
+              dir={isAr ? 'rtl' : 'ltr'}
+            >
+              <Sparkles style={{ width: 11, height: 11 }} />
+              <span>{isAr ? 'قسم التصميمات' : 'Graphic Studio'}</span>
+              <strong dir="ltr">{roundedW} × {roundedH} px</strong>
             </div>
           )}
 

@@ -6,12 +6,118 @@ import {
   DesignTemplate,
   TemplateCategory
 } from '../../../data/templates';
-import { Search, LayoutTemplate, X, Zap, Smartphone, Star } from 'lucide-react';
+import { Search, LayoutTemplate, X, Zap, Smartphone, Star, Box, Sparkles } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
+import type { CartonSize } from '../../../packaging/geometry';
+import type { ArtworkOptions } from '../../../packaging/artwork';
+import { BoxPreview } from '../../../packaging/BoxPreview';
 
 interface TemplatesTabProps {
   onApplyTemplate: (template: DesignTemplate) => void;
+  packagingSize?: CartonSize | null;
+  onApplyCartonTheme?: (artwork: ArtworkOptions) => void;
 }
+
+const PACKAGING_BRAND_THEMES: Array<{
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+  artwork: ArtworkOptions;
+}> = [
+  {
+    id: 'emerald-atelier',
+    titleAr: 'حديقة الزمرد الفاخرة',
+    titleEn: 'Emerald Botanical Atelier',
+    descAr: 'تغليف عطور وعناية طبيعية بهوية زمردية وذهبية',
+    descEn: 'Botanical emerald & warm gold perfume styling',
+    artwork: {
+      style: 'emerald',
+      brand: 'BOTANICA',
+      product: 'VERDANT ELIXIR',
+      accent: '#c9d5ab',
+      ml: 50,
+    },
+  },
+  {
+    id: 'noir-gold',
+    titleAr: 'نوار ملكي ذهبي',
+    titleEn: 'Royal Noir & Gold',
+    descAr: 'إصدار ليلي فاخر بتفاصيل ذهبية كلاسيكية',
+    descEn: 'Luxury dark edition with classic gold foil accents',
+    artwork: {
+      style: 'noir',
+      brand: 'MAISON NOIR',
+      product: 'NOCTURNE OUD',
+      accent: '#d6b77b',
+      ml: 100,
+    },
+  },
+  {
+    id: 'velvet-rose',
+    titleAr: 'وردة مخملية ناعمة',
+    titleEn: 'Velvet Rose Beauty',
+    descAr: 'مثالي لمستحضرات التجميل والسيروم والعطور الزهرية',
+    descEn: 'Tailored for cosmetics, serums & floral scents',
+    artwork: {
+      style: 'rose',
+      brand: 'ATELIER ROSE',
+      product: 'VELVET BLOOM',
+      accent: '#883e54',
+      ml: 30,
+    },
+  },
+  {
+    id: 'artisan-kraft',
+    titleAr: 'كرافت حرفي طبيعي',
+    titleEn: 'Artisan Kraft Stock',
+    descAr: 'خامة كرافت دافئة للشموع والقهوة والمنتجات اليدوية',
+    descEn: 'Warm kraft board for candles, specialty goods & food',
+    artwork: {
+      style: 'emerald',
+      brand: 'TERRA CRAFT',
+      product: 'HAND POURED',
+      descriptor: 'SMALL BATCH',
+      quantity: '100% NATURAL',
+      accent: '#24795e',
+      stock: 'kraft',
+      ml: 50,
+    },
+  },
+  {
+    id: 'specialty-roast',
+    titleAr: 'محمصة قهوة مختصة',
+    titleEn: 'Specialty Coffee Box',
+    descAr: 'هوية جريئة لعلب القهوة والشاي والشوكولاتة',
+    descEn: 'Bold identity for coffee, cacao & gourmet boxes',
+    artwork: {
+      style: 'noir',
+      brand: 'ROASTERY CO.',
+      product: 'SINGLE ORIGIN',
+      descriptor: 'ARABICA BEANS',
+      quantity: 'NET WT 250G',
+      accent: '#d99b52',
+      ml: 100,
+    },
+  },
+  {
+    id: 'patisserie-rose',
+    titleAr: 'باتيسري وحلويات فاخرة',
+    titleEn: 'Fine Patisserie Box',
+    descAr: 'تصميم أنيق لعلب الحلويات والهدايا والمخبوزات',
+    descEn: 'Refined layout for bakery, sweets & gift boxes',
+    artwork: {
+      style: 'rose',
+      brand: 'LA PATISSERIE',
+      product: 'ARTISAN SWEETS',
+      descriptor: 'FRESHLY BAKED',
+      quantity: 'GIFT EDITION',
+      accent: '#9f3a56',
+      ml: 50,
+    },
+  },
+];
 
 const GP_CATEGORY_IDS = new Set<string>(GOOGLE_PLAY_CATEGORIES);
 const MAIN_CATEGORIES = TEMPLATE_CATEGORIES.filter((c) => c.id === 'all' || !GP_CATEGORY_IDS.has(c.id));
@@ -113,8 +219,13 @@ const TemplatePreview: React.FC<{ tpl: DesignTemplate }> = ({ tpl }) => {
   );
 };
 
-export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) => {
+export const TemplatesTab: React.FC<TemplatesTabProps> = ({
+  onApplyTemplate,
+  packagingSize,
+  onApplyCartonTheme,
+}) => {
   const { t, lang } = useDcLang();
+  const isAr = lang === 'ar';
   const [query, setQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { const ids = JSON.parse(localStorage.getItem('designcraft-template-favorites') || '[]'); return Array.isArray(ids) ? ids.filter((id: unknown) => typeof id === 'string' && TEMPLATE_CATALOG.some(t => t.id === id)) : []; } catch { return []; }
@@ -167,6 +278,77 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({ onApplyTemplate }) =
 
   const catCount = (id: string) =>
     id === 'all' ? TEMPLATE_CATALOG.length : TEMPLATE_CATALOG.filter((x) => x.cat === id).length;
+
+  if (packagingSize && onApplyCartonTheme) {
+    const q = query.trim().toLowerCase();
+    const visibleThemes = PACKAGING_BRAND_THEMES.filter(
+      (th) =>
+        !q ||
+        th.titleAr.toLowerCase().includes(q) ||
+        th.titleEn.toLowerCase().includes(q) ||
+        th.descAr.toLowerCase().includes(q) ||
+        th.descEn.toLowerCase().includes(q)
+    );
+    return (
+      <div className="dc-carton-themes-panel" data-testid="packaging-templates-panel" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="dc-carton-tab-hero">
+          <div className="dc-carton-tab-hero__badge">
+            <Box className="w-4 h-4" />
+            <span>{isAr ? 'قوالب وهويات العلب الجاهزة' : 'Carton Brand Themes'}</span>
+          </div>
+          <p className="dc-carton-tab-hero__desc">
+            {isAr
+              ? 'قوالب مصممة خصيصًا لتوزيع الألوان والشعارات على أوجه العلبة مع الحفاظ التام على خطوط القص والطي ومقاساتك الحالية.'
+              : 'Multi-face packaging themes fitted automatically to your exact carton dimensions while preserving cut & fold dielines.'}
+          </p>
+        </div>
+
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute end-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={isAr ? 'ابحث في قوالب العلب...' : 'Search carton themes...'}
+            className="dc-carton-theme-search"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="dc-carton-themes-grid">
+          {visibleThemes.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              data-testid={`carton-theme-${theme.id}`}
+              className="dc-carton-theme-card"
+              onClick={() => onApplyCartonTheme(theme.artwork)}
+            >
+              <div className="dc-carton-theme-card__preview" data-theme-art>
+                <BoxPreview size={packagingSize} artwork={theme.artwork} />
+              </div>
+              <div className="dc-carton-theme-card__meta">
+                <strong>{isAr ? theme.titleAr : theme.titleEn}</strong>
+                <small>{isAr ? theme.descAr : theme.descEn}</small>
+                <span className="dc-carton-theme-card__cta">
+                  <Sparkles className="w-3 h-3" />
+                  {isAr ? 'تطبيق الهوية على العلبة' : 'Apply to carton'}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

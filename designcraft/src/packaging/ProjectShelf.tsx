@@ -1,14 +1,20 @@
-import { useState } from "react";
-import { FolderOpen, Search } from "lucide-react";
+import React, { useState } from "react";
+import { FolderOpen, Search, Trash2 } from "lucide-react";
 import type { ProjectItem } from "../types";
 import { useDcLang } from "../hooks/useDcLang";
 import { CardPhoto } from "./CardPhoto";
+import { formatCartonDims, type PackagingUnit } from "./units";
+
 export function ProjectShelf({
   projects,
+  unit = "cm",
   onOpen,
+  onDelete,
 }: {
   projects: ProjectItem[];
+  unit?: PackagingUnit;
   onOpen: (p: ProjectItem) => void;
+  onDelete?: (id: string, e: React.MouseEvent) => void;
 }) {
   const { lang } = useDcLang(),
     ar = lang === "ar",
@@ -46,6 +52,7 @@ export function ProjectShelf({
               data-section-project={p.id}
             >
               <button
+                type="button"
                 className="packaging-template-preview"
                 onClick={() => onOpen(p)}
                 aria-label={(ar ? "فتح " : "Open ") + p.title}
@@ -67,16 +74,33 @@ export function ProjectShelf({
                 <span>{ar ? "متابعة التصميم" : "Continue designing"}</span>
               </button>
               <div className="packaging-template-meta">
-                <h3>
-                  <button type="button" onClick={() => onOpen(p)}>
-                    {p.title}
-                  </button>
-                </h3>
-                <time>
-                  {new Date(p.updatedAt || p.createdAt).toLocaleDateString(
-                    ar ? "ar-EG" : "en-US",
+                <div>
+                  <h3>
+                    <button type="button" onClick={() => onOpen(p)}>
+                      {p.title}
+                    </button>
+                  </h3>
+                  {p.packaging && (
+                    <small className="packaging-project-dims" dir="ltr">
+                      {formatCartonDims(p.packaging.size, unit, ar)}
+                    </small>
                   )}
-                </time>
+                  <time>
+                    {new Date(p.updatedAt || p.createdAt).toLocaleDateString(
+                      ar ? "ar-EG" : "en-US",
+                    )}
+                  </time>
+                </div>
+                {onDelete && (
+                  <button
+                    type="button"
+                    className="packaging-project-delete"
+                    aria-label={(ar ? "حذف " : "Delete ") + p.title}
+                    onClick={(e) => onDelete(p.id, e)}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             </article>
           ))}

@@ -9,6 +9,15 @@ import {
   paperFor,
   type CartonSize,
 } from "./geometry";
+import {
+  formatSheetDims,
+  formatUnitNumber,
+  mmToUnit,
+  unitAriaSuffix,
+  unitShortLabel,
+  unitToMm,
+  type PackagingUnit,
+} from "./units";
 import { cartonPdf, downloadCartonSvg, downloadPackaging } from "./export";
 import { createCartonProject } from "./project";
 import { saveProjectToStorage } from "../utils/fabricHelpers";
@@ -24,6 +33,7 @@ import {
 } from "./artwork";
 import { BoxPreview } from "./BoxPreview";
 import "./packaging.css";
+
 const standardFields = [
   ["height", "طول العلبة", "Box length", 30, 500],
   ["width", "عرض العلبة", "Box width", 20, 300],
@@ -31,18 +41,21 @@ const standardFields = [
   ["glue", "لسان اللصق", "Glue tab", 5, 30],
   ["tuck", "لسان القفل", "Tuck tab", 5, 30],
 ] as const;
+
 export function PackagingDialog({
   onClose,
   onCreate,
   initial = DEFAULT_CARTON,
   initialArtwork,
   initialTitle,
+  initialUnit = "mm",
 }: {
   onClose: () => void;
   onCreate: (p: ProjectItem) => void;
   initial?: CartonSize;
   initialArtwork?: ArtworkOptions;
   initialTitle?: string;
+  initialUnit?: PackagingUnit;
 }) {
   const hinged = initial.construction === "hinged-lid";
   const fields: ReadonlyArray<
@@ -62,16 +75,18 @@ export function PackagingDialog({
         ["tuck", "لسان الغطاء", "Lid flap", 5, 30],
       ] as const)
     : standardFields;
+
   const { lang } = useDcLang(),
     ar = lang === "ar",
     ref = useRef<HTMLDialogElement>(null),
+    [unit, setUnit] = useState<PackagingUnit>(initialUnit),
     [title, setTitle] = useState(
       initialTitle || (ar ? "قالب علبة جديد" : "New carton template"),
     ),
     [draft, setDraft] = useState(
       () =>
         Object.fromEntries(
-          fields.map(([k]) => [k, String(initial[k])]),
+          fields.map(([k]) => [k, formatUnitNumber(initial[k], initialUnit)]),
         ) as Record<keyof CartonSize, string>,
     ),
     [artwork, setArtwork] = useState<ArtworkOptions>({
@@ -97,14 +112,37 @@ export function PackagingDialog({
     [exportDimensions, setExportDimensions] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+
+  const switchUnit = (nextUnit: PackagingUnit) => {
+    if (nextUnit === unit) return;
+    setDraft((prev) =>
+      Object.fromEntries(
+        fields.map(([k]) => {
+          const raw = prev[k];
+          if (!raw || raw.trim() === "") return [k, ""];
+          const n = Number(raw);
+          if (!Number.isFinite(n)) return [k, raw];
+          return [k, formatUnitNumber(unitToMm(n, unit), nextUnit)];
+        }),
+      ) as Record<keyof CartonSize, string>,
+    );
+    setUnit(nextUnit);
+  };
+
   const size = {
-      ...Object.fromEntries(fields.map(([k]) => [k, Number(draft[k])])),
+      ...Object.fromEntries(
+        fields.map(([k]) => [
+          k,
+          draft[k]?.trim() === "" ? NaN : unitToMm(Number(draft[k]), unit),
+        ]),
+      ),
       ...(hinged
         ? { construction: initial.construction, family: initial.family }
         : {}),
     } as unknown as CartonSize,
     issue = cartonError(size),
     g = issue ? null : cartonGeometry(size);
+
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
     const dialog = ref.current;
@@ -114,28 +152,51 @@ export function PackagingDialog({
       if (previous?.isConnected) previous.focus();
     };
   }, []);
+
   const messages: Record<string, string> = {
     finite: ar
       ? "أدخل أرقامًا صالحة في كل المقاسات."
       : "Enter finite numbers in every field.",
     dimensions: hinged
-      ? ar
-        ? "ارتفاع الجدار 20–150 مم، والعرض وطول القاعدة 100–650 مم."
-        : "Wall height 20–150 mm; base width and length 100–650 mm."
-      : ar
-        ? "الطول 30–500، العرض 20–300، والعمق 10–150 مم."
-        : "Length 30–500, width 20–300, depth 10–150 mm.",
-    glue: ar
-      ? "لسان اللصق: 5–30 مم، بحد أقصى 40% من العرض."
-      : "Glue: 5–30 mm; at most 40% of width.",
+      ? unit === "cm"
+        ? ar
+          ? "ارتفاع الجدار 2–15 سم، والعرض وطول القاعدة 10–65 سم."
+          : "Wall height 2–15 cm; base width and length 10–65 cm."
+        : ar
+          ? "ارتفاع الجدار 20–150 مم، والعرض وطول القاعدة 100–650 مم."
+          : "Wall height 20–150 mm; base width and length 100–650 mm."
+      : unit === "cm"
+        ? ar
+          ? "الطول 3–50 سم، العرض 2–30 سم، والعمق 1–15 سم."
+          : "Length 3–50 cm, width 2–30 cm, depth 1–15 cm."
+        : ar
+          ? "الطول 30–500، العرض 20–300، والعمق 10–150 مم."
+          : "Length 30–500, width 20–300, depth 10–150 mm.",
+    glue:
+      unit === "cm"
+        ? ar
+          ? "لسان اللصق: 0.5–3 سم، بحد أقصى 40% من العرض."
+          : "Glue: 0.5–3 cm; at most 40% of width."
+        : ar
+          ? "لسان اللصق: 5–30 مم، بحد أقصى 40% من العرض."
+          : "Glue: 5–30 mm; at most 40% of width.",
     tuck: hinged
-      ? ar
-        ? "لسان الغطاء: 5–30 مم، وبحد أقصى 70% من ارتفاع الجدار."
-        : "Lid flap: 5–30 mm and at most 70% of wall height."
-      : ar
-        ? "لسان القفل: 5–30 مم، بحد أقصى 60% من العمق و25% من العرض."
-        : "Tuck: 5–30 mm; at most 60% of depth and 25% of width.",
+      ? unit === "cm"
+        ? ar
+          ? "لسان الغطاء: 0.5–3 سم، وبحد أقصى 70% من ارتفاع الجدار."
+          : "Lid flap: 0.5–3 cm and at most 70% of wall height."
+        : ar
+          ? "لسان الغطاء: 5–30 مم، وبحد أقصى 70% من ارتفاع الجدار."
+          : "Lid flap: 5–30 mm and at most 70% of wall height."
+      : unit === "cm"
+        ? ar
+          ? "لسان القفل: 0.5–3 سم، بحد أقصى 60% من العمق و25% من العرض."
+          : "Tuck: 0.5–3 cm; at most 60% of depth and 25% of width."
+        : ar
+          ? "لسان القفل: 5–30 مم، بحد أقصى 60% من العمق و25% من العرض."
+          : "Tuck: 5–30 mm; at most 60% of depth and 25% of width.",
   };
+
   const create = async () => {
     if (issue || busy) return;
     setBusy(true);
@@ -158,6 +219,10 @@ export function PackagingDialog({
       setBusy(false);
     }
   };
+
+  const unitBadge = unit === "cm" ? (ar ? "سم" : "cm") : "mm";
+  const otherUnit: PackagingUnit = unit === "cm" ? "mm" : "cm";
+
   return (
     <dialog
       ref={ref}
@@ -178,8 +243,8 @@ export function PackagingDialog({
           </h2>
           <p className="carton-header-caption">
             {ar
-              ? "من المقاس إلى الهوية… علبة بتفاصيلك."
-              : "From precise dimensions to a signature design."}
+              ? "من المقاس بالـ سم أو المم إلى الهوية… علبة بتفاصيلك."
+              : "From precise cm / mm dimensions to a signature design."}
           </p>
         </div>
         <button
@@ -222,22 +287,44 @@ export function PackagingDialog({
       </nav>
       <div className="carton-body">
         <div className="carton-settings" tabIndex={-1}>
-          <div className="carton-section-title">
-            <span>01</span>
-            <div>
-              <h3>{ar ? "ابدأ بالعلبة المناسبة" : "Find your perfect fit"}</h3>
-              <p>
-                {ar
-                  ? "قالب جاهز أو مقاساتك الخاصة"
-                  : "A starter template or your own dimensions"}
-              </p>
+          <div className="carton-section-head-row">
+            <div className="carton-section-title">
+              <span>01</span>
+              <div>
+                <h3>{ar ? "ابدأ بالعلبة المناسبة" : "Find your perfect fit"}</h3>
+                <p>
+                  {ar
+                    ? "قالب جاهز أو مقاساتك بالـ سم أو المم"
+                    : "A starter template or your own cm / mm dimensions"}
+                </p>
+              </div>
+            </div>
+            <div
+              className="carton-unit-switch"
+              role="group"
+              data-testid="packaging-dialog-unit-toggle"
+              aria-label={ar ? "وحدة قياس العلبة" : "Carton measurement unit"}
+            >
+              {(["mm", "cm"] as const).map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  aria-pressed={unit === u}
+                  data-testid={`dialog-unit-${u}`}
+                  onClick={() => switchUnit(u)}
+                >
+                  {u === "cm"
+                    ? ar
+                      ? "سم · cm"
+                      : "cm"
+                    : ar
+                      ? "مم · mm"
+                      : "mm"}
+                </button>
+              ))}
             </div>
           </div>
-          <p>
-            {ar
-              ? "مقاسات فعلية بالملليمتر · القالب مطابق لنوع العلبة."
-              : "Physical dimensions in millimetres · construction matches the box family."}
-          </p>
+
           <label>
             {ar ? "اسم التصميم" : "Design name"}
             <input
@@ -249,14 +336,15 @@ export function PackagingDialog({
           </label>
           <p className="carton-note">
             {ar
-              ? "طول × عرض × عمق — مقاسات العلبة بعد التجميع بالملليمتر، وليست مقاسات الورقة المفرودة."
-              : "Length × width × depth — assembled box dimensions in millimetres, not the unfolded sheet size."}
+              ? `طول × عرض × عمق — مقاسات العلبة بعد التجميع (${unit === "cm" ? "بالسنتيمتر سم" : "بالملليمتر مم"})، وليست مقاسات الورقة المفرودة.`
+              : `Length × width × depth — assembled box dimensions (${unit === "cm" ? "centimetres cm" : "millimetres mm"}), not the unfolded sheet size.`}
           </p>
           {!hinged && artwork.descriptor === undefined && (
             <PerfumeTemplates
               key={resetKey}
               ar={ar}
               size={size}
+              unit={unit}
               onApply={(next, name, ml) => {
                 if (ml) {
                   const style =
@@ -274,7 +362,10 @@ export function PackagingDialog({
                 }
                 setDraft(
                   Object.fromEntries(
-                    fields.map(([key]) => [key, String(next[key])]),
+                    fields.map(([key]) => [
+                      key,
+                      formatUnitNumber(next[key], unit),
+                    ]),
                   ) as Record<keyof CartonSize, string>,
                 );
                 if (name) setTitle(name);
@@ -283,22 +374,33 @@ export function PackagingDialog({
             />
           )}
           <div className="carton-fields">
-            {fields.slice(0, 3).map(([k, arabic, en, min, max]) => (
-              <label key={k}>
-                {ar ? arabic : en} · mm
-                <input
-                  aria-label={
-                    ar ? `${arabic} بالملليمتر` : `${en} in millimetres`
-                  }
-                  type="number"
-                  step="0.01"
-                  min={min}
-                  max={max}
-                  value={draft[k]}
-                  onChange={(e) => setDraft({ ...draft, [k]: e.target.value })}
-                />
-              </label>
-            ))}
+            {fields.slice(0, 3).map(([k, arabic, en, min, max]) => {
+              const currentMm = size[k];
+              return (
+                <label key={k}>
+                  <span>
+                    {ar ? arabic : en} · {unitBadge}
+                  </span>
+                  <input
+                    aria-label={(ar ? arabic : en) + unitAriaSuffix(unit, ar)}
+                    type="number"
+                    step="0.01"
+                    min={mmToUnit(min, unit)}
+                    max={mmToUnit(max, unit)}
+                    value={draft[k]}
+                    onChange={(e) =>
+                      setDraft({ ...draft, [k]: e.target.value })
+                    }
+                  />
+                  {Number.isFinite(currentMm) && currentMm > 0 && (
+                    <small className="carton-unit-equiv" dir="ltr">
+                      = {formatUnitNumber(currentMm, otherUnit)}{" "}
+                      {unitShortLabel(otherUnit, ar)}
+                    </small>
+                  )}
+                </label>
+              );
+            })}
           </div>
           <details>
             <summary>
@@ -307,15 +409,13 @@ export function PackagingDialog({
             <div className="carton-fields">
               {fields.slice(hinged ? 4 : 3).map(([k, arabic, en, min, max]) => (
                 <label key={k}>
-                  {ar ? arabic : en} · mm
+                  {ar ? arabic : en} · {unitBadge}
                   <input
-                    aria-label={
-                      ar ? `${arabic} بالملليمتر` : `${en} in millimetres`
-                    }
+                    aria-label={(ar ? arabic : en) + unitAriaSuffix(unit, ar)}
                     type="number"
                     step="0.01"
-                    min={min}
-                    max={max}
+                    min={mmToUnit(min, unit)}
+                    max={mmToUnit(max, unit)}
                     value={draft[k]}
                     onChange={(e) =>
                       setDraft({ ...draft, [k]: e.target.value })
@@ -333,14 +433,18 @@ export function PackagingDialog({
             </summary>
             {!issue && (
               <p dir="ltr">
-                {hinged ? "H" : "L"} {size.height} mm · W {size.width} mm ·{" "}
-                {hinged ? "L" : "D"} {size.depth} mm
+                {hinged ? "H" : "L"} {formatUnitNumber(size.height, "cm")} cm (
+                {size.height} mm) · W {formatUnitNumber(size.width, "cm")} cm (
+                {size.width} mm) · {hinged ? "L" : "D"}{" "}
+                {formatUnitNumber(size.depth, "cm")} cm ({size.depth} mm)
                 <br />
-                {ar ? "وجهان / Faces" : "Faces"}: 2 × ({size.width} ×{" "}
-                {size.height}) mm
+                {ar ? "وجهان / Faces" : "Faces"}: 2 × (
+                {formatUnitNumber(size.width, unit)} ×{" "}
+                {formatUnitNumber(size.height, unit)}) {unit}
                 <br />
-                {ar ? "جانبان / Sides" : "Sides"}: 2 × ({size.depth} ×{" "}
-                {size.height}) mm
+                {ar ? "جانبان / Sides" : "Sides"}: 2 × (
+                {formatUnitNumber(size.depth, unit)} ×{" "}
+                {formatUnitNumber(size.height, unit)}) {unit}
               </p>
             )}
             <ol>
@@ -481,10 +585,13 @@ export function PackagingDialog({
                 <strong dir="ltr" data-testid="carton-sheet-size">
                   {g.width} × {g.height} mm
                 </strong>
+                <small dir="ltr" className="carton-sheet-cm">
+                  {formatSheetDims(g.width, g.height, "cm", ar)}
+                </small>
                 <span>
                   {ar
-                    ? "المفرود كاملًا، مع هامش خارجي 10 مم"
-                    : "Full sheet, including 10 mm outer margins"}
+                    ? "المفرود كاملًا، مع هامش خارجي 10 مم (1 سم)"
+                    : "Full sheet, including 10 mm (1 cm) outer margins"}
                 </span>
                 <small>
                   {paperFor(g) === "custom"
@@ -532,7 +639,7 @@ export function PackagingDialog({
             onClick={() => {
               setDraft(
                 Object.fromEntries(
-                  fields.map(([k]) => [k, String(initial[k])]),
+                  fields.map(([k]) => [k, formatUnitNumber(initial[k], unit)]),
                 ) as Record<keyof CartonSize, string>,
               );
               setResetKey((k) => k + 1);

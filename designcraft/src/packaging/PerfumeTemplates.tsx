@@ -1,23 +1,55 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PERFUME_PRESETS, cartonForBottle } from "./perfume";
 import type { CartonSize } from "./geometry";
+import {
+  formatCartonDims,
+  formatUnitNumber,
+  mmToUnit,
+  unitToMm,
+  type PackagingUnit,
+} from "./units";
+
 export function PerfumeTemplates({
   ar,
   size,
+  unit = "mm",
   onApply,
 }: {
   ar: boolean;
   size: CartonSize;
+  unit?: PackagingUnit;
   onApply: (s: CartonSize, title?: string, ml?: number) => void;
 }) {
   const [bottle, setBottle] = useState({
     length: "",
     width: "",
     depth: "",
-    clearance: "2",
+    clearance: unit === "cm" ? "0.2" : "2",
   });
+  const prevUnit = useRef<PackagingUnit>(unit);
   const [error, setError] = useState("");
   const [applied, setApplied] = useState(false);
+
+  useEffect(() => {
+    if (prevUnit.current === unit) return;
+    const oldUnit = prevUnit.current;
+    prevUnit.current = unit;
+    const convert = (raw: string) => {
+      if (raw.trim() === "") return "";
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return raw;
+      return formatUnitNumber(unitToMm(n, oldUnit), unit);
+    };
+    setBottle((prev) => ({
+      length: convert(prev.length),
+      width: convert(prev.width),
+      depth: convert(prev.depth),
+      clearance: convert(prev.clearance),
+    }));
+  }, [unit]);
+
+  const unitBadge = unit === "cm" ? (ar ? "سم" : "cm") : "mm";
+
   return (
     <section
       className="carton-perfume-section"
@@ -68,9 +100,7 @@ export function PerfumeTemplates({
             </span>
             {ar ? `عطر ${p.ml} مل` : `${p.ml} ml perfume`}
             <br />
-            <span dir="ltr">
-              {p.size.height} × {p.size.width} × {p.size.depth} mm
-            </span>
+            <span dir="ltr">{formatCartonDims(p.size, unit, ar)}</span>
           </button>
         ))}
       </div>
@@ -82,8 +112,8 @@ export function PerfumeTemplates({
         </summary>
         <p>
           {ar
-            ? "قِس أقصى طول وعرض وعمق، مع الغطاء والبخاخ وأي بروز. الخلوص لكل جانب؛ أضف مساحة منفصلة لأي بطانة أو حامل."
-            : "Measure maximum length, width and depth including cap, sprayer and protrusions. Clearance is per side; allow extra room for any insert."}
+            ? `قِس أقصى طول وعرض وعمق (${unit === "cm" ? "بالـ سم" : "بالـ مم"})، مع الغطاء والبخاخ وأي بروز. الخلوص لكل جانب؛ أضف مساحة منفصلة لأي بطانة أو حامل.`
+            : `Measure maximum length, width and depth (${unit}) including cap, sprayer and protrusions. Clearance is per side; allow extra room for any insert.`}
         </p>
         <div className="carton-fields">
           {(
@@ -95,11 +125,11 @@ export function PerfumeTemplates({
             ] as const
           ).map(([key, arabic, en]) => (
             <label key={key}>
-              {ar ? arabic : en} · mm
+              {ar ? arabic : en} · {unitBadge}
               <input
                 type="number"
                 min={key === "clearance" ? 0 : 0.01}
-                max={key === "clearance" ? 10 : undefined}
+                max={key === "clearance" ? mmToUnit(10, unit) : undefined}
                 step="0.01"
                 value={bottle[key]}
                 onChange={(e) => {
@@ -120,10 +150,10 @@ export function PerfumeTemplates({
               onApply(
                 cartonForBottle(
                   {
-                    length: Number(bottle.length),
-                    width: Number(bottle.width),
-                    depth: Number(bottle.depth),
-                    clearance: Number(bottle.clearance),
+                    length: unitToMm(Number(bottle.length), unit),
+                    width: unitToMm(Number(bottle.width), unit),
+                    depth: unitToMm(Number(bottle.depth), unit),
+                    clearance: unitToMm(Number(bottle.clearance), unit),
                   },
                   size,
                 ),
@@ -134,8 +164,8 @@ export function PerfumeTemplates({
               setApplied(false);
               setError(
                 ar
-                  ? "أدخل مقاسات صحيحة ضمن حدود القالب وخلوصًا من 0 إلى 10 مم."
-                  : "Enter valid dimensions within the carton limits and clearance from 0 to 10 mm.",
+                  ? `أدخل مقاسات صحيحة ضمن حدود القالب وخلوصًا من 0 إلى ${unit === "cm" ? "1 سم" : "10 مم"}.`
+                  : `Enter valid dimensions within the carton limits and clearance from 0 to ${unit === "cm" ? "1 cm" : "10 mm"}.`,
               );
             }
           }}

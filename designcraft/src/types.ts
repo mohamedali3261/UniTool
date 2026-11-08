@@ -38,6 +38,7 @@ export interface ProjectItem {
 }
 
 export type SidebarTabType = 
+  | 'carton'
   | 'text' 
   | 'elements' 
   | 'icons' 

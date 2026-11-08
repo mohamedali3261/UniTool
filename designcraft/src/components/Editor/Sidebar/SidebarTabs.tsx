@@ -1,6 +1,7 @@
 import React from 'react';
 import { SidebarTabType } from '../../../types';
 import {
+  Box,
   Type,
   Shapes,
   LayoutTemplate,
@@ -14,6 +15,7 @@ import { useDcLang } from '../../../hooks/useDcLang';
 interface SidebarTabsProps {
   activeTab: SidebarTabType | null;
   onSelectTab: (tab: SidebarTabType) => void;
+  isPackaging?: boolean;
   variant?: 'rail' | 'bottom-bar';
   hasSelection?: boolean;
   onToggleProperties?: () => void;
@@ -32,16 +34,29 @@ interface TabItem {
 export const SidebarTabs: React.FC<SidebarTabsProps> = ({
   activeTab,
   onSelectTab,
+  isPackaging,
   variant = 'rail',
   hasSelection,
   onToggleProperties,
   isPropertiesOpen
 }) => {
-  const { t } = useDcLang();
+  const { lang, t } = useDcLang();
+  const isAr = lang === 'ar';
 
-  // Order follows usage flow: add content first, then control the page itself
+  // Order follows usage flow: carton tools first on packaging projects, then content & page tools
   const TABS: TabItem[] = [
-    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: true },
+    ...(isPackaging
+      ? [
+          {
+            id: 'carton' as SidebarTabType,
+            label: isAr ? 'العلبة' : 'Box',
+            labelEn: 'Box',
+            icon: <Box className="w-4 h-4 text-emerald-400" />,
+            dividerAfter: true,
+          },
+        ]
+      : []),
+    { id: 'media', label: t.tabMedia, labelEn: 'Media', icon: <Image className="w-4 h-4" />, dividerAfter: !isPackaging },
     { id: 'templates', label: t.tabTemplates, labelEn: 'Templates', icon: <LayoutTemplate className="w-4 h-4 text-violet-400" /> },
     { id: 'text', label: t.tabText, labelEn: 'Text', icon: <Type className="w-4 h-4" /> },
     { id: 'elements', label: t.tabElements, labelEn: 'Elements', icon: <Shapes className="w-4 h-4" /> },
