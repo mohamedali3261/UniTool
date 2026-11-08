@@ -8,8 +8,11 @@ import {useStudio} from '../../advanced/useStudio';
 import {CartonResizeDialog} from '../../packaging/CartonResizeDialog';
 import {resizeCarton} from '../../packaging/resize';
 import {cartonGeometry,MM_TO_PX,type CartonSize} from '../../packaging/geometry';
+import {cartonArtwork,type ArtworkOptions} from '../../packaging/artwork';
+import {createCartonProject} from '../../packaging/project';
+import type {PackagingUnit} from '../../packaging/units';
 import {CanvasOverlays} from '../../advanced/CanvasOverlays';
-import {DEFAULT_PRINT} from '../../advanced/core/faces';
+import {DEFAULT_PRINT,faces,facePixels} from '../../advanced/core/faces';
 import {applyTextFit} from '../../advanced/core/text';
 import {resetEmptyText,normalTextFill} from '../../utils/textReset';
 import {withoutGuides} from '../../packaging/print';
@@ -40,6 +43,7 @@ import {
 import { TopBar } from './TopBar';
 import type { DesignTabItem } from './DesignTabs';
 import { SidebarTabs } from './Sidebar/SidebarTabs';
+import { CartonStudioTab } from './Sidebar/CartonStudioTab';
 import { TextTab } from './Sidebar/TextTab';
 import { ElementsTab } from './Sidebar/ElementsTab';
 import { IconsTab } from './Sidebar/IconsTab';
@@ -129,9 +133,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 }, ref) {
   const { t, lang } = useDcLang();
   const [liveCanvas,setLiveCanvas]=useState<fabric.Canvas|null>(null);
-  const [studioSettings]=useState(initialProject.studio||DEFAULT_PRINT);
-  const [activeFace]=useState<number|null>(null);
+  const [studioSettings,setStudioSettings]=useState(initialProject.studio||DEFAULT_PRINT);
+  const [activeFace,setActiveFace]=useState<number|null>(null);
   const [isPackagingOpen,setIsPackagingOpen]=useState(false);
+  const [resizeModalUnit,setResizeModalUnit]=useState<PackagingUnit>('mm');
   const [packaging,setPackaging]=useState(initialProject.packaging);
   const packagingRef=useRef(initialProject.packaging);
   const [isPrintOpen,setIsPrintOpen]=useState(false);
@@ -147,7 +152,9 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
   const [zoom, setZoom] = useState(0.85);
   const [showGrid, setShowGrid] = useState(false);
   const [isPanMode, setIsPanMode] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>('media');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabType | null>(
+    initialProject.packaging ? 'carton' : 'media'
+  );
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [cropRequest, setCropRequest] = useState(0);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
@@ -304,6 +311,66 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     } finally {isHistoryLockedRef.current=false;}
     recordHistory();
   },[applyCartonSize,recordHistory,updateLayersList]);
+
+  const handleFocusCartonFace = useCallback((faceIdx: number) => {
+    setActiveFace(faceIdx);
+    const canvas = fabricCanvasRef.current;
+    const currentPkg = packagingRef.current;
+    if (!canvas || !currentPkg) return;
+    const allFaces = faces(currentPkg.size);
+    const target = allFaces[faceIdx];
+    if (!target) return;
+    const active = canvas.getActiveObject();
+    if (active && !active.lockMovementX && !active.lockMovementY) {
+      const fp = facePixels(target);
+      const w = active.getScaledWidth();
+      const h = active.getScaledHeight();
+      if (active.originX === 'center' && active.originY === 'center') {
+        active.set({ left: fp.left + fp.width / 2, top: fp.top + fp.height / 2 });
+      } else {
+        active.set({
+          left: fp.left + (fp.width - w) / 2,
+          top: fp.top + (fp.height - h) / 2,
+        });
+      }
+      active.setCoords();
+      canvas.requestRenderAll();
+      recordHistory();
+      onShowToast(
+        lang === 'ar' ? `تم نقل العنصر إلى وجه: ${target.ar}` : `Moved to ${target.en} face`,
+        undefined,
+        'info'
+      );
+    }
+  }, [lang, onShowToast, recordHistory]);
+
+  const handleApplyCartonTheme = useCallback((artwork: ArtworkOptions) => {
+    const canvas = fabricCanvasRef.current;
+    const currentPkg = packagingRef.current;
+    if (!canvas || !currentPkg) return;
+    const baseProj = createCartonProject(currentPkg.size, projectTitle);
+    const artObjs = cartonArtwork(currentPkg.size, artwork);
+    const nextData = {
+      ...baseProj.canvasData,
+      objects: [...artObjs, ...(baseProj.canvasData.objects || [])],
+    };
+    isHistoryLockedRef.current = true;
+    canvas.loadFromJSON(nextData, () => {
+      isHistoryLockedRef.current = false;
+      applyCartonBoundary(canvas, currentPkg.size);
+      canvas.requestRenderAll();
+      setActiveProperties(null);
+      updateLayersList();
+      recordHistory();
+      onShowToast(
+        lang === 'ar' ? 'تم تطبيق قالب العلبة' : 'Carton theme applied',
+        lang === 'ar'
+          ? 'توزعت عناصر الهوية على أوجه العلبة مع الحفاظ على خطوط القص والطي.'
+          : 'Brand artwork applied across carton faces while keeping locked dielines.',
+        'success'
+      );
+    });
+  }, [lang, onShowToast, projectTitle, recordHistory, updateLayersList]);
 
   // Handle Undo
   const handleUndo = useCallback(() => {
@@ -1082,6 +1149,14 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
     }, 60);
   }, [onShowToast, recordHistory, lang, canvasWidth, canvasHeight, zoom]);
 
+  const autoTplAppliedRef = useRef(false);
+  useEffect(() => {
+    const autoTpl = (initialProject as any)?._autoTemplate as DesignTemplate | undefined;
+    if (!liveCanvas || !autoTpl || autoTplAppliedRef.current) return;
+    autoTplAppliedRef.current = true;
+    handleApplyTemplate(autoTpl);
+  }, [liveCanvas, initialProject, handleApplyTemplate]);
+
   // ---- Quick PNG download straight from the top bar ----
   // Always exports at 2× the full design size, regardless of the current zoom.
   const quickExportBusy = useRef(false);
@@ -1114,7 +1189,10 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   const getTabTitle = (tab: SidebarTabType) => {
     switch (tab) {
-      case 'templates': return t.titleTemplates;
+      case 'carton': return lang === 'ar' ? 'استوديو العلب والمقاسات' : 'Boxes & Dimensions';
+      case 'templates': return packaging
+        ? (lang === 'ar' ? 'قوالب وهويات العلب' : 'Carton Brand Themes')
+        : t.titleTemplates;
       case 'text': return t.titleText;
       case 'elements': return t.titleElements;
       case 'media': return t.titleMedia;
@@ -1126,6 +1204,27 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
 
   const renderSidebarContent = () => {
     switch (activeSidebarTab) {
+      case 'carton':
+        return packaging ? (
+          <CartonStudioTab
+            size={packaging.size}
+            canvas={liveCanvas}
+            printSettings={studioSettings}
+            onUpdatePrintSettings={setStudioSettings}
+            onResizeCarton={handleCartonResize}
+            onOpenResizeModal={(u) => {
+              setResizeModalUnit(u);
+              setIsPackagingOpen(true);
+            }}
+            onFocusFace={handleFocusCartonFace}
+            onOpen3D={() => setIsCarton3DOpen(true)}
+            onOpenPrint={() => setIsPrintOpen(true)}
+            onCanvasMutated={() => {
+              updateLayersList();
+              recordHistory();
+            }}
+          />
+        ) : null;
       case 'text':
         return (
           <TextTab
@@ -1248,7 +1347,11 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         );
       case 'templates':
         return (
-          <TemplatesTab onApplyTemplate={handleApplyTemplate} />
+          <TemplatesTab
+            onApplyTemplate={handleApplyTemplate}
+            packagingSize={packaging ? packaging.size : null}
+            onApplyCartonTheme={packaging ? handleApplyCartonTheme : undefined}
+          />
         );
       case 'media':
         return (
@@ -1478,6 +1581,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       canvasWidth={canvasWidth}
       canvasHeight={canvasHeight}
       isPackaging={!!packaging}
+      packagingSize={packaging ? packaging.size : null}
       backgroundColor={backgroundColor}
       onUpdateProperty={handleUpdateProperty}
       onAlign={(alignment) => {
@@ -1546,6 +1650,15 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       }}
       onApplyImageFilter={handleApplyImageFilter}
       onResizeCanvas={handleResizeCanvas}
+      onResizeCarton={packaging ? handleCartonResize : undefined}
+      onOpenCartonResizeModal={
+        packaging
+          ? (u) => {
+              setResizeModalUnit(u);
+              setIsPackagingOpen(true);
+            }
+          : undefined
+      }
       onSetBackgroundColor={handleSetBackgroundColor}
       onSetBackgroundGradient={handleSetBackgroundGradient}
       onDeselect={() => {
@@ -1608,7 +1721,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         onCloseTab={onCloseTab}
         onNewTab={onNewTab}
         packagingSize={packaging ? packaging.size : null}
-        onOpenResizeCarton={packaging ? () => setIsPackagingOpen(true) : undefined}
+        onOpenResizeCarton={packaging ? () => { setResizeModalUnit('mm'); setIsPackagingOpen(true); } : undefined}
         onOpenCarton3D={packaging ? () => setIsCarton3DOpen(true) : undefined}
         onOpenPrintExport={packaging ? () => setIsPrintOpen(true) : undefined}
       />
@@ -1619,6 +1732,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
         <SidebarTabs
           activeTab={isSidebarOpen ? activeSidebarTab : null}
           onSelectTab={handleSelectSidebarTab}
+          isPackaging={!!packaging}
           variant="rail"
           hasSelection={!!activeProperties}
           isPropertiesOpen={isPropertiesOpen}
@@ -1752,6 +1866,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       <SidebarTabs
         activeTab={isSidebarOpen ? activeSidebarTab : null}
         onSelectTab={handleSelectSidebarTab}
+        isPackaging={!!packaging}
         variant="bottom-bar"
         hasSelection={!!activeProperties}
         onToggleProperties={() => { setIsPropertiesOpen(!isPropertiesOpen); if (window.innerWidth < 1100) setIsSidebarOpen(false); }}
@@ -1797,7 +1912,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
       {/* Modals */}
       {isCarton3DOpen && packaging && fabricCanvasRef.current && <React.Suspense fallback={<div role="status">{lang === 'ar' ? 'جاري تحميل المعاينة…' : 'Loading preview…'}</div>}><Carton3DDialog canvas={fabricCanvasRef.current} size={packaging.size} width={canvasWidth} height={canvasHeight} onClose={()=>setIsCarton3DOpen(false)}/></React.Suspense>}
       {isPrintOpen && packaging && fabricCanvasRef.current && <PackagingPrintDialog canvas={fabricCanvasRef.current} size={packaging.size} width={canvasWidth} height={canvasHeight} bleedMm={studioSettings.bleedMm} onClose={()=>setIsPrintOpen(false)}/>}
-      {isPackagingOpen && packaging && <CartonResizeDialog size={packaging.size} onClose={()=>setIsPackagingOpen(false)} onApply={handleCartonResize}/>}
+      {isPackagingOpen && packaging && <CartonResizeDialog size={packaging.size} initialUnit={resizeModalUnit} onClose={()=>setIsPackagingOpen(false)} onApply={handleCartonResize}/>}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

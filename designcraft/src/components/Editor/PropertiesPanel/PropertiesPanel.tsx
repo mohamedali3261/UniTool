@@ -8,6 +8,8 @@ import { ShapeProperties } from './ShapeProperties';
 import { ImageProperties } from './ImageProperties';
 import { AlignProperties } from './AlignProperties';
 import { CanvasProperties } from './CanvasProperties';
+import type { CartonSize } from '../../../packaging/geometry';
+import type { PackagingUnit } from '../../../packaging/units';
 import { X, ChevronLeft, Type, Image as ImageIcon, Shapes, Layers, Palette } from 'lucide-react';
 import { useDcLang } from '../../../hooks/useDcLang';
 
@@ -17,6 +19,7 @@ interface PropertiesPanelProps {
   canvasWidth: number;
   canvasHeight: number;
   isPackaging?: boolean;
+  packagingSize?: CartonSize | null;
   backgroundColor: string;
   onUpdateProperty: (key: string, value: any) => void;
   onAlign: (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
@@ -29,6 +32,8 @@ interface PropertiesPanelProps {
   onToggleLock: () => void;
   onApplyImageFilter: (filterType: string, value?: any) => void;
   onResizeCanvas: (w: number, h: number) => void;
+  onResizeCarton?: (next: CartonSize) => void;
+  onOpenCartonResizeModal?: (unit: PackagingUnit) => void;
   onSetBackgroundColor: (color: string) => void;
   onSetBackgroundGradient: (stops: string[]) => void;
   onDeselect: () => void;
@@ -41,6 +46,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   canvasWidth,
   canvasHeight,
   isPackaging,
+  packagingSize,
   backgroundColor,
   onUpdateProperty,
   onAlign,
@@ -53,6 +59,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onToggleLock,
   onApplyImageFilter,
   onResizeCanvas,
+  onResizeCarton,
+  onOpenCartonResizeModal,
   onSetBackgroundColor,
   onSetBackgroundGradient,
   onDeselect,
@@ -196,8 +204,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             width={canvasWidth}
             height={canvasHeight}
             isPackaging={isPackaging}
+            packagingSize={packagingSize}
             backgroundColor={backgroundColor}
             onResizeCanvas={onResizeCanvas}
+            onResizeCarton={onResizeCarton}
+            onOpenCartonResizeModal={onOpenCartonResizeModal}
             onSetBackgroundColor={onSetBackgroundColor}
             onSetBackgroundGradient={onSetBackgroundGradient}
           />

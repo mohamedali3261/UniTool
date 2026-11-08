@@ -2,12 +2,12 @@ import {DesignerThemeToggle} from '../Common/DesignerThemeToggle';
 import {isPackagingProject} from '../../packaging/projectScope';
 import { SiteNavbar } from '../../../../src/components/SiteNavbar';
 import {PackagingPage} from '../../packaging/PackagingPage';
-import {PackagingEntry} from "../../packaging/PackagingEntry";
 import { StorageManager } from './StorageManager';
 import { STORAGE_CHANGED_EVENT, removeProject } from '../../utils/projectStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { ProjectItem, DimensionPreset } from '../../types';
 import { DIMENSION_PRESETS } from '../../data/presets';
+import { TEMPLATE_CATALOG, type DesignTemplate } from '../../data/templates';
 import { PresetSilhouette } from './PresetSilhouette';
 import {
   getSavedProjects,
@@ -29,7 +29,10 @@ import {
   Plus,
   X,
   Upload,
-  Database
+  Database,
+  Box,
+  LayoutTemplate,
+  ArrowUpLeft
 } from "lucide-react";
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
@@ -68,6 +71,9 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [aspectRatioVal, setAspectRatioVal] = useState<number>(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [graphicUnit, setGraphicUnit] = useState<'px' | 'cm'>('px');
+  const [graphicTplCat, setGraphicTplCat] = useState<string>('all');
+  const PX_PER_CM_300DPI = 118.11;
 
   // Saved projects
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -199,6 +205,25 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   };
 
   const designProjects=projects.filter(p=>!isPackagingProject(p));
+  const boxProjectsCount=projects.filter(p=>isPackagingProject(p)).length;
+  const featuredGraphicTemplates = TEMPLATE_CATALOG.filter((tpl) =>
+    graphicTplCat === 'all' ? true : tpl.cat === graphicTplCat
+  ).slice(0, 6);
+
+  const handleLaunchGraphicTemplate = (tpl: DesignTemplate) => {
+    const newProj: ProjectItem & { _autoTemplate?: DesignTemplate } = {
+      id: `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: lang === 'ar' ? tpl.nameAr : tpl.nameEn,
+      width: tpl.baseW,
+      height: tpl.baseH,
+      canvasData: null,
+      category: 'template',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      _autoTemplate: tpl,
+    };
+    onOpenProject(newProj);
+  };
   const filteredProjects = designProjects
     .filter((p) => {
       if (!projectSearch.trim()) return true;
@@ -243,7 +268,143 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
       <div className="flex-1">
         {/* Main Container */}
         <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
-          {/* Page Header */}
+          {/* Dual-Studio Workspace Switcher: Graphic Designs vs Boxes & Packaging */}
+          <section
+            className="dc-studio-split-switcher"
+            data-testid="studio-section-switcher"
+            aria-label={lang === 'ar' ? 'أقسام استوديو التصميم' : 'Design Studio Sections'}
+          >
+            {/* Section 1: Graphic Designs Studio */}
+            <div
+              data-testid="section-card-graphics"
+              className={`dc-studio-split-card dc-studio-split-card--graphic ${
+                activeTab === 'create' || activeTab === 'projects' ? 'is-active' : ''
+              }`}
+            >
+              <div className="dc-studio-split-card__top">
+                <div className="dc-studio-split-card__icon dc-studio-split-card__icon--graphic">
+                  <LayoutTemplate className="w-5 h-5" />
+                </div>
+                <span className="dc-studio-split-card__pill">
+                  {lang === 'ar' ? 'القسم الأول · GRAPHIC STUDIO' : 'SECTION 01 · GRAPHIC STUDIO'}
+                </span>
+              </div>
+
+              <div className="dc-studio-split-card__body">
+                <h2>
+                  {lang === 'ar' ? 'قسم التصميمات الجرافيكية' : 'Graphic Designs Section'}
+                </h2>
+                <p>
+                  {lang === 'ar'
+                    ? 'مساحة مخصصة للسوشيال ميديا، الإعلانات، البنرات، الكروت الشخصية والمطبوعات بمقاسات البيكسل والـ سم.'
+                    : 'Dedicated workspace for social posts, ads, banners, business cards & print layouts in px & cm.'}
+                </p>
+              </div>
+
+              <div className="dc-studio-split-card__chips">
+                <span>
+                  {lang === 'ar'
+                    ? `${TEMPLATE_CATALOG.length} قالب جرافيك جاهز`
+                    : `${TEMPLATE_CATALOG.length} ready templates`}
+                </span>
+                <span>
+                  {lang === 'ar'
+                    ? `${getCategoryCount('all')} مقاس قياسي`
+                    : `${getCategoryCount('all')} standard sizes`}
+                </span>
+                <span>
+                  {lang === 'ar'
+                    ? `${designProjects.length} مشروع تصميم`
+                    : `${designProjects.length} design projects`}
+                </span>
+              </div>
+
+              <div className="dc-studio-split-card__footer">
+                {activeTab === 'create' || activeTab === 'projects' ? (
+                  <span className="dc-studio-split-card__status">
+                    {lang === 'ar' ? 'القسم النشط الآن' : 'Active section'}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="switch-to-graphics-btn"
+                    className="dc-studio-split-card__cta"
+                    onClick={() => setActiveTab('create')}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>
+                      {lang === 'ar' ? 'فتح قسم التصميمات' : 'Open Graphic Studio'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Section 2: Boxes & Packaging Studio */}
+            <div
+              data-testid="section-card-boxes"
+              className={`dc-studio-split-card dc-studio-split-card--boxes ${
+                activeTab === 'packaging' ? 'is-active' : ''
+              }`}
+            >
+              <div className="dc-studio-split-card__top">
+                <div className="dc-studio-split-card__icon dc-studio-split-card__icon--boxes">
+                  <Box className="w-5 h-5" />
+                </div>
+                <span className="dc-studio-split-card__pill">
+                  {lang === 'ar' ? 'القسم الثاني · PACKAGING ATELIER' : 'SECTION 02 · PACKAGING ATELIER'}
+                </span>
+              </div>
+
+              <div className="dc-studio-split-card__body">
+                <h2>
+                  {lang === 'ar' ? 'قسم العلب والتغليف' : 'Boxes & Packaging Section'}
+                </h2>
+                <p>
+                  {lang === 'ar'
+                    ? 'مشغل هندسي لتصميم العلب بخطوط القص والطي، إدخال وتعديل المقاسات بالـ سم والمم، ومعاينة 3D.'
+                    : 'Architectural dieline studio with live cm & mm sizing, 6-face stamps, and 360° 3D fold preview.'}
+                </p>
+              </div>
+
+              <div className="dc-studio-split-card__chips">
+                <span>
+                  {lang === 'ar' ? '28 قالب علبة هندسي' : '28 box dielines'}
+                </span>
+                <span>
+                  {lang === 'ar' ? 'مقاسات بالـ سم والمم' : 'cm & mm sizing'}
+                </span>
+                <span>
+                  {lang === 'ar'
+                    ? `${boxProjectsCount} مشروع علبة`
+                    : `${boxProjectsCount} box projects`}
+                </span>
+              </div>
+
+              <div className="dc-studio-split-card__footer">
+                {activeTab === 'packaging' ? (
+                  <span className="dc-studio-split-card__status">
+                    {lang === 'ar' ? 'القسم النشط الآن' : 'Active section'}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="switch-to-boxes-btn"
+                    className="dc-studio-split-card__cta dc-studio-split-card__cta--boxes"
+                    onClick={() => setActiveTab('packaging')}
+                  >
+                    <Box className="w-4 h-4" />
+                    <span>
+                      {lang === 'ar' ? 'قوالب العلب والمقاسات' : 'Carton templates & dimensions'}
+                    </span>
+                    <ArrowUpLeft className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Page Header (Graphic Designs Section) */}
           {activeTab!=='packaging' && activeTab!=='storage' && <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
             <div className="absolute -top-16 -end-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-20 -start-10 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -266,7 +427,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                     <FolderOpen className="w-4 h-4" />
                   </div>
                   <div className="leading-tight">
-                    <div className="text-lg font-bold text-white font-mono">{projects.length}</div>
+                    <div className="text-lg font-bold text-white font-mono">{designProjects.length}</div>
                     <div className="text-[10px] text-slate-400">{t.statProjects}</div>
                   </div>
                 </div>
@@ -332,15 +493,100 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             </button>
           </div>
 
-          {activeTab === 'packaging' && <PackagingPage onCreate={onOpenProject} projects={projects}/>}
+          {activeTab === 'packaging' && (
+            <PackagingPage
+              onCreate={onOpenProject}
+              onDeleteProject={(id, e) => {
+                e.stopPropagation();
+                handleDeleteProject(id);
+              }}
+              projects={projects}
+            />
+          )}
           {activeTab === 'storage' && (
             <StorageManager projects={projects} onOpenProject={onOpenProject} onShowToast={onShowToast} />
           )}
 
-          {/* Create New Design */}
+          {/* Create New Design (Graphic Designs Section) */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <PackagingEntry onCreate={onOpenProject} onNavigate={()=>setActiveTab('packaging')}/>
+              {/* Ready Graphic Templates Showcase */}
+              <section
+                className="dc-graphic-showcase"
+                data-testid="graphic-ready-templates"
+                aria-label={lang === 'ar' ? 'قوالب تصميم جرافيك جاهزة' : 'Ready graphic templates'}
+              >
+                <div className="dc-graphic-showcase__head">
+                  <div>
+                    <h3>
+                      <LayoutTemplate className="w-4 h-4" />
+                      <span>
+                        {lang === 'ar'
+                          ? 'قوالب التصميمات الجرافيكية الجاهزة'
+                          : 'Ready-to-Edit Graphic Templates'}
+                      </span>
+                    </h3>
+                    <p>
+                      {lang === 'ar'
+                        ? 'ابدأ بقالب متكامل للسوشيال ميديا أو الإعلانات أو المطبوعات وعدّل كل طبقة بحرية.'
+                        : 'Launch a complete multi-layer social, ad, or print design in one click.'}
+                    </p>
+                  </div>
+                  <div className="dc-graphic-showcase__pills" role="group">
+                    {(
+                      [
+                        ['all', 'الكل', 'All'],
+                        ['social', 'سوشيال ميديا', 'Social'],
+                        ['business', 'أعمال وإعلانات', 'Business & Ads'],
+                        ['print', 'مطبوعات وكروت', 'Print & Cards'],
+                      ] as const
+                    ).map(([catId, arLabel, enLabel]) => (
+                      <button
+                        key={catId}
+                        type="button"
+                        aria-pressed={graphicTplCat === catId}
+                        onClick={() => setGraphicTplCat(catId)}
+                      >
+                        {lang === 'ar' ? arLabel : enLabel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="dc-graphic-showcase__grid">
+                  {featuredGraphicTemplates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      data-testid={`graphic-starter-tpl-${tpl.id}`}
+                      className="dc-graphic-tpl-card"
+                      onClick={() => handleLaunchGraphicTemplate(tpl)}
+                    >
+                      <div
+                        data-theme-art
+                        className="dc-graphic-tpl-card__art"
+                        style={{
+                          background: tpl.bg2
+                            ? `linear-gradient(135deg, ${tpl.bg} 0%, ${tpl.bg2} 100%)`
+                            : tpl.bg,
+                        }}
+                      >
+                        <span className="dc-graphic-tpl-card__ratio" dir="ltr">
+                          {tpl.baseW} × {tpl.baseH}
+                        </span>
+                        <strong className="dc-graphic-tpl-card__sample">
+                          {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
+                        </strong>
+                      </div>
+                      <div className="dc-graphic-tpl-card__meta">
+                        <strong>{lang === 'ar' ? tpl.nameAr : tpl.nameEn}</strong>
+                        <small>{lang === 'ar' ? tpl.descAr || 'قالب متعدد الطبقات' : tpl.descEn || 'Layered template'}</small>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
               {/* Custom Dimension Box */}
               <section className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -362,7 +608,29 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                      <div
+                        className="carton-unit-switch"
+                        role="group"
+                        data-testid="graphic-custom-unit-toggle"
+                        aria-label={lang === 'ar' ? 'وحدة مقاس اللوحة' : 'Canvas dimension unit'}
+                      >
+                        <button
+                          type="button"
+                          aria-pressed={graphicUnit === 'px'}
+                          onClick={() => setGraphicUnit('px')}
+                        >
+                          {lang === 'ar' ? 'بيكسل · px' : 'px'}
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={graphicUnit === 'cm'}
+                          onClick={() => setGraphicUnit('cm')}
+                        >
+                          {lang === 'ar' ? 'سم · 300 DPI' : 'cm · 300 DPI'}
+                        </button>
+                      </div>
+
                       <div className="flex items-center gap-1.5 bg-[#0B132B] px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-mono text-sky-300">
                         <span className="text-slate-400 font-sans">{t.ratio}</span>
                         <span className="font-bold">{getCustomRatioLabel()}</span>
@@ -508,13 +776,25 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                         <div className="sm:col-span-5 grid grid-cols-3 sm:grid-cols-7 gap-2 items-end">
                           {/* Width */}
                           <div className="col-span-1 sm:col-span-3 space-y-1">
-                            <label className="text-[11px] font-semibold text-slate-300">{t.width}</label>
+                            <label className="text-[11px] font-semibold text-slate-300">
+                              {t.width} ({graphicUnit === 'cm' ? (lang === 'ar' ? 'سم' : 'cm') : 'px'})
+                            </label>
                             <input
                               type="number"
-                              min="50"
-                              max="5000"
-                              value={customWidth}
-                              onChange={(e) => handleWidthChange(parseInt(e.target.value) || 0)}
+                              step={graphicUnit === 'cm' ? '0.1' : '1'}
+                              min={graphicUnit === 'cm' ? '1' : '50'}
+                              max={graphicUnit === 'cm' ? '42' : '5000'}
+                              value={
+                                graphicUnit === 'cm'
+                                  ? +(customWidth / PX_PER_CM_300DPI).toFixed(1)
+                                  : customWidth
+                              }
+                              onChange={(e) => {
+                                const raw = parseFloat(e.target.value) || 0;
+                                handleWidthChange(
+                                  graphicUnit === 'cm' ? Math.round(raw * PX_PER_CM_300DPI) : Math.round(raw)
+                                );
+                              }}
                               className="w-full bg-[#0B132B] border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono text-center focus:outline-none focus:border-sky-500 transition min-h-[44px]"
                             />
                           </div>
@@ -537,13 +817,25 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
 
                           {/* Height */}
                           <div className="col-span-1 sm:col-span-3 space-y-1">
-                            <label className="text-[11px] font-semibold text-slate-300">{t.height}</label>
+                            <label className="text-[11px] font-semibold text-slate-300">
+                              {t.height} ({graphicUnit === 'cm' ? (lang === 'ar' ? 'سم' : 'cm') : 'px'})
+                            </label>
                             <input
                               type="number"
-                              min="50"
-                              max="5000"
-                              value={customHeight}
-                              onChange={(e) => handleHeightChange(parseInt(e.target.value) || 0)}
+                              step={graphicUnit === 'cm' ? '0.1' : '1'}
+                              min={graphicUnit === 'cm' ? '1' : '50'}
+                              max={graphicUnit === 'cm' ? '42' : '5000'}
+                              value={
+                                graphicUnit === 'cm'
+                                  ? +(customHeight / PX_PER_CM_300DPI).toFixed(1)
+                                  : customHeight
+                              }
+                              onChange={(e) => {
+                                const raw = parseFloat(e.target.value) || 0;
+                                handleHeightChange(
+                                  graphicUnit === 'cm' ? Math.round(raw * PX_PER_CM_300DPI) : Math.round(raw)
+                                );
+                              }}
                               className="w-full bg-[#0B132B] border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono text-center focus:outline-none focus:border-sky-500 transition min-h-[44px]"
                             />
                           </div>
