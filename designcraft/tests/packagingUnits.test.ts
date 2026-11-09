@@ -188,11 +188,13 @@ test("TemplatesTab and CanvasProperties cleanly separate Packaging vs Graphic St
   assert.doesNotMatch(graphicPropsHtml, /packaging-properties-panel/);
 });
 
-test("packaging and graphic projects stay strictly separated across studio shelves", () => {
-  const boxProj = createCartonProject(DEFAULT_CARTON, "Perfume Box");
+test("packaging and graphic projects stay strictly separated across studio shelves", async () => {
+  const { PackagingPage } = await import("../src/packaging/PackagingPage");
+
+  const boxProj = createCartonProject(DEFAULT_CARTON, "Perfume Box Luxury");
   const graphicProj = {
     id: "graphic-1",
-    title: "Social Post",
+    title: "Social Post Campaign",
     width: 1080,
     height: 1080,
     canvasData: { objects: [] },
@@ -207,4 +209,32 @@ test("packaging and graphic projects stay strictly separated across studio shelv
     [boxProj, graphicProj].filter((p) => !isPackagingProject(p)).length,
     1,
   );
+
+  // Render PackagingPage with mixed projects: must display Templates + Dimensions + Saved Box ONLY
+  const allBoxHtml = renderToStaticMarkup(
+    React.createElement(PackagingPage, {
+      onCreate: () => {},
+      projects: [boxProj, graphicProj],
+      sectionView: "all",
+    }),
+  );
+  assert.match(allBoxHtml, /packaging-section-pills/);
+  assert.match(allBoxHtml, /packaging-quick-builder/);
+  assert.match(allBoxHtml, /قوالب العلب الجاهزة/);
+  assert.match(allBoxHtml, /packaging-projects/);
+  assert.match(allBoxHtml, /Perfume Box Luxury/);
+  assert.doesNotMatch(allBoxHtml, /Social Post Campaign/);
+
+  // Saved-only section view inside PackagingPage
+  const savedOnlyBoxHtml = renderToStaticMarkup(
+    React.createElement(PackagingPage, {
+      onCreate: () => {},
+      projects: [boxProj, graphicProj],
+      sectionView: "saved",
+    }),
+  );
+  assert.match(savedOnlyBoxHtml, /packaging-projects/);
+  assert.match(savedOnlyBoxHtml, /Perfume Box Luxury/);
+  assert.doesNotMatch(savedOnlyBoxHtml, /packaging-quick-builder/);
+  assert.doesNotMatch(savedOnlyBoxHtml, /Social Post Campaign/);
 });

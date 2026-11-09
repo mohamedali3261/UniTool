@@ -32,8 +32,11 @@ import {
   Database,
   Box,
   LayoutTemplate,
-  ArrowUpLeft
+  ArrowUpLeft,
+  LayoutGrid,
+  Ruler
 } from "lucide-react";
+import { type PackagingSectionView } from '../../packaging/PackagingPage';
 import { setDcLang, useDcLang } from '../../hooks/useDcLang';
 import { ToolsMenu } from '../../../../src/components/ToolsMenu';
 
@@ -58,11 +61,48 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
 }) => {
   const { lang, t } = useDcLang();
 
-  type DashboardPage='create'|'projects'|'storage'|'packaging';
-  const pageFromHash=():DashboardPage=>{const page=window.location.hash.slice(1);return ['projects','storage','packaging'].includes(page)?page as DashboardPage:'create';};
-  const [activeTab,setTab]=useState<DashboardPage>(pageFromHash);
-  const setActiveTab=(page:DashboardPage)=>{window.location.hash=page;setTab(page);window.scrollTo(0,0);};
-  useEffect(()=>{const changed=()=>setTab(pageFromHash());window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed);},[]);
+  type DashboardPage = 'create' | 'projects' | 'storage' | 'packaging' | 'packaging-projects';
+  const pageFromHash = (): DashboardPage => {
+    const page = window.location.hash.slice(1);
+    return ['projects', 'storage', 'packaging', 'packaging-projects'].includes(page)
+      ? (page as DashboardPage)
+      : 'create';
+  };
+  const [activeTab, setTab] = useState<DashboardPage>(pageFromHash);
+  const [lastStudio, setLastStudio] = useState<'design' | 'packaging'>(() => {
+    const init = pageFromHash();
+    return init === 'packaging' || init === 'packaging-projects' ? 'packaging' : 'design';
+  });
+  const [designSection, setDesignSection] = useState<'all' | 'templates' | 'dimensions' | 'saved'>('all');
+  const [pkgSection, setPkgSection] = useState<PackagingSectionView>('all');
+
+  const studioMode: 'design' | 'packaging' =
+    activeTab === 'packaging' || activeTab === 'packaging-projects'
+      ? 'packaging'
+      : activeTab === 'create' || activeTab === 'projects'
+        ? 'design'
+        : lastStudio;
+
+  const setActiveTab = (page: DashboardPage) => {
+    if (page === 'packaging' || page === 'packaging-projects') {
+      setLastStudio('packaging');
+    } else if (page === 'create' || page === 'projects') {
+      setLastStudio('design');
+    }
+    window.location.hash = page;
+    setTab(page);
+    window.scrollTo(0, 0);
+  };
+  useEffect(() => {
+    const changed = () => {
+      const next = pageFromHash();
+      setTab(next);
+      if (next === 'packaging' || next === 'packaging-projects') setLastStudio('packaging');
+      else if (next === 'create' || next === 'projects') setLastStudio('design');
+    };
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  }, []);
   const [customWidth, setCustomWidth] = useState<number>(1080);
   const [customHeight, setCustomHeight] = useState<number>(1080);
   const [customTitle, setCustomTitle] = useState<string>('');
@@ -73,6 +113,7 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [graphicUnit, setGraphicUnit] = useState<'px' | 'cm'>('px');
   const [graphicTplCat, setGraphicTplCat] = useState<string>('all');
+  const [graphicTplSearch, setGraphicTplSearch] = useState<string>('');
   const PX_PER_CM_300DPI = 118.11;
 
   // Saved projects
@@ -204,11 +245,29 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
     return DIMENSION_PRESETS.filter((p) => p.id !== 'custom' && p.category === catId).length;
   };
 
-  const designProjects=projects.filter(p=>!isPackagingProject(p));
-  const boxProjectsCount=projects.filter(p=>isPackagingProject(p)).length;
-  const featuredGraphicTemplates = TEMPLATE_CATALOG.filter((tpl) =>
-    graphicTplCat === 'all' ? true : tpl.cat === graphicTplCat
-  ).slice(0, 6);
+  const designProjects = projects.filter((p) => !isPackagingProject(p));
+  const boxProjectsCount = projects.filter((p) => isPackagingProject(p)).length;
+  const matchingGraphicTemplates = TEMPLATE_CATALOG.filter((tpl) => {
+    const catOk =
+      graphicTplCat === 'all' ||
+      (graphicTplCat === 'social' && (tpl.cat === 'social' || tpl.cat === 'quote')) ||
+      (graphicTplCat === 'promo' && (tpl.cat === 'promo' || tpl.cat === 'event')) ||
+      (graphicTplCat === 'youtube' && tpl.cat === 'youtube') ||
+      (graphicTplCat === 'gp' && tpl.cat.startsWith('gp-'));
+    if (!catOk) return false;
+    if (!graphicTplSearch.trim()) return true;
+    const q = graphicTplSearch.toLowerCase().trim();
+    return (
+      tpl.nameAr.toLowerCase().includes(q) ||
+      tpl.nameEn.toLowerCase().includes(q) ||
+      (tpl.descAr && tpl.descAr.toLowerCase().includes(q)) ||
+      (tpl.descEn && tpl.descEn.toLowerCase().includes(q))
+    );
+  });
+  const featuredGraphicTemplates =
+    designSection === 'templates' || graphicTplCat !== 'all' || graphicTplSearch.trim()
+      ? matchingGraphicTemplates
+      : matchingGraphicTemplates.slice(0, 9);
 
   const handleLaunchGraphicTemplate = (tpl: DesignTemplate) => {
     const newProj: ProjectItem & { _autoTemplate?: DesignTemplate } = {
@@ -268,190 +327,135 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
       <div className="flex-1">
         {/* Main Container */}
         <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-5 sm:space-y-6" style={{ paddingTop: 90, marginInlineStart: 'auto' }}>
-          {/* Dual-Studio Workspace Switcher: Graphic Designs vs Boxes & Packaging */}
-          <section
-            className="dc-studio-split-switcher"
+          {/* Two-Button Studio Mode Switcher: استوديو التصميم | تصميم العلب */}
+          <nav
+            className="dc-two-studio-bar"
             data-testid="studio-section-switcher"
-            aria-label={lang === 'ar' ? 'أقسام استوديو التصميم' : 'Design Studio Sections'}
+            aria-label={lang === 'ar' ? 'اختيار الاستوديو' : 'Choose Studio'}
           >
-            {/* Section 1: Graphic Designs Studio */}
-            <div
-              data-testid="section-card-graphics"
-              className={`dc-studio-split-card dc-studio-split-card--graphic ${
-                activeTab === 'create' || activeTab === 'projects' ? 'is-active' : ''
+            <button
+              type="button"
+              data-testid="studio-btn-design"
+              aria-pressed={studioMode === 'design'}
+              className={`dc-two-studio-btn dc-two-studio-btn--design ${
+                studioMode === 'design' ? 'is-active' : ''
               }`}
+              onClick={() => {
+                setDesignSection('all');
+                setActiveTab('create');
+              }}
             >
-              <div className="dc-studio-split-card__top">
-                <div className="dc-studio-split-card__icon dc-studio-split-card__icon--graphic">
-                  <LayoutTemplate className="w-5 h-5" />
-                </div>
-                <span className="dc-studio-split-card__pill">
-                  {lang === 'ar' ? 'القسم الأول · GRAPHIC STUDIO' : 'SECTION 01 · GRAPHIC STUDIO'}
-                </span>
-              </div>
-
-              <div className="dc-studio-split-card__body">
-                <h2>
-                  {lang === 'ar' ? 'قسم التصميمات الجرافيكية' : 'Graphic Designs Section'}
-                </h2>
-                <p>
+              <span className="dc-two-studio-btn__icon">
+                <LayoutTemplate className="w-5 h-5" />
+              </span>
+              <span className="dc-two-studio-btn__copy">
+                <strong>{lang === 'ar' ? 'استوديو التصميم' : 'Design Studio'}</strong>
+                <small>
                   {lang === 'ar'
-                    ? 'مساحة مخصصة للسوشيال ميديا، الإعلانات، البنرات، الكروت الشخصية والمطبوعات بمقاسات البيكسل والـ سم.'
-                    : 'Dedicated workspace for social posts, ads, banners, business cards & print layouts in px & cm.'}
-                </p>
-              </div>
+                    ? `القوالب · المقاسات · المحفوظات (${designProjects.length})`
+                    : `Templates · Sizes · Saved (${designProjects.length})`}
+                </small>
+              </span>
+            </button>
 
-              <div className="dc-studio-split-card__chips">
-                <span>
-                  {lang === 'ar'
-                    ? `${TEMPLATE_CATALOG.length} قالب جرافيك جاهز`
-                    : `${TEMPLATE_CATALOG.length} ready templates`}
-                </span>
-                <span>
-                  {lang === 'ar'
-                    ? `${getCategoryCount('all')} مقاس قياسي`
-                    : `${getCategoryCount('all')} standard sizes`}
-                </span>
-                <span>
-                  {lang === 'ar'
-                    ? `${designProjects.length} مشروع تصميم`
-                    : `${designProjects.length} design projects`}
-                </span>
-              </div>
-
-              <div className="dc-studio-split-card__footer">
-                {activeTab === 'create' || activeTab === 'projects' ? (
-                  <span className="dc-studio-split-card__status">
-                    {lang === 'ar' ? 'القسم النشط الآن' : 'Active section'}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    data-testid="switch-to-graphics-btn"
-                    className="dc-studio-split-card__cta"
-                    onClick={() => setActiveTab('create')}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>
-                      {lang === 'ar' ? 'فتح قسم التصميمات' : 'Open Graphic Studio'}
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Section 2: Boxes & Packaging Studio */}
-            <div
-              data-testid="section-card-boxes"
-              className={`dc-studio-split-card dc-studio-split-card--boxes ${
-                activeTab === 'packaging' ? 'is-active' : ''
+            <button
+              type="button"
+              data-testid="studio-btn-packaging"
+              aria-pressed={studioMode === 'packaging'}
+              className={`dc-two-studio-btn dc-two-studio-btn--packaging ${
+                studioMode === 'packaging' ? 'is-active' : ''
               }`}
+              onClick={() => {
+                setPkgSection('all');
+                setActiveTab('packaging');
+              }}
             >
-              <div className="dc-studio-split-card__top">
-                <div className="dc-studio-split-card__icon dc-studio-split-card__icon--boxes">
-                  <Box className="w-5 h-5" />
-                </div>
-                <span className="dc-studio-split-card__pill">
-                  {lang === 'ar' ? 'القسم الثاني · PACKAGING ATELIER' : 'SECTION 02 · PACKAGING ATELIER'}
-                </span>
-              </div>
-
-              <div className="dc-studio-split-card__body">
-                <h2>
-                  {lang === 'ar' ? 'قسم العلب والتغليف' : 'Boxes & Packaging Section'}
-                </h2>
-                <p>
+              <span className="dc-two-studio-btn__icon">
+                <Box className="w-5 h-5" />
+              </span>
+              <span className="dc-two-studio-btn__copy">
+                <strong>{lang === 'ar' ? 'تصميم العلب' : 'Packaging studio'}</strong>
+                <small>
                   {lang === 'ar'
-                    ? 'مشغل هندسي لتصميم العلب بخطوط القص والطي، إدخال وتعديل المقاسات بالـ سم والمم، ومعاينة 3D.'
-                    : 'Architectural dieline studio with live cm & mm sizing, 6-face stamps, and 360° 3D fold preview.'}
-                </p>
-              </div>
+                    ? `القوالب · مقاسات سم/مم · المحفوظات (${boxProjectsCount})`
+                    : `Templates · cm/mm Sizes · Saved (${boxProjectsCount})`}
+                </small>
+              </span>
+            </button>
+          </nav>
 
-              <div className="dc-studio-split-card__chips">
-                <span>
-                  {lang === 'ar' ? '28 قالب علبة هندسي' : '28 box dielines'}
-                </span>
-                <span>
-                  {lang === 'ar' ? 'مقاسات بالـ سم والمم' : 'cm & mm sizing'}
-                </span>
-                <span>
-                  {lang === 'ar'
-                    ? `${boxProjectsCount} مشروع علبة`
-                    : `${boxProjectsCount} box projects`}
-                </span>
-              </div>
+          {/* Page Header (Graphic Designs Studio) */}
+          {studioMode === 'design' && activeTab !== 'storage' && (
+            <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
+              <div className="absolute -top-16 -end-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -start-10 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="dc-studio-split-card__footer">
-                {activeTab === 'packaging' ? (
-                  <span className="dc-studio-split-card__status">
-                    {lang === 'ar' ? 'القسم النشط الآن' : 'Active section'}
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="space-y-1.5 min-w-0">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2.5 py-1 rounded-full">
+                    <Sparkles className="w-3 h-3" />
+                    {t.studioBadge}
                   </span>
-                ) : (
+                  <h1 className="text-xl sm:text-2xl font-bold text-white">{t.studioTitle}</h1>
+                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+                    {t.studioDesc}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+                  <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[112px]">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
+                      <FolderOpen className="w-4 h-4" />
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-lg font-bold text-white font-mono">{designProjects.length}</div>
+                      <div className="text-[10px] text-slate-400">{t.statProjects}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[112px]">
+                    <div className="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
+                      <Maximize2 className="w-4 h-4" />
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-lg font-bold text-white font-mono">{getCategoryCount('all')}</div>
+                      <div className="text-[10px] text-slate-400">{t.statPresets}</div>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     data-testid="switch-to-boxes-btn"
-                    className="dc-studio-split-card__cta dc-studio-split-card__cta--boxes"
-                    onClick={() => setActiveTab('packaging')}
+                    onClick={() => {
+                      setPkgSection('all');
+                      setActiveTab('packaging');
+                    }}
+                    className="dc-quick-box-jump flex items-center gap-1.5 rounded-2xl border border-emerald-500/35 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
                   >
                     <Box className="w-4 h-4" />
-                    <span>
-                      {lang === 'ar' ? 'قوالب العلب والمقاسات' : 'Carton templates & dimensions'}
-                    </span>
-                    <ArrowUpLeft className="w-4 h-4" />
+                    <span>{lang === 'ar' ? 'قوالب العلب والمقاسات' : 'Carton templates & dimensions'}</span>
+                    <ArrowUpLeft className="w-3.5 h-3.5" />
                   </button>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Page Header (Graphic Designs Section) */}
-          {activeTab!=='packaging' && activeTab!=='storage' && <header className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#16223F] via-[#101A33] to-[#0B132B] border border-slate-700/70 p-5 sm:p-7 shadow-xl shadow-black/30">
-            <div className="absolute -top-16 -end-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -start-10 w-56 h-56 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-1.5 min-w-0">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2.5 py-1 rounded-full">
-                  <Sparkles className="w-3 h-3" />
-                  {t.studioBadge}
-                </span>
-                <h1 className="text-xl sm:text-2xl font-bold text-white">{t.studioTitle}</h1>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
-                  {t.studioDesc}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2.5 shrink-0">
-                <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[120px]">
-                  <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
-                    <FolderOpen className="w-4 h-4" />
-                  </div>
-                  <div className="leading-tight">
-                    <div className="text-lg font-bold text-white font-mono">{designProjects.length}</div>
-                    <div className="text-[10px] text-slate-400">{t.statProjects}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 bg-[#0B132B]/80 border border-slate-700/70 rounded-2xl px-3.5 py-2.5 min-w-[120px]">
-                  <div className="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
-                    <Maximize2 className="w-4 h-4" />
-                  </div>
-                  <div className="leading-tight">
-                    <div className="text-lg font-bold text-white font-mono">{getCategoryCount('all')}</div>
-                    <div className="text-[10px] text-slate-400">{t.statPresets}</div>
-                  </div>
                 </div>
               </div>
-            </div>
-          </header>}
+            </header>
+          )}
 
-          {/* Tab Switcher */}
+          {/* Studio-Scoped Navigation Bar (for the active Studio ONLY) */}
           <div className="dc-page-tabs flex items-center gap-2 flex-wrap bg-[#0B132B] p-1.5 rounded-2xl border border-slate-700/70 w-full sm:w-fit">
             <button
               type="button"
-              onClick={() => setActiveTab('create')}
+              onClick={() => {
+                if (studioMode === 'packaging') {
+                  setPkgSection('all');
+                  setActiveTab('packaging');
+                } else {
+                  setDesignSection('all');
+                  setActiveTab('create');
+                }
+              }}
               className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                activeTab === 'create'
+                activeTab === 'create' || activeTab === 'packaging'
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
                   : 'text-slate-400 hover:text-white border border-transparent'
               }`}
@@ -461,24 +465,29 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('projects')}
+              onClick={() =>
+                setActiveTab(studioMode === 'packaging' ? 'packaging-projects' : 'projects')
+              }
               className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                activeTab === 'projects'
+                activeTab === 'projects' || activeTab === 'packaging-projects'
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-lg shadow-sky-500/10'
                   : 'text-slate-400 hover:text-white border border-transparent'
               }`}
             >
               <FolderOpen className="w-4 h-4" />
               <span>{t.myProjects}</span>
-              {designProjects.length > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
-                  activeTab === 'projects' ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-300'
-                }`}>
-                  {designProjects.length}
+              {(studioMode === 'packaging' ? boxProjectsCount : designProjects.length) > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                    activeTab === 'projects' || activeTab === 'packaging-projects'
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {studioMode === 'packaging' ? boxProjectsCount : designProjects.length}
                 </span>
               )}
             </button>
-            <button type="button" onClick={()=>setActiveTab('packaging')} aria-current={activeTab==='packaging'?'page':undefined} className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border ${activeTab==='packaging'?'bg-emerald-500/15 text-emerald-200 border-emerald-400/40':'text-slate-400 border-transparent'}`}>{lang==='ar'?'تصميم العلب':'Packaging studio'}</button>
             <button
               type="button"
               onClick={() => setActiveTab('storage')}
@@ -493,100 +502,192 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
             </button>
           </div>
 
-          {activeTab === 'packaging' && (
+          {(activeTab === 'packaging' || activeTab === 'packaging-projects') && (
             <PackagingPage
               onCreate={onOpenProject}
+              onDuplicateProject={(proj, e) => {
+                e.stopPropagation();
+                handleDuplicateProject(proj);
+              }}
               onDeleteProject={(id, e) => {
                 e.stopPropagation();
                 handleDeleteProject(id);
               }}
               projects={projects}
+              sectionView={activeTab === 'packaging-projects' ? 'saved' : pkgSection}
+              onChangeSectionView={(v) => {
+                setPkgSection(v);
+                if (activeTab === 'packaging-projects' && v !== 'saved') {
+                  setActiveTab('packaging');
+                }
+              }}
             />
           )}
           {activeTab === 'storage' && (
-            <StorageManager projects={projects} onOpenProject={onOpenProject} onShowToast={onShowToast} />
+            <StorageManager
+              projects={projects}
+              onOpenProject={onOpenProject}
+              onShowToast={onShowToast}
+            />
           )}
 
-          {/* Create New Design (Graphic Designs Section) */}
+          {/* Create New Design (Graphic Designs Studio: القوالب + المقاسات + المحفوظات) */}
           {activeTab === 'create' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              {/* Ready Graphic Templates Showcase */}
-              <section
-                className="dc-graphic-showcase"
-                data-testid="graphic-ready-templates"
-                aria-label={lang === 'ar' ? 'قوالب تصميم جرافيك جاهزة' : 'Ready graphic templates'}
+              {/* Dedicated Section Filter Bar inside Graphic Design Studio */}
+              <div
+                className="dc-section-pills"
+                data-testid="graphic-section-pills"
+                role="group"
+                aria-label={lang === 'ar' ? 'أقسام استوديو التصميم' : 'Design studio sections'}
               >
-                <div className="dc-graphic-showcase__head">
-                  <div>
-                    <h3>
-                      <LayoutTemplate className="w-4 h-4" />
-                      <span>
+                <button
+                  type="button"
+                  aria-pressed={designSection === 'all'}
+                  data-testid="graphic-pill-all"
+                  onClick={() => setDesignSection('all')}
+                >
+                  <LayoutGrid size={14} />
+                  <span>{lang === 'ar' ? 'كل أقسام التصميم' : 'All Design Sections'}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={designSection === 'templates'}
+                  data-testid="graphic-pill-templates"
+                  onClick={() => setDesignSection('templates')}
+                >
+                  <LayoutTemplate size={14} />
+                  <span>
+                    {lang === 'ar'
+                      ? `القوالب الجاهزة (${TEMPLATE_CATALOG.length})`
+                      : `Templates (${TEMPLATE_CATALOG.length})`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={designSection === 'dimensions'}
+                  data-testid="graphic-pill-dimensions"
+                  onClick={() => setDesignSection('dimensions')}
+                >
+                  <Ruler size={14} />
+                  <span>
+                    {lang === 'ar' ? 'المقاسات والإنشاء (px / سم)' : 'Dimensions (px / cm)'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={designSection === 'saved'}
+                  data-testid="graphic-pill-saved"
+                  onClick={() => setDesignSection('saved')}
+                >
+                  <FolderOpen size={14} />
+                  <span>
+                    {lang === 'ar'
+                      ? `المحفوظات (${designProjects.length})`
+                      : `Saved Designs (${designProjects.length})`}
+                  </span>
+                </button>
+              </div>
+
+              {/* SECTION 1: Ready Graphic Templates Showcase */}
+              {(designSection === 'all' || designSection === 'templates') && (
+                <section
+                  className="dc-graphic-showcase"
+                  data-testid="graphic-ready-templates"
+                  aria-label={lang === 'ar' ? 'قوالب استوديو التصميم الجاهزة' : 'Ready graphic templates'}
+                >
+                  <div className="dc-graphic-showcase__head">
+                    <div>
+                      <h3>
+                        <LayoutTemplate className="w-4 h-4" />
+                        <span>
+                          {lang === 'ar'
+                            ? 'قوالب استوديو التصميم الجاهزة'
+                            : 'Design Studio Ready Templates'}
+                        </span>
+                      </h3>
+                      <p>
                         {lang === 'ar'
-                          ? 'قوالب التصميمات الجرافيكية الجاهزة'
-                          : 'Ready-to-Edit Graphic Templates'}
-                      </span>
-                    </h3>
-                    <p>
-                      {lang === 'ar'
-                        ? 'ابدأ بقالب متكامل للسوشيال ميديا أو الإعلانات أو المطبوعات وعدّل كل طبقة بحرية.'
-                        : 'Launch a complete multi-layer social, ad, or print design in one click.'}
-                    </p>
+                          ? 'قوالب مخصصة لاستوديو التصميم فقط: سوشيال ميديا، عروض، يوتيوب وتطبيقات — عدّل كل طبقة بحرية.'
+                          : 'Multi-layer social, promo, YouTube, and app store templates dedicated to Design Studio.'}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="packaging-search dc-graphic-tpl-search">
+                        <Search size={14} />
+                        <input
+                          type="search"
+                          value={graphicTplSearch}
+                          onChange={(e) => setGraphicTplSearch(e.target.value)}
+                          placeholder={lang === 'ar' ? 'ابحث في قوالب التصميم…' : 'Search design templates…'}
+                          aria-label={lang === 'ar' ? 'بحث في قوالب التصميم' : 'Search design templates'}
+                        />
+                      </label>
+                      <div className="dc-graphic-showcase__pills" role="group">
+                        {(
+                          [
+                            ['all', 'الكل', 'All'],
+                            ['social', 'سوشيال ميديا', 'Social'],
+                            ['promo', 'عروض وإعلانات', 'Promo & Events'],
+                            ['youtube', 'يوتيوب', 'YouTube'],
+                            ['gp', 'جوجل بلاي', 'Google Play'],
+                          ] as const
+                        ).map(([catId, arLabel, enLabel]) => (
+                          <button
+                            key={catId}
+                            type="button"
+                            aria-pressed={graphicTplCat === catId}
+                            onClick={() => setGraphicTplCat(catId)}
+                          >
+                            {lang === 'ar' ? arLabel : enLabel}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <div className="dc-graphic-showcase__pills" role="group">
-                    {(
-                      [
-                        ['all', 'الكل', 'All'],
-                        ['social', 'سوشيال ميديا', 'Social'],
-                        ['business', 'أعمال وإعلانات', 'Business & Ads'],
-                        ['print', 'مطبوعات وكروت', 'Print & Cards'],
-                      ] as const
-                    ).map(([catId, arLabel, enLabel]) => (
+
+                  <div className="dc-graphic-showcase__grid">
+                    {featuredGraphicTemplates.map((tpl) => (
                       <button
-                        key={catId}
+                        key={tpl.id}
                         type="button"
-                        aria-pressed={graphicTplCat === catId}
-                        onClick={() => setGraphicTplCat(catId)}
+                        data-testid={`graphic-starter-tpl-${tpl.id}`}
+                        className="dc-graphic-tpl-card"
+                        onClick={() => handleLaunchGraphicTemplate(tpl)}
                       >
-                        {lang === 'ar' ? arLabel : enLabel}
+                        <div
+                          data-theme-art
+                          className="dc-graphic-tpl-card__art"
+                          style={{
+                            background: tpl.bg2
+                              ? `linear-gradient(135deg, ${tpl.bg} 0%, ${tpl.bg2} 100%)`
+                              : tpl.bg,
+                          }}
+                        >
+                          <span className="dc-graphic-tpl-card__ratio" dir="ltr">
+                            {tpl.baseW} × {tpl.baseH}
+                          </span>
+                          <strong className="dc-graphic-tpl-card__sample">
+                            {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
+                          </strong>
+                        </div>
+                        <div className="dc-graphic-tpl-card__meta">
+                          <strong>{lang === 'ar' ? tpl.nameAr : tpl.nameEn}</strong>
+                          <small>
+                            {lang === 'ar'
+                              ? tpl.descAr || 'قالب متعدد الطبقات'
+                              : tpl.descEn || 'Layered template'}
+                          </small>
+                        </div>
                       </button>
                     ))}
                   </div>
-                </div>
+                </section>
+              )}
 
-                <div className="dc-graphic-showcase__grid">
-                  {featuredGraphicTemplates.map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      type="button"
-                      data-testid={`graphic-starter-tpl-${tpl.id}`}
-                      className="dc-graphic-tpl-card"
-                      onClick={() => handleLaunchGraphicTemplate(tpl)}
-                    >
-                      <div
-                        data-theme-art
-                        className="dc-graphic-tpl-card__art"
-                        style={{
-                          background: tpl.bg2
-                            ? `linear-gradient(135deg, ${tpl.bg} 0%, ${tpl.bg2} 100%)`
-                            : tpl.bg,
-                        }}
-                      >
-                        <span className="dc-graphic-tpl-card__ratio" dir="ltr">
-                          {tpl.baseW} × {tpl.baseH}
-                        </span>
-                        <strong className="dc-graphic-tpl-card__sample">
-                          {lang === 'ar' ? tpl.nameAr : tpl.nameEn}
-                        </strong>
-                      </div>
-                      <div className="dc-graphic-tpl-card__meta">
-                        <strong>{lang === 'ar' ? tpl.nameAr : tpl.nameEn}</strong>
-                        <small>{lang === 'ar' ? tpl.descAr || 'قالب متعدد الطبقات' : tpl.descEn || 'Layered template'}</small>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
+              {/* SECTION 2: Graphic Dimensions & Custom Creation */}
+              {(designSection === 'all' || designSection === 'dimensions') && (
+                <div className="space-y-6" data-testid="graphic-dimensions-section">
               {/* Custom Dimension Box */}
               <section className="bg-[#141E38] border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl shadow-black/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -1041,18 +1142,33 @@ export const NewDesignScreen: React.FC<NewDesignScreenProps> = ({
                   </div>
                 )}
               </section>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Saved Projects */}
-          {activeTab === 'projects' && (
-            <div className="space-y-4 animate-in fade-in duration-200">
+          {/* SECTION 3: Saved Graphic Projects (المحفوظات — مشاريع استوديو التصميم فقط) */}
+          {(activeTab === 'projects' ||
+            (activeTab === 'create' &&
+              (designSection === 'all' || designSection === 'saved'))) && (
+            <div
+              className="space-y-4 animate-in fade-in duration-200"
+              data-testid="graphic-saved-projects"
+            >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#141E38] p-4 rounded-2xl border border-slate-700/70">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-sky-400" />
                   <div>
-                    <h3 className="text-sm font-bold text-white">{t.savedProjects} ({designProjects.length})</h3>
-                    <p className="text-xs text-slate-400">{t.savedProjectsDesc}</p>
+                    <h3 className="text-sm font-bold text-white">
+                      {lang === 'ar'
+                        ? `المحفوظات — مشاريع استوديو التصميم (${designProjects.length})`
+                        : `${t.savedProjects} — Design Studio (${designProjects.length})`}
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      {lang === 'ar'
+                        ? 'محفوظات التصميمات الجرافيكية منفصلة تماماً عن محفوظات العلب.'
+                        : t.savedProjectsDesc}
+                    </p>
                   </div>
                 </div>
 
