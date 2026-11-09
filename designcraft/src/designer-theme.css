@@ -1701,8 +1701,313 @@ html[data-dc-theme='light'] .dc-carton-status-toast {
   color: #19563f;
 }
 
+/* ============================================================================
+   Two-Button Studio Mode Switcher & Per-Studio Section Pills (Dark + Daylight)
+   ============================================================================ */
+.dc-two-studio-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 6px;
+  border-radius: 20px;
+  background: #141615;
+  border: 1px solid #2b3230;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+
+.dc-two-studio-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 15px;
+  border: 1px solid transparent;
+  background: #1b1e1d;
+  color: #b7c2bd;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.16s ease,
+    box-shadow 0.2s ease;
+}
+
+.dc-two-studio-btn:hover {
+  background: #212725;
+  border-color: #384440;
+  color: #f1f6f3;
+}
+
+.dc-two-studio-btn__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #9fb4aa;
+  transition: all 0.2s ease;
+}
+
+.dc-two-studio-btn__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dc-two-studio-btn__copy strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: inherit;
+}
+
+.dc-two-studio-btn__copy small {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8b9993;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dc-two-studio-btn--design.is-active {
+  background: linear-gradient(135deg, #1b362c 0%, #152922 100%);
+  border-color: #438c6f;
+  color: #ebfaf2;
+  box-shadow: 0 8px 22px rgba(36, 121, 94, 0.22);
+}
+
+.dc-two-studio-btn--design.is-active .dc-two-studio-btn__icon {
+  background: #24795e;
+  border-color: #53a987;
+  color: #ffffff;
+}
+
+.dc-two-studio-btn--design.is-active .dc-two-studio-btn__copy small {
+  color: #a8dec4;
+}
+
+.dc-two-studio-btn--packaging.is-active {
+  background: linear-gradient(135deg, #21382d 0%, #172820 100%);
+  border-color: #57a483;
+  color: #effaf3;
+  box-shadow: 0 8px 22px rgba(36, 121, 94, 0.24);
+}
+
+.dc-two-studio-btn--packaging.is-active .dc-two-studio-btn__icon {
+  background: #24795e;
+  border-color: #63b894;
+  color: #ffffff;
+}
+
+.dc-two-studio-btn--packaging.is-active .dc-two-studio-btn__copy small {
+  color: #b5e4cb;
+}
+
+/* Per-Studio Section Filter Pills (All | Templates | Dimensions | Saved) */
+.dc-section-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 15px;
+  background: #171a19;
+  border: 1px solid #2b3330;
+}
+
+.dc-section-pills button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #a5b5ad;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.dc-section-pills button:hover {
+  background: rgba(133, 204, 172, 0.08);
+  color: #e6f2ec;
+}
+
+.dc-section-pills button[aria-pressed='true'] {
+  background: rgba(36, 121, 94, 0.22);
+  border-color: #438c6f;
+  color: #85ccac;
+}
+
+.dc-graphic-tpl-search {
+  min-width: 190px;
+}
+
+.packaging-project-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.packaging-project-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--studio-ui-line, #3b4b43);
+  background: transparent;
+  color: var(--studio-ui-muted, #9ab2a4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.packaging-project-action:hover {
+  color: #85ccac;
+  border-color: #438c6f;
+  background: rgba(36, 121, 94, 0.16);
+}
+
+/* Daylight Overrides for Two-Button Switcher & Section Pills */
+html[data-dc-theme='light'] .dc-two-studio-bar {
+  background: #eef4ef;
+  border-color: #c8d7cb;
+  box-shadow: 0 8px 22px rgba(27, 54, 41, 0.06);
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn {
+  background: #f8fbf8;
+  border-color: #d6e2d8;
+  color: #2c473a;
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn:hover {
+  background: #ffffff;
+  border-color: #9ec0ae;
+  color: #163024;
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn__icon {
+  background: #e7f0e9;
+  border-color: #c7d9cc;
+  color: #24684f;
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn__copy small {
+  color: #546f61;
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn--design.is-active,
+html[data-dc-theme='light'] .dc-two-studio-btn--packaging.is-active {
+  background: #ffffff;
+  border-color: #24795e;
+  color: #143325;
+  box-shadow: 0 8px 20px rgba(36, 121, 94, 0.14);
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn--design.is-active .dc-two-studio-btn__icon,
+html[data-dc-theme='light'] .dc-two-studio-btn--packaging.is-active .dc-two-studio-btn__icon {
+  background: #24795e;
+  border-color: #24795e;
+  color: #ffffff;
+}
+
+html[data-dc-theme='light'] .dc-two-studio-btn--design.is-active .dc-two-studio-btn__copy small,
+html[data-dc-theme='light'] .dc-two-studio-btn--packaging.is-active .dc-two-studio-btn__copy small {
+  color: #1f6a50;
+}
+
+html[data-dc-theme='light'] .dc-section-pills {
+  background: #f2f7f3;
+  border-color: #cbdace;
+}
+
+html[data-dc-theme='light'] .dc-section-pills button {
+  color: #355244;
+}
+
+html[data-dc-theme='light'] .dc-section-pills button:hover {
+  background: #e4efe8;
+  color: #183628;
+}
+
+html[data-dc-theme='light'] .dc-section-pills button[aria-pressed='true'] {
+  background: #24795e;
+  border-color: #24795e;
+  color: #ffffff;
+}
+
+html[data-dc-theme='light'] .dc-quick-box-jump {
+  background: #e3f2ea;
+  border-color: #9ec8b3;
+  color: #185b44;
+}
+
+html[data-dc-theme='light'] .dc-quick-box-jump:hover {
+  background: #d3ebdf;
+  color: #124835;
+}
+
+html[data-dc-theme='light'] .packaging-project-action {
+  background: #f5f9f6;
+  border-color: #c8d8cb;
+  color: #2e4d3e;
+}
+
+html[data-dc-theme='light'] .packaging-project-action:hover {
+  background: #e2f1e8;
+  border-color: #24795e;
+  color: #1b6048;
+}
+
 /* Responsive Mobile Adjustments (390px) */
 @media (max-width: 760px) {
+  .dc-two-studio-bar {
+    gap: 7px;
+    padding: 5px;
+  }
+  .dc-two-studio-btn {
+    padding: 10px 10px;
+    gap: 8px;
+  }
+  .dc-two-studio-btn__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+  .dc-two-studio-btn__copy strong {
+    font-size: 12.5px;
+  }
+  .dc-two-studio-btn__copy small {
+    font-size: 9.5px;
+  }
+  .dc-section-pills {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+  }
+  .dc-section-pills button {
+    justify-content: center;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+  .dc-graphic-tpl-search {
+    min-width: 0;
+    width: 100%;
+  }
   .dc-studio-split-switcher {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FolderOpen, Search, Trash2 } from "lucide-react";
+import { Copy, FolderOpen, Search, Trash2 } from "lucide-react";
 import type { ProjectItem } from "../types";
 import { useDcLang } from "../hooks/useDcLang";
 import { CardPhoto } from "./CardPhoto";
@@ -9,11 +9,13 @@ export function ProjectShelf({
   projects,
   unit = "cm",
   onOpen,
+  onDuplicate,
   onDelete,
 }: {
   projects: ProjectItem[];
   unit?: PackagingUnit;
   onOpen: (p: ProjectItem) => void;
+  onDuplicate?: (p: ProjectItem, e: React.MouseEvent) => void;
   onDelete?: (id: string, e: React.MouseEvent) => void;
 }) {
   const { lang } = useDcLang(),
@@ -29,7 +31,7 @@ export function ProjectShelf({
       <header>
         <h2>
           <FolderOpen size={17} />
-          {ar ? "مشاريع هذا القسم" : "Projects in this section"}{" "}
+          {ar ? "المحفوظات — مشاريع العلب" : "Saved Box Projects"}{" "}
           <span>{projects.length}</span>
         </h2>
         <label className="packaging-search">
@@ -37,7 +39,7 @@ export function ProjectShelf({
           <input
             aria-label={ar ? "بحث في مشاريع القسم" : "Search section projects"}
             type="search"
-            placeholder={ar ? "ابحث في مشاريعك…" : "Find your project…"}
+            placeholder={ar ? "ابحث في مشاريع العلب…" : "Find your box project…"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -91,16 +93,30 @@ export function ProjectShelf({
                     )}
                   </time>
                 </div>
-                {onDelete && (
-                  <button
-                    type="button"
-                    className="packaging-project-delete"
-                    aria-label={(ar ? "حذف " : "Delete ") + p.title}
-                    onClick={(e) => onDelete(p.id, e)}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+                <div className="packaging-project-actions">
+                  {onDuplicate && (
+                    <button
+                      type="button"
+                      className="packaging-project-action"
+                      title={ar ? "نسخ المشروع" : "Duplicate project"}
+                      aria-label={(ar ? "نسخ " : "Duplicate ") + p.title}
+                      onClick={(e) => onDuplicate(p, e)}
+                    >
+                      <Copy size={14} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className="packaging-project-delete"
+                      title={ar ? "حذف المشروع" : "Delete project"}
+                      aria-label={(ar ? "حذف " : "Delete ") + p.title}
+                      onClick={(e) => onDelete(p.id, e)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             </article>
           ))}
@@ -108,8 +124,8 @@ export function ProjectShelf({
       ) : (
         <div className="packaging-projects-empty">
           {ar
-            ? "مشاريعك في هذا القسم هتظهر هنا."
-            : "Your projects in this section will appear here."}
+            ? "لا توجد علب محفوظة بعد في هذا القسم — اختر قالب علبة أو أنشئ مقاسًا مخصصًا وستظهر محفوظاتك هنا بشكل منفصل."
+            : "No saved box projects in this section yet — pick a box template or enter custom dimensions to start."}
         </div>
       )}
     </section>
