@@ -305,7 +305,7 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
       onDrop={e => { e.preventDefault(); setDragOver(false); const f = Array.from(e.dataTransfer.files || []); if (f.length) void importFiles(f); }}
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 sm:w-8 sm:h-8">
           <FileText size={14} className="text-white" />
         </div>
         <div className="flex-1">
@@ -327,15 +327,15 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
         ].map(tab => (
           <button key={tab.id} onClick={() => setMobileTab(tab.id as any)}
             className={cn("flex-1 py-2.5 font-mono text-[7px] uppercase tracking-widest transition-colors",
-              mobileTab === tab.id ? "text-red-500 bg-[#1A1D23]" : "text-gray-500")}>
+              mobileTab === tab.id ? "text-emerald-500 bg-[#1A1D23]" : "text-gray-500")}>
             {tab.label}
           </button>
         ))}
       </div>
 
       {dragOver && (
-        <div className="absolute inset-0 z-50 bg-red-600/10 backdrop-blur-sm border-2 border-dashed border-red-500 m-3 rounded-2xl flex items-center justify-center pointer-events-none">
-          <p className="text-red-400 font-bold text-sm">{lang === 'ar' ? 'أفلت الصور هنا 📥' : 'Drop images here 📥'}</p>
+        <div className="absolute inset-0 z-50 bg-emerald-600/10 backdrop-blur-sm border-2 border-dashed border-emerald-500 m-3 rounded-2xl flex items-center justify-center pointer-events-none">
+          <p className="text-emerald-400 font-bold text-sm">{lang === 'ar' ? 'أفلت الصور هنا 📥' : 'Drop images here 📥'}</p>
         </div>
       )}
 
@@ -376,12 +376,12 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
           {images.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-6">
               <div className="text-center max-w-xs">
-                <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-                  <FileText size={26} className="text-red-500/60" />
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                  <FileText size={26} className="text-emerald-500/60" />
                 </div>
                 <p className="text-[11px] font-bold text-gray-300 mb-1">{lang === 'ar' ? 'اسحب الصور هنا' : 'Drop images here'}</p>
                 <p className="text-[9px] font-mono text-gray-600 leading-relaxed">{lang === 'ar' ? 'أو الصق من الحافظة (Ctrl+V) — يمكنك إعادة الترتيب بالسحب' : 'Or paste from clipboard (Ctrl+V) — drag to reorder'}</p>
-                <button onClick={() => fileInputRef.current?.click()} className="mt-4 px-5 py-2.5 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 text-[10px] font-mono font-bold hover:bg-red-600/30 transition-all">
+                <button onClick={() => fileInputRef.current?.click()} className="mt-4 px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-[10px] font-mono font-bold hover:bg-emerald-500 transition-all">
                   {lang === 'ar' ? '📁 اختر صور' : '📁 Browse images'}
                 </button>
               </div>
@@ -391,7 +391,7 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
               <div className="flex items-center gap-2 mb-3 text-[9px] font-mono text-gray-500 flex-wrap">
                 <span>{images.length} {lang === 'ar' ? 'صورة' : 'images'}</span>
                 <span className="text-gray-700">|</span>
-                <span className="text-red-400/70">{settings.pageSize.toUpperCase()} · {settings.imagesPerPage}/{lang === 'ar' ? 'صفحة' : 'page'} · {settings.fitMode}</span>
+                <span className="text-emerald-400/70">{settings.pageSize.toUpperCase()} · {settings.imagesPerPage}/{lang === 'ar' ? 'صفحة' : 'page'} · {settings.fitMode}</span>
                 <span className="text-gray-700">|</span>
                 <span className="text-gray-600">{lang === 'ar' ? 'اسحب لإعادة الترتيب' : 'drag to reorder'}</span>
               </div>

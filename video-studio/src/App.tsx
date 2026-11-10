@@ -22,11 +22,31 @@ export default function App() {
   const [navLang,setNavLang]=useState<'ar'|'en'>(()=>{try{return localStorage.getItem('unitool-lang')==='en'?'en':'ar';}catch{return 'ar';}});
   const state = useProject();
   const [page, setPage] = useState<"home" | "editor">(() =>
-    location.hash === "#elements" ? "editor" : "home",
+    location.hash === "#elements" || location.hash === "#editor" ? "editor" : "home",
   );
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    if (page === "editor" && location.hash !== "#elements" && location.hash !== "#editor") {
+      window.history.pushState({ vsView: "editor" }, "", "#editor");
+    } else if (page === "home" && location.hash === "#editor") {
+      window.history.pushState({ vsView: "home" }, "", location.pathname);
+    }
   }, [page]);
+  useEffect(() => {
+    const onPop = () => {
+      if (location.hash === "#elements" || location.hash === "#editor") {
+        setPage("editor");
+      } else {
+        setPage("home");
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("hashchange", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("hashchange", onPop);
+    };
+  }, []);
   const [startTab, setStartTab] = useState<Tab>(() =>
     location.hash === "#elements" ? "elements" : "media",
   );

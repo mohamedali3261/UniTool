@@ -17,8 +17,8 @@ export function UploadPanel({ lang, fileCount, quality, dpi, error, onFiles, onQ
   return (
     <>
       <div className="p-3 border-b border-[#2D3139] sm:p-4">
-        <label className={cn("flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-[#2D3139] rounded-lg cursor-pointer hover:border-red-500/50 transition-colors bg-[#0F1115]", fileCount > 0 ? "border-red-500/30" : "")}>
-          <Upload size={20} className={fileCount > 0 ? "text-red-500" : "text-gray-500"} />
+        <label className={cn("flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-[#2D3139] rounded-lg cursor-pointer hover:border-emerald-500/50 transition-colors bg-[#0F1115]", fileCount > 0 ? "border-emerald-500/30" : "")}>
+          <Upload size={20} className={fileCount > 0 ? "text-emerald-500" : "text-gray-500"} />
           <span className="text-[9px] font-mono text-gray-400 text-center leading-relaxed">{fileCount > 0 ? (lang === 'ar' ? 'إضافة ملفات PDF' : 'Add more PDFs') : (lang === 'ar' ? 'اختر ملفات PDF' : 'Select PDF files')}</span>
           <input type="file" accept=".pdf,application/pdf" multiple className="hidden" onChange={onFiles} />
         </label>
@@ -35,7 +35,7 @@ export function UploadPanel({ lang, fileCount, quality, dpi, error, onFiles, onQ
         <div className="space-y-4">
           <div>
             <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px]">JPEG: {quality}%</label>
-            <input type="range" min="10" max="95" step="1" value={quality} onChange={e => onQualityChange(parseInt(e.target.value))} className="w-full mt-1.5 accent-red-500" />
+            <input type="range" min="10" max="95" step="1" value={quality} onChange={e => onQualityChange(parseInt(e.target.value))} className="w-full mt-1.5 accent-emerald-500" />
             <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
               <span>{lang === 'ar' ? 'حجم صغير' : 'Small size'}</span>
               <span>{lang === 'ar' ? 'جودة عالية' : 'High quality'}</span>
@@ -43,7 +43,7 @@ export function UploadPanel({ lang, fileCount, quality, dpi, error, onFiles, onQ
           </div>
           <div>
             <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px]">DPI: {dpi}</label>
-            <input type="range" min="72" max="300" step="10" value={dpi} onChange={e => onDpiChange(parseInt(e.target.value))} className="w-full mt-1.5 accent-red-500" />
+            <input type="range" min="72" max="300" step="10" value={dpi} onChange={e => onDpiChange(parseInt(e.target.value))} className="w-full mt-1.5 accent-emerald-500" />
             <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
               <span>{lang === 'ar' ? 'منخفض' : 'Low'}</span>
               <span>{lang === 'ar' ? 'عالي' : 'High'}</span>

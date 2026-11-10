@@ -65,7 +65,7 @@ export function ToolsMenu({ lang, labels, children }: ToolsMenuProps) {
       <ChevronDown
         className="hidden md:block"
         style={{
-          width: 12, height: 12, marginInlineStart: -4, color: open ? '#a5b4fc' : '#5d6070',
+          width: 12, height: 12, marginInlineStart: -4, color: open ? '#24795e' : 'var(--site-muted, #5d6070)',
           transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'none',
         }}
       />
@@ -78,9 +78,9 @@ export function ToolsMenu({ lang, labels, children }: ToolsMenuProps) {
             position: 'fixed', top: 54, left: '50%', transform: 'translateX(-50%)',
             width: 'min(720px, calc(100vw - 24px))', zIndex: 90,
             direction: 'ltr',
-            background: 'rgba(10,14,25,.97)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-            border: '1px solid #1e2028', borderRadius: 18,
-            boxShadow: '0 24px 60px -12px rgba(0,0,0,.65), 0 0 0 1px rgba(99,102,241,.07)',
+            background: 'var(--site-panel, #171717)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+            border: '1px solid var(--site-line, #383838)', borderRadius: 18,
+            boxShadow: '0 24px 60px -12px rgba(0,0,0,.35), 0 0 0 1px rgba(36,121,94,.14)',
             overflow: 'hidden', fontFamily: 'inherit',
           }}
         >
@@ -89,21 +89,21 @@ export function ToolsMenu({ lang, labels, children }: ToolsMenuProps) {
             dir={dir}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 16px', borderBottom: '1px solid #1e2028',
-              background: 'rgba(99,102,241,.05)',
+              padding: '12px 16px', borderBottom: '1px solid var(--site-line, #383838)',
+              background: 'rgba(36,121,94,.08)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #4f46e5, #06b6d4)',
+                width: 26, height: 26, borderRadius: 8, background: '#24795e',
               }}>
                 <LayoutGrid style={{ width: 14, height: 14, color: '#fff' }} />
               </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#e4e6eb' }}>{labels.allTools}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--site-ink, #e4e6eb)' }}>{labels.allTools}</span>
               <span style={{
-                fontSize: 10, fontFamily: 'monospace', fontWeight: 700, color: '#818cf8',
-                background: 'rgba(99,102,241,.12)', border: '1px solid rgba(99,102,241,.3)',
+                fontSize: 10, fontFamily: 'monospace', fontWeight: 700, color: '#24795e',
+                background: 'rgba(36,121,94,.14)', border: '1px solid rgba(67,140,111,.35)',
                 padding: '2px 8px', borderRadius: 999,
               }}>
                 {toolsCountLabel(labels.toolsCount, navItems.length)}
@@ -111,9 +111,7 @@ export function ToolsMenu({ lang, labels, children }: ToolsMenuProps) {
             </div>
             <a
               href="/app.html"
-              style={{ fontSize: 12, fontWeight: 600, color: '#818cf8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'color .2s' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#c7d2fe'}
-              onMouseLeave={e => e.currentTarget.style.color = '#818cf8'}
+              style={{ fontSize: 12, fontWeight: 600, color: '#24795e', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'color .2s' }}
             >
               {lang === 'ar' ? 'فتح صفحة الأدوات' : 'Open Tools Page'}
               <ExternalLink style={{ width: 12, height: 12 }} />
@@ -136,21 +134,18 @@ export function ToolsMenu({ lang, labels, children }: ToolsMenuProps) {
                     background: 'transparent', transition: 'background .18s',
                   }}
                   onClick={() => setOpen(false)}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(36,121,94,.1)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <span
-                    className={`bg-gradient-to-br ${item.color}`}
                     style={{
                       flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      width: 30, height: 30, borderRadius: 9,
+                      width: 30, height: 30, borderRadius: 9, background: '#24795e',
                     }}
                   >
                     <Icon style={{ width: 15, height: 15, color: '#fff' }} />
                   </span>
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: '#cbd5e1', lineHeight: 1.35, transition: 'color .18s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#cbd5e1'}
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--site-ink, #cbd5e1)', lineHeight: 1.35 }}
                   >
                     {label}
                   </span>

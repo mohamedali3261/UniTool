@@ -668,7 +668,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               {/* Header */}
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#2D3139]">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                     <Scissors size={12} className="text-white" />
                   </div>
                   <span className="text-[10px] font-bold text-white uppercase tracking-wide">
@@ -682,7 +682,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                     onChange={(e) => setTrimSettings(prev => ({ ...prev, enabled: e.target.checked }))}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-[#2D3139] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-500"></div>
+                  <div className="w-9 h-5 bg-[#2D3139] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
               </div>
 
@@ -695,7 +695,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                       opacity: 0.2
                     }} />
                     <div
-                      className="absolute top-0 bottom-0 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-500/20 border-x-2 border-orange-500"
+                      className="absolute top-0 bottom-0 bg-emerald-500/20 border-x-2 border-emerald-500"
                       style={{
                         left: `${(trimSettings.startTime / videoDuration) * 100}%`,
                         width: `${((trimSettings.endTime - trimSettings.startTime) / videoDuration) * 100}%`
@@ -706,9 +706,9 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                   {/* Time display */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-[9px] font-mono text-gray-500">
-                      <span className="text-green-400 font-bold">{formatTime(trimSettings.startTime)}</span>
+                      <span className="text-emerald-400 font-bold">{formatTime(trimSettings.startTime)}</span>
                       <span className="text-gray-600">→</span>
-                      <span className="text-red-400 font-bold">{formatTime(trimSettings.endTime)}</span>
+                      <span className="text-emerald-400 font-bold">{formatTime(trimSettings.endTime)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[9px] font-mono text-orange-400">
                       <Clock size={10} />
@@ -748,7 +748,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                         const v = parseFloat(e.target.value);
                         setTrimSettings(prev => ({ ...prev, endTime: Math.max(v, prev.startTime + 1) }));
                       }}
-                      className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-400 [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(248,113,113,0.5)] [&::-webkit-slider-thumb]:cursor-pointer"
+                      className="w-full h-1.5 bg-[#2D3139] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:shadow-[0_0_4px_rgba(36,121,94,0.5)] [&::-webkit-slider-thumb]:cursor-pointer"
                     />
                   </div>
 

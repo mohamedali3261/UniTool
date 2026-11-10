@@ -89,8 +89,27 @@ export default function App() {
         : [...alive, project];
     });
     setActiveTabId(project.id);
+    if (window.location.hash !== '#editor') {
+      window.history.pushState({ dcView: 'editor' }, '', '#editor');
+    }
     setCurrentView('editor');
   };
+
+  useEffect(() => {
+    const onPop = () => {
+      if (currentView === 'editor' && window.location.hash !== '#editor') {
+        setCurrentView('dashboard');
+      } else if (currentView === 'dashboard' && window.location.hash === '#editor' && activeTabId) {
+        setCurrentView('editor');
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('hashchange', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('hashchange', onPop);
+    };
+  }, [currentView, activeTabId]);
 
   // 1. Create Design from Preset (Default White Background)
   const handleSelectPreset = async (preset: DimensionPreset) => {

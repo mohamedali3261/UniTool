@@ -279,10 +279,10 @@ export function PdfSigner({ t, lang, onNavigate }: Props) {
         {onNavigate && (
           <button
             onClick={() => onNavigate('pdfTools')}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-red-600/15 border border-white/[0.06] hover:border-red-500/30 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-600/15 border border-white/[0.06] hover:border-emerald-500/30 transition-colors"
           >
-            <FileText size={10} className="text-red-400" />
-            <span className="text-[9px] font-mono text-gray-400 hover:text-red-300">{ar('أدوات PDF', 'PDF Tools')}</span>
+            <FileText size={10} className="text-emerald-400" />
+            <span className="text-[9px] font-mono text-gray-400 hover:text-emerald-300">{ar('أدوات PDF', 'PDF Tools')}</span>
           </button>
         )}
       </div>

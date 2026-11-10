@@ -23,16 +23,16 @@ interface Props {
 
 const ACCENTS = {
   orange: {
-    iconBg: 'bg-orange-500/15',
-    icon: 'text-orange-400',
-    handle: 'border-orange-500',
-    button: 'from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-orange-500/20',
+    iconBg: 'bg-emerald-500/15',
+    icon: 'text-emerald-400',
+    handle: 'border-emerald-500',
+    button: 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20',
   },
   red: {
-    iconBg: 'bg-red-500/15',
-    icon: 'text-red-400',
-    handle: 'border-red-500',
-    button: 'from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-red-500/20',
+    iconBg: 'bg-emerald-500/15',
+    icon: 'text-emerald-400',
+    handle: 'border-emerald-500',
+    button: 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20',
   },
 } as const;
 

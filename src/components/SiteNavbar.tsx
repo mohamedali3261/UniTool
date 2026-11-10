@@ -1,6 +1,12 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Menu, X, Globe, ArrowUpLeft, ChevronDown } from "lucide-react";
+import { Menu, X, Globe, ArrowUpLeft, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { navbarSections, isCurrentSitePage } from "./navbarSections";
+import { DownloadPopupModal } from "./DownloadPopupModal";
+import {
+  recordPageVisit,
+  stepBackInSession,
+  syncStackOnPopState,
+} from "../utils/navigationHistory";
 import "./site-navbar.css";
 export function SiteNavbar({
   lang: controlled,
@@ -8,12 +14,14 @@ export function SiteNavbar({
   home = false,
   fixed = false,
   actions,
+  onBack,
 }: {
   lang?: "ar" | "en";
   onToggleLang?: () => void;
   home?: boolean;
   fixed?: boolean;
   actions?: ReactNode;
+  onBack?: () => void;
 }) {
   const [local, setLocal] = useState<"ar" | "en">(() => {
     try {
@@ -95,6 +103,25 @@ export function SiteNavbar({
       </div>
     </section>
   ));
+  useEffect(() => {
+    recordPageVisit();
+    const onPop = () => syncStackOnPopState();
+    const onHash = () => recordPageVisit();
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("hashchange", onHash);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("hashchange", onHash);
+    };
+  }, []);
+  const handleSiteBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    stepBackInSession("/index.html");
+  };
+  const BackIcon = ar ? ArrowRight : ArrowLeft;
   const section = (hash: string) => (home ? hash : "/index.html" + hash);
   return (
     <header
@@ -104,13 +131,28 @@ export function SiteNavbar({
       dir={ar ? "rtl" : "ltr"}
     >
       <div className="ut-nav-inner">
-        <a
-          className="home-brand ut-nav-brand"
-          href="/index.html"
-          aria-label="UniTool"
-        >
-          <img src="/UniTool_logo.png" alt="UniTool" width="128" height="40" />
-        </a>
+        <div className="ut-nav-brand-wrap">
+          {!home && (
+            <button
+              type="button"
+              data-testid="site-back-button"
+              className="ut-nav-back"
+              onClick={handleSiteBack}
+              aria-label={ar ? "رجوع للصفحة السابقة" : "Back to previous page"}
+              title={ar ? "رجوع للصفحة السابقة" : "Back to previous page"}
+            >
+              <BackIcon size={15} aria-hidden="true" />
+              <span>{ar ? "رجوع" : "Back"}</span>
+            </button>
+          )}
+          <a
+            className="home-brand ut-nav-brand"
+            href="/index.html"
+            aria-label="UniTool"
+          >
+            <img src="/UniTool_logo.png" alt="UniTool" width="128" height="40" />
+          </a>
+        </div>
         <nav
           className="ut-nav-desktop desktop-home-nav"
           aria-label={ar ? "التنقل الرئيسي" : "Main navigation"}
@@ -173,6 +215,7 @@ export function SiteNavbar({
           {sections(true)}
         </nav>
       )}
+      <DownloadPopupModal lang={lang} />
     </header>
   );
 }

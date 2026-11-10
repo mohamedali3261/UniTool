@@ -201,13 +201,19 @@ export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const onHash = () => setRoute(readHashRoute());
     window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('popstate', onHash);
+    return () => {
+      window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('popstate', onHash);
+    };
   }, []);
 
   const navigate = useCallback((next: StudioRoute) => {
     setRoute(next);
     setOpenPopover(null);
-    window.history.replaceState(null, '', `#${next}`);
+    if (window.location.hash !== `#${next}`) {
+      window.history.pushState({ tbRoute: next }, '', `#${next}`);
+    }
   }, []);
 
   const toggleLang = useCallback(() => {
@@ -387,7 +393,9 @@ export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setFuture([]);
     setSelectedId(null);
     setRoute('board');
-    window.history.replaceState(null, '', '#board');
+    if (window.location.hash !== '#board') {
+      window.history.pushState({ tbRoute: 'board' }, '', '#board');
+    }
   }, []);
 
   const createNewLesson = useCallback(

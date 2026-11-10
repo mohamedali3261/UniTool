@@ -25,8 +25,8 @@ export function UploadPanel({
 
   return (
     <div className="p-3 border-b border-[#2D3139] sm:p-4">
-      <label className={cn("flex flex-col items-center justify-center gap-2 p-5 border-2 border-dashed rounded-lg cursor-pointer transition-colors bg-[#0F1115]", dragOver ? "border-red-500 bg-red-500/5" : imageCount > 0 ? "border-red-500/30 hover:border-red-500/60" : "border-[#2D3139] hover:border-red-500/50")}>
-        <ImagePlus size={22} className={imageCount > 0 ? "text-red-500" : "text-gray-500"} />
+      <label className={cn("flex flex-col items-center justify-center gap-2 p-5 border-2 border-dashed rounded-lg cursor-pointer transition-colors bg-[#0F1115]", dragOver ? "border-emerald-500 bg-emerald-500/5" : imageCount > 0 ? "border-emerald-500/30 hover:border-emerald-500/60" : "border-[#2D3139] hover:border-emerald-500/50")}>
+        <ImagePlus size={22} className={imageCount > 0 ? "text-emerald-500" : "text-gray-500"} />
         <span className="text-[10px] font-mono text-gray-300 text-center leading-relaxed font-bold">
           {imageCount > 0 ? (lang === 'ar' ? 'إضافة المزيد (سحب / لصق / اختيار)' : 'Add more (drop / paste / browse)') : (lang === 'ar' ? 'اختر صور أو اسحبها هنا' : 'Select or drop images')}
         </span>
