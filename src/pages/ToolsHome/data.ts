@@ -43,15 +43,15 @@ export const toolCategories: ToolCategory[] = [
     taglineAr: 'تحويل، دمج، تقسيم، ضغط وحماية ملفات PDF',
     taglineEn: 'Convert, merge, split, compress and protect PDF files',
     icon: FileText,
-    accent: 'from-red-500 to-rose-600',
-    soft: 'bg-red-500/10 text-red-300 border-red-500/20',
+    accent: 'from-emerald-500 to-teal-600',
+    soft: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
     tools: [
       {
         id: 'imageToPdf', icon: Image,
         titleAr: 'صور → PDF', titleEn: 'Images → PDF',
         descAr: 'حوّل مجموعة صور لملف PDF واحد مع ترتيب وتدوير وقص كل صورة',
         descEn: 'Turn multiple images into one PDF with reorder, rotate and crop',
-        gradient: 'from-red-500 to-rose-600', border: 'border-red-500/25 hover:border-red-400/50', glow: 'group-hover:shadow-red-500/20',
+        gradient: 'from-emerald-500 to-teal-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
         badgeAr: 'الأكثر استخدامًا', badgeEn: 'Popular',
       },
       {

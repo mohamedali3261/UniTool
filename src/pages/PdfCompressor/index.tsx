@@ -177,7 +177,7 @@ export function PdfCompressor({ lang }: Props) {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 sm:w-8 sm:h-8">
           <FileType2 size={14} className="text-white" />
         </div>
         <div>
@@ -193,7 +193,7 @@ export function PdfCompressor({ lang }: Props) {
           { id: 'export', label: lang === 'ar' ? 'تصدير' : 'Export', icon: FileDown },
         ].map(tab => (
           <button key={tab.id} onClick={() => setMobileTab(tab.id as any)}
-            className={cn("flex-1 py-2.5 flex flex-col items-center gap-1 font-mono text-[7px] uppercase tracking-widest transition-colors", mobileTab === tab.id ? "text-red-500 bg-[#1A1D23]" : "text-gray-500")}>
+            className={cn("flex-1 py-2.5 flex flex-col items-center gap-1 font-mono text-[7px] uppercase tracking-widest transition-colors", mobileTab === tab.id ? "text-emerald-500 bg-[#1A1D23]" : "text-gray-500")}>
             <tab.icon size={12} />{tab.label}
           </button>
         ))}
@@ -247,7 +247,7 @@ export function PdfCompressor({ lang }: Props) {
                 <FileType2 size={12} />
                 <span>{files.length} {lang === 'ar' ? 'ملف' : 'file'}{files.length !== 1 ? 's' : ''}</span>
                 <span className="text-gray-700 mx-1">|</span>
-                <span className="text-red-400/70">JPEG {quality}% @ {dpi}DPI</span>
+                <span className="text-emerald-400/70">JPEG {quality}% @ {dpi}DPI</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {files.map(f => (

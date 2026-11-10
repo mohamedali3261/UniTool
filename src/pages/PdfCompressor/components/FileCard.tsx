@@ -17,9 +17,9 @@ export function FileCard({ file, selected, lang, onToggle, onRemove, onDownload 
 
   return (
     <div onClick={onToggle}
-      className={cn("relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all group bg-[#1A1D23]", selected ? "border-red-500 shadow-lg shadow-red-500/20" : "border-[#2D3139] hover:border-gray-500")}>
+      className={cn("relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all group bg-[#1A1D23]", selected ? "border-emerald-500 shadow-lg shadow-emerald-500/20" : "border-[#2D3139] hover:border-gray-500")}>
       <div className="h-28 bg-gradient-to-br from-[#1A1D23] to-[#0A0C0F] flex items-center justify-center">
-        <FileText size={36} className={selected ? "text-red-400" : "text-gray-600"} />
+        <FileText size={36} className={selected ? "text-emerald-400" : "text-gray-600"} />
       </div>
       <div className="bg-[#1A1D23] p-2">
         <p className="text-[8px] font-mono text-white truncate leading-tight">{file.name}</p>
@@ -27,20 +27,20 @@ export function FileCard({ file, selected, lang, onToggle, onRemove, onDownload 
           <span>{formatBytes(file.originalSize)}</span>
           {file.compressedSize > 0 && (
             <>
-              <ArrowDownUp size={8} className="text-red-500" />
-              <span className="text-red-400">{formatBytes(file.compressedSize)}</span>
-              {!file.keptOriginal && <span className="text-red-500 font-bold">-{savings}%</span>}
+              <ArrowDownUp size={8} className="text-emerald-500" />
+              <span className="text-emerald-400">{formatBytes(file.compressedSize)}</span>
+              {!file.keptOriginal && <span className="text-emerald-500 font-bold">-{savings}%</span>}
             </>
           )}
         </div>
         <div className="text-[6px] font-mono text-gray-600 mt-0.5">{file.pages} {lang === 'ar' ? 'صفحة' : 'page'}{file.pages !== 1 ? 's' : ''}</div>
-        {file.keptOriginal && <p className="text-[6px] font-mono text-red-400 mt-0.5">{lang === 'ar' ? 'تم الاحتفاظ بالأصلي' : 'Original kept'}</p>}
+        {file.keptOriginal && <p className="text-[6px] font-mono text-emerald-400 mt-0.5">{lang === 'ar' ? 'تم الاحتفاظ بالأصلي' : 'Original kept'}</p>}
       </div>
-      <div className={cn("absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all", selected ? "bg-red-500" : "bg-black/40 group-hover:bg-black/60")}>
+      <div className={cn("absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all", selected ? "bg-emerald-500" : "bg-black/40 group-hover:bg-black/60")}>
         {selected ? <CheckSquare size={12} className="text-white" /> : <Square size={12} className="text-white/60" />}
       </div>
       {file.compressedBlob && (
-        <button onClick={e => { e.stopPropagation(); onDownload(); }} className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-black/40 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+        <button onClick={e => { e.stopPropagation(); onDownload(); }} className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-black/40 hover:bg-emerald-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
           <Download size={10} className="text-white" />
         </button>
       )}

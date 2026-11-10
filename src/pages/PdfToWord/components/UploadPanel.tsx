@@ -41,8 +41,8 @@ export function UploadPanel({
       ) : (
         <div className="space-y-3">
           <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-              <FileText size={18} className="text-red-400" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <FileText size={18} className="text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-white font-medium truncate">{pdfFile.name}</p>

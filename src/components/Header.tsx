@@ -6,18 +6,26 @@ export function Header({
   theme,
   onToggleTheme,
   onToggleLang,
+  onBack,
 }: {
   lang: "ar" | "en";
   theme?: ToolsTheme;
   onToggleTheme?: () => void;
   onToggleLang: () => void;
   onOpenMobileMenu: () => void;
+  onBack?: () => void;
 }) {
   return (
-    <SiteNavbar fixed lang={lang} onToggleLang={onToggleLang}
-      actions={theme && onToggleTheme
-        ? <ToolsThemeToggle theme={theme} onToggle={onToggleTheme} lang={lang} />
-        : undefined}
+    <SiteNavbar
+      fixed
+      lang={lang}
+      onToggleLang={onToggleLang}
+      onBack={onBack}
+      actions={
+        theme && onToggleTheme ? (
+          <ToolsThemeToggle theme={theme} onToggle={onToggleTheme} lang={lang} />
+        ) : undefined
+      }
     />
   );
 }
