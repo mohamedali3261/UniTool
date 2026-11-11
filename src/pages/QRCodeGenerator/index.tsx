@@ -23,6 +23,7 @@ import {
   ScanQrCode,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { downloadBlob, downloadDataUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -244,12 +245,7 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
       const merged = createCanvasWithCredit();
       if (!merged) return;
       const url = merged.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `qrcode_${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadDataUrl(url, `qrcode_${Date.now()}.png`);
     } else {
       const value = getQRValue();
       qrSvg(value, qrSize, fgColor, bgColor, logo, logoSize, {
@@ -257,14 +253,10 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
         background: logoBackground ? logoBackgroundColor : null,
       })
         .then((finalSvg) => {
-          const url = URL.createObjectURL(
-              new Blob([finalSvg], { type: "image/svg+xml" }),
-            ),
-            a = document.createElement("a");
-          a.href = url;
-          a.download = `qrcode_${Date.now()}.svg`;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          downloadBlob(
+            new Blob([finalSvg], { type: "image/svg+xml" }),
+            `qrcode_${Date.now()}.svg`,
+          );
         })
         .catch(() =>
           setRenderError(
@@ -288,11 +280,8 @@ export function QRCodeGenerator({ t, lang, onNavigate }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      const url = merged.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `qrcode_${Date.now()}.png`;
-      a.click();
+      // Clipboard images are unsupported in Safari — save the file instead.
+      downloadDataUrl(merged.toDataURL("image/png"), `qrcode_${Date.now()}.png`);
     }
   };
 

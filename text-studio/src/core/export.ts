@@ -1,16 +1,9 @@
 import { type Design, serializeProject } from "./model";
 import { embeddedFontCss } from "./fonts";
 import { canvasMeasure, svgDesign } from "./render";
-export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+import { downloadBlob } from '../../../src/utils/download';
+
+export const download = downloadBlob;
 export function exportProject(d: Design) {
   download(
     new Blob([serializeProject(d)], { type: "application/json" }),

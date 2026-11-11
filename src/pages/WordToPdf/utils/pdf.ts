@@ -72,13 +72,4 @@ export async function generatePdfBlob(element: HTMLElement): Promise<Blob> {
   return pdf.output('blob');
 }
 
-export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+export { downloadBlob } from '../../../utils/download';

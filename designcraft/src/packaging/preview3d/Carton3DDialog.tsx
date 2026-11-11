@@ -30,6 +30,7 @@ import {
   type View,
 } from "./scene";
 import "./preview3d.css";
+import { downloadDataUrl } from '../../../../src/utils/download';
 
 export type StageBackdrop = "neutral" | "light" | "dark" | "grid";
 
@@ -318,12 +319,7 @@ export default function Carton3DDialog({
   const downloadSnapshot = () => {
     const dataUrl = engine.current?.snapshotDataUrl();
     if (!dataUrl) return;
-    const link = document.createElement("a");
-    link.download = `carton-3d-${size.height}x${size.width}x${size.depth}.png`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    downloadDataUrl(dataUrl, `carton-3d-${size.height}x${size.width}x${size.depth}.png`);
   };
 
   const onDialogKeyDown = (e: React.KeyboardEvent<HTMLDialogElement>) => {

@@ -7,6 +7,7 @@ import {
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { cn } from '../../lib/utils';
 import type { FileHandoff } from '../../types/app';
+import { downloadBlob, downloadDataUrl, downloadText as downloadTextFile } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -1470,12 +1471,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     catch { setError(lang === 'ar' ? 'تعذر النسخ' : 'Copy failed'); }
   };
   const downloadText = (filename: string, text: string) => {
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    downloadTextFile(text, filename);
   };
 
   /* ---------- export ---------- */
@@ -1491,10 +1487,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
     try {
       const canvas = await renderScan(selected, exportScale);
       const url = canvas.toDataURL(imgFormat === 'png' ? 'image/png' : 'image/jpeg', quality);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = safeName(imgFormat === 'png' ? 'png' : 'jpg');
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      downloadDataUrl(url, safeName(imgFormat === 'png' ? 'png' : 'jpg'));
       setSuccess(lang === 'ar' ? 'تم تحميل الصفحة ✅' : 'Page downloaded ✅');
     } catch {
       setError(lang === 'ar' ? 'فشل تحميل الصفحة' : 'Page export failed');
@@ -1543,13 +1536,12 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
       const bytes = await buildPdf();
       setProgress(100);
       const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      if (mode === 'preview') { window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 60000); }
-      else {
-        const a = document.createElement('a');
-        a.href = url; a.download = safeName('pdf');
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      if (mode === 'preview') {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } else {
+        downloadBlob(blob, safeName('pdf'));
       }
       setSuccess(lang === 'ar' ? `تم إنشاء PDF (${pages.length} صفحات)` : `PDF created (${pages.length} pages)`);
     } catch (e) {
@@ -1573,11 +1565,7 @@ export function DocumentScanner({ lang, fileHandoff, onFileHandoffConsumed }: Pr
         setProgress(Math.round((i / pages.length) * 85));
       }
       const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = safeName('zip');
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      downloadBlob(blob, safeName('zip'));
       setSuccess(lang === 'ar' ? 'تم تحميل ZIP ✅' : 'ZIP downloaded ✅');
     } catch (e) {
       console.error(e);

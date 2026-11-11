@@ -3,6 +3,7 @@ import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Tr
 import JSZip from 'jszip';
 import { cn } from '../../lib/utils';
 import type { FileHandoff, FileHandoffTarget } from '../../types/app';
+import { downloadBlob, downloadDataUrl, downloadUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -197,12 +198,12 @@ export function ImageCompressor({ t, lang, fileHandoff, onSendFilesToTool, onFil
     const url = file.keptOriginal ? file.originalDataUrl : file.compressedDataUrl;
     if (!url) return;
     const ext = file.keptOriginal ? 'original' : format;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file.name}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // data: URLs are capped by Safari; downloadDataUrl hands the bytes to a Blob.
+    if (url.startsWith('data:')) {
+      downloadDataUrl(url, `${file.name}.${ext}`);
+      return;
+    }
+    downloadUrl(url, `${file.name}.${ext}`);
   };
 
   const downloadAll = async () => {
@@ -225,14 +226,7 @@ export function ImageCompressor({ t, lang, fileHandoff, onSendFilesToTool, onFil
       zip.file(zipPath, blob);
     }
     const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = rootFolderName ? `${rootFolderName}_compressed.zip` : `compressed_images.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(content, rootFolderName ? `${rootFolderName}_compressed.zip` : `compressed_images.zip`);
   };
 
   const sendSelectedToTool = async (target: FileHandoffTarget) => {

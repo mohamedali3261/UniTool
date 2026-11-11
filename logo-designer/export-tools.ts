@@ -1,15 +1,9 @@
 import { svgString } from "./render";
 import { embeddedFonts } from "./fonts";
 import { bounds, type Project } from "./types";
+import { downloadBlob } from '../src/utils/download';
 export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  downloadBlob(blob, name);
 }
 export function exportSize(p: Project, maxEdge: number) {
   const scale = maxEdge / Math.max(p.width, p.height);

@@ -1,3 +1,5 @@
+import { downloadBlob, downloadUrl } from './download';
+
 export interface DownloadPopupEntry {
   id: string;
   filename: string;
@@ -139,17 +141,25 @@ export function installDownloadPopupInterceptor(): void {
     };
   }
 
-  // 2. Intercept programmatic anchor.click() downloads
+  // 2. Intercept programmatic anchor.click() downloads.
+  //    Other modules (download.ts, the studios) also patch this prototype, so a
+  //    marker prevents stacking our wrapper twice.
   if (typeof HTMLAnchorElement !== 'undefined') {
-    const origClick = HTMLAnchorElement.prototype.click;
-    HTMLAnchorElement.prototype.click = function patchedAnchorClick(this: HTMLAnchorElement) {
-      try {
-        notifyAnchorDownload(this);
-      } catch {
-        /* never block native download */
-      }
-      return origClick.apply(this);
+    const proto = HTMLAnchorElement.prototype as typeof HTMLAnchorElement.prototype & {
+      __unitoolPopupPatched?: boolean;
     };
+    if (!proto.__unitoolPopupPatched) {
+      const origClick = proto.click;
+      proto.__unitoolPopupPatched = true;
+      proto.click = function patchedAnchorClick(this: HTMLAnchorElement) {
+        try {
+          notifyAnchorDownload(this);
+        } catch {
+          /* never block native download */
+        }
+        return origClick.apply(this);
+      };
+    }
   }
 
   // 3. Intercept direct user clicks on rendered <a download> elements
@@ -175,29 +185,24 @@ export function subscribeDownloadPopup(listener: Listener): () => void {
   };
 }
 
-export function triggerManualRedownload(entry: DownloadPopupEntry, customFilename?: string): void {
+/**
+ * Re-saves a popup entry. Returns false when there is nothing to save, so the
+ * modal can tell the user instead of silently doing nothing (Safari used to
+ * swallow the old detached-anchor, immediately-revoked implementation).
+ */
+export function triggerManualRedownload(entry: DownloadPopupEntry, customFilename?: string): boolean {
   const finalName = ensureExtension(customFilename || entry.filename, entry.ext);
-  const a = document.createElement('a');
-  a.dataset.utBypassPopup = 'true';
-  a.download = finalName;
-  a.rel = 'noopener';
-
-  let tempUrl = '';
-  if (entry.blob) {
-    tempUrl = URL.createObjectURL(entry.blob);
-    a.href = tempUrl;
-  } else if (entry.fallbackHref) {
-    a.href = entry.fallbackHref;
-  } else {
-    return;
+  try {
+    if (entry.blob) {
+      return downloadBlob(entry.blob, finalName, { silent: true }).ok;
+    }
+    if (entry.fallbackHref) {
+      return downloadUrl(entry.fallbackHref, finalName, { silent: true }).ok;
+    }
+  } catch {
+    return false;
   }
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  if (tempUrl) {
-    setTimeout(() => URL.revokeObjectURL(tempUrl), 4000);
-  }
+  return false;
 }
 
 export function ensureExtension(rawName: string, ext: string): string {

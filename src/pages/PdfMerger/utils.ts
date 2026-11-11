@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import type { PdfFile } from './types';
+import { downloadBlob } from '../../utils/download';
 
 export const formatSize = (bytes: number) => {
   if (bytes < 1024) return bytes + ' B';
@@ -34,10 +35,5 @@ export const mergePdfFiles = async (files: PdfFile[]) => {
   }
   const bytes = await merged.save();
   const blob = new Blob([bytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'merged.pdf';
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, 'merged.pdf');
 };

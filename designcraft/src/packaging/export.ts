@@ -5,13 +5,9 @@ import {
   FOLD_COLOR,
   type CartonSize,
 } from "./geometry";
+import { downloadBlob } from '../../../src/utils/download';
 export function downloadPackaging(data: BlobPart, type: string, name: string) {
-  const url = URL.createObjectURL(new Blob([data], { type })),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadBlob(new Blob([data], { type }), name);
 }
 export function downloadCartonSvg(s: CartonSize, dimensions = false) {
   downloadPackaging(

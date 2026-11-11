@@ -1,9 +1,6 @@
-/** Keep blob URLs alive long enough for mobile browsers to hand off a download. */
-export function downloadFile(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url; anchor.download = filename; anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click(); anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30_000);
-}
+/**
+ * Keep blob URLs alive long enough for mobile browsers to hand off a download.
+ * Delegates to the shared Safari-safe helper (detached anchors and eager
+ * revokes cancelled downloads in WebKit).
+ */
+export { downloadBlob as downloadFile } from '../../../src/utils/download';

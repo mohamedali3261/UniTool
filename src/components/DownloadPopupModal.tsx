@@ -20,6 +20,7 @@ import {
   triggerManualRedownload,
   type DownloadPopupEntry,
 } from '../utils/downloadPopupBus';
+import { downloadBlob, downloadUrl } from '../utils/download';
 import '../styles/download-popup.css';
 
 const BATCH_WINDOW_MS = 650;
@@ -40,6 +41,7 @@ export function DownloadPopupModal({ lang = 'ar' }: { lang?: 'ar' | 'en' }) {
   const [customName, setCustomName] = useState('');
   const [progress, setProgress] = useState(35);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const lastOpenedAtRef = useRef<number>(0);
 
@@ -127,16 +129,49 @@ export function DownloadPopupModal({ lang = 'ar' }: { lang?: 'ar' | 'en' }) {
     customName.trim() !== '' &&
     ensureExtension(customName, primary.ext) !== primary.filename;
 
-  const handleClose = () => setItems([]);
+  const handleClose = () => {
+    setSaveError(null);
+    setItems([]);
+  };
 
+  /**
+   * Safari sometimes refuses a programmatic save (no user gesture on the new
+   * element, strict blob policy…). We surface that instead of pretending the
+   * file was downloaded, and offer the "open in a tab" route which always works.
+   */
   const handleRedownload = () => {
     if (isBatch) {
       items.forEach((item, index) => {
-        window.setTimeout(() => triggerManualRedownload(item), index * 140);
+        window.setTimeout(() => triggerManualRedownload(item), index * 220);
       });
+      setSaveError(null);
       return;
     }
-    triggerManualRedownload(primary, customName);
+    const ok = triggerManualRedownload(primary, customName);
+    setSaveError(
+      ok
+        ? null
+        : ar
+          ? 'لم يتمكن سفاري من بدء الحفظ. اضغط «فتح في تبويب» ثم استخدم زر المشاركة ← حفظ في الملفات.'
+          : 'Safari did not start the save. Use “Open in tab”, then Share → Save to Files.',
+    );
+  };
+
+  const openInNewTab = () => {
+    if (!primary) return;
+    if (primary.blob) {
+      const result = downloadBlob(primary.blob, primary.filename, { forceTab: true, silent: true });
+      if (!result.ok) {
+        setSaveError(ar ? 'المتصفح منع فتح التبويب الجديد.' : 'The browser blocked the new tab.');
+      }
+      return;
+    }
+    if (primary.fallbackHref) {
+      const result = downloadUrl(primary.fallbackHref, primary.filename, { forceTab: true, silent: true });
+      if (!result.ok) {
+        setSaveError(ar ? 'المتصفح منع فتح التبويب الجديد.' : 'The browser blocked the new tab.');
+      }
+    }
   };
 
   return createPortal(
@@ -189,6 +224,12 @@ export function DownloadPopupModal({ lang = 'ar' }: { lang?: 'ar' | 'en' }) {
             <div className="ut-dl-progress-bar" style={{ width: `${progress}%` }} />
           </div>
         </div>
+
+        {saveError && (
+          <p className="ut-dl-error" role="alert" data-testid="unitool-download-error">
+            {saveError}
+          </p>
+        )}
 
         <div className="ut-dl-body">
           {!isBatch ? (
@@ -300,6 +341,17 @@ export function DownloadPopupModal({ lang = 'ar' }: { lang?: 'ar' | 'en' }) {
                       ? 'إعادة التحميل'
                       : 'Download again'}
               </span>
+            </button>
+          )}
+          {!isBatch && (
+            <button
+              type="button"
+              data-testid="unitool-download-open-tab-btn"
+              className="ut-dl-btn-secondary"
+              onClick={openInNewTab}
+            >
+              <FileText size={14} />
+              <span>{ar ? 'فتح في تبويب' : 'Open in tab'}</span>
             </button>
           )}
           <button

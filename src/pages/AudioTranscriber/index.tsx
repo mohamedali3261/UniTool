@@ -3,6 +3,7 @@ import {
   Upload, FileAudio, AlertCircle, Loader2, Copy, Download,
   FileText, Trash2, Key, CheckCircle2, FileOutput, Quote, Timer, X, Mic
 } from 'lucide-react';
+import { downloadText } from '../../utils/download';
 
 interface AudioTranscriberProps {
   t: any;
@@ -196,14 +197,10 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
 
   const exportTxt = () => {
     if (!transcript) return;
-    const blob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.txt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadText(
+      transcript,
+      `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.txt`,
+    );
   };
 
   const exportSrt = () => {
@@ -223,14 +220,11 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
       };
       srt += `${seg.i}\n${fmt(start)} --> ${fmt(end)}\n${seg.text}\n\n`;
     });
-    const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.srt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadText(
+      srt,
+      `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.srt`,
+      'text/plain;charset=utf-8',
+    );
   };
 
   const exportVtt = () => {
@@ -248,27 +242,21 @@ export function AudioTranscriber({ t, lang }: AudioTranscriberProps) {
     segments.forEach((seg, i) => {
       vtt += `${fmt(i * segDur)} --> ${fmt((i + 1) * segDur)}\n${seg.text}\n\n`;
     });
-    const blob = new Blob([vtt], { type: 'text/vtt;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.vtt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadText(
+      vtt,
+      `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.vtt`,
+      'text/vtt;charset=utf-8',
+    );
   };
 
   const exportMd = () => {
     if (!transcript) return;
     const md = `# Transcript: ${file?.name || 'Audio'}\n\n${transcript}\n\n---\n*Transcribed via UniTool*\n`;
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.md`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadText(
+      md,
+      `transcript_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.md`,
+      'text/markdown;charset=utf-8',
+    );
   };
 
   const copyText = async () => {

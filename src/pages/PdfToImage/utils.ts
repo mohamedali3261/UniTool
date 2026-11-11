@@ -1,5 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { ImageFormat, PageImage } from './types';
+import { downloadDataUrl, downloadUrl as downloadUrlSafe } from '../../utils/download';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -76,11 +77,11 @@ export const canvasToBlob = (dataUrl: string, format: ImageFormat, quality: numb
   });
 };
 
+/**
+ * Kept for API compatibility. Delegates to the Safari-safe helper so data URLs
+ * are converted to blobs and the anchor outlives the click.
+ */
 export const downloadUrl = (url: string, filename: string) => {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (url.startsWith('data:')) return downloadDataUrl(url, filename);
+  return downloadUrlSafe(url, filename);
 };

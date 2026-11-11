@@ -2,6 +2,7 @@ import { Archive, ClipboardCopy, Download, FileJson, ImageDown, MailCheck, Print
 import { useCvStudio } from '../../app/context';
 import { buildPlainTextAtsResume } from '../../core/exportEngine';
 import { ResumeSheetCanvas } from '../editor/A4Preview';
+import { downloadText } from '../../../../src/utils/download';
 
 export function ExportCenterPanel() {
   const { resume, exportPdfNow, exportPngNow, exportUtcvNow, busyLabel, notify, t } = useCvStudio();
@@ -12,13 +13,7 @@ export function ExportCenterPanel() {
       await navigator.clipboard.writeText(plain);
       notify(t('تم نسخ النص القياسي الصافي (ATS Plain Text) للحافظة', 'Copied ATS plain text to clipboard'));
     } catch {
-      const blob = new Blob([plain], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${resume.title || 'resume'}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadText(plain, `${resume.title || 'resume'}.txt`);
       notify(t('تم تنزيل ملف النص القياسي (.txt)', 'Downloaded ATS plain-text (.txt)'));
     }
   };

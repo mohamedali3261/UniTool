@@ -2,14 +2,7 @@ import { LIMITS, themes, type Workbook, type Cell } from "./types";
 import { newBook, newSheet, validateBook } from "./workbook";
 import { address, position } from "./address";
 import { calculator, display } from "./calculate";
-export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+export { downloadBlob as download } from '../../../src/utils/download';
 export function parseDelimited(text: string, delimiter = ","): string[][] {
   const rows: string[][] = [];
   let row: string[] = [],

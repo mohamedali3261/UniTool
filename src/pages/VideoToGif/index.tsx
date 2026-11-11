@@ -3,6 +3,7 @@ import { Upload, Download, Loader2, Film, Trash2, Scissors, Settings2, Eye, Wand
 import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
+import { downloadBlob, downloadUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -13,6 +14,7 @@ export function VideoToGif({ t, lang }: Props) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
   const [gifUrl, setGifUrl] = useState('');
+  const gifBlobRef = useRef<Blob | null>(null);
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -197,6 +199,7 @@ export function VideoToGif({ t, lang }: Props) {
 
       const data = await ffmpeg.readFile(outputName);
       const blob = new Blob([data], { type: 'image/gif' });
+      gifBlobRef.current = blob;
       const url = URL.createObjectURL(blob);
       setGifUrl(url);
       setProgress(100);
@@ -228,12 +231,12 @@ export function VideoToGif({ t, lang }: Props) {
 
   const downloadGif = () => {
     if (!gifUrl || !videoFile) return;
-    const a = document.createElement('a');
-    a.href = gifUrl;
-    a.download = `${videoFile.name.replace(/\.[^.]+$/, '')}.gif`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const filename = `${videoFile.name.replace(/\.[^.]+$/, '')}.gif`;
+    if (gifBlobRef.current) {
+      downloadBlob(gifBlobRef.current, filename);
+      return;
+    }
+    downloadUrl(gifUrl, filename);
   };
 
   const clearAll = () => {
