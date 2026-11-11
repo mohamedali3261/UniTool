@@ -127,6 +127,38 @@ test('SiteNavbar renders site-back-button on non-home pages and omits it on home
   assert.ok(!homeNavHtml.includes('data-testid="site-back-button"'));
 });
 
+test('site navbar keeps the start button and no longer links to #how', async () => {
+  (globalThis as any).location = new URL('http://localhost:3000/index.html');
+  const { SiteNavbar } = await import('../components/SiteNavbar');
+
+  const ar = renderToStaticMarkup(React.createElement(SiteNavbar, { lang: 'ar', home: true }));
+  const en = renderToStaticMarkup(React.createElement(SiteNavbar, { lang: 'en', home: true }));
+
+  assert.ok(ar.includes('ابدأ العمل'), 'Arabic start button must stay');
+  assert.ok(en.includes('Get started'), 'English start button must stay');
+  assert.ok(ar.includes('ut-nav-start'));
+  assert.ok(!ar.includes('كيف يعمل'), 'the how-it-works link was removed on request');
+  assert.ok(!en.includes('How it works'));
+  assert.ok(!ar.includes('#how'));
+  assert.ok(!ar.includes('ut-nav-help'));
+});
+
+test('the brand logo is drawn on a transparent plate, never on a coloured box', () => {
+  const navbarCss = fs.readFileSync(path.resolve(process.cwd(), 'src/components/site-navbar.css'), 'utf8');
+  const heroCss = fs.readFileSync(path.resolve(process.cwd(), 'src/pages/Home/hero.css'), 'utf8');
+
+  for (const css of [navbarCss, heroCss]) {
+    assert.ok(!/ut-nav-brand[^{]*\{[^}]*background:\s*#f1f4e9/i.test(css), 'no opaque navbar plate');
+    assert.ok(!/home-brand[^{]*\{[^}]*background:\s*#f1f4e9/i.test(css), 'no opaque home plate');
+    assert.match(css, /background:\s*transparent/);
+  }
+
+  // The PNG itself must keep real alpha transparency.
+  const png = fs.readFileSync(path.resolve(process.cwd(), 'public/UniTool_logo.png'));
+  assert.equal(png.toString('latin1', 1, 4), 'PNG');
+  assert.equal(png[25], 6, 'logo must stay RGBA so the background is transparent');
+});
+
 test('downloadPopupBus formats sizes, preserves extensions, and intercepts anchor downloads', async () => {
   const {
     ensureExtension,

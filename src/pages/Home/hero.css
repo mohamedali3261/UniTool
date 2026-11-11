@@ -1,8 +1,9 @@
+/* الشعار شفاف فوق خلفية الصفحة — بدون لوحة أو حشو */
 .home-header .home-brand,
 .home-footer .home-brand {
-  background: #f1f4e9;
-  padding: 6px 11px;
-  border-radius: 8px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 .restored-brand-logo {
   display: block;
@@ -100,7 +101,7 @@ html[dir="ltr"] .hero-workspace-layout .hero-copy > p {
 @media (max-width: 700px) {
   .home-header .home-brand,
   .home-footer .home-brand {
-    padding: 5px 8px;
+    padding: 0;
   }
   .restored-brand-logo {
     width: 112px;

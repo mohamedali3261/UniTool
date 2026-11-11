@@ -158,3 +158,17 @@ html[data-site-page='logo'] .ld-preview-only > .ut-site-nav { display: none; }
 html[data-site-page='excel'][data-site-theme='dark'] .bi-overview { background: var(--site-panel); }
 /* Workspace-wide button rules must not inflate the shared mobile navbar. */
 html[data-site-theme] .ut-site-nav button { padding: 7px 9px; min-height: 36px; font-size: 12px; }
+
+/* Brand logo: transparent artwork, theme-aware dark variant.
+   No background, border or padding is ever painted behind the wordmark. */
+html[data-site-theme] .unitool-brand-logo,
+html[data-site-theme] .ut-nav-brand img,
+html[data-site-theme] .home-brand img,
+html[data-site-theme] .restored-brand-logo {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-site-theme='dark'] .unitool-brand-logo[data-dark-src] {
+  content: url('/UniTool_logo_dark.png');
+}

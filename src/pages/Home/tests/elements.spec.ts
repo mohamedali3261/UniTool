@@ -10,10 +10,11 @@ test("motion hero cycles through every real tool and studio and respects pause",
   page,
 }) => {
   await page.goto(base);
-  await expect(page.locator(".home-header img")).toHaveAttribute(
+  await expect(page.locator(".home-header img.unitool-brand-logo")).toHaveAttribute(
     "src",
     "/UniTool_logo.png",
   );
+  await expect(page.locator(".home-header .ut-nav-help")).toHaveCount(0);
   const hero = page.locator(".hero-motion"),
     chapters = hero.locator(".film-chapters button");
   const count = await chapters.count();

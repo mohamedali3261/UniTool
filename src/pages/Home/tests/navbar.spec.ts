@@ -16,10 +16,15 @@ for (const width of [390, 1440])
       const bar = page.locator("[data-site-navbar]");
       await expect(bar).toHaveCount(1);
       await expect(bar).toBeVisible();
-      await expect(bar.locator("img")).toHaveAttribute(
+      await expect(bar.locator("img.unitool-brand-logo")).toHaveAttribute(
         "src",
         "/UniTool_logo.png",
       );
+      // The logo artwork is transparent: nothing is painted behind it.
+      const plate = await bar
+        .locator(".ut-nav-brand")
+        .evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(plate === "rgba(0, 0, 0, 0)" || plate === "transparent").toBe(true);
       expect(
         await bar.evaluate((el) => el.getBoundingClientRect().width),
       ).toBeLessThanOrEqual(width);

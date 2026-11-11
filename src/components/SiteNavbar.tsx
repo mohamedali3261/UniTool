@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Menu, X, Globe, ArrowUpLeft, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { navbarSections, isCurrentSitePage } from "./navbarSections";
+import { BrandLogo } from "./BrandLogo";
 import { DownloadPopupModal } from "./DownloadPopupModal";
 import {
   recordPageVisit,
@@ -122,7 +123,6 @@ export function SiteNavbar({
     stepBackInSession("/index.html");
   };
   const BackIcon = ar ? ArrowRight : ArrowLeft;
-  const section = (hash: string) => (home ? hash : "/index.html" + hash);
   return (
     <header
       ref={root}
@@ -150,7 +150,7 @@ export function SiteNavbar({
             href="/index.html"
             aria-label="UniTool"
           >
-            <img src="/UniTool_logo.png" alt="UniTool" width="128" height="40" />
+            <BrandLogo width={128} height={40} />
           </a>
         </div>
         <nav
@@ -163,7 +163,6 @@ export function SiteNavbar({
             <summary>{ar ? 'كل الأقسام' : 'Workspaces'}<ChevronDown size={14} aria-hidden="true" /></summary>
             <div className="ut-nav-mega">{sections(false)}</div>
           </details>
-          <a className="ut-nav-help" href={section("#how")}>{ar ? 'كيف يعمل' : 'How it works'}</a>
         </nav>
         <div className="ut-nav-actions">
           {actions}
