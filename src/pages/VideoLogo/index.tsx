@@ -470,7 +470,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-y-auto">
       {/* Page Header */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Plus size={16} className="text-white" />
         </div>
         <div>
@@ -612,7 +612,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <ImageIcon size={14} className="text-purple-500" />
+                <ImageIcon size={14} className="text-emerald-500" />
                 {lang === 'ar' ? 'اللوجو' : 'Logo'}
               </h2>
               {logoFile && (
@@ -626,9 +626,9 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
             </div>
 
             {!logoFile ? (
-              <label className="group relative flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <ImageIcon size={14} className="text-purple-500" />
+              <label className="group relative flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-[#14171C] border-2 border-dashed border-[#2D3139] hover:border-emerald-500/50 rounded-lg transition-all cursor-pointer">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                  <ImageIcon size={14} className="text-emerald-500" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-xs text-gray-300 font-medium">
@@ -861,7 +861,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
                   <Maximize2 size={9} />
                   {lang === 'ar' ? 'الحجم' : 'Scale'}
                 </label>
-                <span className="text-[8px] text-purple-400 font-mono">{(logoPosition.scale * 100).toFixed(0)}%</span>
+                <span className="text-[8px] text-emerald-400 font-mono">{(logoPosition.scale * 100).toFixed(0)}%</span>
               </div>
               <div className="flex gap-1.5 items-center">
                 <button
@@ -937,7 +937,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
           <button
             onClick={processVideo}
             disabled={!videoFile || !logoFile || processing}
-            className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {processing ? (
               <>
@@ -961,7 +961,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
               </div>
               <div className="w-full h-2 bg-[#2D3139] rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                  className="h-full bg-gradient-to-r from-blue-500 to-emerald-500"
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.3 }}

@@ -11,6 +11,12 @@ The tools header exposes an Arabic/English keyboard-accessible day/night toggle.
 saved graphic/video preference, otherwise light. Once saved, the tools choice is
 independent. Theme and language controls remain usable with blocked storage.
 
+Purple/violet/indigo/fuchsia UI accents are not allowed anywhere: every studio
+loads `tools-appearance.css`, whose brand-palette block maps those Tailwind
+families (text, background, gradient stops, borders, rings) to #24795e/#438c6f.
+The source utilities were also rewritten to emerald, so new tools start on
+brand. Authored artwork, canvas pixels, templates and swatches are excluded.
+
 Night surfaces are neutral #101010/#171717/#202020, with #383838 borders.
 Primary actions use #24795e, #1d634b on hover and #174e3a on press. Day surfaces
 are white/#f5f7f4. Do not introduce filtering, inherited color transformations or

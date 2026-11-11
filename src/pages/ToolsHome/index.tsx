@@ -64,7 +64,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
       `}</style>
 
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 sm:w-8 sm:h-8">
           <LayoutDashboard size={14} className="text-white" />
         </div>
         <div>
@@ -101,7 +101,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-2.5 py-1 text-[7px] font-mono uppercase tracking-[0.18em] text-indigo-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[7px] font-mono uppercase tracking-[0.18em] text-emerald-300">
                 <Sparkles size={9} />
                 UniTool · Toolbox
               </span>
@@ -110,14 +110,14 @@ export function ToolsHome({ lang, onNavigate }: Props) {
                 {lang === 'ar' ? (
                   <>
                     كل اللي محتاجه{' '}
-                    <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-rose-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-emerald-400 via-emerald-400 to-rose-400 bg-clip-text text-transparent">
                       في مكان واحد
                     </span>
                   </>
                 ) : (
                   <>
                     Everything you need{' '}
-                    <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-rose-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-emerald-400 via-emerald-400 to-rose-400 bg-clip-text text-transparent">
                       in one place
                     </span>
                   </>
@@ -136,7 +136,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
                     key={s.en}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[8px] font-medium text-gray-300"
                   >
-                    <s.icon size={10} className="text-indigo-400" />
+                    <s.icon size={10} className="text-emerald-400" />
                     {lang === 'ar' ? s.ar : s.en}
                   </span>
                 ))}
@@ -148,7 +148,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={lang === 'ar' ? 'ابحث عن أداة... (مثال: ضغط، صور، PDF)' : 'Search for a tool... (e.g. PDF, image, audio)'}
-                  className="w-full rounded-xl border border-white/[0.08] bg-[#0B0D11]/80 py-2.5 ps-9 pe-9 text-[10px] text-white placeholder:text-gray-600 outline-none transition-colors focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/15"
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#0B0D11]/80 py-2.5 ps-9 pe-9 text-[10px] text-white placeholder:text-gray-600 outline-none transition-colors focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/15"
                 />
                 {query && (
                   <button
@@ -175,7 +175,7 @@ export function ToolsHome({ lang, onNavigate }: Props) {
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[8px] font-semibold transition-all',
                     active
-                      ? 'border-indigo-500/40 bg-indigo-500/15 text-indigo-200 shadow-lg shadow-indigo-500/10'
+                      ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200 shadow-lg shadow-emerald-500/10'
                       : 'border-white/[0.07] bg-white/[0.02] text-gray-400 hover:border-white/[0.14] hover:text-gray-200'
                   )}
                 >

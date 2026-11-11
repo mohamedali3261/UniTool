@@ -71,7 +71,7 @@ export function SegmentCard({
             className={cn(
               "shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all relative",
               isPlaying
-                ? "bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/50"
+                ? "bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg shadow-blue-500/50"
                 : segment.status === 'completed' 
                 ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
                 : "bg-[#2D3139] text-gray-400 hover:bg-blue-500/20 hover:text-blue-400"
@@ -123,7 +123,7 @@ export function SegmentCard({
             </div>
             <div className="h-1 sm:h-1.5 bg-[#2D3139] rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                className="h-full bg-gradient-to-r from-blue-500 to-emerald-500"
                 initial={{ width: 0 }}
                 animate={{ width: `${segment.progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -139,7 +139,7 @@ export function SegmentCard({
               onClick={onProcess}
               disabled={isProcessing || !engineReady}
               title={!engineReady ? (lang === 'ar' ? 'جاري تجهيز محرك الصوت...' : 'Preparing the audio engine...') : undefined}
-              className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[9px] sm:text-[10px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5"
+              className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-lg hover:from-blue-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 text-[9px] sm:text-[10px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5"
             >
               {engineReady ? <Scissors size={10} className="sm:size-3" /> : <Loader2 size={10} className="sm:size-3 animate-spin" />}
               {lang === 'ar' ? 'قص' : 'Cut'}

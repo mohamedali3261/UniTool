@@ -112,19 +112,36 @@ test('ToolNavigationBar renders Back button & breadcrumb on every tool page and 
   assert.ok(enHtml.includes('All Tools'));
 });
 
-test('SiteNavbar renders site-back-button on non-home pages and omits it on home', async () => {
+test('SiteNavbar never renders a back button (each tool owns its back bar)', async () => {
   (globalThis as any).location = new URL('http://localhost:3000/app.html');
   const { SiteNavbar } = await import('../components/SiteNavbar');
 
   const toolNavHtml = renderToStaticMarkup(
     React.createElement(SiteNavbar, { lang: 'ar', home: false }),
   );
-  assert.ok(toolNavHtml.includes('data-testid="site-back-button"'));
+  assert.ok(!toolNavHtml.includes('data-testid="site-back-button"'));
+  assert.ok(!toolNavHtml.includes('ut-nav-back"'));
 
   const homeNavHtml = renderToStaticMarkup(
     React.createElement(SiteNavbar, { lang: 'ar', home: true }),
   );
   assert.ok(!homeNavHtml.includes('data-testid="site-back-button"'));
+
+  // The brand and the deep-link navigation stay untouched.
+  assert.ok(toolNavHtml.includes('unitool-brand-logo'));
+  assert.ok(toolNavHtml.includes('كل الأقسام'));
+
+  // Each tool page still renders its own back bar.
+  const { ToolNavigationBar } = await import('../components/ToolNavigationBar');
+  const backBar = renderToStaticMarkup(
+    React.createElement(ToolNavigationBar, {
+      currentPage: 'pdfMerger',
+      lang: 'ar',
+      onBack: () => {},
+      onGoToolsHome: () => {},
+    }),
+  );
+  assert.ok(backBar.includes('رجوع'));
 });
 
 test('site navbar keeps the start button and no longer links to #how', async () => {
@@ -157,6 +174,27 @@ test('the brand logo is drawn on a transparent plate, never on a coloured box', 
   const png = fs.readFileSync(path.resolve(process.cwd(), 'public/UniTool_logo.png'));
   assert.equal(png.toString('latin1', 1, 4), 'PNG');
   assert.equal(png[25], 6, 'logo must stay RGBA so the background is transparent');
+});
+
+test('no purple/violet/indigo utility survives in tool sources', () => {
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'tests' || entry.name === 'node_modules') continue;
+        walk(full);
+        continue;
+      }
+      // CSS is skipped: the unified-palette rules must name these classes.
+      if (!/\.tsx?$/.test(entry.name) || /\.(test|spec)\./.test(entry.name)) continue;
+      const text = fs.readFileSync(full, 'utf8');
+      const hits = text.match(/\b(?:indigo|violet|purple|fuchsia)-\d{2,3}\b/g);
+      if (hits) offenders.push(`${path.relative(process.cwd(), full)}: ${hits.slice(0, 3).join(', ')}`);
+    }
+  };
+  walk(path.resolve(process.cwd(), 'src'));
+  assert.deepEqual(offenders, [], 'purple Tailwind utilities must be replaced by brand emerald');
 });
 
 test('downloadPopupBus formats sizes, preserves extensions, and intercepts anchor downloads', async () => {

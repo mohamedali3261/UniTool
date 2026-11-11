@@ -71,7 +71,7 @@
 
 /* Custom focus ring */
 .focus-ring {
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
 }
 
 /* قواعد محلية للقارئ: النوافذ أعلى شريط الموقع والمشغّل، وأهداف لمس واضحة. */

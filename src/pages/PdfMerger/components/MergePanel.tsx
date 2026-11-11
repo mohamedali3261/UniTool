@@ -16,7 +16,7 @@ export function MergePanel({ lang, fileCount, merging, error, onMerge }: Props) 
       <button onClick={onMerge} disabled={fileCount < 2 || merging} className={cn(
         "w-full py-3 rounded-xl font-bold text-[11px] font-mono transition-all",
         fileCount >= 2 && !merging
-          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg hover:shadow-violet-500/20"
+          ? "bg-gradient-to-r from-emerald-600 to-emerald-600 text-white hover:shadow-lg hover:shadow-emerald-500/20"
           : "bg-white/[0.06] text-gray-500 cursor-not-allowed"
       )}>
         {merging ? <Loader2 size={16} className="animate-spin mx-auto" /> : (

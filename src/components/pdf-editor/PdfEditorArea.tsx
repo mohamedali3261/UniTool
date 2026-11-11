@@ -290,13 +290,13 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
 
         {isSelected && (
           <>
-            <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white rounded-full cursor-se-resize z-40 shadow-lg hover:scale-125 transition-transform"
+            <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-emerald-600 border-2 border-white rounded-full cursor-se-resize z-40 shadow-lg hover:scale-125 transition-transform"
               onMouseDown={(e) => handleResize(e, 'se')} />
-            <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white rounded-full cursor-ne-resize z-40 shadow-lg hover:scale-125 transition-transform"
+            <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-emerald-600 border-2 border-white rounded-full cursor-ne-resize z-40 shadow-lg hover:scale-125 transition-transform"
               onMouseDown={(e) => handleResize(e, 'ne')} />
-            <div className="absolute -bottom-2 -left-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white rounded-full cursor-sw-resize z-40 shadow-lg hover:scale-125 transition-transform"
+            <div className="absolute -bottom-2 -left-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-emerald-600 border-2 border-white rounded-full cursor-sw-resize z-40 shadow-lg hover:scale-125 transition-transform"
               onMouseDown={(e) => handleResize(e, 'sw')} />
-            <div className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white rounded-full cursor-nw-resize z-40 shadow-lg hover:scale-125 transition-transform"
+            <div className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-br from-blue-500 to-emerald-600 border-2 border-white rounded-full cursor-nw-resize z-40 shadow-lg hover:scale-125 transition-transform"
               onMouseDown={(e) => handleResize(e, 'nw')} />
           </>
         )}

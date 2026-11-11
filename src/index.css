@@ -27,15 +27,15 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #24795e, #438c6f);
   cursor: var(--ut-cursor-pointer, pointer);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px rgba(36, 121, 94, 0.45);
   transition: all 0.2s ease;
 }
 
 .slider-thumb::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 12px rgba(36, 121, 94, 0.7);
 }
 
 .slider-thumb::-moz-range-thumb {
@@ -43,15 +43,15 @@
   height: 16px;
   border: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #24795e, #438c6f);
   cursor: var(--ut-cursor-pointer, pointer);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px rgba(36, 121, 94, 0.45);
   transition: all 0.2s ease;
 }
 
 .slider-thumb::-moz-range-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 12px rgba(36, 121, 94, 0.7);
 }
 
 /* Orange Transition Slider Styles */
@@ -139,17 +139,17 @@ input[type="range"]::-moz-range-thumb:active {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+  background: linear-gradient(to bottom, #24795e, #438c6f);
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #60a5fa, #a78bfa);
+  background: linear-gradient(to bottom, #2f9270, #57b192);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #6366f1 transparent;
+  scrollbar-color: #24795e transparent;
 }
 
 html {

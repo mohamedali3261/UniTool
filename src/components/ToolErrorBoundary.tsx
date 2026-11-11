@@ -63,7 +63,7 @@ export class ToolErrorBoundary extends Component<Props, State> {
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
               onClick={this.reset}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-[10px] font-semibold text-white transition-colors hover:bg-indigo-500"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-[10px] font-semibold text-white transition-colors hover:bg-emerald-500"
             >
               <RotateCcw size={12} />
               {ar ? 'إعادة المحاولة' : 'Try again'}

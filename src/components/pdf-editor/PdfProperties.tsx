@@ -104,7 +104,7 @@ export const PdfProperties: React.FC<Props> = ({
                 ].map((f) => (
                   <button key={f.value}
                     onClick={() => onUpdateElement(selectedElement.id, { filter: f.value })}
-                    className={`px-1 py-1 rounded text-[7px] font-mono transition-all border ${selectedElement.filter === f.value ? 'bg-purple-600/20 border-purple-500/30 text-purple-400' : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:text-gray-300'}`}
+                    className={`px-1 py-1 rounded text-[7px] font-mono transition-all border ${selectedElement.filter === f.value ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400' : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:text-gray-300'}`}
                   >
                     {f.label}
                   </button>

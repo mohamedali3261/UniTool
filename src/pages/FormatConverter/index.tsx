@@ -268,7 +268,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
 
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 sm:w-8 sm:h-8">
           <ArrowLeftRight size={14} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -280,10 +280,10 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
         {onNavigate && (
           <button
             onClick={() => onNavigate('imageTools')}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-violet-600/15 border border-white/[0.06] hover:border-violet-500/30 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-600/15 border border-white/[0.06] hover:border-emerald-500/30 transition-colors"
           >
-            <ImageIcon size={10} className="text-violet-400" />
-            <span className="text-[9px] font-mono text-gray-400 hover:text-violet-300">{ar('أدوات الصور', 'Image Tools')}</span>
+            <ImageIcon size={10} className="text-emerald-400" />
+            <span className="text-[9px] font-mono text-gray-400 hover:text-emerald-300">{ar('أدوات الصور', 'Image Tools')}</span>
           </button>
         )}
       </div>
@@ -302,7 +302,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                 onClick={() => setTab(m.id)}
                 className={cn(
                   'flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-mono transition-colors',
-                  tab === m.id ? 'bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30' : 'text-gray-500 hover:text-gray-300'
+                  tab === m.id ? 'bg-emerald-600/20 text-emerald-300 ring-1 ring-emerald-500/30' : 'text-gray-500 hover:text-gray-300'
                 )}
               >
                 <m.icon size={12} />
@@ -322,7 +322,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                       onClick={() => setImgFormat(f.id)}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-[10px] font-mono border transition-colors',
-                        imgFormat === f.id ? 'bg-violet-600/20 border-violet-500/30 text-violet-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
+                        imgFormat === f.id ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
                       )}
                     >
                       {f.label}
@@ -335,9 +335,9 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                     <input
                       type="range" min={30} max={100} value={quality}
                       onChange={e => setQuality(Number(e.target.value))}
-                      className="flex-1 h-1 accent-violet-500"
+                      className="flex-1 h-1 accent-emerald-500"
                     />
-                    <span className="text-[9px] font-mono text-violet-300 w-8 text-right">{quality}%</span>
+                    <span className="text-[9px] font-mono text-emerald-300 w-8 text-right">{quality}%</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 flex-wrap">
@@ -348,7 +348,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                       onClick={() => setMaxDim(o.id)}
                       className={cn(
                         'px-2 py-1 rounded-md text-[9px] font-mono border transition-colors',
-                        maxDim === o.id ? 'bg-violet-600/20 border-violet-500/30 text-violet-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
+                        maxDim === o.id ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
                       )}
                     >
                       {o.id === 0 ? ar('الأصلي', 'Original') : o.label}
@@ -368,7 +368,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                       onClick={() => setAudioFormat(f.id)}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-[10px] font-mono border transition-colors',
-                        audioFormat === f.id ? 'bg-violet-600/20 border-violet-500/30 text-violet-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
+                        audioFormat === f.id ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
                       )}
                     >
                       {f.label}
@@ -384,7 +384,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                         onClick={() => setBitrate(b)}
                         className={cn(
                           'px-2 py-1 rounded-md text-[9px] font-mono border transition-colors',
-                          bitrate === b ? 'bg-violet-600/20 border-violet-500/30 text-violet-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
+                          bitrate === b ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-300' : 'bg-white/[0.03] border-white/[0.06] text-gray-500 hover:text-gray-300'
                         )}
                       >
                         {b}
@@ -415,7 +415,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                   'flex items-center gap-1.5 px-4 py-2 rounded-lg text-[10px] font-bold transition-colors',
                   !visible.length || busy
                     ? 'bg-white/[0.03] text-gray-600 border border-white/[0.06]'
-                    : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:brightness-110'
+                    : 'bg-gradient-to-r from-emerald-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:brightness-110'
                 )}
               >
                 {busy ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
@@ -432,15 +432,15 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
             onClick={() => fileInputRef.current?.click()}
             className={cn(
               'flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed cursor-pointer transition-colors',
-              dragOver ? 'border-violet-500 bg-violet-500/10' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]'
+              dragOver ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]'
             )}
           >
             {loadingFiles ? (
-              <Loader2 size={20} className="text-violet-400 animate-spin" />
+              <Loader2 size={20} className="text-emerald-400 animate-spin" />
             ) : (
               <>
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', dragOver ? 'bg-violet-500/30' : 'bg-white/[0.05]')}>
-                  <Upload size={16} className={dragOver ? 'text-violet-300' : 'text-gray-500'} />
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', dragOver ? 'bg-emerald-500/30' : 'bg-white/[0.05]')}>
+                  <Upload size={16} className={dragOver ? 'text-emerald-300' : 'text-gray-500'} />
                 </div>
                 <p className="text-[10px] font-mono text-gray-400">
                   {ar('افلِت الملفات هنا أو انقر للاختيار', 'Drop files here or click to browse')}
@@ -482,7 +482,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
               </div>
               <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-500 transition-all duration-200"
                   style={{ width: `${totalProgress * 100}%` }}
                 />
               </div>
@@ -519,12 +519,12 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                       {item.status === 'done' && item.outBlob && (
                         <span className="text-emerald-400"> → {fmtBytes(item.outBlob.size)} {(item.outBlob.size < item.size) ? `(-${Math.round((1 - item.outBlob.size / item.size) * 100)}%)` : ''}</span>
                       )}
-                      {item.status === 'working' && <span className="text-violet-400"> {item.progress}%</span>}
+                      {item.status === 'working' && <span className="text-emerald-400"> {item.progress}%</span>}
                       {item.status === 'ready' && <span> · {ar('بانتظار التحويل', 'pending')}</span>}
                     </p>
                     {item.status === 'working' && (
                       <div className="h-0.5 mt-1 rounded-full bg-white/[0.05] overflow-hidden">
-                        <div className="h-full bg-violet-500 transition-all" style={{ width: `${item.progress}%` }} />
+                        <div className="h-full bg-emerald-500 transition-all" style={{ width: `${item.progress}%` }} />
                       </div>
                     )}
                     {item.status === 'error' && item.error && (
@@ -542,7 +542,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
                         <Download size={11} />
                       </button>
                     )}
-                    {item.status === 'working' && <Loader2 size={11} className="text-violet-400 animate-spin" />}
+                    {item.status === 'working' && <Loader2 size={11} className="text-emerald-400 animate-spin" />}
                     {item.status === 'error' && <AlertTriangle size={11} className="text-red-400" />}
                     {item.status === 'ready' && <Check size={11} className="text-gray-600" />}
                     <button

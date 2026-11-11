@@ -162,7 +162,7 @@ export function WaveformPlayer({
           
           <button
             onClick={onPlayPause}
-            className="relative p-3 sm:p-4 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all hover:scale-105 shadow-xl shadow-blue-500/30"
+            className="relative p-3 sm:p-4 bg-gradient-to-br from-blue-600 to-emerald-600 text-white rounded-xl hover:from-blue-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-blue-500/30"
           >
             {isPlaying ? <Pause size={20} className="sm:size-6" /> : <Play size={20} className="ml-0.5 sm:size-6" />}
             {isPlaying && (

@@ -46,7 +46,7 @@ interface AudioSplitterProps {
 
 const SEGMENT_COLORS = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-  '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
+  '#24795e', '#3f8f72', '#5aa98c', '#76c0a3',
 ];
 
 export function AudioSplitter({ t, lang }: AudioSplitterProps) {
@@ -621,7 +621,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
           </p>
           <button
             onClick={retryFfmpeg}
-            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-[10px] font-semibold text-white hover:bg-indigo-500"
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-[10px] font-semibold text-white hover:bg-emerald-500"
           >
             <RotateCcw size={12} />
             {lang === 'ar' ? 'إعادة المحاولة' : 'Try again'}
@@ -635,7 +635,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Page Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Scissors size={16} className="text-white" />
         </div>
         <div>
@@ -698,7 +698,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
           <div className="border-2 border-dashed border-[#2D3139] rounded-2xl p-6 sm:p-12 lg:p-16 text-center hover:border-blue-500/50 transition-all">
             <label className="cursor-pointer block">
               <div className="flex flex-col items-center gap-4">
-                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl flex items-center justify-center">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500/20 to-emerald-600/20 rounded-2xl flex items-center justify-center">
                   <Plus className="text-blue-500" size={24} />
                 </div>
                 <div>

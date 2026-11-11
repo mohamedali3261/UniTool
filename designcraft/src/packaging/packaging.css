@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 24px;
   background: linear-gradient(120deg, var(--studio-ui-surface, #15243b), var(--studio-ui-surface, #171c35));
-  border: 1px solid var(--studio-night-accent-line, #6664bd66);
+  border: 1px solid var(--studio-night-accent-line, #2f927066);
   border-radius: 24px;
   padding: 28px;
   color: var(--studio-ui-ink, #e7edf8);
@@ -34,7 +34,7 @@
   gap: 14px;
   align-items: center;
   padding: 12px 18px;
-  background: var(--studio-night-accent-fill, #8581f0);
+  background: var(--studio-night-accent-fill, #24795e);
   border: 0;
   color: #0d1027;
   border-radius: 10px;
@@ -167,7 +167,7 @@
 .carton-legend i {
   display: inline-block;
   width: 25px;
-  border-top: 2px solid var(--studio-night-accent-line, #8f87eb);
+  border-top: 2px solid var(--studio-night-accent-line, #3f8f72);
 }
 .carton-legend .fold {
   border-top: 2px dashed #ef879d;
@@ -824,7 +824,7 @@
 }
 .carton-resize-dialog button {
   padding: 8px 14px;
-  border: 1px solid var(--studio-ui-line, var(--studio-night-accent-line, #68649e));
+  border: 1px solid var(--studio-ui-line, var(--studio-night-accent-line, #1d634b));
   border-radius: 8px;
   background: var(--studio-night-accent-fill, #393267);
   color: white;

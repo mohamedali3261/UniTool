@@ -456,7 +456,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
     <div className="flex-1 flex flex-col bg-[#0A0C0F]">
       {/* Page Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-pink-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
           <MessageSquareText size={14} className="text-white sm:size-4" />
         </div>
         <div>
@@ -471,7 +471,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
           <button
             onClick={() => setMobileTab('transcript')}
             className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
-              mobileTab === 'transcript' ? 'text-purple-400 bg-[#1A1D23] border-b-2 border-purple-500' : 'text-gray-500'
+              mobileTab === 'transcript' ? 'text-emerald-400 bg-[#1A1D23] border-b-2 border-emerald-500' : 'text-gray-500'
             }`}
           >
             <FileText size={14} />
@@ -480,7 +480,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
           <button
             onClick={() => setMobileTab('controls')}
             className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
-              mobileTab === 'controls' ? 'text-purple-400 bg-[#1A1D23] border-b-2 border-purple-500' : 'text-gray-500'
+              mobileTab === 'controls' ? 'text-emerald-400 bg-[#1A1D23] border-b-2 border-emerald-500' : 'text-gray-500'
             }`}
           >
             <Mic size={14} />
@@ -495,7 +495,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[#2D3139] shrink-0">
               <div className="flex items-center gap-2">
-                <FileText size={14} className="text-purple-500" />
+                <FileText size={14} className="text-emerald-500" />
                 <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">
                   {lang === 'ar' ? 'النص' : 'Transcript'}
                 </span>
@@ -522,13 +522,13 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
               <div ref={transcriptRef} className="flex-1 overflow-y-auto p-3 font-mono text-xs leading-relaxed">
                 {!currentText && !interimText ? (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-600">
-                    <Mic size={24} className="text-purple-500/30" />
+                    <Mic size={24} className="text-emerald-500/30" />
                     <p className="text-[9px]">{lang === 'ar' ? 'تحدث الآن...' : 'Speak now...'}</p>
                   </div>
                 ) : (
                   <div>
                     <p className="text-gray-200 whitespace-pre-wrap">{currentText}<span className="text-gray-500">{interimText}</span></p>
-                    {!interimText && <span className="inline-block w-1.5 h-3.5 bg-purple-500 animate-pulse ml-0.5 align-middle" />}
+                    {!interimText && <span className="inline-block w-1.5 h-3.5 bg-emerald-500 animate-pulse ml-0.5 align-middle" />}
                   </div>
                 )}
               </div>
@@ -571,7 +571,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
                     const threshold = (i + 1) / 30;
                     return (
                       <div key={i} className="flex-1 h-1 rounded-full transition-all duration-75"
-                        style={{ backgroundColor: audioLevel >= threshold ? (audioLevel > 0.6 ? '#ef4444' : '#8b5cf6') : '#2D3139' }}
+                        style={{ backgroundColor: audioLevel >= threshold ? (audioLevel > 0.6 ? '#ef4444' : '#24795e') : '#2D3139' }}
                       />
                     );
                   })}
@@ -594,7 +594,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
                     ? "bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-yellow-500/20"
                     : paused
                       ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-green-500/20"
-                      : "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-purple-500/20",
+                      : "bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-emerald-500/20",
                   supported === false && "opacity-50 cursor-not-allowed"
                 )}
               >
@@ -640,7 +640,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
                   ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white shadow-yellow-500/30"
                   : paused
                     ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-500/30"
-                    : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-purple-500/30",
+                    : "bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white shadow-emerald-500/30",
                 supported === false && "opacity-50 cursor-not-allowed"
               )}
             >
@@ -662,7 +662,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {/* Language */}
             <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center gap-1.5">
-                <Languages size={12} className="text-purple-500" />
+                <Languages size={12} className="text-emerald-500" />
                 <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'اللغة' : 'Language'}</h3>
               </div>
               <div className="grid grid-cols-3 gap-1">
@@ -673,7 +673,7 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
                     className={cn(
                       "py-2 text-[9px] font-mono rounded transition-all tracking-wider truncate px-1",
                       recognitionLang === option.id
-                        ? "bg-purple-600 text-white"
+                        ? "bg-emerald-600 text-white"
                         : "bg-[#1A1D23] text-gray-400 hover:text-white border border-[#2D3139]"
                     )}
                   >
@@ -686,14 +686,14 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {/* Punctuation Toggle */}
             <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Quote size={12} className="text-purple-500" />
+                <Quote size={12} className="text-emerald-500" />
                 <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'ترقيم تلقائي' : 'Auto Punctuation'}</span>
               </div>
               <button
                 onClick={() => setPunctuationEnabled(!punctuationEnabled)}
                 className={cn(
                   "w-8 h-4 rounded-full transition-all relative",
-                  punctuationEnabled ? "bg-purple-600" : "bg-[#2D3139]"
+                  punctuationEnabled ? "bg-emerald-600" : "bg-[#2D3139]"
                 )}
               >
                 <div className={cn(
@@ -707,13 +707,13 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {(currentText || isActive) && (
               <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Timer size={12} className="text-purple-500" />
+                  <Timer size={12} className="text-emerald-500" />
                   <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'إحصائيات' : 'Stats'}</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   <div className="bg-[#1A1D23] rounded p-1 text-center sm:p-1.5">
                     <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'كلمات' : 'Words'}</p>
-                    <p className="text-[10px] font-mono text-purple-400">{wordCount}</p>
+                    <p className="text-[10px] font-mono text-emerald-400">{wordCount}</p>
                   </div>
                   <div className="bg-[#1A1D23] rounded p-1 text-center sm:p-1.5">
                     <p className="text-[7px] font-mono text-gray-600 uppercase">{lang === 'ar' ? 'أحرف' : 'Chars'}</p>
@@ -731,16 +731,16 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {currentText && !isActive && (
               <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <FileOutput size={12} className="text-purple-500" />
+                  <FileOutput size={12} className="text-emerald-500" />
                   <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'تصدير' : 'Export'}</h3>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={exportTxt}
-                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-purple-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">TXT</button>
+                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-emerald-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">TXT</button>
                   <button onClick={exportSrt}
-                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-purple-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">SRT</button>
+                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-emerald-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">SRT</button>
                   <button onClick={exportMd}
-                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-purple-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">MD</button>
+                    className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-emerald-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">MD</button>
                   <button onClick={copyText}
                     className="flex-1 py-1.5 bg-[#1A1D23] border border-[#2D3139] hover:border-blue-500/50 text-gray-300 hover:text-white rounded text-[8px] font-mono transition-all">
                     <Copy size={10} className="inline" />
@@ -752,15 +752,15 @@ export function SpeechToText({ t, lang }: SpeechToTextProps) {
             {/* Vocabulary */}
             <div className="bg-[#0F1115] border border-[#2D3139] rounded-lg p-2 sm:p-2.5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center gap-1.5">
-                <BookOpen size={12} className="text-purple-500" />
+                <BookOpen size={12} className="text-emerald-500" />
                 <h3 className="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{lang === 'ar' ? 'المفردات' : 'Vocabulary'}</h3>
               </div>
               <div className="flex gap-1">
                 <input value={vocabFrom} onChange={e => setVocabFrom(e.target.value)} placeholder={lang === 'ar' ? 'من' : 'From'}
-                  className="flex-1 bg-[#1A1D23] border border-[#2D3139] rounded px-1.5 py-1 text-[8px] font-mono text-gray-300 outline-none focus:border-purple-500/50 placeholder:text-gray-600" />
+                  className="flex-1 bg-[#1A1D23] border border-[#2D3139] rounded px-1.5 py-1 text-[8px] font-mono text-gray-300 outline-none focus:border-emerald-500/50 placeholder:text-gray-600" />
                 <input value={vocabTo} onChange={e => setVocabTo(e.target.value)} placeholder={lang === 'ar' ? 'إلى' : 'To'}
-                  className="flex-1 bg-[#1A1D23] border border-[#2D3139] rounded px-1.5 py-1 text-[8px] font-mono text-gray-300 outline-none focus:border-purple-500/50 placeholder:text-gray-600" />
-                <button onClick={addVocab} className="p-1 bg-purple-600 hover:bg-purple-500 rounded text-white transition-all"><Plus size={12} /></button>
+                  className="flex-1 bg-[#1A1D23] border border-[#2D3139] rounded px-1.5 py-1 text-[8px] font-mono text-gray-300 outline-none focus:border-emerald-500/50 placeholder:text-gray-600" />
+                <button onClick={addVocab} className="p-1 bg-emerald-600 hover:bg-emerald-500 rounded text-white transition-all"><Plus size={12} /></button>
               </div>
               {vocabulary.length > 0 && (
                 <div className="space-y-0.5 max-h-20 overflow-y-auto">

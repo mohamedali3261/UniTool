@@ -11,6 +11,7 @@ import type { Lang } from "../core/types";
 import { useSession } from "./useSession";
 import { SiteHeader } from "../components/SiteHeader";
 import "./styles.css";
+import "../../../src/styles/tools-appearance.css";
 const Welcome = lazy(() => import("../pages/welcome/WelcomePage")),
   Editor = lazy(() => import("../pages/editor/EditorPage"));
 export default function App() {

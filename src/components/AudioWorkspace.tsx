@@ -65,7 +65,7 @@ export function AudioWorkspace({
     <>
       {/* Page Header */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Zap size={16} className="text-white" />
         </div>
         <div>
@@ -214,7 +214,7 @@ export function AudioWorkspace({
               <button
                 onClick={onProcessAll}
                 disabled={isAnyProcessing}
-                className="group relative w-full sm:w-auto px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white transition-all overflow-hidden rounded-lg shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none"
+                className="group relative w-full sm:w-auto px-12 py-6 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:from-gray-800 disabled:to-gray-800 text-white transition-all overflow-hidden rounded-lg shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none"
               >
                 <div className="relative z-10 flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-[0.2em] sm:text-sm">
                   {isAnyProcessing ? (
@@ -229,7 +229,7 @@ export function AudioWorkspace({
                     </>
                   )}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-emerald-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
               </button>
               {isAnyProcessing && (

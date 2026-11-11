@@ -6,6 +6,7 @@ import { StudioSettings } from "./settings/StudioSettings";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
+import "../../src/styles/tools-appearance.css";
 import "./animation/motions/styles.css";
 import "./media/import.css";
 import "./text/catalog.css";

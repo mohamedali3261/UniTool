@@ -22,8 +22,8 @@ export function FileList({ lang, files, totalPages, onMove, onRemove }: Props) {
       </div>
       {files.map((file, i) => (
         <div key={file.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
-            <FileText size={16} className="text-violet-400" />
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+            <FileText size={16} className="text-emerald-400" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] text-white font-bold truncate">{file.name}</p>

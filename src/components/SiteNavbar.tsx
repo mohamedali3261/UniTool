@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Menu, X, Globe, ArrowUpLeft, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { Menu, X, Globe, ArrowUpLeft, ChevronDown } from "lucide-react";
 import { navbarSections, isCurrentSitePage } from "./navbarSections";
 import { BrandLogo } from "./BrandLogo";
 import { DownloadPopupModal } from "./DownloadPopupModal";
 import {
   recordPageVisit,
-  stepBackInSession,
   syncStackOnPopState,
 } from "../utils/navigationHistory";
 import "./site-navbar.css";
@@ -22,6 +21,7 @@ export function SiteNavbar({
   home?: boolean;
   fixed?: boolean;
   actions?: ReactNode;
+  /** Kept for API compatibility; the navbar no longer renders a back button. */
   onBack?: () => void;
 }) {
   const [local, setLocal] = useState<"ar" | "en">(() => {
@@ -115,14 +115,6 @@ export function SiteNavbar({
       window.removeEventListener("hashchange", onHash);
     };
   }, []);
-  const handleSiteBack = () => {
-    if (onBack) {
-      onBack();
-      return;
-    }
-    stepBackInSession("/index.html");
-  };
-  const BackIcon = ar ? ArrowRight : ArrowLeft;
   return (
     <header
       ref={root}
@@ -132,19 +124,8 @@ export function SiteNavbar({
     >
       <div className="ut-nav-inner">
         <div className="ut-nav-brand-wrap">
-          {!home && (
-            <button
-              type="button"
-              data-testid="site-back-button"
-              className="ut-nav-back"
-              onClick={handleSiteBack}
-              aria-label={ar ? "رجوع للصفحة السابقة" : "Back to previous page"}
-              title={ar ? "رجوع للصفحة السابقة" : "Back to previous page"}
-            >
-              <BackIcon size={15} aria-hidden="true" />
-              <span>{ar ? "رجوع" : "Back"}</span>
-            </button>
-          )}
+          {/* No back button here: every tool already ships its own back bar
+              (ToolNavigationBar), so the navbar stays brand + links only. */}
           <a
             className="home-brand ut-nav-brand"
             href="/index.html"

@@ -44,7 +44,7 @@ export const PdfToolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={onAddText}
-            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 rounded-lg transition-all text-[9px] sm:text-[10px] font-bold shrink-0"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-lg transition-all text-[9px] sm:text-[10px] font-bold shrink-0"
           >
             <Type size={12} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'نص' : 'Text'}</span>
@@ -52,7 +52,7 @@ export const PdfToolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={() => imageInputRef.current?.click()}
-            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-lg transition-all text-[9px] sm:text-[10px] font-bold shrink-0"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-lg transition-all text-[9px] sm:text-[10px] font-bold shrink-0"
           >
             <ImageIcon size={12} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'صورة' : 'Image'}</span>

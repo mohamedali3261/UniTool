@@ -58,7 +58,7 @@ export function SegmentsSidebar({
       {/* Header */}
       <div className="p-2.5 sm:p-4 border-b border-[#2D3139] bg-gradient-to-br from-[#14171C] to-[#0A0C0F]">
         <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-emerald-600 rounded-xl flex items-center justify-center">
             <Scissors className="text-white" size={16} />
           </div>
           <div className="flex-1 min-w-0">
@@ -96,7 +96,7 @@ export function SegmentsSidebar({
             onClick={onProcessAll}
             disabled={isProcessing || !engineReady}
             title={!engineReady ? (lang === 'ar' ? 'جاري تجهيز محرك الصوت...' : 'Preparing the audio engine...') : undefined}
-            className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1.5 sm:gap-2"
+            className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-lg hover:from-blue-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1.5 sm:gap-2"
           >
             {!engineReady ? <Loader2 size={12} className="sm:size-[14px] animate-spin" /> : <Scissors size={12} className="sm:size-[14px]" />}
             {!engineReady
@@ -121,7 +121,7 @@ export function SegmentsSidebar({
             margin: 4px 0;
           }
           .segments-list-scroll::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            background: linear-gradient(180deg, #24795e 0%, #3f8f72 50%, #5aa98c 100%);
             border-radius: 10px;
             border: 1px solid rgba(10, 12, 15, 0.5);
             box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
@@ -131,7 +131,7 @@ export function SegmentsSidebar({
             box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
           }
           .segments-list-scroll::-webkit-scrollbar-thumb:active {
-            background: linear-gradient(180deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
+            background: linear-gradient(180deg, #1d634b 0%, #2f9270 50%, #57b192 100%);
           }
           .segments-list-scroll {
             scrollbar-width: thin;

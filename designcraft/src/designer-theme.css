@@ -59,7 +59,9 @@ html[data-dc-theme="light"]
     [class*="text-blue-"],
     [class*="text-emerald-"],
     [class*="text-violet-"],
-    [class*="text-purple-"]
+    [class*="text-purple-"],
+    [class*="text-indigo-"],
+    [class*="text-fuchsia-"]
   ) {
   color: #365c4e;
 }
@@ -2050,3 +2052,57 @@ html[data-dc-theme='light'] .packaging-project-action:hover {
   }
 }
 
+
+/* Off-brand purple accents are unified to the UniTool emerald in both themes.
+   Never touches template artwork, canvas pixels or swatches. */
+html[data-dc-theme]
+  :is(
+    [class*="text-indigo-"],
+    [class*="text-violet-"],
+    [class*="text-purple-"],
+    [class*="text-fuchsia-"]
+  ):not(.dc-canvas-workspace *) {
+  color: #85ccac;
+}
+html[data-dc-theme="light"]
+  :is(
+    [class*="text-indigo-"],
+    [class*="text-violet-"],
+    [class*="text-purple-"],
+    [class*="text-fuchsia-"]
+  ):not(.dc-canvas-workspace *) {
+  color: #24795e;
+}
+html[data-dc-theme]
+  :is(
+    [class*="bg-indigo-"],
+    [class*="bg-violet-"],
+    [class*="bg-purple-"],
+    [class*="bg-fuchsia-"]
+  ):not(button):not(a):not(.dc-canvas-workspace *) {
+  background-color: #24795e;
+  color: #ffffff;
+}
+html[data-dc-theme]
+  :is(button, a):is(
+    [class*="bg-indigo-"],
+    [class*="bg-violet-"],
+    [class*="bg-purple-"],
+    [class*="bg-fuchsia-"]
+  ) {
+  background-color: #24795e;
+  color: #ffffff;
+  border-color: #24795e;
+}
+html[data-dc-theme]
+  :is(
+    [class*="border-indigo-"],
+    [class*="border-violet-"],
+    [class*="border-purple-"],
+    [class*="border-fuchsia-"],
+    [class*="ring-indigo-"],
+    [class*="ring-violet-"],
+    [class*="ring-purple-"]
+  ) {
+  border-color: #438c6f;
+}
