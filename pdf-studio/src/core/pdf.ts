@@ -3,6 +3,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PageText, TextRun } from "./types";
 import { LIMITS } from "./types";
 import { buildText } from "./text";
+import { downloadBlob } from '../../../src/utils/download';
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 export type PdfDoc = pdfjs.PDFDocumentProxy;
 export async function openPdf(file: File) {
@@ -112,12 +113,7 @@ export async function pageCanvas(
   return canvas;
 }
 export function saveBlob(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  downloadBlob(blob, name);
 }
 export async function fingerprint(bytes: Uint8Array) {
   const digest = await crypto.subtle.digest("SHA-256", bytes.slice().buffer);

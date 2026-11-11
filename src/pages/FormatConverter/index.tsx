@@ -7,6 +7,7 @@ import {
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { cn } from '../../lib/utils';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -235,11 +236,7 @@ export function FormatConverter({ t, lang, onNavigate }: Props) {
   // ---------- downloads ----------
   const downloadOne = (item: ConvItem) => {
     if (!item.outBlob || !item.outName) return;
-    const url = URL.createObjectURL(item.outBlob);
-    const a = document.createElement('a');
-    a.href = url; a.download = item.outName;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    downloadBlob(item.outBlob, item.outName);
   };
 
   const downloadAll = () => {

@@ -5,6 +5,9 @@ import {
   renderSlideToContext,
 } from './boardRenderer';
 import type { BoardSlide, LessonDocument } from './types';
+import { downloadBlob, downloadDataUrl } from '../../../src/utils/download';
+
+export { downloadDataUrl };
 
 export function renderSlideDataUrl(slide: BoardSlide, scale = 1.5): string {
   const c = document.createElement('canvas');
@@ -14,15 +17,6 @@ export function renderSlideDataUrl(slide: BoardSlide, scale = 1.5): string {
   ctx.scale(scale, scale);
   renderSlideToContext(ctx, BOARD_LOGICAL_WIDTH, BOARD_LOGICAL_HEIGHT, slide.surface, slide.grid, slide.elements);
   return c.toDataURL('image/png');
-}
-
-export function downloadDataUrl(dataUrl: string, filename: string): void {
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 export function exportSlidePng(slide: BoardSlide, lessonTitle: string, slideIndex: number): void {
@@ -47,7 +41,8 @@ export function exportLessonPdf(lesson: LessonDocument): void {
   });
 
   const safeName = (lesson.title || 'teacher-lesson').replace(/[^\w\u0600-\u06FF-]+/g, '-');
-  pdf.save(`${safeName}.pdf`);
+  // jsPDF's own save() creates a detached anchor, which Safari ignores.
+  downloadBlob(pdf.output('blob'), `${safeName}.pdf`);
 }
 
 export function playClassroomChime(): void {

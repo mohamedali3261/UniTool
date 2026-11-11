@@ -9,6 +9,7 @@ import { buildPdf, safeFileName } from './utils/pdf';
 import { UploadPanel } from './components/UploadPanel';
 import { ImageCard } from './components/ImageCard';
 import { SettingsPanel } from './components/SettingsPanel';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -273,18 +274,12 @@ export function ImageToPdf({ lang, fileHandoff, onFileHandoffConsumed }: Props) 
       const bytes = await buildPdf(images, settings, setProgress);
       setProgress(100);
       const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
       if (mode === 'preview') {
+        const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
       } else {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = safeFileName(settings.fileName);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        downloadBlob(blob, safeFileName(settings.fileName));
       }
       setSuccess(lang === 'ar' ? `تم إنشاء PDF بنجاح (${images.length} صورة)` : `PDF created (${images.length} images)`);
     } catch (err) {

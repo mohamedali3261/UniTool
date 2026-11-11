@@ -8,6 +8,7 @@ import {
   Search, FileJson2, FileText, Wand2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -309,12 +310,7 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
       : history.map(h => `[${fmtDate(h.ts)}] ${h.text}`).join('\n');
     // BOM so Arabic text opens correctly in Notepad / Excel
     const blob = new Blob(['\uFEFF' + content], { type: (kind === 'json' ? 'application/json' : 'text/plain') + ';charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `qr-scan-history_${new Date().toISOString().slice(0, 10)}.${kind}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `qr-scan-history_${new Date().toISOString().slice(0, 10)}.${kind}`);
   };
 
   const copyHistoryItem = async (item: HistoryItem) => {

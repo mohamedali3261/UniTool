@@ -15,6 +15,7 @@ import {
 } from '../core/storage';
 import { exportLessonPdf, exportSlidePng } from '../core/exporter';
 import { SURFACE_PALETTES } from '../data/boardModes';
+import { downloadBlob } from '../../../src/utils/download';
 import type { SubjectTemplate } from '../data/subjectTemplates';
 import type {
   BoardElement,
@@ -568,14 +569,7 @@ export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const exportLessonJson = useCallback(() => {
     const json = serializeLessonFile(activeLesson);
     const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(activeLesson.title || 'lesson').replace(/[^\w\u0600-\u06FF-]+/g, '-')}.utboard.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBlob(blob, `${(activeLesson.title || 'lesson').replace(/[^\w\u0600-\u06FF-]+/g, '-')}.utboard.json`);
     notify(isAr ? 'تم تصدير ملف الدرس' : 'Lesson file exported');
   }, [activeLesson, isAr, notify]);
 
@@ -617,14 +611,7 @@ export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
         recorder.onstop = () => {
           const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${(activeLesson.title || 'lesson').replace(/[^\w\u0600-\u06FF-]+/g, '-')}.webm`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          downloadBlob(blob, `${(activeLesson.title || 'lesson').replace(/[^\w\u0600-\u06FF-]+/g, '-')}.webm`);
           canvasStream.getTracks().forEach((tr) => tr.stop());
           notify(isAr ? 'تم حفظ فيديو الشرح بنجاح' : 'Lesson recording saved');
         };

@@ -16,6 +16,7 @@ import type { Block } from '@/bot/cycles'
 import type { ArtElement } from '@/bot/art'
 import { gifAnime, gifIndexe, indexe, nouvellePalette, recense, svgAnime } from './anime'
 import { arrete, DEMI_ECRAN, sansCommentaires, spritesGrille, viewBoxExport } from './export'
+import { downloadBlob } from '../../../src/utils/download'
 
 /**
  * Serialise le SVG affiche en un document autonome, recadre sur la boule.
@@ -92,16 +93,9 @@ export async function versPng(markup: string, taille: number): Promise<Blob> {
 
 /** Declenche le telechargement d'un blob sous le nom donne. */
 export function telecharge(blob: Blob, nom: string) {
-  const url = URL.createObjectURL(blob)
-  try {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = nom
-    a.click()
-  } finally {
-    // Differe : Safari lit encore l'URL apres le clic sur un gros blob.
-    setTimeout(() => URL.revokeObjectURL(url), 10_000)
-  }
+  // Delegue au helper partage : ancre attachee au document et URL maintenue
+  // en vie, car Safari annule un telechargement dont l'URL est revoquee.
+  downloadBlob(blob, nom)
 }
 
 /** Le presse-papiers sait-il ecrire une image ici ? */

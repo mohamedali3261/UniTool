@@ -8,6 +8,7 @@ import { PdfToolbar } from '../../components/pdf-editor/PdfToolbar';
 import { PdfProperties } from '../../components/pdf-editor/PdfProperties';
 import { PdfPages } from '../../components/pdf-editor/PdfPages';
 import { PDFDocument } from 'pdf-lib';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -186,13 +187,7 @@ export function PdfEditor({ t, lang }: Props) {
       const originalBuffer = await fileToArrayBuffer(file);
       const editedPdfBytes = await exportEditedPDF(originalBuffer, elements, pageWidth, pageHeight, pageRotations);
       const blob = new Blob([editedPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `edited_${file.name}`;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `edited_${file.name}`);
     } catch (err) {
       setError(lang === 'ar' ? 'فشل التصدير' : 'Export failed');
     } finally {

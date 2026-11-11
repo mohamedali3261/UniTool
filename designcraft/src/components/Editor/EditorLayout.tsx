@@ -1936,7 +1936,7 @@ export const EditorLayout = React.forwardRef<EditorLayoutHandle, EditorLayoutPro
           if (!fabricCanvasRef.current) return;
           if(packaging){
             await document.fonts.ready;
-            const blob=await packagingPrint(fabricCanvasRef.current,packaging.size,canvasWidth,canvasHeight,'pdf',300,guides),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${filename}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+            const blob=await packagingPrint(fabricCanvasRef.current,packaging.size,canvasWidth,canvasHeight,'pdf',300,guides);downloadFile(blob,`${filename}.pdf`);
           }else await exportCanvasPdf(fabricCanvasRef.current, filename, canvasWidth, canvasHeight);
         }}
         defaultTitle={projectTitle}

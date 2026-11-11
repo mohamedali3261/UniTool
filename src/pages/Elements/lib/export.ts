@@ -5,16 +5,7 @@ import {
 } from "../../../../video-studio/src/types";
 import type { LibraryElement } from "../types";
 import { fittedLayer } from "./render";
-export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+export { downloadBlob as download } from "../../../utils/download";
 function svgURL(svg: string) {
   return (
     "data:image/svg+xml;base64," +

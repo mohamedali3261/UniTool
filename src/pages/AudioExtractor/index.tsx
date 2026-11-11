@@ -15,6 +15,7 @@ import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { VIDEO_ACCEPT, getFileExtension, isVideoFile } from '../../utils/video-formats';
+import { downloadBlob, downloadUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -82,6 +83,8 @@ export function AudioExtractor({ lang }: Props) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Kept so "download" never depends on a media object URL Safari may still own.
+  const audioBlobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     return () => {
@@ -181,6 +184,7 @@ export function AudioExtractor({ lang }: Props) {
         : new Uint8Array(raw);
       const blob = new Blob([bytes], { type: fmt.mime });
       setResultSize(blob.size);
+      audioBlobRef.current = blob;
       setAudioUrl(URL.createObjectURL(blob));
       setProgress(100);
 
@@ -196,14 +200,17 @@ export function AudioExtractor({ lang }: Props) {
   };
 
   const downloadAudio = () => {
-    if (!audioUrl || !videoFile) return;
+    if (!videoFile) return;
     const fmt = FORMAT_OPTIONS.find((f) => f.id === format)!;
-    const a = document.createElement('a');
-    a.href = audioUrl;
-    a.download = `${videoFile.name.replace(/\.[^.]+$/, '')}.${fmt.ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const filename = `${videoFile.name.replace(/\.[^.]+$/, '')}.${fmt.ext}`;
+    // Prefer the generated blob: Safari can fail on a media object URL that is
+    // still attached to a <video>/<audio> element.
+    if (audioBlobRef.current) {
+      downloadBlob(audioBlobRef.current, filename);
+      return;
+    }
+    if (!audioUrl) return;
+    downloadUrl(audioUrl, filename);
   };
 
   const clearAll = () => {

@@ -13,6 +13,7 @@ import { PDFElement, PDFFileState } from './types';
 import { fileToArrayBuffer, fileToDataURL } from './lib/utils';
 import { exportEditedPDF } from './utils/pdf-utils';
 import { toJpeg, toPng } from 'html-to-image';
+import { downloadBlob, downloadDataUrl } from '../src/utils/download';
 
 export default function App() {
   const [state, setState] = useState<PDFFileState>({
@@ -275,14 +276,7 @@ export default function App() {
       const editedPdfBytes = await exportEditedPDF(originalBuffer, state.elements, state.pageWidth, state.pageHeight, state.pageRotations);
       
       const blob = new Blob([editedPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `edited_${state.file.name}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `edited_${state.file.name}`);
     } catch (err) {
       console.error('Export failed:', err);
       setState(prev => ({ ...prev, error: 'Failed to export PDF. Please try again.' }));
@@ -317,11 +311,8 @@ export default function App() {
         }
       });
       
-      const link = document.createElement('a');
       const baseName = state.file ? state.file.name.replace(/\.[^/.]+$/, "") : `exported_page_${state.currentPage}`;
-      link.download = `${baseName}.jpg`;
-      link.href = dataUrl;
-      link.click();
+      downloadDataUrl(dataUrl, `${baseName}.jpg`);
     } catch (err) {
       console.error('Image export failed:', err);
       setState(prev => ({ ...prev, error: 'Failed to export Image.' }));
@@ -354,11 +345,8 @@ export default function App() {
         }
       });
       
-      const link = document.createElement('a');
       const baseName = state.file ? state.file.name.replace(/\.[^/.]+$/, "") : `exported_page_${state.currentPage}`;
-      link.download = `${baseName}.png`;
-      link.href = dataUrl;
-      link.click();
+      downloadDataUrl(dataUrl, `${baseName}.png`);
     } catch (err) {
       console.error('Image export failed:', err);
       setState(prev => ({ ...prev, error: 'Failed to export Image.' }));

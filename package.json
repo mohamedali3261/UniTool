@@ -40,7 +40,9 @@
     "test:designcraft:browser": "playwright test --config designcraft/playwright.config.ts",
     "test:text-studio": "tsx --test text-studio/tests/*.test.ts",
     "test:text-studio:browser": "playwright test --config text-studio/tests/playwright.config.ts",
-    "test:site-storage": "tsx --test site-storage/tests/*.test.ts"
+    "test:site-storage": "tsx --test site-storage/tests/*.test.ts",
+    "test:downloads": "tsx --test src/tests/downloadSafari.test.ts",
+    "test:tools:downloads": "playwright test --config playwright.downloads.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

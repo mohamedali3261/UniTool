@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, Download, Loader2, FileImage, CheckSquare, Square, FileDown, Trash2, FileType2, FileSpreadsheet, FileText as FileTextIcon, ArrowDownUp, FileArchive } from 'lucide-react';
 import JSZip from 'jszip';
 import { cn } from '../../lib/utils';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -191,14 +192,7 @@ export function OfficeCompressor({ t, lang }: Props) {
     if (!blob) return;
     const originalFile = fileMap.get(file.id);
     const ext = originalFile ? (originalFile.name.split('.').pop() || 'docx') : 'docx';
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file.name}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${file.name}.${ext}`);
   };
 
   const downloadAll = async () => {
@@ -219,14 +213,7 @@ export function OfficeCompressor({ t, lang }: Props) {
       zip.file(`${f.name}.${ext}`, blob);
     }
     const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `compressed_office_files.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(content, 'compressed_office_files.zip');
   };
 
   const formatBytes = (bytes: number) => {

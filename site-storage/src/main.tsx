@@ -9,6 +9,7 @@ import { DATABASES } from './registry';
 import './style.css';
 import '../../src/styles/studio-controls.css';
 import '../../src/styles/site-appearance.css';
+import { downloadBlob } from '../../src/utils/download';
 function App() {
   const {theme,toggleTheme}=useSiteAppearance('storage');
   const [ar, setAr] = useState(() => { try { return localStorage.getItem('unitool-lang') !== 'en'; } catch { return true; } });
@@ -42,9 +43,7 @@ function App() {
   const download = async () => {
     const data = await exportSite(name => setStatus(text('تجهيز النسخة: ', 'Preparing backup: ') + name));
     const blob = new Blob([data.slice().buffer], { type: 'application/zip' });
-    const url = URL.createObjectURL(blob), link = document.createElement('a');
-    link.href = url; link.download = `UniTool-backup-${new Date().toISOString().slice(0, 10)}.zip`;
-    document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
+    downloadBlob(blob, `UniTool-backup-${new Date().toISOString().slice(0, 10)}.zip`);
     setStatus(text('تم تجهيز ملف ZIP وبدء التنزيل. احتفظ به في مكان آمن.', 'ZIP prepared and download started. Keep it somewhere safe.'));
   };
   return <div className="storage-app" dir={ar ? 'rtl' : 'ltr'}>

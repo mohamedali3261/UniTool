@@ -14,6 +14,7 @@ import { compressAudio, loadFFmpeg } from '../../lib/ffmpeg';
 import { WaveformPlayer } from '../../components/splitter/WaveformPlayer';
 import { SegmentsSidebar } from '../../components/splitter/SegmentsSidebar';
 import { SplitControls, type SplitMode } from '../../components/splitter/SplitControls';
+import { downloadBlob } from '../../utils/download';
 
 type OutputFormat = 'mp3' | 'aac' | 'wav' | 'ogg';
 
@@ -572,18 +573,9 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
   const downloadSegment = (segment: SplitSegment, index?: number) => {
     if (!segment.resultBlob) return;
 
-    const url = URL.createObjectURL(segment.resultBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    
     // Use index if provided, otherwise find segment index
     const segmentIndex = index !== undefined ? index + 1 : segments.findIndex(s => s.id === segment.id) + 1;
-    a.download = `audio${segmentIndex}.${settings.format}`;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadBlob(segment.resultBlob, `audio${segmentIndex}.${settings.format}`);
   };
 
   const downloadAllSegments = () => {
@@ -606,14 +598,7 @@ export function AudioSplitter({ t, lang }: AudioSplitterProps) {
     });
 
     const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audio_segments_${Date.now()}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadBlob(content, `audio_segments_${Date.now()}.zip`);
   };
 
   const isAnyProcessing = segments.some(s => s.status === 'processing');

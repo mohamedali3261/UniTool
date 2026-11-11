@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import type { UnlockFile } from './types';
+import { downloadBlob } from '../../utils/download';
 
 export class PdfPasswordRequiredError extends Error {}
 
@@ -18,10 +19,5 @@ export const unlockPdfFile = async (file: UnlockFile, password: string): Promise
   }
   const bytes = await doc.save();
   const blob = new Blob([bytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${file.name}_unlocked.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${file.name}_unlocked.pdf`);
 };

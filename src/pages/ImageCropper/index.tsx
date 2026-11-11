@@ -8,6 +8,7 @@ import {
 import JSZip from 'jszip';
 import { cn } from '../../lib/utils';
 import type { FileHandoff, FileHandoffTarget } from '../../types/app';
+import { downloadBlob } from '../../utils/download';
 
 interface ImageCropperProps {
   t: any;
@@ -272,8 +273,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
 
   const downloadItem = (item: CroppedItem) => {
     const ext = item.blob.type === 'image/webp' ? 'webp' : item.blob.type === 'image/jpeg' ? 'jpg' : 'png';
-    const a = document.createElement('a'); a.href = item.url; a.download = `${item.originalName}.${ext}`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    downloadBlob(item.blob, `${item.originalName}.${ext}`);
   };
 
   const downloadAllAsZip = async () => {
@@ -284,9 +284,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
       zip.file(item.folderPath ? `${item.folderPath}/${item.originalName}.${ext}` : `${item.originalName}.${ext}`, item.blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a'); a.href = url; a.download = `edited_${Date.now()}.zip`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    downloadBlob(content, `edited_${Date.now()}.zip`);
   };
 
   const removeItem = (id: string) => { setCroppedItems(prev => { const item = prev.find(i => i.id === id); if (item) URL.revokeObjectURL(item.url); return prev.filter(i => i.id !== id); }); };

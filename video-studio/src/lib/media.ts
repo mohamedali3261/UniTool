@@ -8,6 +8,7 @@ import { sceneAt } from "../composition/scene";
 import { effectFrame, drawEffectOverlay } from "../effects/renderer";
 import { clipOpacity } from "./timeline";
 import { Asset, Clip, Project, clipDuration, filterCss, uid } from "../types";
+import { downloadBlob } from '../../../src/utils/download';
 /** The metadata probe is cancellable and never decodes the whole file into memory. */
 export async function readAsset(
   file: File,
@@ -381,12 +382,5 @@ export function portableFilename(name: string) {
   return `${slug || "UniTool-project"}${extension}`;
 }
 export function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = portableFilename(name);
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  downloadBlob(blob, portableFilename(name));
 }

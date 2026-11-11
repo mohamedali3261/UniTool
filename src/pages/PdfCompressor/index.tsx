@@ -8,6 +8,7 @@ import { compressPdfFile } from './utils';
 import { UploadPanel } from './components/UploadPanel';
 import { ExportPanel } from './components/ExportPanel';
 import { FileCard } from './components/FileCard';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -142,14 +143,7 @@ export function PdfCompressor({ lang }: Props) {
   const downloadSingle = (file: PdfFile) => {
     const blob = file.keptOriginal ? fileMap.get(file.id) : file.compressedBlob;
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file.name}_compressed.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${file.name}_compressed.pdf`);
   };
 
   const downloadAll = async () => {
@@ -162,12 +156,7 @@ export function PdfCompressor({ lang }: Props) {
       if (!blob) continue;
       zip.file(`${f.name}_compressed.pdf`, blob);
     }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(await zip.generateAsync({ type: 'blob' }));
-    a.download = 'compressed_pdfs.zip';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadBlob(await zip.generateAsync({ type: 'blob' }), 'compressed_pdfs.zip');
   };
 
   const totalOriginalSize = files.reduce((s, f) => s + f.originalSize, 0);

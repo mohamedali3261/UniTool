@@ -18,6 +18,7 @@ import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { VIDEO_ACCEPT, getFileExtension, isVideoFile } from '../../utils/video-formats';
+import { downloadBlob, downloadUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -142,6 +143,7 @@ export function VideoMerger({ lang }: Props) {
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState('');
+  const resultBlobRef = useRef<Blob | null>(null);
   const [resultSize, setResultSize] = useState(0);
   const [quality, setQuality] = useState<Quality>('balanced');
   const [transitionDuration, setTransitionDuration] = useState(0.8);
@@ -563,6 +565,7 @@ export function VideoMerger({ lang }: Props) {
         ? new TextEncoder().encode(raw)
         : new Uint8Array(raw);
       const blob = new Blob([bytes], { type: 'video/mp4' });
+      resultBlobRef.current = blob;
       setResultSize(blob.size);
       setResultUrl(URL.createObjectURL(blob));
       setProgress(100);
@@ -583,13 +586,12 @@ export function VideoMerger({ lang }: Props) {
   };
 
   const downloadResult = () => {
+    if (resultBlobRef.current) {
+      downloadBlob(resultBlobRef.current, 'merged_video.mp4');
+      return;
+    }
     if (!resultUrl) return;
-    const a = document.createElement('a');
-    a.href = resultUrl;
-    a.download = 'merged_video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadUrl(resultUrl, 'merged_video.mp4');
   };
 
   const currentTransition =

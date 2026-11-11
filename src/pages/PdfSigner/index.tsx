@@ -6,6 +6,7 @@ import {
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
 import { cn } from '../../lib/utils';
+import { downloadBlob } from '../../utils/download';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -238,14 +239,7 @@ export function PdfSigner({ t, lang, onNavigate }: Props) {
       }
       const out = await pdfDoc.save();
       const blob = new Blob([out as unknown as BlobPart], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${(file?.name || 'document.pdf').replace(/\.pdf$/i, '')}_signed.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 6000);
+      downloadBlob(blob, `${(file?.name || 'document.pdf').replace(/\.pdf$/i, '')}_signed.pdf`);
     } catch (err: any) {
       setError(err?.message || ar('فشل توقيع الملف', 'Signing failed'));
     } finally {

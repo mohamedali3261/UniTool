@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { AudioFile, CompressionSettings } from '../types';
 import { compressAudio, loadFFmpeg } from '../lib/ffmpeg';
 import { playCompletionSound } from '../lib/soundEffects';
+import { downloadBlob } from '../utils/download';
 
 export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
   const [isFfmpegLoaded, setIsFfmpegLoaded] = useState(false);
@@ -118,15 +119,8 @@ export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
 
   const downloadFile = useCallback((file: AudioFile) => {
     if (!file.resultBlob) return;
-    const url = URL.createObjectURL(file.resultBlob);
-    const a = document.createElement('a');
-    a.href = url;
     const originalNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-    a.download = `${originalNameWithoutExt}.${settings.format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(file.resultBlob, `${originalNameWithoutExt}.${settings.format}`);
   }, [settings.format]);
 
   const downloadAllAsZip = useCallback(async () => {
@@ -141,14 +135,7 @@ export function useAudioProcessor(lang: 'ar' | 'en', t: any) {
     });
 
     const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sonic_reduce_batch_${Date.now()}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(content, `unitool-audio-batch_${Date.now()}.zip`);
   }, [files, settings.format]);
 
   const downloadAllFiles = useCallback(() => {

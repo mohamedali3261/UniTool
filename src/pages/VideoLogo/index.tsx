@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
+import { downloadBlob } from '../../utils/download';
 
 interface VideoLogoProps {
   t: any;
@@ -275,14 +276,7 @@ export function VideoLogo({ t, lang }: VideoLogoProps) {
 
   const downloadResult = () => {
     if (!resultBlob) return;
-    const url = URL.createObjectURL(resultBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `video_with_logo_${Date.now()}.mp4`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(resultBlob, `video_with_logo_${Date.now()}.mp4`);
   };
 
   // Auto-download when processing completes

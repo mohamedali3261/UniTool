@@ -5,6 +5,7 @@ import { formatPaperPresent, getPaperSectionTitle, PROFICIENCY_LABELS } from './
 import { getPaperDimensions } from './pagination';
 import { serializeUtcvProject } from './storage';
 import type { PaperSize, ResumeDocument } from './types';
+import { downloadBlob } from '../../../src/utils/download';
 
 export function sanitizeFilename(raw: string, fallback = 'UniTool-CV'): string {
   const clean = raw
@@ -16,14 +17,7 @@ export function sanitizeFilename(raw: string, fallback = 'UniTool-CV'): string {
 }
 
 export function triggerBlobDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 15_000);
+  downloadBlob(blob, filename);
 }
 
 async function renderSheetElementToCanvas(sheet: HTMLElement, paperSize: PaperSize): Promise<HTMLCanvasElement> {

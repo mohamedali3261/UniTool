@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { cn } from '../../lib/utils';
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
+import { downloadBlob } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -179,14 +180,7 @@ export function VideoCompressor({ t, lang }: Props) {
     if (!blob) return;
     const originalFile = fileMap.get(file.id);
     const ext = originalFile ? getExt(originalFile.name) : 'mp4';
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file.name}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${file.name}.${ext}`);
   };
 
   const downloadAll = async () => {
@@ -202,12 +196,7 @@ export function VideoCompressor({ t, lang }: Props) {
       zip.file(`${f.name}.${ext}`, blob);
     }
     const content = await zip.generateAsync({ type: 'blob' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(content);
-    a.download = `compressed_videos.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadBlob(content, 'compressed_videos.zip');
   };
 
   const formatBytes = (bytes: number) => {

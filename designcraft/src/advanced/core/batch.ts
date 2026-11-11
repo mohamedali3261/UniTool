@@ -2,13 +2,9 @@ import { fabric } from "fabric";
 import type { ProjectItem } from "../../types";
 import { exportCanvasImage } from "../../utils/fabricHelpers";
 import { withoutGuides } from "../../packaging/print";
+import { downloadBlob as safeDownloadBlob } from "../../../../src/utils/download";
 export function downloadBlob(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  safeDownloadBlob(blob, name);
 }
 function safeName(value: string) {
   return value.replace(/[\\/:*?"<>|]/g, "_").slice(0, 80) || "design";

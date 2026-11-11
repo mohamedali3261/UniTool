@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import type { SplitFile, SplitMode } from './types';
+import { downloadBlob } from '../../utils/download';
 
 export const readPdfFile = async (f: File): Promise<SplitFile> => {
   const data = new Uint8Array(await f.arrayBuffer());
@@ -22,11 +23,5 @@ export const splitPdfFile = async (file: SplitFile, selectedPages: Set<number>, 
   copied.forEach(p => newDoc.addPage(p));
   const bytes = await newDoc.save();
   const blob = new Blob([bytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${file.name}_split.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
-  return true;
+  return downloadBlob(blob, `${file.name}_split.pdf`).ok;
 };

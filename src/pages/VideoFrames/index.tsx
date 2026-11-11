@@ -6,6 +6,7 @@ import {
 import { loadFFmpeg } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { cn } from '../../lib/utils';
+import { downloadBlob, downloadUrl } from '../../utils/download';
 
 interface Props {
   t: any;
@@ -187,12 +188,11 @@ export function VideoFrames({ t, lang, onNavigate }: Props) {
   };
 
   const downloadOne = (f: FrameItem) => {
-    const a = document.createElement('a');
-    a.href = f.url;
-    a.download = f.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    if (f.blob) {
+      downloadBlob(f.blob, f.name);
+      return;
+    }
+    downloadUrl(f.url, f.name);
   };
 
   const downloadAll = () => {

@@ -3,6 +3,7 @@ import {
   Upload, FileVideo, AlertCircle, Loader2, Key, Copy, Download,
   FileText, Trash2, CheckCircle2, FileOutput, Timer, X, Subtitles, RotateCcw, Type, Palette
 } from 'lucide-react';
+import { downloadText, downloadUrl } from '../../utils/download';
 
 interface VideoSubtitlesProps {
   t: any;
@@ -284,14 +285,10 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
 
   const exportTxt = () => {
     if (!transcript) return;
-    const blob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `subtitles_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.txt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadText(
+      transcript,
+      `subtitles_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.txt`,
+    );
   };
 
   const exportSrt = () => {
@@ -307,14 +304,10 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
       };
       srt += `${seg.i}\n${fmt(seg.start)} --> ${fmt(seg.end)}\n${seg.text}\n\n`;
     });
-    const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `subtitles_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.srt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadText(
+      srt,
+      `subtitles_${file?.name.replace(/\.[^.]+$/, '') || Date.now()}.srt`,
+    );
   };
 
   const copyText = () => {
@@ -659,10 +652,10 @@ export function VideoSubtitles({ t, lang }: VideoSubtitlesProps) {
                       </span>
                       <button
                         onClick={() => {
-                          const a = document.createElement('a');
-                          a.href = resultVideoUrl;
-                          a.download = `${(file?.name || 'video').replace(/\.[^.]+$/, '')}_subtitled.webm`;
-                          a.click();
+                          downloadUrl(
+                            resultVideoUrl,
+                            `${(file?.name || 'video').replace(/\.[^.]+$/, '')}_subtitled.webm`,
+                          );
                         }}
                         className="flex items-center gap-1 text-[8px] font-mono text-gray-400 hover:text-white transition-colors"
                       >

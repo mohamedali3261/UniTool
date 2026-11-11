@@ -5,6 +5,7 @@ import { cartonGeometry, type CartonSize } from "./geometry";
 import { imagePreflight, packagingPrint } from "./print";
 import { assertPhysicalCanvas, printSpec, type PrintDpi } from "./printMath";
 import "./packaging.css";
+import { downloadBlob } from '../../../src/utils/download';
 export function PackagingPrintDialog({
   canvas,
   size,
@@ -198,12 +199,8 @@ export function PackagingPrintDialog({
                   guides,
                   includeBleed ? bleedMm : 0,
                 ),
-                url = URL.createObjectURL(blob),
-                a = document.createElement("a");
-              a.href = url;
-              a.download = `carton-artwork-${format === "svg" ? "vector" : dpi + "dpi"}.${format}`;
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
+                name = `carton-artwork-${format === "svg" ? "vector" : dpi + "dpi"}.${format}`;
+              downloadBlob(blob, name);
             } catch {
               setError(
                 ar
