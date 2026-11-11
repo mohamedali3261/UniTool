@@ -20,7 +20,7 @@ test("eight scroll-directed chapters cover every workspace and animate with real
   await page.goto(base);
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator(".journey-chapter")).toHaveCount(8);
-  await expect(page.locator(".home-header img")).toHaveAttribute(
+  await expect(page.locator(".home-header img.unitool-brand-logo")).toHaveAttribute(
     "src",
     "/UniTool_logo.png",
   );

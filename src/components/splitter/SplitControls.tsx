@@ -70,8 +70,8 @@ export function SplitControls({
           className={cn(
             "px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs rounded-lg border transition-all font-medium",
             splitMode === 'auto'
-              ? "bg-gradient-to-br from-purple-600 to-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/30"
-              : "bg-[#0A0C0F] text-gray-400 border-[#2D3139] hover:border-purple-500/50"
+              ? "bg-gradient-to-br from-emerald-600 to-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/30"
+              : "bg-[#0A0C0F] text-gray-400 border-[#2D3139] hover:border-emerald-500/50"
           )}
         >
           {lang === 'ar' ? 'تلقائي' : 'Auto'}
@@ -126,7 +126,7 @@ export function SplitControls({
                 max="20"
                 value={autoSplitCount}
                 onChange={(e) => onAutoSplitCountChange(Number(e.target.value))}
-                className="flex-1 accent-purple-500"
+                className="flex-1 accent-emerald-500"
               />
               <span className="text-white text-sm sm:text-base font-bold min-w-[30px] sm:min-w-[35px] text-center bg-[#0A0C0F] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border border-[#2D3139]">
                 {autoSplitCount}
@@ -136,7 +136,7 @@ export function SplitControls({
           <button
             onClick={onAutoSplit}
             disabled={disabled}
-            className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-500 hover:to-purple-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-[10px] sm:text-xs font-medium transition-all shadow-lg"
+            className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:from-emerald-500 hover:to-emerald-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-[10px] sm:text-xs font-medium transition-all shadow-lg"
           >
             <Scissors size={12} className="sm:size-[14px]" />
             {lang === 'ar' ? 'تقسيم تلقائي' : 'Auto Split'}

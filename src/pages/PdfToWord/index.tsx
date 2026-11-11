@@ -88,7 +88,7 @@ export function PdfToWord({ t, lang }: Props) {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20 sm:w-8 sm:h-8">
           <FileText size={14} className="text-white" />
         </div>
         <div>

@@ -31,6 +31,7 @@ import {
   ToolsArt,
 } from "./components/Artwork";
 import { ToolDirectory } from "./components/ToolDirectory";
+import { BrandLogo } from '../../components/BrandLogo';
 function stored(key: string) {
   try {
     return localStorage.getItem(key);
@@ -381,13 +382,7 @@ export default function HomePage() {
       <footer className="home-footer home-container">
         <div className="footer-top">
           <a className="home-brand" href="#top" aria-label="UniTool">
-            <img
-              src="/UniTool_logo.png"
-              alt="UniTool"
-              width="128"
-              height="32"
-              className="restored-brand-logo"
-            />
+            <BrandLogo width={128} height={32} className="restored-brand-logo" />
           </a>
           <nav
             aria-label={lang === "ar" ? "كل صفحات الموقع" : "All site pages"}

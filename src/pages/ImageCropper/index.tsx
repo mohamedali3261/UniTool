@@ -302,7 +302,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
     <div className="flex-1 flex flex-col bg-[#0A0C0F] overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-6 sm:py-3">
-        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <ImageIcon size={14} className="text-white sm:size-4" />
         </div>
         <div className="flex-1">
@@ -469,10 +469,10 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
                     ))}
                   </div>
                   <div className="flex gap-1.5 mt-1">
-                    <button onClick={() => setRotate(p => ({ ...p, flipH: !p.flipH }))} className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded border text-[9px] font-mono transition-all", rotate.flipH ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'text-gray-500 border-[#2D3139] hover:border-gray-500')}>
+                    <button onClick={() => setRotate(p => ({ ...p, flipH: !p.flipH }))} className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded border text-[9px] font-mono transition-all", rotate.flipH ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'text-gray-500 border-[#2D3139] hover:border-gray-500')}>
                       <FlipHorizontal size={12} /> {lang === 'ar' ? 'أفقي' : 'H'}
                     </button>
-                    <button onClick={() => setRotate(p => ({ ...p, flipV: !p.flipV }))} className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded border text-[9px] font-mono transition-all", rotate.flipV ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'text-gray-500 border-[#2D3139] hover:border-gray-500')}>
+                    <button onClick={() => setRotate(p => ({ ...p, flipV: !p.flipV }))} className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded border text-[9px] font-mono transition-all", rotate.flipV ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'text-gray-500 border-[#2D3139] hover:border-gray-500')}>
                       <FlipVertical size={12} /> {lang === 'ar' ? 'عمودي' : 'V'}
                     </button>
                   </div>
@@ -535,7 +535,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
 
             {/* Apply Button */}
             {images.length > 0 && (
-              <button onClick={processAll} disabled={processing || (mode === 'text' && !text.text)} className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed">
+              <button onClick={processAll} disabled={processing || (mode === 'text' && !text.text)} className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 disabled:from-gray-800 disabled:to-gray-800 text-white rounded-lg transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:shadow-none disabled:cursor-not-allowed">
                 {processing ? (
                   <><Loader2 size={12} className="animate-spin sm:size-[14px]" /> {lang === 'ar' ? `جاري المعالجة ${progress.done}/${progress.total}...` : `Processing ${progress.done}/${progress.total}...`}</>
                 ) : (
@@ -581,13 +581,13 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
                 <span className="text-[10px] sm:text-xs font-mono text-gray-300">{lang === 'ar' ? 'إضافة صور' : 'Add Images'}</span>
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
               </label>
-              <label className="w-full flex items-center justify-center gap-2 py-2 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-purple-500/50 rounded-lg transition-all cursor-pointer">
-                <FolderOpen size={14} className="text-purple-400" />
+              <label className="w-full flex items-center justify-center gap-2 py-2 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-emerald-500/50 rounded-lg transition-all cursor-pointer">
+                <FolderOpen size={14} className="text-emerald-400" />
                 <span className="text-[10px] sm:text-xs font-mono text-gray-300">{lang === 'ar' ? 'إضافة فولدر' : 'Add Folder'}</span>
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" {...{ webkitdirectory: '', directory: '' }} />
               </label>
               {images.length > 1 && <button onClick={() => setShowGallery(true)} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1A1D23] hover:bg-[#1E2127] border border-[#2D3139] hover:border-blue-500/50 rounded-lg transition-all">
-                <Grid3X3 size={14} className="text-purple-400" />
+                <Grid3X3 size={14} className="text-emerald-400" />
                 <span className="text-[10px] sm:text-xs font-mono text-gray-300">{lang === 'ar' ? `عرض كل الصور (${images.length})` : `View All (${images.length})`}</span>
               </button>}
               {images.length > 0 && <button onClick={removeAllImages} className="w-full flex items-center justify-center gap-2 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-lg transition-all">
@@ -653,7 +653,7 @@ export function ImageCropper({ t, lang, fileHandoff, onSendFilesToTool, onFileHa
               <p className="text-[9px] sm:text-[10px] text-blue-300 font-mono">{lang === 'ar' ? 'كل التعديلات بتحفظ بنفس الصيغة والجودة الأصلية. حجم القص بيتحفظ تلقائي.' : 'All edits keep original format and quality. Crop size is saved automatically.'}</p>
             </div>
 
-            <button onClick={() => { setShowGuide(false); markGuide(); setGuideSeen(true); }} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg font-bold text-xs transition-all">
+            <button onClick={() => { setShowGuide(false); markGuide(); setGuideSeen(true); }} className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white rounded-lg font-bold text-xs transition-all">
               {lang === 'ar' ? 'فهمت، يلا نبدأ' : "Got it, let's go"}
             </button>
           </div>

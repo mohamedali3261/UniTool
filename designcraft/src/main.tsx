@@ -6,6 +6,7 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import '../../src/styles/studio-controls.css';
+import '../../src/styles/tools-appearance.css';
 import { initProjectStorage } from './utils/projectStorage';
 
 installTextPathRevival();

@@ -66,7 +66,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'PDF → Word', titleEn: 'PDF → Word',
         descAr: 'استخرج النص من PDF وحوّله لمستند Word قابل للتعديل',
         descEn: 'Extract text from PDF and convert it to an editable Word document',
-        gradient: 'from-blue-500 to-indigo-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
+        gradient: 'from-blue-500 to-emerald-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
       },
       {
         id: 'wordToPdf', icon: FileText,
@@ -87,7 +87,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'دمج ملفات PDF', titleEn: 'Merge PDF',
         descAr: 'اجمع عدة ملفات PDF في ملف واحد مع ترتيب الصفحات',
         descEn: 'Combine multiple PDF files into one with page ordering',
-        gradient: 'from-violet-500 to-purple-600', border: 'border-violet-500/25 hover:border-violet-400/50', glow: 'group-hover:shadow-violet-500/20',
+        gradient: 'from-emerald-500 to-emerald-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
       },
       {
         id: 'pdfSplitter', icon: Scissors,
@@ -148,7 +148,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'قص وتحرير الصور', titleEn: 'Crop & Edit Images',
         descAr: 'قص وتدوير وتغيير مقاسات الصور مع معاينة مباشرة',
         descEn: 'Crop, rotate and resize images with live preview',
-        gradient: 'from-violet-500 to-indigo-600', border: 'border-violet-500/25 hover:border-violet-400/50', glow: 'group-hover:shadow-violet-500/20',
+        gradient: 'from-emerald-500 to-emerald-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
         badgeAr: 'محرر كامل', badgeEn: 'Full editor',
       },
       {
@@ -189,7 +189,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'ضغط الفيديو', titleEn: 'Compress Video',
         descAr: 'قلّل حجم الفيديو مع الحفاظ على جودة مقبولة',
         descEn: 'Reduce video size while keeping acceptable quality',
-        gradient: 'from-indigo-500 to-blue-600', border: 'border-indigo-500/25 hover:border-indigo-400/50', glow: 'group-hover:shadow-indigo-500/20',
+        gradient: 'from-emerald-500 to-blue-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
       },
       {
         id: 'videoToGif', icon: Film,
@@ -217,7 +217,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'استخراج إطارات الفيديو', titleEn: 'Video Frames',
         descAr: 'استخرج لقطات ثابتة من أي فيديو بجودة عالية',
         descEn: 'Extract high-quality still frames from any video',
-        gradient: 'from-sky-500 to-indigo-600', border: 'border-sky-500/25 hover:border-sky-400/50', glow: 'group-hover:shadow-sky-500/20',
+        gradient: 'from-sky-500 to-emerald-600', border: 'border-sky-500/25 hover:border-sky-400/50', glow: 'group-hover:shadow-sky-500/20',
       },
     ],
   },
@@ -236,7 +236,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'ضغط الصوت', titleEn: 'Audio Compression',
         descAr: 'قلّل حجم الملفات الصوتية مع إعدادات الصيغة والجودة',
         descEn: 'Reduce audio file size with format and quality controls',
-        gradient: 'from-blue-500 to-indigo-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
+        gradient: 'from-blue-500 to-emerald-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
       },
       {
         id: 'audioExtractor', icon: AudioLines,
@@ -257,7 +257,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'كلام إلى نص', titleEn: 'Speech to Text',
         descAr: 'اكتب مباشرة بالكلام من الميكروفون',
         descEn: 'Dictate directly using your microphone',
-        gradient: 'from-purple-500 to-fuchsia-600', border: 'border-purple-500/25 hover:border-purple-400/50', glow: 'group-hover:shadow-purple-500/20',
+        gradient: 'from-emerald-500 to-emerald-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
       },
       {
         id: 'splitter', icon: Scissors,
@@ -275,22 +275,22 @@ export const toolCategories: ToolCategory[] = [
     taglineAr: 'ضغط الملفات المكتبية وأكواد QR وأكثر',
     taglineEn: 'Office file compression, QR codes and more',
     icon: Sparkles,
-    accent: 'from-indigo-500 to-violet-600',
-    soft: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+    accent: 'from-emerald-500 to-emerald-600',
+    soft: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
     tools: [
       {
         id: 'compressionTools', icon: Zap,
         titleAr: 'أدوات الضغط', titleEn: 'Compression Tools',
         descAr: 'اضغط فيديو، صوت، صور وملفات PDF من مكان واحد',
         descEn: 'Compress video, audio, images and PDF in one place',
-        gradient: 'from-indigo-500 to-blue-600', border: 'border-indigo-500/25 hover:border-indigo-400/50', glow: 'group-hover:shadow-indigo-500/20',
+        gradient: 'from-emerald-500 to-blue-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
       },
       {
         id: 'officeCompressor', icon: Briefcase,
         titleAr: 'ضغط ملفات الأوفيس', titleEn: 'Office Compressor',
         descAr: 'قلّل حجم مستندات Word و PowerPoint',
         descEn: 'Reduce the size of Word and PowerPoint documents',
-        gradient: 'from-blue-500 to-indigo-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
+        gradient: 'from-blue-500 to-emerald-600', border: 'border-blue-500/25 hover:border-blue-400/50', glow: 'group-hover:shadow-blue-500/20',
       },
       {
         id: 'qrCode', icon: QrCode,
@@ -311,7 +311,7 @@ export const toolCategories: ToolCategory[] = [
         titleAr: 'محول الصيغ', titleEn: 'Format Converter',
         descAr: 'حوّل بين صيغ الصور والملفات المختلفة بسرعة',
         descEn: 'Quickly convert between different image and file formats',
-        gradient: 'from-fuchsia-500 to-purple-600', border: 'border-fuchsia-500/25 hover:border-fuchsia-400/50', glow: 'group-hover:shadow-fuchsia-500/20',
+        gradient: 'from-emerald-500 to-emerald-600', border: 'border-emerald-500/25 hover:border-emerald-400/50', glow: 'group-hover:shadow-emerald-500/20',
       },
     ],
   },

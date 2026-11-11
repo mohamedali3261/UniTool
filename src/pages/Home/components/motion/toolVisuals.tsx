@@ -12,7 +12,7 @@ const C = {
   rose: "#e11d48",
   blue: "#2563eb",
   amber: "#d97706",
-  violet: "#7c3aed",
+  violet: "#24795e",
   teal: "#0d9488",
 };
 

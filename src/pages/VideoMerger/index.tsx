@@ -698,15 +698,15 @@ export function VideoMerger({ lang }: Props) {
                   {index < items.length - 1 && (
                     <div className="px-2 pb-2 pt-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Sparkles size={10} className="text-violet-400" />
-                        <span className="text-[7px] font-mono text-violet-400 uppercase tracking-wider">
+                        <Sparkles size={10} className="text-emerald-400" />
+                        <span className="text-[7px] font-mono text-emerald-400 uppercase tracking-wider">
                           {lang === 'ar' ? 'انتقال إلى التالي' : 'Transition to next'}
                         </span>
                       </div>
                       <select
                         value={item.transition}
                         onChange={(e) => setItemTransition(item.id, e.target.value as TransitionType)}
-                        className="w-full bg-[#14171C] border border-[#2D3139] rounded-md text-[8px] font-mono text-gray-300 px-2 py-1.5 outline-none focus:border-violet-500/50"
+                        className="w-full bg-[#14171C] border border-[#2D3139] rounded-md text-[8px] font-mono text-gray-300 px-2 py-1.5 outline-none focus:border-emerald-500/50"
                       >
                         {TRANSITIONS.map((tr) => (
                           <option key={tr.id} value={tr.id}>
@@ -738,7 +738,7 @@ export function VideoMerger({ lang }: Props) {
                         className={cn(
                           'py-1.5 text-[7px] font-mono rounded-md border transition-all',
                           defaultTransition === id
-                            ? 'bg-violet-600/20 border-violet-500/40 text-violet-300'
+                            ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-300'
                             : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500'
                         )}
                       >
@@ -763,7 +763,7 @@ export function VideoMerger({ lang }: Props) {
                     setTransitionDuration(parseFloat(e.target.value));
                     clearResult();
                   }}
-                  className="w-full mt-1 accent-violet-500"
+                  className="w-full mt-1 accent-emerald-500"
                 />
               </div>
 
@@ -806,7 +806,7 @@ export function VideoMerger({ lang }: Props) {
               <button
                 onClick={toggleLive}
                 disabled={items.length === 0 || merging}
-                className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-40"
+                className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 disabled:opacity-40"
               >
                 {livePlaying ? <Pause size={13} /> : <Play size={13} />}
                 {livePlaying
@@ -867,11 +867,11 @@ export function VideoMerger({ lang }: Props) {
             ) : (
               <>
                 {/* Live stage */}
-                <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.03] overflow-hidden">
-                  <div className="px-3 py-2 border-b border-violet-500/15 flex items-center justify-between gap-2">
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden">
+                  <div className="px-3 py-2 border-b border-emerald-500/15 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Eye size={12} className="text-violet-400" />
-                      <span className="text-[9px] font-mono text-violet-300 uppercase tracking-wider">
+                      <Eye size={12} className="text-emerald-400" />
+                      <span className="text-[9px] font-mono text-emerald-300 uppercase tracking-wider">
                         {lang === 'ar' ? 'معاينة حية' : 'Live Preview'}
                       </span>
                       {livePlaying && (
@@ -912,7 +912,7 @@ export function VideoMerger({ lang }: Props) {
                         onClick={startLive}
                         className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 hover:bg-black/50 transition-colors"
                       >
-                        <div className="w-14 h-14 rounded-full bg-violet-600/90 flex items-center justify-center shadow-lg shadow-violet-500/30 mb-2">
+                        <div className="w-14 h-14 rounded-full bg-emerald-600/90 flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-2">
                           <Play size={22} className="text-white ms-0.5" />
                         </div>
                         <span className="text-[10px] font-mono text-white/90">
@@ -924,7 +924,7 @@ export function VideoMerger({ lang }: Props) {
 
                   {/* Timeline */}
                   {items.length > 0 && (
-                    <div className="px-3 py-2.5 border-t border-violet-500/15">
+                    <div className="px-3 py-2.5 border-t border-emerald-500/15">
                       <div className="flex gap-1 items-stretch h-8">
                         {items.map((item, index) => (
                           <div key={item.id} className="contents">
@@ -941,7 +941,7 @@ export function VideoMerger({ lang }: Props) {
                               className={cn(
                                 'flex-1 min-w-0 rounded-md border text-[7px] font-mono px-1 truncate transition-all',
                                 liveIndex === index
-                                  ? 'bg-violet-600/30 border-violet-500/50 text-violet-200'
+                                  ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-200'
                                   : 'bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500'
                               )}
                               title={item.name}
@@ -954,7 +954,7 @@ export function VideoMerger({ lang }: Props) {
                                   'w-5 shrink-0 rounded-sm flex items-center justify-center text-[6px] font-mono border',
                                   item.transition === 'none'
                                     ? 'border-[#2D3139] text-gray-600'
-                                    : 'border-violet-500/40 bg-violet-500/10 text-violet-300'
+                                    : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
                                 )}
                                 title={TRANSITIONS.find((t) => t.id === item.transition)?.[lang === 'ar' ? 'labelAr' : 'labelEn']}
                               >

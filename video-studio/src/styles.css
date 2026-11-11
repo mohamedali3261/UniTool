@@ -513,8 +513,8 @@ button:hover:not(:disabled) {
   background: #b7f56812;
 }
 .purple {
-  color: var(--studio-night-accent-ink, #b3a1e5);
-  background: var(--studio-night-accent-wash, #b3a1e512);
+  color: var(--studio-night-accent-ink, #85ccac);
+  background: var(--studio-night-accent-wash, #24795e26);
 }
 .quick-actions h3 {
   font-size: 13px;

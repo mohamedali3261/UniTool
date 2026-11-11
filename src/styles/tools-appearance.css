@@ -1,4 +1,5 @@
-html[data-tools-theme] {
+html[data-tools-theme],
+.unitool-brand-palette:root {
   --tools-page: #f5f7f4;
   --tools-surface: #ffffff;
   --tools-raised: #f0f4ee;
@@ -638,4 +639,200 @@ html[data-tools-theme] .tools-sidebar :is(button, a) svg {
   .tools-theme-toggle span {
     display: none;
   }
+}
+
+/* Safety net: any purple Tailwind class (all shades, all utilities) resolves to
+   the UniTool emerald, so a newly added tool can never introduce violet.
+   Artwork, canvases and exported pixels are excluded. */
+html[data-tools-theme]
+  .tools-app-shell
+  :is(
+    [class*='text-indigo-'],
+    [class*='text-violet-'],
+    [class*='text-purple-'],
+    [class*='text-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  color: var(--tools-accent-ink) !important;
+}
+html[data-tools-theme]
+  .tools-app-shell
+  :is(
+    [class*='bg-indigo-'],
+    [class*='bg-violet-'],
+    [class*='bg-purple-'],
+    [class*='bg-fuchsia-']
+  ):not(button):not(a):not([data-theme-art]):not([data-theme-art] *) {
+  background-color: var(--tools-selected) !important;
+  background-image: none !important;
+}
+html[data-tools-theme]
+  .tools-app-shell
+  :is(button, a[download]):is(
+    [class*='bg-indigo-'],
+    [class*='bg-violet-'],
+    [class*='bg-purple-'],
+    [class*='bg-fuchsia-']
+  ) {
+  background: #24795e !important;
+  color: #ffffff !important;
+  border-color: #24795e !important;
+}
+html[data-tools-theme]
+  .tools-app-shell
+  :is(
+    [class*='border-indigo-'],
+    [class*='border-violet-'],
+    [class*='border-purple-'],
+    [class*='border-fuchsia-'],
+    [class*='ring-indigo-'],
+    [class*='ring-violet-'],
+    [class*='ring-purple-'],
+    [class*='ring-violet-'],
+    [class*='ring-purple-'],
+    [class*='ring-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  border-color: #438c6f !important;
+  --tw-ring-color: #438c6f;
+}
+/* Purple gradient stops (from-/via-/to-) become brand gradients. */
+html[data-tools-theme]
+  .tools-app-shell
+  :is(
+    [class*='from-indigo-'],
+    [class*='from-violet-'],
+    [class*='from-purple-'],
+    [class*='from-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  --tw-gradient-from: #24795e !important;
+  --tw-gradient-to: #1d634b !important;
+}
+html[data-tools-theme]
+  .tools-app-shell
+  :is(
+    [class*='to-indigo-'],
+    [class*='to-violet-'],
+    [class*='to-purple-'],
+    [class*='to-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  --tw-gradient-to: #1d634b !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Brand palette everywhere (opt-in by the tool screens).
+   StudiOS that cannot use .tools-app-shell add `.unitool-brand-palette` on
+   <html>, or simply inherit the palette because they already set
+   data-tools-theme / data-site-theme / data-dc-theme / data-video-theme.
+   No purple/violet/indigo/fuchsia UI accent may survive anywhere on the site.
+--------------------------------------------------------------------------- */
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(
+    [class*='text-indigo-'],
+    [class*='text-violet-'],
+    [class*='text-purple-'],
+    [class*='text-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  color: var(--tools-accent-ink, var(--site-accent-ink, #85ccac)) !important;
+}
+
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(
+    [class*='bg-indigo-'],
+    [class*='bg-violet-'],
+    [class*='bg-purple-'],
+    [class*='bg-fuchsia-']
+  ):not(button):not(a):not(input):not(select):not([data-theme-art]):not(
+    [data-theme-art] *
+  ) {
+  background-color: var(--tools-accent, #24795e) !important;
+  background-image: none !important;
+  color: #ffffff !important;
+}
+
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(button, a[download]):is(
+    [class*='bg-indigo-'],
+    [class*='bg-violet-'],
+    [class*='bg-purple-'],
+    [class*='bg-fuchsia-']
+  ) {
+  background: #24795e !important;
+  color: #ffffff !important;
+  border-color: #24795e !important;
+}
+
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(
+    [class*='border-indigo-'],
+    [class*='border-violet-'],
+    [class*='border-purple-'],
+    [class*='border-fuchsia-'],
+    [class*='ring-indigo-'],
+    [class*='ring-violet-'],
+    [class*='ring-purple-'],
+    [class*='ring-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  border-color: #438c6f !important;
+  --tw-ring-color: #438c6f;
+}
+
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(
+    [class*='from-indigo-'],
+    [class*='from-violet-'],
+    [class*='from-purple-'],
+    [class*='from-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  --tw-gradient-from: #24795e !important;
+  --tw-gradient-to: #1d634b !important;
+}
+
+:is(
+    html[data-tools-theme],
+    html[data-site-theme],
+    html[data-dc-theme],
+    html[data-video-theme],
+    .unitool-brand-palette:root
+  )
+  :is(
+    [class*='to-indigo-'],
+    [class*='to-violet-'],
+    [class*='to-purple-'],
+    [class*='to-fuchsia-'],
+    [class*='via-indigo-'],
+    [class*='via-violet-'],
+    [class*='via-purple-'],
+    [class*='via-fuchsia-']
+  ):not([data-theme-art]):not([data-theme-art] *) {
+  --tw-gradient-to: #1d634b !important;
+  --tw-gradient-via: #2f9270 !important;
 }

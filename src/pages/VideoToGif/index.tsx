@@ -423,7 +423,7 @@ export function VideoToGif({ t, lang }: Props) {
           {/* Background Removal */}
           <div className="p-3 border-b border-[#2D3139] sm:p-4">
             <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5 sm:text-[10px]">
-              <Wand2 size={11} className="text-purple-500" />
+              <Wand2 size={11} className="text-emerald-500" />
               {lang === 'ar' ? 'إزالة الخلفية' : 'Remove Background'}
             </h3>
             <div className="space-y-3">
@@ -432,7 +432,7 @@ export function VideoToGif({ t, lang }: Props) {
                 className={cn(
                   "w-full py-2 text-[8px] font-mono uppercase tracking-wider rounded-md border transition-all",
                   removeBg
-                    ? "bg-purple-600/20 border-purple-500/40 text-purple-400"
+                    ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400"
                     : "bg-[#0F1115] border-[#2D3139] text-gray-500 hover:border-gray-500"
                 )}
               >
@@ -444,7 +444,7 @@ export function VideoToGif({ t, lang }: Props) {
                 <>
                   <div>
                     <label className="text-[8px] font-mono text-gray-500 uppercase tracking-wider sm:text-[9px] flex items-center gap-1">
-                      <Pipette size={9} className="text-purple-400" />
+                      <Pipette size={9} className="text-emerald-400" />
                       {lang === 'ar' ? 'لون الخلفية' : 'Background Color'}
                     </label>
                     <div className="flex items-center gap-2 mt-1.5">
@@ -464,7 +464,7 @@ export function VideoToGif({ t, lang }: Props) {
                     <button
                       onClick={detectBgColor}
                       disabled={detectingColor}
-                      className="w-full mt-2 py-1.5 flex items-center justify-center gap-1.5 text-[8px] font-mono uppercase tracking-wider rounded border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all disabled:opacity-50"
+                      className="w-full mt-2 py-1.5 flex items-center justify-center gap-1.5 text-[8px] font-mono uppercase tracking-wider rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                     >
                       {detectingColor ? (
                         <Loader2 size={10} className="animate-spin" />
@@ -498,7 +498,7 @@ export function VideoToGif({ t, lang }: Props) {
                       step="0.01"
                       value={bgSimilarity}
                       onChange={e => setBgSimilarity(parseFloat(e.target.value))}
-                      className="w-full mt-1.5 accent-purple-500"
+                      className="w-full mt-1.5 accent-emerald-500"
                     />
                     <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
                       <span>{lang === 'ar' ? 'دقيقة' : 'Precise'}</span>
@@ -516,7 +516,7 @@ export function VideoToGif({ t, lang }: Props) {
                       step="0.01"
                       value={bgBlend}
                       onChange={e => setBgBlend(parseFloat(e.target.value))}
-                      className="w-full mt-1.5 accent-purple-500"
+                      className="w-full mt-1.5 accent-emerald-500"
                     />
                     <div className="flex justify-between text-[7px] font-mono text-gray-600 mt-1">
                       <span>{lang === 'ar' ? 'حاد' : 'Sharp'}</span>

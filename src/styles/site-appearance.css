@@ -121,7 +121,7 @@ html[data-site-page='home'] .art-timeline { background: var(--art-window); borde
 html[data-site-page='home'] .art-ruler { color: var(--site-muted); }
 html[data-site-page='home'] :is(.art-playhead,.art-playhead::before) { background: var(--art-accent); }
 html[data-site-page='home'] .svg-demo { background: var(--art-surface); border-color: var(--art-border); color: var(--art-accent); }
-html[data-site-page='home'] .svg-demo-0 { color: #7c3aed; }
+html[data-site-page='home'] .svg-demo-0 { color: #24795e; }
 html[data-site-page='home'] .svg-demo-1 { color: #d97706; }
 html[data-site-page='home'] .svg-demo-3 { color: #0d9488; }
 html[data-site-page='home'] .svg-demo-4 { color: #2563eb; }
@@ -158,3 +158,17 @@ html[data-site-page='logo'] .ld-preview-only > .ut-site-nav { display: none; }
 html[data-site-page='excel'][data-site-theme='dark'] .bi-overview { background: var(--site-panel); }
 /* Workspace-wide button rules must not inflate the shared mobile navbar. */
 html[data-site-theme] .ut-site-nav button { padding: 7px 9px; min-height: 36px; font-size: 12px; }
+
+/* Brand logo: transparent artwork, theme-aware dark variant.
+   No background, border or padding is ever painted behind the wordmark. */
+html[data-site-theme] .unitool-brand-logo,
+html[data-site-theme] .ut-nav-brand img,
+html[data-site-theme] .home-brand img,
+html[data-site-theme] .restored-brand-logo {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-site-theme='dark'] .unitool-brand-logo[data-dark-src] {
+  content: url('/UniTool_logo_dark.png');
+}

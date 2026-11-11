@@ -13,7 +13,7 @@ export function Header({ lang, fileCount, mobileTab, onTabChange }: Props) {
   return (
     <>
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 sm:w-8 sm:h-8">
           <FileText size={14} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -26,10 +26,10 @@ export function Header({ lang, fileCount, mobileTab, onTabChange }: Props) {
         {(['upload', 'files', 'export'] as const).map(tab => (
           <button key={tab} onClick={() => onTabChange(tab)} className={cn(
             "flex-1 py-2 text-[9px] font-mono uppercase tracking-wider transition-colors",
-            mobileTab === tab ? 'text-white border-b-2 border-violet-500' : 'text-gray-500'
+            mobileTab === tab ? 'text-white border-b-2 border-emerald-500' : 'text-gray-500'
           )}>
             {tab === 'upload' ? (lang === 'ar' ? 'رفع' : 'Upload') : tab === 'files' ? (lang === 'ar' ? 'الملفات' : 'Files') : (lang === 'ar' ? 'دمج' : 'Merge')}
-            {tab === 'files' && fileCount > 0 && <span className="ml-1 text-violet-400">({fileCount})</span>}
+            {tab === 'files' && fileCount > 0 && <span className="ml-1 text-emerald-400">({fileCount})</span>}
           </button>
         ))}
       </div>

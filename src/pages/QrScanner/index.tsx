@@ -378,7 +378,7 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
 
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06] bg-[#0F1115]/50 shrink-0 sm:px-4 sm:py-3">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 sm:w-8 sm:h-8">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-blue-500/20 sm:w-8 sm:h-8">
           <ScanQrCode size={14} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -526,7 +526,7 @@ export function QrScanner({ t, lang, onNavigate }: Props) {
                   <button
                     onClick={() => startCamera()}
                     disabled={cameraLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold shadow-lg shadow-blue-500/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-wait"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-[10px] font-bold shadow-lg shadow-blue-500/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-wait"
                   >
                     {cameraLoading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                     {ar('تشغيل الكاميرا والسكانر', 'Start Camera & Scan')}
