@@ -320,6 +320,33 @@ export const toolCategories: ToolCategory[] = [
 toolCategories[toolCategories.length - 1].tools.push({ id: 'siteStorage', href: '/storage.html', icon: FileText, titleAr: 'التخزين والنسخ الاحتياطي', titleEn: 'Storage & backup', descAr: 'نسخة مضغوطة لبيانات الموقع المحفوظة ونقلها بين الأجهزة', descEn: 'Back up and restore saved site data across devices', gradient: 'from-emerald-500 to-cyan-600', border: 'border-emerald-500/25', glow: 'hover:shadow-emerald-500/20' });
 
 toolCategories.push({
+  id: 'typography',
+  titleAr: 'الخطوط والطباعة',
+  titleEn: 'Fonts & Typography',
+  taglineAr: 'معمل خطوط كامل: منحنيات حقيقية، أشكال عربية، وكرننغ وتصدير TTF',
+  taglineEn: 'A full font lab: real outlines, Arabic positional forms, kerning and TTF export',
+  icon: Type,
+  accent: 'from-emerald-500 to-teal-600',
+  soft: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+  tools: [
+    {
+      id: 'fontLab',
+      href: '/font-lab/',
+      icon: Type,
+      titleAr: 'معمل الخطوط العربي واللاتيني',
+      titleEn: 'Arabic & Latin Font Lab',
+      descAr: 'حرّر منحنيات خط حقيقي نقطة بنقطة، أضف أشكالاً وعمليات منطقية، اضبط الكرننغ والمقاييس، عاين النص بالخط نفسه وصدّر TTF/OTF',
+      descEn: 'Edit real glyph outlines node by node, add shapes and boolean ops, tune kerning and metrics, preview with the actual font and export TTF/OTF',
+      gradient: 'from-emerald-500 to-teal-600',
+      border: 'border-emerald-500/25 hover:border-emerald-400/50',
+      glow: 'group-hover:shadow-emerald-500/20',
+      badgeAr: 'جديد',
+      badgeEn: 'New',
+    },
+  ],
+});
+
+toolCategories.push({
   id: 'education',
   titleAr: 'التعليم والشرح التفاعلي',
   titleEn: 'Teaching & Smartboard',
