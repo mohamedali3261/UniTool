@@ -20,6 +20,7 @@ import { FontLibrary } from './sections/library/FontLibrary';
 import { PreviewDesk } from './sections/preview/PreviewDesk';
 import { MetricsPanel } from './sections/metrics/MetricsPanel';
 import { ShapeLibrary } from './sections/shapes/ShapeLibrary';
+import { NodeOps } from './sections/nodeops/NodeOps';
 import { KerningStudio } from './sections/kerning/KerningStudio';
 import { ExportPanel } from './sections/export/ExportPanel';
 import { HistoryPanel } from './sections/history/HistoryPanel';
@@ -220,6 +221,7 @@ function LabShell() {
             </div>
             <div className="fl-workspace-panels">
               <Inspector />
+              <NodeOps />
               <ShapeLibrary onNotice={notify} />
               <MetricsPanel />
               <FidelityPanel />

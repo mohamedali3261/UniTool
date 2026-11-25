@@ -16,6 +16,7 @@ import type { GlyphContour } from '../../core/fontEngine';
 export function Inspector() {
   const { state, dispatch, index, font, ar } = useFontLab();
   const entry = useMemo(() => index.find((item) => item.name === state.selection.glyph) || null, [index, state.selection.glyph]);
+  const formFamily = index.find((item) => Object.values(item.forms).includes(state.selection.glyph ?? '')) ?? entry;
   const shape = font && entry ? font.glyphs.get(entry.name) : null;
   const current = shape ? glyphState(state.doc, shape) : null;
   const stats = current ? nodeStats(current.contours) : { on: 0, off: 0, total: 0, contours: 0 };
@@ -93,11 +94,36 @@ export function Inspector() {
             <strong>{displayName(entry, ar ? 'ar' : 'en')}</strong>
             <small>{entry.unicodeHex !== '—' ? unicodeHex(entry.unicode ?? 0) : '—'} · {entry.category}</small>
             <div className="fl-forms">
-              {(['isolated', 'initial', 'medial', 'final'] as const).map((form) => (
-                <span key={form} className={entry.forms[form] ? 'is-available' : ''} title={entry.forms[form] || (ar ? 'غير موجود في الخط' : 'Not in this font')}>
-                  {ar ? FORM_LABELS[form].ar : FORM_LABELS[form].en}
-                </span>
-              ))}
+              {(['isolated', 'initial', 'medial', 'final'] as const).map((form) => {
+                const name = formFamily?.forms[form] ?? (form === 'isolated' ? formFamily?.name : undefined);
+                const available = Boolean(name);
+                const active = available && state.selection.glyph === name;
+                return (
+                  <button
+                    key={form}
+                    type="button"
+                    disabled={!available}
+                    aria-pressed={active}
+                    className={`${available ? 'is-available' : ''}${active ? ' is-active' : ''}`}
+                    title={
+                      available
+                        ? ar
+                          ? `افتح شكل «${FORM_LABELS[form].ar}» (${name})`
+                          : `Open the ${FORM_LABELS[form].en.toLowerCase()} form (${name})`
+                        : ar
+                          ? 'غير موجود في الخط'
+                          : 'Not in this font'
+                    }
+                    onClick={() => {
+                      if (!available || !font?.glyphs.has(name!)) return;
+                      dispatch({ type: 'select', glyph: name! });
+                      dispatch({ type: 'form', value: form });
+                    }}
+                  >
+                    {ar ? FORM_LABELS[form].ar : FORM_LABELS[form].en}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

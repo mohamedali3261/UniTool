@@ -456,8 +456,13 @@
 .fl-glyph-hero strong { display: block; font-size: 13px; }
 .fl-glyph-hero small { display: block; color: var(--fl-muted); font-size: 10.5px; }
 .fl-forms { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
-.fl-forms span { font-size: 9px; padding: 1px 5px; border-radius: 999px; background: var(--fl-panel-2); color: var(--fl-muted); border: 1px solid var(--fl-line-soft); }
-.fl-forms span.is-available { color: var(--fl-accent); border-color: color-mix(in srgb, var(--fl-accent) 35%, transparent); background: var(--fl-wash); }
+.fl-forms button { font-size: 9px; padding: 1px 5px; border-radius: 999px; background: var(--fl-panel-2); color: var(--fl-muted); border: 1px solid var(--fl-line-soft); }
+.fl-forms button.is-available { color: var(--fl-accent); border-color: color-mix(in srgb, var(--fl-accent) 35%, transparent); background: var(--fl-wash); cursor: pointer; }
+.fl-forms button.is-available:hover { border-color: var(--fl-accent); }
+.fl-forms button.is-active { background: var(--fl-accent); color: var(--fl-accent-ink); border-color: var(--fl-accent); }
+.fl-nodeops-group { display: grid; gap: 5px; }
+.fl-nodeops-group > small { font-size: 9.5px; color: var(--fl-muted); font-weight: 650; }
+.fl-grid-row { display: grid; grid-template-columns: 92px 1fr; gap: 6px; align-items: center; }
 
 .fl-metrics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .fl-substats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 10px; color: var(--fl-muted); }

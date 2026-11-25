@@ -28,6 +28,7 @@ font-lab/
 ├─ sections/               ← كل قسم في مجلد وملف مستقل:
 │  ├─ topbar/              الشريط العلوي
 │  ├─ glyphrail/           رف الحروف والبحث والمرشّحات
+│  ├─ nodeops/             محاذاة وتوزيع وتنعيم وتثبيت وإدراج وحذف النقاط
 │  ├─ inspector/           مفتش الحرف والنقاط المحددة
 │  ├─ library/             مكتبة الخطوط وتحليل الخط
 │  ├─ preview/             المعاينة الحيّة بالخط المُحرَّر
@@ -49,7 +50,7 @@ font-lab/
 
 ```bash
 npm run dev -- --strictPort        # ثم افتح /font-lab/
-npm run test:font-lab              # 51 اختباراً: المحرك + الواجهة + الربط
+npm run test:font-lab              # 53 اختباراً: المحرك + الواجهة + الربط
 npm run test:font-lab:browser      # Playwright (يحتاج متصفحات مثبّتة)
 npm run lint                       # tsc --noEmit
 ```

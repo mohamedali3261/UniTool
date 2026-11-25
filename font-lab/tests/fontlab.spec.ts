@@ -17,7 +17,7 @@ test('loads a real font and shows editable outlines', async ({ page }) => {
   const outline = page.locator('.fl-outline-line');
   await expect(outline).toHaveAttribute('d', /M[\d.]+/);
   await expect(page.locator('.fl-node').first()).toBeVisible();
-  await expect(page.locator('.fl-forms span')).toHaveCount(4);
+  await expect(page.locator('.fl-forms button')).toHaveCount(4);
 });
 
 test('glyph search filters the rail', async ({ page }) => {

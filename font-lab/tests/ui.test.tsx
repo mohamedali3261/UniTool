@@ -97,7 +97,64 @@ test('selecting a glyph updates the inspector and the stage outline', async () =
   const path = q('.fl-outline-line');
   assert.ok(path?.getAttribute('d')?.length, 'outline drawn');
   assert.ok(q('.fl-metrics-grid'), 'metrics shown');
-  assert.ok(qa('.fl-forms span').length === 4, 'four positional forms shown');
+  assert.equal(qa('.fl-forms button').length, 4, 'four positional form chips shown');
+
+});
+
+test('the positional-form chips open the real substituted glyph', async () => {
+  await switchTab('المحرر');
+  // pick a letter that really joins (ب) so all four forms exist in the font
+  const search = q<HTMLInputElement>('.fl-search input')!;
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!;
+    setter.call(search, 'باء');
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  });
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  await click(qa('.fl-glyph-main')[0]);
+  const before = q('.fl-stage-title')?.textContent || '';
+  const medial = qa('.fl-forms button').find((button) => button.textContent?.trim() === 'وسطي')!;
+  assert.ok(medial && !medial.hasAttribute("disabled"), 'medial form available for this letter');
+  await click(medial);
+  const after = q('.fl-stage-title')?.textContent || '';
+  assert.notEqual(after, before);
+  assert.ok(q('.fl-outline-line')?.getAttribute('d'), 'the substituted glyph has outlines');
+  assert.ok(qa('.fl-forms button').some((button) => button.className.includes('is-active')));
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!;
+    setter.call(search, '');
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  });
+});
+
+test('node operations act on a real selection', async () => {
+  await switchTab('المحرر');
+  const stage = q('.fl-stage')!;
+  stage.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: 720, height: 520, right: 720, bottom: 520, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+  const node = q('.fl-node rect') as unknown as SVGRectElement;
+  const nodeX = Number(node.getAttribute('x')) + 4;
+  const nodeY = Number(node.getAttribute('y')) + 4;
+  const fire = (type: string, clientX: number, clientY: number) => {
+    const event = new dom.window.MouseEvent(type, { bubbles: true, clientX, clientY, button: 0 });
+    Object.defineProperty(event, 'pointerId', { value: 1 });
+    stage.dispatchEvent(event);
+  };
+  await act(async () => {
+    fire('pointerdown', nodeX, nodeY);
+  });
+  await act(async () => {
+    fire('pointerup', nodeX, nodeY);
+  });
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  const selectedBefore = qa('.fl-node.is-selected').length;
+  assert.ok(selectedBefore >= 1, 'a node is selected');
+
+  const snap = qa('.fl-nodeops-group .fl-btn').find((button) => button.textContent?.includes('تثبيت'))!;
+  assert.ok(snap && !snap.hasAttribute("disabled"), 'snap enabled with a selection');
+  const before = q('.fl-outline-line')!.getAttribute('d');
+  await click(snap);
+  assert.notEqual(q('.fl-outline-line')!.getAttribute('d'), before);
 });
 
 test('tool switching changes the stage mode', async () => {
