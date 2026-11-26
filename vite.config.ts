@@ -30,6 +30,7 @@ export default defineConfig(() => {
           unitoolSvg: path.resolve(__dirname, 'unitool-svg.html'),
           videoStudio: path.resolve(__dirname, 'video-studio.html'),
           teacherBoard: path.resolve(__dirname, 'teacher-board/index.html'),
+          fontLab: path.resolve(__dirname, 'font-lab/index.html'),
         },
       },
     },

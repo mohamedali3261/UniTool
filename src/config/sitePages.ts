@@ -5,6 +5,7 @@ export const sitePages = [
   { href: "/cv-studio/", ar: "ستوديو السيرة الذاتية", en: "CV Studio" },
   { href: "/index.html", ar: "الرئيسية", en: "Home" },
   { href: "/app.html", ar: "الأدوات", en: "Tools" },
+  { href: "/font-lab/", ar: "معمل الخطوط", en: "Font Lab" },
   { href: "/designcraft.html", ar: "مصمم الجرافيك", en: "Design Craft" },
   { href: "/the-audio-reader.html", ar: "القارئ الصوتي", en: "Audio Reader" },
   { href: "/unitool-svg.html", ar: "UniTool SVG", en: "UniTool SVG" },

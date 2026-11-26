@@ -43,6 +43,8 @@
     "text-studio/**/*.ts",
     "text-studio/**/*.tsx",
     "site-storage/**/*.ts",
-    "site-storage/**/*.tsx"
+    "site-storage/**/*.tsx",
+    "font-lab/**/*.ts",
+    "font-lab/**/*.tsx"
   ]
 }
