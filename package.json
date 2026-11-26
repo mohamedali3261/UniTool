@@ -44,7 +44,9 @@
     "test:text-studio:browser": "playwright test --config text-studio/tests/playwright.config.ts",
     "test:site-storage": "tsx --test site-storage/tests/*.test.ts",
     "test:downloads": "tsx --test src/tests/downloadSafari.test.ts",
-    "test:tools:downloads": "playwright test --config playwright.downloads.config.ts"
+    "test:tools:downloads": "playwright test --config playwright.downloads.config.ts",
+    "test:product-studio": "tsx --test product-studio/tests/*.test.ts",
+    "test:product-studio:browser": "playwright test --config product-studio/tests/playwright.config.ts"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

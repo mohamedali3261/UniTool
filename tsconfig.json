@@ -45,6 +45,8 @@
     "site-storage/**/*.ts",
     "site-storage/**/*.tsx",
     "font-lab/**/*.ts",
-    "font-lab/**/*.tsx"
+    "font-lab/**/*.tsx",
+    "product-studio/**/*.ts",
+    "product-studio/**/*.tsx"
   ]
 }
